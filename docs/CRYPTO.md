@@ -26,7 +26,7 @@ crates.io und RustSec-Datenbank).
 - **`libcrux` nicht gewählt:** formal verifiziert, aber Version 0.0.x und 2026 vier RustSec-Meldungen
   zu ML-DSA (u. a. fehlerhafte Prüfung bei der Verifikation), alle inzwischen behoben.
   Ein späterer Wechsel bleibt möglich, da Kryptologik nur in `src/crypto/` liegt.
-- **MSRV 1.87:** von `ml-kem` 0.3.4 und `ml-dsa` 0.1.2 vorgegeben.
+- **MSRV 1.88:** `ml-kem` 0.3.4 und `ml-dsa` 0.1.2 verlangen 1.87; 1.88 wegen `proptest` (Tests sollen mit der MSRV laufen).
 
 ## Speicherung privater Schlüssel
 
@@ -99,7 +99,7 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
 **Why RustCrypto:** pure Rust from a single project, seed API, `ZeroizeOnDrop` private keys, no secrets
 in `Debug`, no open RustSec advisories for the versions used, MIT/Apache-2.0. `libcrux` is formally
 verified but still 0.0.x and had four ML-DSA advisories in 2026 (all fixed). Crypto logic is confined to
-`src/crypto/`, so switching later remains possible. MSRV 1.87 is required by `ml-kem`/`ml-dsa`.
+`src/crypto/`, so switching later remains possible. MSRV 1.88 (`ml-kem`/`ml-dsa` need 1.87, `proptest` 1.88 so tests run on the MSRV too).
 
 **Private key storage:** ML-KEM 64-byte seed, ML-DSA 32-byte seed, AES 32-byte key; expanded keys are
 re-derived on load. Protection: Argon2id(passphrase, 32-byte salt) → AES-256-GCM key, 96-bit nonce;
