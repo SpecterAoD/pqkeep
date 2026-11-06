@@ -7,6 +7,9 @@ fn all_variants() -> Vec<Error> {
     vec![
         Error::InvalidInput { field: "name" },
         Error::Crypto,
+        Error::Decrypt,
+        Error::KdfParams,
+        Error::Rng,
         Error::Unsupported,
         Error::Io(std::io::ErrorKind::NotFound),
     ]
