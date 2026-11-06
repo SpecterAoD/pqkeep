@@ -91,7 +91,7 @@ fn empty_passphrase_rejected() {
 #[test]
 fn derivation_is_deterministic_and_salt_dependent() {
     let p = common::min_params();
-    let pass = common::random_passphrase();
+    let pass = common::random_secret();
     let salt_a = [0xA5u8; kdf::SALT_LEN];
     let salt_b = [0x5Au8; kdf::SALT_LEN];
     let k1 = kdf::derive(&pass, &salt_a, &p).unwrap();
@@ -104,7 +104,7 @@ fn derivation_is_deterministic_and_salt_dependent() {
 
 #[test]
 fn parameters_change_the_key() {
-    let pass = common::random_passphrase();
+    let pass = common::random_secret();
     let salt = [0x11u8; kdf::SALT_LEN];
     let base = with(kdf::MIN_MEMORY_KIB, kdf::MIN_ITERATIONS, 1);
     let more_t = with(kdf::MIN_MEMORY_KIB, kdf::MIN_ITERATIONS + 1, 1);

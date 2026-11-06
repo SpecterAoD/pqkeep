@@ -7,6 +7,7 @@
 
 use pqc_keyforge::crypto::kdf::{self, KdfParams};
 use pqc_keyforge::crypto::rng;
+use pqc_keyforge::security::{Passphrase, StrongPassphrase, generator};
 
 /// DE: Kleinste zulässige Parameter (schnellster gültiger Fall).
 /// EN: Smallest permitted parameters (fastest valid case).
@@ -18,10 +19,23 @@ pub fn min_params() -> KdfParams {
     }
 }
 
-/// DE: Zufällige Test-Passphrase (48 Hex-Zeichen). EN: Random test passphrase (48 hex chars).
-pub fn random_passphrase() -> Vec<u8> {
+/// DE: Zufällige starke Passphrase aus dem Generator.
+/// EN: Random strong passphrase from the generator.
+pub fn random_passphrase() -> StrongPassphrase {
+    generator::generate(&generator::Options::default()).unwrap()
+}
+
+/// DE: Zufällige Bytes als KDF-Eingabe (48 Hex-Zeichen).
+/// EN: Random bytes as KDF input (48 hex characters).
+pub fn random_secret() -> Vec<u8> {
     let raw = rng::array::<24>().unwrap();
     hex::encode(raw).into_bytes()
+}
+
+/// DE: Normalisierte Passphrase aus Text (für Varianten in Negativtests).
+/// EN: Normalised passphrase from text (for variants in negative tests).
+pub fn passphrase(text: &str) -> Passphrase {
+    Passphrase::new(text).unwrap()
 }
 
 /// DE: Kopie mit einem gekippten Bit an Position `i`. EN: Copy with one flipped bit at `i`.

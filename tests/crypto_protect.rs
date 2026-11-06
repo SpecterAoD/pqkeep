@@ -28,7 +28,7 @@ fn kem_key_survives_protection() {
     )
     .unwrap();
 
-    let seed = protect::unprotect(&pass, &p, META).unwrap();
+    let seed = protect::unprotect(pass.as_ref(), &p, META).unwrap();
     assert_eq!(seed.expose(), kp.seed().expose());
     let restored = kem::from_seed(alg, seed.expose()).unwrap();
     assert_eq!(restored.public_key, kp.public_key);
@@ -52,7 +52,7 @@ fn dsa_key_survives_protection() {
     )
     .unwrap();
 
-    let seed = protect::unprotect(&pass, &p, META).unwrap();
+    let seed = protect::unprotect(pass.as_ref(), &p, META).unwrap();
     let sig = dsa::sign(alg, seed.expose(), b"message", b"").unwrap();
     assert!(dsa::verify(alg, &kp.public_key, b"message", b"", &sig));
 }
@@ -69,7 +69,7 @@ fn aes_key_survives_protection() {
         META,
     )
     .unwrap();
-    let restored = protect::unprotect(&pass, &p, META).unwrap();
+    let restored = protect::unprotect(pass.as_ref(), &p, META).unwrap();
     assert_eq!(restored.expose(), key.expose());
 }
 
