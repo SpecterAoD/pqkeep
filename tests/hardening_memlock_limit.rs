@@ -5,6 +5,10 @@
 //! continues; the secret counts as not locked and the failure is counted.
 //! Own test file because the limit affects the whole test process (Linux only).
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 #[cfg(target_os = "linux")]
 #[test]
 fn locking_failure_is_tolerated_and_reported() {

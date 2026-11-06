@@ -6,8 +6,9 @@
 //! truncated data, plus salt, parameters, algorithm, metadata and wrong
 //! passphrase on the protected key. Always an error, never a panic.
 
-// DE: unwrap in Hilfsfunktionen erlaubt. EN: unwrap allowed in helper functions.
-#![allow(clippy::unwrap_used)]
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 mod common;
 

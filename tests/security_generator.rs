@@ -1,8 +1,9 @@
 //! DE: Generator: gültig, verschieden, Länge, Klassen, Gleichverteilung, Grenzen.
 //! EN: Generator: valid, distinct, length, classes, uniformity, bounds.
 
-// DE: unwrap in Hilfsfunktionen erlaubt. EN: unwrap allowed in helper functions.
-#![allow(clippy::unwrap_used)]
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use std::collections::{HashMap, HashSet};
 

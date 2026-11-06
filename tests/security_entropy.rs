@@ -1,6 +1,10 @@
 //! DE: Entropieschätzung: Formel log2(Vorrat) × Länge, Klassen, Mindestwert.
 //! EN: Entropy estimate: formula log2(pool) × length, classes, minimum.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::security::generator::Options;

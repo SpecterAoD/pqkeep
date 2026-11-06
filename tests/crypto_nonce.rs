@@ -1,6 +1,10 @@
 //! DE: Eindeutigkeit von Nonces und Zufallswerten über viele Durchläufe.
 //! EN: Uniqueness of nonces and random values over many runs.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use std::collections::HashSet;
 
 use pqc_keyforge::crypto::{aead, rng};

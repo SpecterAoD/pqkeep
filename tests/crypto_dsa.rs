@@ -1,6 +1,10 @@
 //! DE: ML-DSA: Signieren/Prüfen, Seed-Ableitung, Längen und Fehlerfälle.
 //! EN: ML-DSA: sign/verify, seed derivation, lengths and error cases.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::Error;

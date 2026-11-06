@@ -3,6 +3,10 @@
 //! EN: Mandatory rules: each rejection with reason, several reasons, strong
 //! passphrases, bilingual messages. Weak example values only as negative test data.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::Error;

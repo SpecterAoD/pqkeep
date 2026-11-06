@@ -1,8 +1,9 @@
 //! DE: Known-Answer-Tests mit NIST-ACVP-Vektoren (siehe tests/kat/README.md).
 //! EN: Known-answer tests with NIST ACVP vectors (see tests/kat/README.md).
 
-// DE: unwrap in Hilfsfunktionen erlaubt. EN: unwrap allowed in helper functions.
-#![allow(clippy::unwrap_used)]
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use pqc_keyforge::crypto::{DsaAlgorithm, KemAlgorithm, dsa, kem};
 use serde_json::Value;
