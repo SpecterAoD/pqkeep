@@ -6,6 +6,8 @@
 //! blocklisted words (also in leetspeak). Matched characters are marked and do
 //! not count towards the entropy estimate.
 
+use zeroize::Zeroizing;
+
 use super::Reason;
 use super::blocklist::{BLOCKLIST, KEYBOARD_ROWS};
 
@@ -43,8 +45,10 @@ fn unleet(c: char) -> char {
 
 /// DE: Sucht alle Muster. EN: Searches all patterns.
 pub(super) fn find(chars: &[char]) -> Found {
-    let low: Vec<char> = chars.iter().map(|&c| lower(c)).collect();
-    let leet: Vec<char> = low.iter().map(|&c| unleet(c)).collect();
+    // DE: Abgeleitete Kopien der Passphrase – werden beim Verlassen genullt.
+    // EN: Derived copies of the passphrase – zeroed when leaving scope.
+    let low: Zeroizing<Vec<char>> = Zeroizing::new(chars.iter().map(|&c| lower(c)).collect());
+    let leet: Zeroizing<Vec<char>> = Zeroizing::new(low.iter().map(|&c| unleet(c)).collect());
     let mut marked = vec![false; chars.len()];
     let repetition = mark_runs(&low, &mut marked, |a, b| a == b);
     let sequence = mark_runs(&low, &mut marked, |a, b| {

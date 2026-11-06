@@ -22,6 +22,7 @@ argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "ze
 getrandom = { version = "0.4.3", features = ["sys_rng"] }
 ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
 ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
+region = "4.0.1"
 thiserror = "2.0.21"
 unicode-normalization = "0.1.26"
 zeroize = "1.9.1"
@@ -51,6 +52,9 @@ strip = true
 [dev-dependencies]
 hex = "0.4"
 serde_json = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix = { version = "1.1.6", default-features = false, features = ["std", "process"] }
 
 # DE: Abhängigkeiten auch im Debug/Test-Build optimieren (Argon2 sonst extrem langsam).
 #     Betrifft nur die Laufzeit, nicht die Semantik; eigener Code bleibt unoptimiert.
