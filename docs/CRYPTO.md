@@ -77,8 +77,9 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
 - **Nicht FIPS-140-validiert, nicht extern auditiert.** Die Verfahren entsprechen FIPS 203/204, die
   Implementierungen sind aber nicht zertifiziert.
 - **Zeroize ist „best effort“:** Der Compiler kann Kopien anlegen (Register, Stack, Verschiebungen),
-  das Betriebssystem kann Speicher auslagern (Swap) oder in Core Dumps schreiben. Sperren von
-  Speicherseiten und Abschalten von Core Dumps folgen später in einem eigenen Modul.
+  das Betriebssystem kann Speicher auslagern (Swap) oder in Core Dumps schreiben. Speicherseiten
+  mit Geheimnissen werden gesperrt und Core Dumps abgeschaltet (Linux); Details und Grenzen in
+  [`MEMORY_HARDENING.md`](MEMORY_HARDENING.md).
 - **Zwischenwerte der Crates:** Interne Zwischenwerte der Krypto-Crates liegen außerhalb unserer
   Kontrolle; wir verlassen uns auf deren eigene Zeroize-Unterstützung (aktiviert per Feature).
 - **Zufallsfehler:** ML-KEM-Kapselung nutzt intern `UnwrapErr(SysRng)`; liefert das Betriebssystem
@@ -110,7 +111,7 @@ range for creating and reading: 64 MiB…1 GiB, t 3…10, p 1…16; checked **be
 and DoS protection).
 
 **Limitations:** not FIPS 140 validated, not externally audited; zeroization is best effort (compiler
-copies, swap, core dumps; memory locking follows later); internal intermediate values of the crates are
+copies, swap, core dumps; see MEMORY_HARDENING.md for page locking and core dump suppression); internal intermediate values of the crates are
 outside our control (we rely on their zeroize support); ML-KEM encapsulation aborts if the OS RNG fails; constant time is a goal of the crates, not a
 guarantee for the target hardware.
 
