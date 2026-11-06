@@ -2,7 +2,7 @@
 name = "pqc-keyforge"
 version = "0.0.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 license = "Apache-2.0"
 description = "Post-quantum key generation and storage (ML-KEM, ML-DSA, AES-256)"
 repository = "https://github.com/SpecterAoD/PQC-KeyForge"
@@ -17,7 +17,13 @@ name = "keyforge"
 path = "src/main.rs"
 
 [dependencies]
+aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
+argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
+getrandom = { version = "0.4.3", features = ["sys_rng"] }
+ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
+ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
 thiserror = "2.0.21"
+zeroize = "1.9.1"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -40,3 +46,14 @@ overflow-checks = true
 lto = true
 codegen-units = 1
 strip = true
+
+[dev-dependencies]
+hex = "0.4"
+serde_json = "1"
+
+# DE: Abhängigkeiten auch im Debug/Test-Build optimieren (Argon2 sonst extrem langsam).
+#     Betrifft nur die Laufzeit, nicht die Semantik; eigener Code bleibt unoptimiert.
+# EN: Optimise dependencies in debug/test builds too (Argon2 is extremely slow otherwise).
+#     Affects run time only, not semantics; own code stays unoptimised.
+[profile.dev.package."*"]
+opt-level = 3

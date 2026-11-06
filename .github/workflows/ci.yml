@@ -20,7 +20,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  MSRV: "1.85"
+  MSRV: "1.87"
 
 jobs:
   test:

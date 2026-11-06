@@ -28,6 +28,23 @@ pub enum Error {
     #[error("Kryptografische Operation fehlgeschlagen / cryptographic operation failed")]
     Crypto,
 
+    /// DE: Entschlüsselung fehlgeschlagen: falsche Passphrase oder manipulierte Daten.
+    /// Bewusst nicht unterscheidbar. EN: Decryption failed: wrong passphrase or
+    /// tampered data. Deliberately indistinguishable.
+    #[error(
+        "Entschlüsselung fehlgeschlagen (falsche Passphrase oder manipulierte Daten) / decryption failed (wrong passphrase or tampered data)"
+    )]
+    Decrypt,
+
+    /// DE: KDF-Parameter außerhalb der zulässigen Grenzen.
+    /// EN: KDF parameters outside the permitted bounds.
+    #[error("KDF-Parameter unzulässig / KDF parameters not permitted")]
+    KdfParams,
+
+    /// DE: Betriebssystem liefert keinen Zufall. EN: Operating system provides no randomness.
+    #[error("Zufallsquelle nicht verfügbar / random source unavailable")]
+    Rng,
+
     /// DE: Nicht unterstützte Version oder nicht unterstützter Algorithmus.
     /// EN: Unsupported version or algorithm.
     #[error("Nicht unterstützt / unsupported")]
