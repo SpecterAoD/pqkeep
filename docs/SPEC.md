@@ -1,7 +1,8 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.2: PQC KeyForge (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.3: PQC KeyForge (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
+> Änderung v2.3 (07.11.2026, freigegeben von SpecterAoD): geplante Updates nach der ersten Beta (Abschnitt 9): Signaturen, mehrere Empfänger, Einrichtungs-Assistent, Kontextmenü.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -217,6 +218,33 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 
 ### Schritt 7: Abschluss-Review
 - Aufgabe: Sicherheits-Selbstreview (Checkliste: Geheimnisse in Logs/Fehlern, `unwrap`/`expect` in Produktionspfaden, Panics, Parameterlimits, Abhängigkeitsbaum, Maßnahmen aus 5b umgesetzt), `cargo audit`/`deny` ohne offene Funde, erste signierte Beta (`v0.1.0-beta.1`) veröffentlichen und die Verifikation nach Anleitung selbst nachvollziehen.
+
+## 9. Geplante Updates (nach `v0.1.0-beta.1`)
+
+Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of Done. Reihenfolge nach Abhängigkeiten.
+
+### U1: Digitale Signaturen (ML-DSA-87)
+- Datei signieren mit dem eigenen privaten ML-DSA-Schlüssel; abgesetzte Signaturdatei (`<datei>.pqsig`) mit Format-Version, Algorithmus, Schlüssel-ID des Signierers, SHA3-512 der Datei, Zeitstempel, Kontext-String und Signatur. Große Dateien werden gestreamt gehasht (kein Laden in den Speicher).
+- Prüfen mit dem öffentlichen Schlüssel: Ausgabe eindeutig `[VERIFIED]` oder `[INVALID]` (Exit-Code 0 bzw. ≠ 0); Anzeige der Schlüssel-ID/des Fingerabdrucks des Signierers.
+- **Ehrliche Einordnung:** Die Signatur beweist, dass die Datei unverändert ist und vom Inhaber des privaten Schlüssels signiert wurde. Wer dieser Inhaber ist, muss über den Fingerabdruck auf einem zweiten Weg bestätigt werden. Sie ist **keine** qualifizierte elektronische Signatur nach eIDAS (dafür wären ein qualifiziertes Zertifikat und ein Vertrauensdiensteanbieter nötig); „rechtssicher“ im juristischen Sinn ist sie damit nicht.
+- Erweiterung für `.pqkf`: optionale Absender-Signatur im Container (ersetzt den bisherigen Eintrag „optionale ML-DSA-Signatur des Absenders“).
+
+### U2: Mehrere Empfänger (Multi-Recipient-Container)
+- Ein zufälliger AES-256-GCM-Dateischlüssel (wie bisher); im Header pro Empfänger ein eigener Eintrag (ML-KEM-Kapselung, Standard ML-KEM-1024, Empfänger-ID, eingepackter Schlüssel). Jeder Empfänger öffnet mit seinem eigenen privaten Schlüssel; kein geteiltes Passwort.
+- Grenzen: Höchstzahl Empfänger (z. B. 64), neue `format_version` mit Downgrade-Schutz, Tests für jeden Empfänger, falsche/fehlende Empfänger, manipulierte Einträge.
+- Entscheidung im Plan: Empfänger-IDs sichtbar (schnelles Finden des eigenen Eintrags) oder verborgen (Probe-Entschlüsselung, mehr Privatsphäre).
+
+### U3: Einrichtungs-Assistent (Konsole)
+- Beim ersten Start ein farbiger, interaktiver Konsolen-Assistent (Terminal-UI-Crates, Auswahl im Plan): 1. sichere Master-Passphrase (Regeln aus 3.3, Argon2id), 2. eigenes Schlüsselpaar ML-KEM-1024 (Verschlüsselung) und ML-DSA-87 (Signaturen), 3. optional Registrierung des Kontextmenüs (U4), 4. Einweisung und Notfall-Backup (Kopie der Schlüsseldateien an einen gewählten Ort, Hinweise zur sicheren Aufbewahrung, Prüf-Wiederherstellung).
+- Ablage im Benutzerprofil (Linux `~/.local/share/pqc-keyforge`, Windows `%APPDATA%\PQC-KeyForge`), Rechte wie Abschnitt 4. Erneut aufrufbar (`keyforge setup`), überschreibt nie ohne Bestätigung.
+
+### U4: Kontextmenü (Rechtsklick) mit Passphrase-Dialog
+- Aktionen „Mit PQC sichern“ / „PQC entschlüsseln“ (später „Signieren“/„Prüfen“) im Dateimanager. Registrierung nur auf Benutzerebene, ohne Administratorrechte, vollständig rückgängig zu machen: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo-Actions (Cinnamon/Mint), Nautilus-Skripte, Dolphin-Service-Menüs.
+- Ohne Terminal öffnet sich ein schlankes Eingabefenster für die Passphrase. **Abweichung von Abschnitt 1 („GUI ist Non-Goal“):** nur dieser Dialog, keine Anwendungsoberfläche; Umsetzung im Plan zu entscheiden (z. B. vorhandene Systemwerkzeuge wie `zenity`/`kdialog` unter Linux bzw. ein minimaler nativer Dialog unter Windows). Übergabe der Passphrase nur über Pipe/Speicher, nie über Argumente oder Umgebungsvariablen.
+
+### Weitere Updates
+- Spiegel-Modus für Ordner (Struktur erhalten, Dateien einzeln verschlüsselt).
+- Diceware-Generator mit eigener bzw. gemeinfreier Wortliste (DE/EN), keine CC-BY-Liste (Abschnitt 5c).
 
 ## 8. Definition of Done (pro Schritt)
 

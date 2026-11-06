@@ -16,12 +16,16 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## Spätere Erweiterungen
+## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9)
 
-- Datei-/Ordnerverschlüsselung: Spiegel-Modus (Struktur erhalten, Dateien einzeln verschlüsselt)
-- Datei-/Ordnerverschlüsselung: mehrere Empfänger pro Datei
-- Datei-/Ordnerverschlüsselung: optionale ML-DSA-Signatur des Absenders
-- Passphrase-Generator: Diceware-Variante mit eigener bzw. gemeinfreier Wortliste (DE/EN); keine CC-BY-Liste (Abschnitt 5c)
+| Update | Inhalt | Hinweis |
+|---|---|---|
+| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, `[VERIFIED]`/`[INVALID]`, Absender-Signatur für `.pqkf` | Keine qualifizierte eIDAS-Signatur; Identität über Fingerabdruck bestätigen |
+| U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) | Neue Formatversion; Empfänger-IDs sichtbar oder verborgen (Entscheidung im Plan) |
+| U3 | Einrichtungs-Assistent in der Konsole: Master-Passphrase, ML-KEM-1024 + ML-DSA-87, Kontextmenü, Notfall-Backup | Erneut aufrufbar, überschreibt nie ohne Bestätigung |
+| U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog | Abweichung vom Non-Goal „GUI“ – nur Dialog, Umsetzung im Plan entscheiden |
+| – | Spiegel-Modus für Ordner | |
+| – | Diceware mit eigener/gemeinfreier Wortliste (DE/EN) | Keine CC-BY-Liste |
 
 ## Offene Punkte außerhalb des Codes
 
