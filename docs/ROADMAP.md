@@ -19,6 +19,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 - Datei-/Ordnerverschlüsselung: Spiegel-Modus (Struktur erhalten, Dateien einzeln verschlüsselt)
 - Datei-/Ordnerverschlüsselung: mehrere Empfänger pro Datei
 - Datei-/Ordnerverschlüsselung: optionale ML-DSA-Signatur des Absenders
+- Passphrase-Generator: Diceware-Variante mit eigener bzw. gemeinfreier Wortliste (DE/EN); keine CC-BY-Liste (Abschnitt 5c)
 
 ## Offene Punkte außerhalb des Codes
 
