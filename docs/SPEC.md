@@ -1,4 +1,6 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2: PQC KeyForge (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.1: PQC KeyForge (Core, CLI & API)
+
+> Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -69,6 +71,24 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - Parser: strenge Längen- und Zeichensatzgrenzen, `deny_unknown_fields`, maximale Dateigröße, keine Panics bei Fehleingaben.
 - Keine Pfade im Container. Dateien werden **atomar** geschrieben (temporäre Datei, dann umbenennen), Linux-Rechte `0600`, unter Windows Ablage im Benutzerprofil.
 
+## 4a. Datei- und Ordnerverschlüsselung (Basis für Schritt 3a)
+
+- **Zweck:** Beliebige Einzeldateien und komplette Ordner (rekursiv) quantensicher ver- und entschlüsseln. Teil der Core-Bibliothek (`src/files/`, Kryptobausteine in `src/crypto/`), genutzt von der CLI. **Nicht** über die REST-API angeboten (Angriffsfläche und DoS-Risiko durch große Uploads).
+- **Schlüsselmodi:**
+  - *Passphrase:* Argon2id (Abschnitt 3.2, Parameter im Header) leitet den Schlüssel ab, der den Dateischlüssel einpackt.
+  - *Empfänger:* ML-KEM (Standard ML-KEM-768) mit dem öffentlichen Schlüssel einer Person; gemeinsames Geheimnis → HKDF-SHA3-256 (Kontext: Header) → Schlüssel, der den Dateischlüssel einpackt. Zunächst genau **ein** Empfänger.
+- **Dateischlüssel:** Pro Verschlüsselung ein neuer zufälliger 256-Bit-Schlüssel (OS-CSPRNG), eingepackt mit AES-256-GCM.
+- **Inhalt:** Streaming-AEAD nach der STREAM-Konstruktion mit AES-256-GCM, Blockgröße 64 KiB, Nonce = Zufallspräfix ‖ Blockzähler ‖ Endmarke. Erkennt Kippen, Vertauschen, Entfernen, Abschneiden und Anhängen von Blöcken. Konstanter Speicherbedarf, unabhängig von der Dateigröße.
+- **Header:** Magic, `format_version`, Modus, KDF-Parameter und Salt bzw. KEM-Chiffrat, eingepackter Dateischlüssel, Nonce-Präfix, Blockgröße. Der gesamte Header ist als AAD an jeden Block gebunden. Strenge Grenzen beim Lesen (Abschnitt 4 gilt sinngemäß, Downgrade-Schutz).
+- **Inhaltsprüfsumme:** SHA3-256 des Klartexts (bei Ordnern pro Datei) wird **innerhalb** des verschlüsselten Teils mitgeführt und nach dem Entschlüsseln geprüft (Ende-zu-Ende-Kontrolle gegen Lese-/Schreibfehler). Sie wird nie im Klartext gespeichert, da sie Rückschlüsse auf den Inhalt erlauben würde.
+- **Ordner:** Ein Ordner wird zu **einem** verschlüsselten Archiv (eigenes minimales Format: Typ, relativer Pfad, Größe, Inhalt, Prüfsumme). Dateinamen, Anzahl und Struktur bleiben verborgen. Kein Einsatz der Crate `tar` (Historie von Entpack-Schwachstellen).
+- **Entschlüsseln:** Ausgabe zunächst in temporäre Dateien, Freigabe (Umbenennen) erst nach vollständiger Authentifizierung und Prüfsummenkontrolle; bei Fehlern keine Teilausgabe. Vorhandene Ziele werden nie überschrieben.
+- **Pfadsicherheit beim Entpacken:** Ablehnung von `..`, absoluten Pfaden, Laufwerksbuchstaben/UNC, Steuerzeichen, Windows-reservierten Namen und zu langen Pfaden; Grenzen für Einträge und Verschachtelungstiefe. Symlinks, Geräte und Pipes werden beim Verschlüsseln nicht verfolgt (übersprungen und gemeldet) und beim Entpacken nie angelegt. Im Empfänger-Modus kann jeder mit dem öffentlichen Schlüssel gültige Dateien erzeugen; der Parser muss daher auch bösartige, korrekt verschlüsselte Archive sicher abweisen.
+- **Nicht übernommen:** Zeitstempel, Eigentümer, Rechte (nur Inhalt und Struktur). Entschlüsselte Dateien erhalten restriktive Rechte (Linux `0600`/Ordner `0700`).
+- **Originale:** werden nicht gelöscht; sicheres Löschen ist auf SSDs unzuverlässig (Abschnitt 5b).
+- **Geplante Erweiterungen (spätere Updates):** Spiegel-Modus (Ordnerstruktur erhalten, jede Datei einzeln verschlüsselt), mehrere Empfänger pro Datei, optionale ML-DSA-Signatur des Absenders.
+- **Dokumentation:** `docs/FILE_FORMAT.md` (DE/EN), Ergänzung in `docs/THREAT_MODEL.md` (sichtbare Metadaten: ungefähre Größe; Angriffe über manipulierte Archive).
+
 ## 5. Automatisierung & CI/CD (GitHub Actions)
 
 - Trigger: jeder Push und Pull Request, Matrix `ubuntu-latest` und `windows-latest`, Rust stable (+ MSRV-Job).
@@ -126,11 +146,12 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 pqc-keyforge/
 ├─ Cargo.toml / Cargo.lock / deny.toml / rust-toolchain.toml
 ├─ src/  lib.rs  main.rs  error.rs  security.rs  envelope.rs  cli.rs  api.rs
-│        crypto/ (mod.rs, kem.rs, dsa.rs, kdf.rs, aead.rs)
+│        crypto/ (mod.rs, kem.rs, dsa.rs, kdf.rs, aead.rs, stream.rs, wrap.rs)
+│        files/  (mod.rs, format.rs, archive.rs, paths.rs)
 ├─ tests/  integration_*.rs   (+ tests/kat/ für Known-Answer-Tests, tests/cli_help.rs)
 │        (interne Tests: src/**/<modul>_tests.rs, nur per #[cfg(test)] mod eingebunden)
 ├─ scripts/  check_limits.sh  (Zeilenlimits, keine #[test] in Produktionsdateien)
-├─ docs/  THREAT_MODEL.md  FORMAT.md
+├─ docs/  THREAT_MODEL.md  FORMAT.md  FILE_FORMAT.md  CRYPTO.md
 ├─ README.md (DE/EN)  SECURITY.md  CONTRIBUTING.md  CODE_SIGNING_POLICY.md
 ├─ LICENSE (Apache-2.0)  NOTICE  CLAUDE.md  docs/ROADMAP.md  docs/CHECKLIST.md
 └─ .github/workflows/ci.yml  dependabot.yml
@@ -162,17 +183,21 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 - Aufgabe: Struktur (Abschnitt 4), Serialisierung, Deserialisierung, Validierung der Metadaten.
 - Tests: Roundtrip; Ablehnung unbekannter Felder, falscher Version, übergroßer oder fehlerhaft kodierter Daten; Pfadkonventionen Windows (`C:\Users\...`, Backslashes) und Linux (`/home/...`) via `PathBuf` und `tempfile`; atomares Schreiben; Dateirechte unter Linux; Fuzz-Test oder Property-Test (`proptest`) für den Parser (keine Panics).
 
+### Schritt 3a: Datei- und Ordnerverschlüsselung (`files/`, `crypto/stream.rs`, `crypto/wrap.rs`)
+- Aufgabe: Abschnitt 4a umsetzen: Streaming-AEAD, Einpacken des Dateischlüssels (Passphrase, ML-KEM-Empfänger), Header, Archivformat für Ordner, Pfadprüfung, atomare Ausgabe, Inhaltsprüfsumme.
+- Tests: Roundtrip leerer, kleiner, blockgenauer und großer Dateien (mehrere Blöcke); Ordner mit Unterordnern, leeren Ordnern und Unicode-Namen; Manipulation jedes Header-Bytes und von Blöcken (kippen, vertauschen, abschneiden, anhängen); falsche Passphrase bzw. falscher Schlüssel; bösartige Archive (Pfad-Traversal, absolute und Windows-Pfade, Symlink-Einträge, zu viele Einträge, falsche Prüfsumme); keine Teilausgabe bei Fehlern; vorhandenes Ziel wird nicht überschrieben; Property-Tests für Header- und Archiv-Parser (keine Panics).
+
 ### Schritt 4: CLI (`cli.rs`, `clap` + `dialoguer`)
-- Aufgabe: Interaktives Menü **und** nicht-interaktive Subcommands (`generate`, `validate`, `inspect`, `export`, `passphrase`, `help`). Verdeckte Passphrase-Eingabe, Bestätigung vor Überschreiben, Ausgabe nur in vom Nutzer gewählte Pfade (Pfad-Validierung).
+- Aufgabe: Interaktives Menü **und** nicht-interaktive Subcommands (`generate`, `validate`, `inspect`, `export`, `passphrase`, `encrypt`, `decrypt`, `help`). Verdeckte Passphrase-Eingabe, Bestätigung vor Überschreiben, Ausgabe nur in vom Nutzer gewählte Pfade (Pfad-Validierung).
 - **Integrierte Hilfe (zweisprachig DE/EN, per `--lang de|en`, Standard aus System-Locale):**
   - `--help` und `-h` global und pro Subcommand, jeweils mit Beschreibung, Parametern, Beispielen und Exit-Codes.
-  - `keyforge help <thema>` mit Themen: `passphrase` (Regeln und Generator), `algorithms` (ML-KEM/ML-DSA/AES, Parametersätze), `container` (Format und Metadaten), `security` (Sicherheitshinweise und Grenzen), `verify` (Release-Signaturen prüfen).
+  - `keyforge help <thema>` mit Themen: `passphrase` (Regeln und Generator), `files` (Datei-/Ordnerverschlüsselung, Modi, Grenzen), `algorithms` (ML-KEM/ML-DSA/AES, Parametersätze), `container` (Format und Metadaten), `security` (Sicherheitshinweise und Grenzen), `verify` (Release-Signaturen prüfen).
   - Im interaktiven Menü ein Eintrag „Hilfe / Help“ sowie kontextbezogene Kurzhinweise bei jeder Eingabe (z. B. Passphrase-Regeln, Hinweis auf Metadaten im Klartext).
   - Manpage (`clap_mangen`) und Shell-Completions (`clap_complete`, bash/zsh/fish/PowerShell) werden per Subcommand `keyforge completions <shell>` bzw. `keyforge man` erzeugt, ohne Netzwerkzugriff.
 - Tests (in eigenen Dateien): simulierte Eingaben (Integrationstests mit `assert_cmd`), erfolgreicher Export des Containers, erneutes Einlesen und Entschlüsseln, saubere Fehlermeldungen bei ungültigen Eingaben, Exit-Codes. Hilfetests: Jeder Subcommand und jedes Hilfethema liefert Text in **beiden** Sprachen, `--help` enthält mindestens ein Beispiel, kein Hilfetext enthält Beispielgeheimnisse, die wie echte Zugangsdaten aussehen.
 
 ### Schritt 5: API (`api.rs`, Axum)
-- Aufgabe: Endpunkte `POST /v1/generate`, `POST /v1/validate`, `GET /v1/health`. Strikte JSON-Schemata.
+- Aufgabe: Endpunkte `POST /v1/generate`, `POST /v1/validate`, `GET /v1/health`. Strikte JSON-Schemata. Datei-/Ordnerverschlüsselung (Abschnitt 4a) ist bewusst **nicht** über die API verfügbar.
 - Härtung: Standard-Bind **127.0.0.1**, Anbindung an andere Interfaces nur explizit und mit Warnhinweis (TLS-Terminierung durch Reverse Proxy dokumentieren); Authentifizierung per Token aus Datei/Umgebung (konstante Zeit); Body-Größenlimit, Timeouts, Rate-Limiting; Argon2-Arbeit in `spawn_blocking` mit Semaphore (Begrenzung paralleler KDF-Jobs gegen DoS); keine Geheimnisse in Logs; generische Fehlerantworten ohne interne Details.
 - Tests: HTTP-Integrationstests für alle Endpunkte (Erfolg, ungültige Eingabe, fehlende Auth, zu große Bodies, manipulierte Container, Parallelitätslimit).
 
