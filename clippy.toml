@@ -1,0 +1,10 @@
+# DE: Funktionslimit laut Spezifikation (clippy zählt Codezeilen ohne Kommentare/Leerzeilen).
+# EN: Function limit per specification (clippy counts code lines without comments/blank lines).
+too-many-lines-threshold = 50
+
+# DE: unwrap/expect nur in Tests erlaubt. EN: unwrap/expect allowed in tests only.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+
+# DE: Projektname nicht als Code markieren. EN: Do not require backticks for the project name.
+doc-valid-idents = ["KeyForge", ".."]

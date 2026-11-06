@@ -1,0 +1,2 @@
+# DE: Einheitlich LF, auch unter Windows. EN: Always LF, also on Windows.
+* text=auto eol=lf
