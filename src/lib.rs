@@ -10,6 +10,7 @@
 
 pub mod crypto;
 pub mod error;
+pub mod security;
 
 pub use error::{Error, Result};
 

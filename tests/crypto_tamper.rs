@@ -14,6 +14,7 @@ mod common;
 use pqc_keyforge::Error;
 use pqc_keyforge::crypto::protect::{self, ProtectedKey};
 use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm, aead, kem};
+use pqc_keyforge::security::{Passphrase, StrongPassphrase};
 
 const AAD: &[u8] = b"PQC-KeyForge test header with metadata";
 
@@ -73,13 +74,13 @@ fn truncated_and_extended_data() {
 
 /// DE: Geschützter ML-KEM-768-Seed mit Minimalparametern.
 /// EN: Protected ML-KEM-768 seed with minimal parameters.
-fn protected(pass: &[u8]) -> ProtectedKey {
+fn protected(pass: &StrongPassphrase) -> ProtectedKey {
     let kp = kem::generate(KemAlgorithm::MlKem768).unwrap();
     let alg = KeyAlgorithm::Kem(KemAlgorithm::MlKem768);
     protect::protect(pass, alg, kp.seed().expose(), &common::min_params(), AAD).unwrap()
 }
 
-fn expect_decrypt_error(pass: &[u8], key: &ProtectedKey, meta: &[u8], what: &str) {
+fn expect_decrypt_error(pass: &Passphrase, key: &ProtectedKey, meta: &[u8], what: &str) {
     let err = protect::unprotect(pass, key, meta).err();
     assert_eq!(err, Some(Error::Decrypt), "{what}");
 }
@@ -88,9 +89,20 @@ fn expect_decrypt_error(pass: &[u8], key: &ProtectedKey, meta: &[u8], what: &str
 fn wrong_passphrase() {
     let pass = common::random_passphrase();
     let key = protected(&pass);
-    expect_decrypt_error(&common::random_passphrase(), &key, AAD, "random");
-    expect_decrypt_error(&common::flip(&pass, pass.len() - 1), &key, AAD, "1 bit");
-    expect_decrypt_error(&pass[..pass.len() - 1], &key, AAD, "truncated");
+    let text = pass.as_ref().expose_str().to_owned();
+    let other = common::random_passphrase();
+    expect_decrypt_error(other.as_ref(), &key, AAD, "random");
+    let mut changed: Vec<char> = text.chars().collect();
+    changed[0] = if changed[0] == 'x' { 'y' } else { 'x' };
+    let changed: String = changed.into_iter().collect();
+    expect_decrypt_error(&common::passphrase(&changed), &key, AAD, "1 char");
+    let truncated = &text[..text.len() - 1];
+    expect_decrypt_error(&common::passphrase(truncated), &key, AAD, "truncated");
+    let longer = format!("{text}x");
+    expect_decrypt_error(&common::passphrase(&longer), &key, AAD, "extended");
+    // DE: Gegenprobe: dieselbe Passphrase als neu normalisierter Text funktioniert.
+    // EN: Cross-check: the same passphrase as freshly normalised text works.
+    assert!(protect::unprotect(&common::passphrase(&text), &key, AAD).is_ok());
 }
 
 #[test]
@@ -100,19 +112,19 @@ fn header_fields_are_authenticated() {
 
     let mut k = key.clone();
     k.salt = common::flip(&k.salt, 0);
-    expect_decrypt_error(&pass, &k, AAD, "salt");
+    expect_decrypt_error(pass.as_ref(), &k, AAD, "salt");
 
     let mut k = key.clone();
     k.kdf.iterations += 1;
-    expect_decrypt_error(&pass, &k, AAD, "iterations");
+    expect_decrypt_error(pass.as_ref(), &k, AAD, "iterations");
 
     // DE: Gleiche Seed-Länge, anderer Algorithmus. EN: Same seed length, other algorithm.
     let mut k = key.clone();
     k.algorithm = KeyAlgorithm::Kem(KemAlgorithm::MlKem1024);
-    expect_decrypt_error(&pass, &k, AAD, "algorithm");
+    expect_decrypt_error(pass.as_ref(), &k, AAD, "algorithm");
 
-    expect_decrypt_error(&pass, &key, &common::flip(AAD, 3), "metadata");
-    expect_decrypt_error(&pass, &key, b"", "metadata empty");
+    expect_decrypt_error(pass.as_ref(), &key, &common::flip(AAD, 3), "metadata");
+    expect_decrypt_error(pass.as_ref(), &key, b"", "metadata empty");
 }
 
 #[test]
@@ -122,22 +134,22 @@ fn malformed_protected_key_fails_fast() {
 
     let mut k = key.clone();
     k.ciphertext.pop();
-    expect_decrypt_error(&pass, &k, AAD, "truncated ciphertext");
+    expect_decrypt_error(pass.as_ref(), &k, AAD, "truncated ciphertext");
 
     // DE: Andere Seed-Länge (ML-DSA: 32 statt 64 Byte). EN: Other seed length.
     let mut k = key.clone();
     k.algorithm = KeyAlgorithm::Dsa(pqc_keyforge::crypto::DsaAlgorithm::MlDsa65);
-    expect_decrypt_error(&pass, &k, AAD, "algorithm with other length");
+    expect_decrypt_error(pass.as_ref(), &k, AAD, "algorithm with other length");
 
     let mut k = key.clone();
     k.kdf.memory_kib = u32::MAX;
     assert_eq!(
-        protect::unprotect(&pass, &k, AAD).err(),
+        protect::unprotect(pass.as_ref(), &k, AAD).err(),
         Some(Error::KdfParams)
     );
 
     let mut k = key;
     k.salt.truncate(4);
-    let err = protect::unprotect(&pass, &k, AAD).err();
+    let err = protect::unprotect(pass.as_ref(), &k, AAD).err();
     assert_eq!(err, Some(Error::InvalidInput { field: "salt" }));
 }

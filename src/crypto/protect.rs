@@ -2,17 +2,20 @@
 //! Argon2id → AES-256-GCM. Pro Vorgang neuer Salt, neuer Schlüssel und neue Nonce.
 //! Algorithmus, KDF-Parameter, Salt und die Metadaten des Aufrufers werden als
 //! AAD mitauthentifiziert; die Nonce ist über GCM selbst gebunden.
-//! Das Dateiformat (Container) folgt in Schritt 3.
+//! Schützen verlangt eine geprüfte `StrongPassphrase`, Öffnen nur eine normalisierte
+//! `Passphrase` (vorhandene Daten bleiben lesbar). Das Dateiformat folgt in Schritt 3.
 //!
 //! EN: Protection of a private key (seed) with a passphrase:
 //! Argon2id → AES-256-GCM. Fresh salt, fresh key and fresh nonce every time.
 //! Algorithm, KDF parameters, salt and the caller's metadata are authenticated
 //! as AAD; the nonce is bound by GCM itself.
-//! The file format (container) follows in step 3.
+//! Protecting requires a checked `StrongPassphrase`, opening only a normalised
+//! `Passphrase` (existing data stays readable). The file format follows in step 3.
 
 use crate::crypto::aead::{self, NONCE_LEN};
 use crate::crypto::kdf::{self, KdfParams};
 use crate::crypto::{KeyAlgorithm, SecretBytes, rng};
+use crate::security::{Passphrase, StrongPassphrase};
 use crate::{Error, Result};
 
 /// DE: Domänen-Tag der AAD (Version 1). EN: AAD domain tag (version 1).
@@ -66,7 +69,7 @@ fn push_field(out: &mut Vec<u8>, field: &[u8]) {
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`], [`Error::KdfParams`], [`Error::Rng`], [`Error::Crypto`].
 pub fn protect(
-    passphrase: &[u8],
+    passphrase: &StrongPassphrase,
     algorithm: KeyAlgorithm,
     secret: &[u8],
     params: &KdfParams,
@@ -76,7 +79,7 @@ pub fn protect(
         return Err(Error::InvalidInput { field: "secret" });
     }
     let salt = rng::array::<{ kdf::SALT_LEN }>()?.to_vec();
-    let key = kdf::derive(passphrase, &salt, params)?;
+    let key = kdf::derive(passphrase.as_ref().expose(), &salt, params)?;
     let aad = associated_data(algorithm, params, &salt, metadata);
     let sealed = aead::seal(key.expose(), secret, &aad)?;
     Ok(ProtectedKey {
@@ -98,7 +101,7 @@ pub fn protect(
 /// # Errors
 /// DE/EN: [`Error::KdfParams`], [`Error::InvalidInput`], [`Error::Decrypt`].
 pub fn unprotect(
-    passphrase: &[u8],
+    passphrase: &Passphrase,
     protected: &ProtectedKey,
     metadata: &[u8],
 ) -> Result<SecretBytes> {
@@ -107,7 +110,7 @@ pub fn unprotect(
     if protected.ciphertext.len() != expected {
         return Err(Error::Decrypt);
     }
-    let key = kdf::derive(passphrase, &protected.salt, &protected.kdf)?;
+    let key = kdf::derive(passphrase.expose(), &protected.salt, &protected.kdf)?;
     let aad = associated_data(
         protected.algorithm,
         &protected.kdf,
