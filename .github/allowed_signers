@@ -1,0 +1,2 @@
+# DE: Erlaubte Signaturschlüssel für Commits und Release-Tags (SSH). EN: Allowed signing keys for commits and release tags (SSH).
+SpecterAoD@t-online.de namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHni9M474FfrTd72CuQ5jlv9eDpyE/uXh1g6xRYLHzjz
