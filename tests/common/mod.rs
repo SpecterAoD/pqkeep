@@ -62,3 +62,56 @@ pub fn key_file(
         pqc_keyforge::envelope::KeyFile::generate(&pass, algorithm, &meta, &min_params()).unwrap();
     (file, pass)
 }
+
+/// DE: Liest einen Ordnerbaum: relativer Pfad → Inhalt (None = Ordner).
+/// EN: Reads a directory tree: relative path → content (None = directory).
+pub fn read_tree(root: &std::path::Path) -> std::collections::BTreeMap<String, Option<Vec<u8>>> {
+    let mut out = std::collections::BTreeMap::new();
+    let mut stack = vec![(root.to_path_buf(), String::new())];
+    while let Some((dir, prefix)) = stack.pop() {
+        for entry in std::fs::read_dir(&dir).unwrap() {
+            let entry = entry.unwrap();
+            let rel = format!("{prefix}{}", entry.file_name().to_str().unwrap());
+            if entry.file_type().unwrap().is_dir() {
+                out.insert(rel.clone(), None);
+                stack.push((entry.path(), format!("{rel}/")));
+            } else {
+                out.insert(rel, Some(std::fs::read(entry.path()).unwrap()));
+            }
+        }
+    }
+    out
+}
+
+/// DE: Beispielbaum mit Unterordnern, leerem Ordner, Unicode und größerer Datei.
+/// EN: Sample tree with subdirectories, empty directory, Unicode and a larger file.
+pub fn write_sample_tree(root: &std::path::Path) {
+    let dirs = ["Dokumente", "Dokumente/Prüfung 2026", "leer", "日本語"];
+    for d in dirs {
+        std::fs::create_dir_all(root.join(d)).unwrap();
+    }
+    let big: Vec<u8> = (0..200_000u32)
+        .map(|i| u8::try_from(i % 253).unwrap())
+        .collect();
+    let files: [(&str, &[u8]); 5] = [
+        ("Dokumente/Bericht.txt", b"Inhalt / content"),
+        ("Dokumente/Prüfung 2026/Größe.bin", &big),
+        ("Dokumente/leer.txt", b""),
+        ("日本語/ファイル.md", "テキスト".as_bytes()),
+        ("wurzel.txt", b"root"),
+    ];
+    for (path, data) in files {
+        std::fs::write(root.join(path), data).unwrap();
+    }
+}
+
+/// DE: Namen aller Einträge eines Ordners (für „keine Reste“-Prüfungen).
+/// EN: Names of all entries of a directory (for "no leftovers" checks).
+pub fn dir_names(dir: &std::path::Path) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(dir)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    names
+}
