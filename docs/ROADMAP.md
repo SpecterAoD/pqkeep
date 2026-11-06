@@ -8,10 +8,17 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 1 | Core-Krypto: ML-KEM, ML-DSA, AES-256, Argon2id, AES-256-GCM-Container-Verschlüsselung ([CRYPTO.md](CRYPTO.md)) | Roundtrip-, Manipulations-, KAT- und Zeroize-Tests |
 | 2 | `security.rs`: Passphrase-Prüfung, Entropie, Generator | Schwach abgelehnt, stark akzeptiert, Generator getestet |
 | 3 | `envelope.rs`: JSON-Container, Metadaten, Parser-Härtung | Roundtrip, Pfadkonventionen Windows/Linux, Fuzz/Property-Tests |
+| 3a | `files/`: Datei- und Ordnerverschlüsselung (Passphrase oder ML-KEM-Empfänger), Streaming-AEAD, Archiv, Pfadsicherheit | Roundtrip, Manipulation, bösartige Archive, keine Teilausgabe |
 | 4 | `cli.rs`: Menü, Subcommands, integrierte zweisprachige Hilfe | CLI-Integrationstests, Hilfetests DE/EN |
 | 5 | `api.rs`: Axum-REST-API, Härtung | HTTP-Integrationstests inkl. Auth, Limits, DoS-Schutz |
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
+
+## Spätere Erweiterungen
+
+- Datei-/Ordnerverschlüsselung: Spiegel-Modus (Struktur erhalten, Dateien einzeln verschlüsselt)
+- Datei-/Ordnerverschlüsselung: mehrere Empfänger pro Datei
+- Datei-/Ordnerverschlüsselung: optionale ML-DSA-Signatur des Absenders
 
 ## Offene Punkte außerhalb des Codes
 
