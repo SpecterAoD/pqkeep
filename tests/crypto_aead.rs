@@ -1,6 +1,10 @@
 //! DE: AES-256-GCM: Roundtrip, Schlüsselerzeugung, Längenprüfungen.
 //! EN: AES-256-GCM: round trip, key generation, length checks.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use pqc_keyforge::Error;
 use pqc_keyforge::crypto::aead;
 

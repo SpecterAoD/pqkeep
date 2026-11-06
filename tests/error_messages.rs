@@ -1,6 +1,10 @@
 //! DE: Tests der Fehlertexte: zweisprachig, nicht leer, ohne Eingabedaten.
 //! EN: Tests of error messages: bilingual, non-empty, without input data.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use pqc_keyforge::Error;
 
 fn all_variants() -> Vec<Error> {

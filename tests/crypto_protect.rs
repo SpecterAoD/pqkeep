@@ -4,6 +4,10 @@
 //! EN: Full flow: generate, protect, unlock and use the restored key
 //! (encaps/decaps, sign/verify, AES).
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::Error;

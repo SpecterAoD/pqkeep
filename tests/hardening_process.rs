@@ -3,6 +3,10 @@
 //! EN: Process hardening: core dumps disabled, process not dumpable (Linux).
 //! Own test file because the settings affect the whole test process.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use pqc_keyforge::hardening::harden_process;
 
 #[test]

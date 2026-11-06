@@ -9,6 +9,7 @@
 #![forbid(unsafe_code)]
 
 pub mod crypto;
+pub mod envelope;
 pub mod error;
 pub mod hardening;
 pub mod security;

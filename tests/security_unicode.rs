@@ -1,6 +1,10 @@
 //! DE: Unicode: NFKC-Normalisierung, Zählen von Zeichen statt Bytes.
 //! EN: Unicode: NFKC normalisation, counting characters instead of bytes.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::security::Reason;

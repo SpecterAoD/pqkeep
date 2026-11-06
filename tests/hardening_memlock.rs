@@ -5,8 +5,9 @@
 //! number of locked pages again. On Linux additionally checked via `VmLck` in
 //! /proc/self/status. One test per file because the status is process-wide.
 
-// DE: unwrap in Hilfsfunktionen erlaubt. EN: unwrap allowed in helper functions.
-#![allow(clippy::unwrap_used)]
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use pqc_keyforge::crypto::SecretBytes;
 use pqc_keyforge::hardening::memlock;

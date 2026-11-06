@@ -2,7 +2,7 @@
 name = "pqc-keyforge"
 version = "0.0.0"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 license = "Apache-2.0"
 description = "Post-quantum key generation and storage (ML-KEM, ML-DSA, AES-256)"
 repository = "https://github.com/SpecterAoD/PQC-KeyForge"
@@ -19,10 +19,14 @@ path = "src/main.rs"
 [dependencies]
 aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
+base64ct = { version = "1.8.3", features = ["alloc"] }
 getrandom = { version = "0.4.3", features = ["sys_rng"] }
 ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
 ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
 region = "4.0.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha3 = "0.12.0"
 thiserror = "2.0.21"
 unicode-normalization = "0.1.26"
 zeroize = "1.9.1"
@@ -58,7 +62,8 @@ panic = "abort"
 
 [dev-dependencies]
 hex = "0.4"
-serde_json = "1"
+proptest = "1.12.0"
+tempfile = "3.27.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rustix = { version = "1.1.6", default-features = false, features = ["std", "process"] }

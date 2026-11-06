@@ -94,6 +94,21 @@ impl KeyAlgorithm {
             .ok_or(Error::Unsupported)
     }
 
+    /// DE: Länge des öffentlichen Schlüssels in Bytes (AES: 0) laut FIPS 203/204.
+    /// EN: Public key length in bytes (AES: 0) per FIPS 203/204.
+    #[must_use]
+    pub fn public_key_len(self) -> usize {
+        match self {
+            Self::Kem(KemAlgorithm::MlKem512) => 800,
+            Self::Kem(KemAlgorithm::MlKem768) => 1184,
+            Self::Kem(KemAlgorithm::MlKem1024) => 1568,
+            Self::Dsa(DsaAlgorithm::MlDsa44) => 1312,
+            Self::Dsa(DsaAlgorithm::MlDsa65) => 1952,
+            Self::Dsa(DsaAlgorithm::MlDsa87) => 2592,
+            Self::Aes256 => 0,
+        }
+    }
+
     /// DE: Länge des gespeicherten Geheimnisses (Seed bzw. Schlüssel) in Bytes.
     /// EN: Length of the stored secret (seed or key) in bytes.
     #[must_use]

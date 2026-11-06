@@ -4,6 +4,10 @@
 //! EN: Zeroize: secret types are `ZeroizeOnDrop` (type-level check) and
 //! `zeroize()` really clears buffers. Limits: see docs/CRYPTO.md.
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 use pqc_keyforge::crypto::{SecretBytes, aead};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 

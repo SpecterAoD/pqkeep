@@ -44,3 +44,21 @@ pub fn flip(data: &[u8], i: usize) -> Vec<u8> {
     out[i] ^= 0x01;
     out
 }
+
+/// DE: Schlüsseldatei mit Minimalparametern; liefert Datei und Passphrase.
+/// EN: Key file with minimal parameters; returns file and passphrase.
+pub fn key_file(
+    algorithm: pqc_keyforge::crypto::KeyAlgorithm,
+) -> (pqc_keyforge::envelope::KeyFile, StrongPassphrase) {
+    let pass = random_passphrase();
+    let meta = pqc_keyforge::envelope::Metadata {
+        name: "Test User".to_owned(),
+        organization: Some("Example Org".to_owned()),
+        company: None,
+        department: Some("IT-Sicherheit".to_owned()),
+        account_type: Some("service".to_owned()),
+    };
+    let file =
+        pqc_keyforge::envelope::KeyFile::generate(&pass, algorithm, &meta, &min_params()).unwrap();
+    (file, pass)
+}

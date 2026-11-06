@@ -1,6 +1,10 @@
 //! DE: Muster: Wiederholungen, Folgen, Tastaturreihen, Blocklist (inkl. Leetspeak).
 //! EN: Patterns: repetitions, sequences, keyboard rows, blocklist (incl. leetspeak).
 
+// DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
+// EN: Tests may use unwrap/expect (also in helpers); production code may not.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 mod common;
 
 use pqc_keyforge::security::Reason;
