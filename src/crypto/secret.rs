@@ -10,6 +10,19 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 /// DE: Geheime Bytefolge, die beim Drop genullt wird.
 /// EN: Secret byte sequence that is zeroed on drop.
+///
+/// DE: Die folgenden Beispiele dürfen **nicht** kompilieren (kein `Debug`/`Clone`).
+/// EN: The following examples must **not** compile (no `Debug`/`Clone`).
+///
+/// ```compile_fail
+/// let s = pqc_keyforge::crypto::SecretBytes::new(vec![1, 2, 3]);
+/// println!("{s:?}");
+/// ```
+///
+/// ```compile_fail
+/// let s = pqc_keyforge::crypto::SecretBytes::new(vec![1, 2, 3]);
+/// let t = s.clone();
+/// ```
 pub struct SecretBytes {
     inner: Zeroizing<Vec<u8>>,
 }
