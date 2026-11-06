@@ -1,0 +1,10 @@
+/target
+**/*.rs.bk
+# Niemals Schlüssel, Container oder Secrets einchecken / Never commit keys, containers or secrets
+*.pem
+*.key
+*.pfx
+*.p12
+*.kfc
+.env
+.env.*

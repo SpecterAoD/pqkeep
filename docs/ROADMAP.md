@@ -1,0 +1,23 @@
+# Fahrplan / Roadmap
+
+Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
+
+| Schritt | Inhalt | Ergebnis |
+|---|---|---|
+| 0 | Projekt-Grundgerüst, Lints, `error.rs`, CI-Rumpf, Zeilenlimit-Check | Leerer Build grün auf Linux und Windows |
+| 1 | Core-Krypto: ML-KEM, ML-DSA, AES-256, Argon2id, AES-256-GCM-Container-Verschlüsselung | Roundtrip-, Manipulations-, KAT- und Zeroize-Tests |
+| 2 | `security.rs`: Passphrase-Prüfung, Entropie, Generator | Schwach abgelehnt, stark akzeptiert, Generator getestet |
+| 3 | `envelope.rs`: JSON-Container, Metadaten, Parser-Härtung | Roundtrip, Pfadkonventionen Windows/Linux, Fuzz/Property-Tests |
+| 4 | `cli.rs`: Menü, Subcommands, integrierte zweisprachige Hilfe | CLI-Integrationstests, Hilfetests DE/EN |
+| 5 | `api.rs`: Axum-REST-API, Härtung | HTTP-Integrationstests inkl. Auth, Limits, DoS-Schutz |
+| 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
+| 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
+
+## Offene Punkte außerhalb des Codes
+
+- [ ] Repository öffentlich schalten (Voraussetzung für SignPath)
+- [ ] Bei der SignPath Foundation bewerben (erst wenn Repo öffentlich und Lizenz vorhanden)
+- [ ] MFA für alle Beteiligten bei GitHub und SignPath aktivieren
+- [ ] Branch Protection auf `main`, signierte Commits erzwingen
+- [ ] Secret Scanning und Push Protection aktivieren
+- [ ] Signing-Key für Git-Tags einrichten (SSH oder GPG)
