@@ -96,6 +96,8 @@ fn permission_warnings(file: &File) -> Result<Vec<FileWarning>> {
 }
 
 #[cfg(not(unix))]
+// DE: Gleiche Signatur wie die Unix-Variante. EN: Same signature as the Unix variant.
+#[allow(clippy::unnecessary_wraps)]
 fn permission_warnings(_file: &File) -> Result<Vec<FileWarning>> {
     Ok(Vec::new())
 }
