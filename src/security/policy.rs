@@ -3,6 +3,8 @@
 
 use std::fmt;
 
+use zeroize::Zeroizing;
+
 use super::{Lang, entropy, patterns};
 
 /// DE: Mindestlänge in Unicode-Zeichen (nach NFKC). EN: Minimum length in Unicode characters.
@@ -139,7 +141,9 @@ pub(super) type CharPred = fn(char) -> bool;
 /// DE: Prüft alle Regeln und liefert Gründe sowie geschätzte Entropie.
 /// EN: Checks all rules and returns reasons and estimated entropy.
 pub(super) fn assess(text: &str) -> (Vec<Reason>, f64) {
-    let chars: Vec<char> = text.chars().collect();
+    // DE: Zeichenkopie der Passphrase – wird beim Verlassen genullt.
+    // EN: Character copy of the passphrase – zeroed when leaving scope.
+    let chars: Zeroizing<Vec<char>> = Zeroizing::new(text.chars().collect());
     let mut reasons = Vec::new();
     if chars.len() < MIN_CHARS {
         reasons.push(Reason::TooShort { chars: chars.len() });

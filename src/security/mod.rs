@@ -55,9 +55,19 @@ impl Passphrase {
     /// # Errors
     /// DE/EN: [`Error::InvalidInput`] bei leerer oder zu langer Eingabe / if empty or too long.
     pub fn new(input: &str) -> Result<Self> {
-        // DE: Vorab reservieren, damit beim Wachsen möglichst keine Kopien entstehen.
-        // EN: Reserve up front so that growing leaves as few copies as possible.
-        let mut normalized = String::with_capacity(input.len().saturating_mul(3));
+        // DE: Exakte Größe vorab bestimmen, damit beim Wachsen keine ungenullten
+        //     Kopien im freigegebenen Speicher zurückbleiben.
+        // EN: Determine the exact size up front so that growing leaves no
+        //     un-zeroed copies behind in freed memory.
+        // DE: Übergroße Eingaben vor der (teureren) Normalisierung abweisen.
+        // EN: Reject oversized input before the (more expensive) normalisation.
+        if input.len() > INPUT_LIMIT_CHARS * 4 {
+            return Err(Error::InvalidInput {
+                field: "passphrase",
+            });
+        }
+        let len: usize = input.nfkc().map(char::len_utf8).sum();
+        let mut normalized = String::with_capacity(len);
         normalized.extend(input.nfkc());
         let chars = normalized.chars().count();
         if chars == 0 || chars > INPUT_LIMIT_CHARS {

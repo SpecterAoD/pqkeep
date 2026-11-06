@@ -81,7 +81,11 @@ pub fn protect(
     let salt = rng::array::<{ kdf::SALT_LEN }>()?.to_vec();
     let key = kdf::derive(passphrase.as_ref().expose(), &salt, params)?;
     let aad = associated_data(algorithm, params, &salt, metadata);
-    let sealed = aead::seal(key.expose(), secret, &aad)?;
+    let sealed = aead::seal(key.expose(), secret, &aad);
+    // DE: Abgeleiteten Schlüssel sofort nach der Nutzung freigeben (nullen + entsperren).
+    // EN: Release the derived key right after use (zero + unlock).
+    drop(key);
+    let sealed = sealed?;
     Ok(ProtectedKey {
         algorithm,
         kdf: *params,
@@ -117,5 +121,7 @@ pub fn unprotect(
         &protected.salt,
         metadata,
     );
-    aead::open(key.expose(), &protected.nonce, &protected.ciphertext, &aad)
+    let opened = aead::open(key.expose(), &protected.nonce, &protected.ciphertext, &aad);
+    drop(key);
+    opened
 }
