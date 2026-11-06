@@ -1,7 +1,7 @@
 # DE: CI-Rumpf (Schritt 0): Format, Lints, Tests auf Linux und Windows, MSRV,
-#     Zeilenlimits, cargo-deny. Ausbau (gitleaks, Fuzzing, Release) in Schritt 6.
+#     Zeilenlimits, Binär-Härtung, cargo-deny. Ausbau (gitleaks, Fuzzing, Release) in Schritt 6.
 # EN: CI skeleton (step 0): format, lints, tests on Linux and Windows, MSRV,
-#     line limits, cargo-deny. Extended (gitleaks, fuzzing, release) in step 6.
+#     line limits, binary hardening, cargo-deny. Extended (gitleaks, fuzzing, release) in step 6.
 name: CI
 
 # DE: Push nur auf main; Branches laufen über den Pull Request (keine Doppelläufe).
@@ -60,6 +60,31 @@ jobs:
           persist-credentials: false
       - run: bash scripts/check_limits.sh
       - run: bash scripts/test_check_limits.sh
+      - run: python3 scripts/test_check_binary.py
+
+  binary:
+    name: Binär-Härtung / binary hardening (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show active-toolchain || rustup toolchain install
+      - run: cargo build --release --locked
+      # DE: Linux: PIE, Full RELRO, NX. Windows: ASLR, DEP, Control Flow Guard.
+      # EN: Linux: PIE, full RELRO, NX. Windows: ASLR, DEP, Control Flow Guard.
+      - run: |
+          bin=target/release/keyforge
+          [ -f "$bin.exe" ] && bin="$bin.exe"
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/check_binary.py "$bin"
 
   deny:
     name: cargo-deny

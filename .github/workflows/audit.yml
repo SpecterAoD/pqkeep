@@ -1,0 +1,24 @@
+# DE: Wöchentliche Prüfung auf neue Sicherheitsmeldungen (RustSec), auch ohne Codeänderung.
+#     cargo-deny nutzt dieselbe Datenbank wie cargo-audit. Manuell startbar.
+# EN: Weekly check for new security advisories (RustSec), even without code changes.
+#     cargo-deny uses the same database as cargo-audit. Can be started manually.
+name: Wöchentliches Audit / weekly audit
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  advisories:
+    name: cargo-deny advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo install --locked cargo-deny --version 0.20.2
+      - run: cargo deny check advisories
