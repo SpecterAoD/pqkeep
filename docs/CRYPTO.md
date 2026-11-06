@@ -51,11 +51,26 @@ Ressourcenerschöpfung durch manipulierte Header. Die Prüfung erfolgt **vor** d
 
 ## Tests
 
-Roundtrips aller Parametersätze, NIST-ACVP-Vektoren (keyGen ML-KEM/ML-DSA, sigVer ML-DSA, siehe
-`tests/kat/`), Manipulation jedes einzelnen Bytes von Chiffrat/Tag/Nonce/AAD, abgeschnittene Daten,
-falsche Passphrase, KDF-Grenzwerte, Eindeutigkeit von Nonces über 10 000 Durchläufe, Zeroize.
-Für Argon2id gibt es keinen eigenen KAT: die RFC-9106-Vektoren liegen unter unserer Mindestgrenze
-(32 KiB); die Crate testet sie selbst.
+Roundtrips aller Parametersätze, Manipulation jedes einzelnen Bytes von Chiffrat/Tag/Nonce/AAD,
+abgeschnittene Daten, falsche Passphrase, KDF-Grenzwerte, Eindeutigkeit von Nonces über 10 000
+Durchläufe, Zeroize. Known-Answer-Tests (`tests/kat/`, `src/crypto/kdf_tests.rs`):
+
+| Was | Quelle | Prüft |
+|---|---|---|
+| ML-KEM keyGen | NIST ACVP | Seed → öffentlicher Schlüssel |
+| ML-KEM decaps mit Seed | Wycheproof (C2SP) | Entkapselung, **implizite Ablehnung** (exaktes Ersatz-Geheimnis), ungültige Längen |
+| ML-DSA keyGen / sigVer | NIST ACVP | Seed → öffentlicher Schlüssel; gültige und ungültige Signaturen |
+| Argon2id intern | RFC 9106, Abschnitt 5.3 | Variante, Version, Parameter, Secret/AD des Argon2id-Kerns |
+| Argon2id öffentlich | C-Referenzimplementierung (argon2-cffi) | `derive()` mit unseren Mindestparametern (64 MiB, t=3, p=1 und p=4) |
+
+Warum zwei Argon2id-Tests: Der RFC-Vektor nutzt 32 KiB und liegt unter unserer Mindestgrenze, er läuft
+daher intern gegen den Kern ohne Grenzprüfung. Der Referenzvektor prüft den echten öffentlichen Weg.
+Ein Roundtrip allein würde z. B. eine versehentlich falsche Variante (Argon2i statt Argon2id) nicht
+bemerken, da Ver- und Entschlüsseln denselben Fehler machen; das wurde per Mutationstest bestätigt.
+
+Warum Wycheproof statt NIST für die Entkapselung: Die NIST-ACVP-Vektoren liefern den privaten Schlüssel
+nur in expandierter Form; unsere Schnittstelle akzeptiert bewusst nur den Seed. Wycheproof enthält
+Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203.
 
 ## Grenzen (ehrlich)
 
@@ -97,5 +112,11 @@ and DoS protection).
 **Limitations:** not FIPS 140 validated, not externally audited; zeroization is best effort (compiler
 copies, swap, core dumps; memory locking follows later); internal intermediate values of the crates are
 outside our control (we rely on their zeroize support); ML-KEM encapsulation aborts if the OS RNG fails; constant time is a goal of the crates, not a
-guarantee for the target hardware. No separate Argon2id KAT: the RFC 9106 vectors use 32 KiB, below
-our minimum; the crate tests them itself.
+guarantee for the target hardware.
+
+**Known-answer tests:** NIST ACVP (ML-KEM keyGen, ML-DSA keyGen/sigVer), Wycheproof (ML-KEM
+decapsulation from seed incl. implicit rejection and invalid lengths; NIST decaps vectors need the
+expanded key, which our seed-only API deliberately does not accept), RFC 9106 Argon2id vector against
+the internal core (32 KiB is below our public minimum) and reference-implementation vectors through the
+public `derive()`. A round trip alone would not detect e.g. Argon2i used instead of Argon2id; this was
+confirmed by a mutation test.
