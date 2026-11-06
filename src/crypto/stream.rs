@@ -19,6 +19,7 @@ use aes_gcm::{Aes256Gcm, KeyInit};
 use zeroize::Zeroizing;
 
 use crate::crypto::aead::TAG_LEN;
+pub use crate::crypto::stream_io::{DecryptReader, EncryptWriter};
 use crate::{Error, Result};
 
 /// DE: Klartext-Blockgröße. EN: Plaintext chunk size.
@@ -29,7 +30,7 @@ pub const PREFIX_LEN: usize = 7;
 pub const ENCRYPTED_CHUNK_SIZE: usize = CHUNK_SIZE + TAG_LEN;
 
 /// DE: Gemeinsamer Zustand für Ver- und Entschlüsseln. EN: Shared state for both directions.
-struct Stream {
+pub(crate) struct Stream {
     cipher: Aes256Gcm,
     prefix: [u8; PREFIX_LEN],
     counter: u32,
@@ -37,7 +38,7 @@ struct Stream {
 }
 
 impl Stream {
-    fn new(key: &[u8], prefix: [u8; PREFIX_LEN], aad: &[u8]) -> Result<Self> {
+    pub(crate) fn new(key: &[u8], prefix: [u8; PREFIX_LEN], aad: &[u8]) -> Result<Self> {
         let cipher =
             Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })?;
         Ok(Self {
@@ -62,7 +63,7 @@ impl Stream {
         Ok(())
     }
 
-    fn seal(&mut self, chunk: &[u8], last: bool) -> Result<Vec<u8>> {
+    pub(crate) fn seal(&mut self, chunk: &[u8], last: bool) -> Result<Vec<u8>> {
         let payload = Payload {
             msg: chunk,
             aad: &self.aad,
@@ -75,7 +76,7 @@ impl Stream {
         Ok(out)
     }
 
-    fn open(&mut self, chunk: &[u8], last: bool) -> Result<Zeroizing<Vec<u8>>> {
+    pub(crate) fn open(&mut self, chunk: &[u8], last: bool) -> Result<Zeroizing<Vec<u8>>> {
         let payload = Payload {
             msg: chunk,
             aad: &self.aad,
@@ -91,7 +92,7 @@ impl Stream {
 
 /// DE: Liest so viel wie möglich bis `buf` voll ist; liefert die gelesene Länge.
 /// EN: Reads as much as possible until `buf` is full; returns the length read.
-fn read_full(reader: &mut impl Read, buf: &mut [u8]) -> Result<usize> {
+pub(crate) fn read_full(reader: &mut impl Read, buf: &mut [u8]) -> Result<usize> {
     let mut filled = 0;
     while filled < buf.len() {
         match reader.read(&mut buf[filled..]) {
@@ -118,28 +119,16 @@ pub fn encrypt(
     reader: &mut impl Read,
     writer: &mut impl Write,
 ) -> Result<u64> {
-    let mut stream = Stream::new(key, prefix, aad)?;
-    let mut current = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
-    let mut next = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
-    let mut current_len = read_full(reader, &mut current)?;
-    let mut total = 0u64;
+    let mut enc = EncryptWriter::new(key, prefix, aad, writer)?;
+    let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
     loop {
-        // DE: Vorauslesen entscheidet, ob der aktuelle Block der letzte ist.
-        // EN: Reading ahead decides whether the current chunk is the last one.
-        let next_len = if current_len == CHUNK_SIZE {
-            read_full(reader, &mut next)?
-        } else {
-            0
-        };
-        let last = next_len == 0;
-        writer.write_all(&stream.seal(&current[..current_len], last)?)?;
-        total += current_len as u64;
-        if last {
-            return Ok(total);
+        let n = read_full(reader, &mut buf)?;
+        if n == 0 {
+            break;
         }
-        std::mem::swap(&mut current, &mut next);
-        current_len = next_len;
+        enc.push(&buf[..n])?;
     }
+    Ok(enc.finish()?.1)
 }
 
 /// DE: Entschlüsselt `reader` nach `writer`; liefert die Klartextlänge. Bei einem
@@ -158,28 +147,15 @@ pub fn decrypt(
     reader: &mut impl Read,
     writer: &mut impl Write,
 ) -> Result<u64> {
-    let mut stream = Stream::new(key, prefix, aad)?;
-    let mut current = vec![0u8; ENCRYPTED_CHUNK_SIZE];
-    let mut next = vec![0u8; ENCRYPTED_CHUNK_SIZE];
-    let mut current_len = read_full(reader, &mut current)?;
+    let mut dec = DecryptReader::new(key, prefix, aad, reader)?;
+    let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
     let mut total = 0u64;
     loop {
-        if current_len < TAG_LEN {
-            return Err(Error::Decrypt);
-        }
-        let next_len = if current_len == ENCRYPTED_CHUNK_SIZE {
-            read_full(reader, &mut next)?
-        } else {
-            0
-        };
-        let last = next_len == 0;
-        let plain = stream.open(&current[..current_len], last)?;
-        writer.write_all(&plain)?;
-        total += plain.len() as u64;
-        if last {
+        let n = dec.read(&mut buf)?;
+        if n == 0 {
             return Ok(total);
         }
-        std::mem::swap(&mut current, &mut next);
-        current_len = next_len;
+        writer.write_all(&buf[..n])?;
+        total += n as u64;
     }
 }

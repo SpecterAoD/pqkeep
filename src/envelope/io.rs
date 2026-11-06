@@ -10,13 +10,12 @@
 //! exists); with explicit overwriting, `rename`. Linux: mode 0600, fsync of file
 //! and directory. Windows: default ACL of the target directory (user profile recommended).
 
-use std::fs::{self, File, OpenOptions};
-use std::io::{ErrorKind, Read, Write};
-use std::path::{Path, PathBuf};
+use std::fs::{self, File};
+use std::io::{Read, Write};
+use std::path::Path;
 
-use super::encoding::hex_encode;
 use super::keyfile::{KeyFile, MAX_FILE_BYTES};
-use crate::crypto::rng;
+use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::security::Lang;
 use crate::{Error, Result};
 
@@ -102,28 +101,6 @@ fn permission_warnings(_file: &File) -> Result<Vec<FileWarning>> {
     Ok(Vec::new())
 }
 
-fn temp_path(path: &Path) -> Result<PathBuf> {
-    let name = path
-        .file_name()
-        .ok_or(Error::InvalidInput { field: "path" })?;
-    let suffix = hex_encode(&rng::array::<8>()?);
-    let mut temp = std::ffi::OsString::from(".");
-    temp.push(name);
-    temp.push(format!(".tmp-{suffix}"));
-    Ok(path.with_file_name(temp))
-}
-
-fn open_new(path: &Path) -> std::io::Result<File> {
-    let mut options = OpenOptions::new();
-    options.write(true).create_new(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o600);
-    }
-    options.open(path)
-}
-
 /// DE: Schreibt `data` atomar nach `path`. EN: Writes `data` atomically to `path`.
 ///
 /// # Errors
@@ -150,33 +127,3 @@ fn write_and_publish(temp: &Path, path: &Path, data: &[u8], overwrite: Overwrite
     sync_dir(path);
     Ok(())
 }
-
-fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<()> {
-    match fs::hard_link(temp, path) {
-        Ok(()) => fs::remove_file(temp),
-        // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Prüfen + Umbenennen, nicht atomar.
-        // EN: File systems without hard links (e.g. FAT): check + rename, not atomic.
-        Err(e) if e.kind() == ErrorKind::Unsupported => {
-            if path.exists() {
-                return Err(ErrorKind::AlreadyExists.into());
-            }
-            fs::rename(temp, path)
-        }
-        Err(e) => Err(e),
-    }
-}
-
-#[cfg(unix)]
-fn sync_dir(path: &Path) {
-    let dir = path
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or(Path::new("."));
-    // DE: Best effort: Ordnereintrag dauerhaft machen. EN: Best effort: persist the dir entry.
-    if let Ok(d) = File::open(dir) {
-        let _ = d.sync_all();
-    }
-}
-
-#[cfg(not(unix))]
-fn sync_dir(_path: &Path) {}

@@ -15,6 +15,7 @@ mod metadata;
 mod parse;
 pub mod time;
 
+pub(crate) use encoding::hex_encode;
 pub use format::{FORMAT_VERSION, MAGIC};
 pub use io::{FileWarning, Overwrite, load, save, write_atomic};
 pub use keyfile::{KEY_ID_LEN, KeyFile, MAX_FILE_BYTES, UnlockedKey};
