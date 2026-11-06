@@ -175,6 +175,12 @@ impl KeyFile {
         self.algorithm
     }
 
+    /// DE: Schlüssel-ID (32 Byte). EN: Key ID (32 bytes).
+    #[must_use]
+    pub fn key_id(&self) -> &[u8] {
+        &self.key_id
+    }
+
     /// DE: Schlüssel-ID als Hex. EN: Key ID as hex.
     #[must_use]
     pub fn key_id_hex(&self) -> String {

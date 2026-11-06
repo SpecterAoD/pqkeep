@@ -12,6 +12,7 @@ pub mod protect;
 pub mod rng;
 mod secret;
 pub mod stream;
+mod stream_io;
 pub mod wrap;
 
 pub use secret::SecretBytes;
