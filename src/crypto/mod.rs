@@ -11,6 +11,8 @@ pub mod kem;
 pub mod protect;
 pub mod rng;
 mod secret;
+pub mod stream;
+pub mod wrap;
 
 pub use secret::SecretBytes;
 

@@ -11,6 +11,8 @@
 | Symmetrisch | AES-256 (Schlüsselerzeugung), AES-256-GCM (Schutz privater Schlüssel) | `aes-gcm` 0.11.1 |
 | Schlüsselableitung | Argon2id (RFC 9106), Version 0x13, mehrere Kerne (`parallel`) | `argon2` 0.6.0 |
 | Zufall | ausschließlich OS-CSPRNG | `getrandom` 0.4.3 |
+| Streaming (Dateien) | STREAM-Konstruktion mit AES-256-GCM, 64-KiB-Blöcke, Nonce = 7 Byte Präfix ‖ Zähler ‖ Endmarke | `aes-gcm` 0.11.1 |
+| Schlüssel einpacken (Dateien) | Passphrase: Argon2id; Empfänger: ML-KEM → HKDF-SHA3-256 (Salt = KEM-Chiffrat, Info = Domäne ‖ Empfänger-ID) | `hkdf` 0.13.0, `sha3` 0.12.0 |
 | Löschen von Geheimnissen | `Zeroize`/`ZeroizeOnDrop` | `zeroize` 1.9.1 |
 
 ## Begründung der Crate-Wahl
@@ -62,6 +64,7 @@ Durchläufe, Zeroize. Known-Answer-Tests (`tests/kat/`, `src/crypto/kdf_tests.rs
 | ML-DSA keyGen / sigVer | NIST ACVP | Seed → öffentlicher Schlüssel; gültige und ungültige Signaturen |
 | Argon2id intern | RFC 9106, Abschnitt 5.3 | Variante, Version, Parameter, Secret/AD des Argon2id-Kerns |
 | Argon2id öffentlich | C-Referenzimplementierung (argon2-cffi) | `derive()` mit unseren Mindestparametern (64 MiB, t=3, p=1 und p=4) |
+| HKDF-SHA3-256 intern | unabhängige Python-Berechnung (hashlib/hmac, an RFC 5869 Fall 1 geprüft) | Ableitung des Packschlüssels: Hash, Rollen von Salt/IKM/Info, Domänen-Tag |
 
 Warum zwei Argon2id-Tests: Der RFC-Vektor nutzt 32 KiB und liegt unter unserer Mindestgrenze, er läuft
 daher intern gegen den Kern ohne Grenzprüfung. Der Referenzvektor prüft den echten öffentlichen Weg.
@@ -114,6 +117,8 @@ and DoS protection).
 copies, swap, core dumps; see MEMORY_HARDENING.md for page locking and core dump suppression); internal intermediate values of the crates are
 outside our control (we rely on their zeroize support); ML-KEM encapsulation aborts if the OS RNG fails; constant time is a goal of the crates, not a
 guarantee for the target hardware.
+
+**File encryption building blocks:** STREAM construction with AES-256-GCM (64 KiB chunks, nonce = 7-byte prefix ‖ counter ‖ last flag) and file-key wrapping via Argon2id (passphrase) or ML-KEM → HKDF-SHA3-256 (recipient); the HKDF wiring is checked against an independently computed reference value.
 
 **Known-answer tests:** NIST ACVP (ML-KEM keyGen, ML-DSA keyGen/sigVer), Wycheproof (ML-KEM
 decapsulation from seed incl. implicit rejection and invalid lengths; NIST decaps vectors need the
