@@ -8,10 +8,14 @@
 //! hardware. Bounds protect against weak parameters and against DoS via
 //! tampered headers.
 
-use argon2::{Algorithm, Argon2, Params, Version};
+use argon2::{Algorithm, Argon2, AssociatedData, ParamsBuilder, Version};
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
+
+#[cfg(test)]
+#[path = "kdf_tests.rs"]
+mod kdf_tests;
 
 /// DE: Länge des abgeleiteten Schlüssels (AES-256). EN: Derived key length (AES-256).
 pub const OUTPUT_LEN: usize = 32;
@@ -114,17 +118,42 @@ pub fn derive(passphrase: &[u8], salt: &[u8], params: &KdfParams) -> Result<Secr
             field: "passphrase",
         });
     }
-    let argon_params = Params::new(
-        params.memory_kib,
-        params.iterations,
-        params.parallelism,
-        Some(OUTPUT_LEN),
-    )
-    .map_err(|_| Error::KdfParams)?;
-    let argon = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_params);
     let mut key = SecretBytes::new(vec![0u8; OUTPUT_LEN]);
-    argon
-        .hash_password_into(passphrase, salt, key.expose_mut())
-        .map_err(|_| Error::Crypto)?;
+    argon2id(passphrase, salt, params, &[], &[], key.expose_mut())?;
     Ok(key)
+}
+
+/// DE: Argon2id-Kern **ohne** Grenzprüfung; nur über [`derive`] aufrufen.
+/// `secret` (K) und `ad` (X) nach RFC 9106, leer = nicht verwendet.
+/// Getrennt, damit der offizielle RFC-9106-Testvektor (32 KiB) intern prüfbar ist.
+/// EN: Argon2id core **without** bounds checks; call only via [`derive`].
+/// `secret` (K) and `ad` (X) per RFC 9106, empty = unused.
+/// Separate so that the official RFC 9106 test vector (32 KiB) can be checked internally.
+pub(crate) fn argon2id(
+    passphrase: &[u8],
+    salt: &[u8],
+    params: &KdfParams,
+    secret: &[u8],
+    ad: &[u8],
+    out: &mut [u8],
+) -> Result<()> {
+    let mut builder = ParamsBuilder::new();
+    builder
+        .m_cost(params.memory_kib)
+        .t_cost(params.iterations)
+        .p_cost(params.parallelism)
+        .output_len(out.len());
+    if !ad.is_empty() {
+        builder.data(AssociatedData::new(ad).map_err(|_| Error::KdfParams)?);
+    }
+    let argon_params = builder.build().map_err(|_| Error::KdfParams)?;
+    let argon = if secret.is_empty() {
+        Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_params)
+    } else {
+        Argon2::new_with_secret(secret, Algorithm::Argon2id, Version::V0x13, argon_params)
+            .map_err(|_| Error::KdfParams)?
+    };
+    argon
+        .hash_password_into(passphrase, salt, out)
+        .map_err(|_| Error::Crypto)
 }
