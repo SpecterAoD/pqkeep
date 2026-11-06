@@ -1,0 +1,42 @@
+[package]
+name = "pqc-keyforge"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+description = "Post-quantum key generation and storage (ML-KEM, ML-DSA, AES-256)"
+repository = "https://github.com/SpecterAoD/PQC-KeyForge"
+publish = false
+
+[lib]
+name = "pqc_keyforge"
+path = "src/lib.rs"
+
+[[bin]]
+name = "keyforge"
+path = "src/main.rs"
+
+[dependencies]
+thiserror = "2.0.21"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+too_many_lines = "warn"
+
+# DE: Überlauf-Prüfungen auch im Release; LTO und strip für kleinere, gehärtete Binaries.
+# EN: Overflow checks in release too; LTO and strip for smaller, hardened binaries.
+[profile.release]
+overflow-checks = true
+lto = true
+codegen-units = 1
+strip = true
