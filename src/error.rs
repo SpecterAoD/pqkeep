@@ -41,6 +41,11 @@ pub enum Error {
     #[error("KDF-Parameter unzulässig / KDF parameters not permitted")]
     KdfParams,
 
+    /// DE: Passphrase erfüllt die Regeln nicht (Details über `security::Rejection`).
+    /// EN: Passphrase does not meet the rules (details via `security::Rejection`).
+    #[error("Passphrase zu schwach / passphrase too weak")]
+    WeakPassphrase,
+
     /// DE: Betriebssystem liefert keinen Zufall. EN: Operating system provides no randomness.
     #[error("Zufallsquelle nicht verfügbar / random source unavailable")]
     Rng,

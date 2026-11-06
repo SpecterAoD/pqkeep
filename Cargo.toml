@@ -23,6 +23,7 @@ getrandom = { version = "0.4.3", features = ["sys_rng"] }
 ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
 ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
 thiserror = "2.0.21"
+unicode-normalization = "0.1.26"
 zeroize = "1.9.1"
 
 [lints.rust]
