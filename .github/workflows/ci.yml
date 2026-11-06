@@ -4,8 +4,11 @@
 #     line limits, cargo-deny. Extended (gitleaks, fuzzing, release) in step 6.
 name: CI
 
+# DE: Push nur auf main; Branches laufen über den Pull Request (keine Doppelläufe).
+# EN: Push on main only; branches run via the pull request (no duplicate runs).
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
