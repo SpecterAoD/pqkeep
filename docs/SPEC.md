@@ -1,6 +1,7 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.1: PQC KeyForge (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.2: PQC KeyForge (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
+> Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -133,8 +134,8 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 - **Dateirechte beim Laden prüfen:** Unter Linux Warnung bei `group/world`-lesbaren Containern. Unter Windows Ablage im Benutzerprofil mit eingeschränkter ACL.
 - **Kein Clipboard, keine Historie:** Passphrasen werden nie automatisch in die Zwischenablage kopiert, nie als Argument übergeben (Shell-History) und im Terminal nicht angezeigt (Ausnahme: Generator, nur auf ausdrücklichen Wunsch).
 - **Core Dumps und Swap:** Core Dumps für den Prozess deaktivieren und Speicherseiten mit Geheimnissen sperren (`mlock`/`VirtualLock`), nur in einem isolierten, kommentierten Modul. Ehrlich dokumentieren: Das ist best effort.
-- **Compiler-/Linker-Härtung:** `overflow-checks = true` auch im Release, `lto`, `strip`. Linux: PIE, Full RELRO (`-z relro -z now`). Windows: Control Flow Guard.
-- **Lieferkette:** `cargo deny` mit Allowlist für Lizenzen und Quellen, möglichst wenige Abhängigkeiten, optional `cargo vet`, OpenSSF-Scorecard-Workflow, Dependabot, 2FA für alle Maintainer.
+- **Compiler-/Linker-Härtung:** `overflow-checks = true` auch im Release, `lto`, `codegen-units = 1`, `strip`, `panic = "abort"` (nur Release; Destruktoren laufen bei Panik nicht – vertretbar, da Core Dumps gesperrt sind). Linux: PIE, Full RELRO (`-z relro -z now`), NX-Stack. Windows: ASLR (High Entropy), DEP, Control Flow Guard. Ein CI-Job prüft diese Merkmale am gebauten Release-Binary (`scripts/check_binary.py`).
+- **Lieferkette:** `cargo deny` mit Allowlist für Lizenzen und Quellen, zusätzlich wöchentlicher geplanter Advisory-Lauf (`.github/workflows/audit.yml`), möglichst wenige Abhängigkeiten, optional `cargo vet`, OpenSSF-Scorecard-Workflow, Dependabot, 2FA für alle Maintainer.
 - **Fuzzing:** `cargo-fuzz` für Container-Parser und API-Eingaben, regelmäßig per geplantem Workflow.
 - **API zusätzlich:** Optionales TLS (rustls) mit modernen Cipher Suites, Token nur als Hash gespeichert, Sperre nach wiederholten Fehlversuchen, Sicherheits-Header, kein CORS standardmäßig.
 - **Backup und Rotation:** Doku zu Sicherung der Container, Schlüssel-Rotation und Ablaufdatum. Hinweis: Sicheres Löschen auf SSDs ist unzuverlässig, daher Verschlüsselung statt Löschen als Schutzprinzip.
@@ -179,6 +180,10 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 - Aufgabe: Stärkeprüfung (Abschnitt 3.3), Entropieschätzung, Generator.
 - Tests: schwache Passphrasen werden mit nachvollziehbarem Grund abgelehnt (zu kurz, fehlende Klassen, Muster, Blocklist); starke werden akzeptiert; Generator liefert in N Durchläufen stets gültige, voneinander verschiedene Werte mit erwarteter Länge und Klassenabdeckung; Entropiewert stimmt mit Formel überein; Unicode-Grenzfälle.
 
+### Schritt 2a: Speicher- und Prozesshärtung (`hardening/`)
+- Aufgabe: Speicherseiten mit Geheimnissen sperren (mlock/VirtualLock, Seitenzähler), Core-Dump-Sperre und „nicht dumpbar“ (Linux), sofortiges Nullen nach Nutzung; ohne eigenen `unsafe`-Code. Details: `docs/MEMORY_HARDENING.md`.
+- Tests: Sperren/Freigeben, gemeinsame Seiten, Weiterlaufen bei verbotenem Sperren, Core-Dump-Grenze.
+
 ### Schritt 3: Container (`envelope.rs`)
 - Aufgabe: Struktur (Abschnitt 4), Serialisierung, Deserialisierung, Validierung der Metadaten.
 - Tests: Roundtrip; Ablehnung unbekannter Felder, falscher Version, übergroßer oder fehlerhaft kodierter Daten; Pfadkonventionen Windows (`C:\Users\...`, Backslashes) und Linux (`/home/...`) via `PathBuf` und `tempfile`; atomares Schreiben; Dateirechte unter Linux; Fuzz-Test oder Property-Test (`proptest`) für den Parser (keine Panics).
@@ -189,6 +194,7 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 
 ### Schritt 4: CLI (`cli.rs`, `clap` + `dialoguer`)
 - Aufgabe: Interaktives Menü **und** nicht-interaktive Subcommands (`generate`, `validate`, `inspect`, `export`, `passphrase`, `encrypt`, `decrypt`, `help`). Verdeckte Passphrase-Eingabe, Bestätigung vor Überschreiben, Ausgabe nur in vom Nutzer gewählte Pfade (Pfad-Validierung).
+- **Minimale Rechte:** Die CLI benötigt keine Administrator-/root-Rechte und gibt eine deutliche Warnung aus, wenn sie mit solchen Rechten gestartet wird. Erster Aufruf beim Start: `hardening::harden_process()`.
 - **Integrierte Hilfe (zweisprachig DE/EN, per `--lang de|en`, Standard aus System-Locale):**
   - `--help` und `-h` global und pro Subcommand, jeweils mit Beschreibung, Parametern, Beispielen und Exit-Codes.
   - `keyforge help <thema>` mit Themen: `passphrase` (Regeln und Generator), `files` (Datei-/Ordnerverschlüsselung, Modi, Grenzen), `algorithms` (ML-KEM/ML-DSA/AES, Parametersätze), `container` (Format und Metadaten), `security` (Sicherheitshinweise und Grenzen), `verify` (Release-Signaturen prüfen).
@@ -198,8 +204,12 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 
 ### Schritt 5: API (`api.rs`, Axum)
 - Aufgabe: Endpunkte `POST /v1/generate`, `POST /v1/validate`, `GET /v1/health`. Strikte JSON-Schemata. Datei-/Ordnerverschlüsselung (Abschnitt 4a) ist bewusst **nicht** über die API verfügbar.
-- Härtung: Standard-Bind **127.0.0.1**, Anbindung an andere Interfaces nur explizit und mit Warnhinweis (TLS-Terminierung durch Reverse Proxy dokumentieren); Authentifizierung per Token aus Datei/Umgebung (konstante Zeit); Body-Größenlimit, Timeouts, Rate-Limiting; Argon2-Arbeit in `spawn_blocking` mit Semaphore (Begrenzung paralleler KDF-Jobs gegen DoS); keine Geheimnisse in Logs; generische Fehlerantworten ohne interne Details.
+- Härtung: Standard-Bind **127.0.0.1**, Anbindung an andere Interfaces nur explizit und mit Warnhinweis (TLS-Terminierung durch Reverse Proxy dokumentieren); Authentifizierung per Token aus Datei/Umgebung (konstante Zeit); Body-Größenlimit, Timeouts, Rate-Limiting; Argon2-Arbeit in `spawn_blocking` mit Semaphore (Begrenzung paralleler KDF-Jobs gegen DoS); keine Geheimnisse in Logs; generische Fehlerantworten ohne interne Details. `/v1/validate` füllt jede Antwort auf eine feste Mindestdauer auf, damit die Antwortzeit keine Rückschlüsse auf den Aufbau der Passphrase erlaubt (die Prüfung selbst ist nicht zeitkonstant). Token-Vergleich in konstanter Zeit (`subtle`).
 - Tests: HTTP-Integrationstests für alle Endpunkte (Erfolg, ungültige Eingabe, fehlende Auth, zu große Bodies, manipulierte Container, Parallelitätslimit).
+
+### Schritt 5a: Sandboxing (Linux)
+- Aufgabe: Nach dem Start Rechte einschränken. **Landlock**: Dateizugriff nur auf die vom Nutzer gewählten Pfade (CLI) bzw. konfigurierte Pfade (API). **Seccomp-BPF**: nur benötigte Systemaufrufe; in der CLI kein Netzwerk, kein `execve`, kein `ptrace`; die API zusätzlich nur `accept` auf dem eigenen Socket. Profile getrennt für CLI und API, abgeleitet aus den tatsächlich genutzten Systemaufrufen (inkl. Argon2-Threads). Ältere Kernel ohne Landlock: Warnung statt Abbruch. Windows: kein gleichwertiges Verfahren ohne großen Aufwand (AppContainer) – dokumentiert.
+- Tests: verbotene Zugriffe (Datei außerhalb der Freigabe, Netzwerk in der CLI, `execve`) schlagen fehl; normale Abläufe (generate, encrypt/decrypt, API-Anfragen) funktionieren unverändert.
 
 ### Schritt 6: CI/CD & Dokumentation
 - Aufgabe: vollständige `ci.yml` (Abschnitt 5), `release.yml` mit Signierung (Abschnitt 5a), `SECURITY.md` (Meldeweg), `THREAT_MODEL.md`, `FORMAT.md`, zweisprachige `README.md` (Installation, Nutzung, Sicherheitshinweise, Grenzen, Verifikation von Releases).

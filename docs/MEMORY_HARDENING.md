@@ -59,6 +59,21 @@ Festplattenverschlüsselung nutzen.
 - **Grenze:** Der Compiler kann Werte in Registern oder auf dem Stack kopieren; das lässt sich in
   Rust ohne `unsafe` nicht vollständig verhindern.
 
+## 4. Verhalten bei Panik (`panic = "abort"`)
+
+Der Release-Build beendet sich bei einer Panik sofort, ohne Stack-Unwinding. Das verkleinert die
+Angriffsfläche und verhindert, dass Programmteile nach einem Fehler weiterlaufen. **Nachteil:**
+Destruktoren laufen dann nicht, Geheimnisse werden also nicht genullt. Der Speicher geht direkt an
+das Betriebssystem zurück; da Core Dumps gesperrt sind, entsteht keine Kopie auf der Platte.
+Tests laufen weiterhin mit Unwinding (Testprofil).
+
+## 5. Binär-Härtung
+
+Ein CI-Job prüft am Release-Binary (`scripts/check_binary.py`): Linux PIE, Full RELRO, nicht
+ausführbarer Stack; Windows ASLR (High Entropy), DEP und Control Flow Guard
+(`.cargo/config.toml`). Hinweis: `strip` entfernt Symbole und verkleinert die Datei; bei einem
+Open-Source-Projekt erschwert das Reverse Engineering kaum, da der Quelltext öffentlich ist.
+
 ## Tests
 
 `tests/hardening_*.rs` und `src/hardening/memlock_tests.rs`: Sperren und Freigeben (Linux zusätzlich
@@ -87,3 +102,8 @@ for Linux process settings).
    after last use; intermediate copies are avoided or zeroed (seed parsing, shared secrets, passphrase
    character copies, generator buffers, exact-size NFKC buffer). The compiler may still copy values to
    registers or the stack; this cannot be fully prevented in safe Rust.
+4. **Panic = abort (release):** no unwinding; destructors do not run, so secrets are not zeroed, but
+   memory returns to the OS and core dumps are disabled. Tests still unwind.
+5. **Binary hardening:** CI checks the release binary for PIE, full RELRO and NX stack (Linux) and
+   ASLR, DEP and Control Flow Guard (Windows). `strip` mostly reduces size; for open source it hardly
+   hinders reverse engineering.
