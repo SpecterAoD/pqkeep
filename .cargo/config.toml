@@ -1,0 +1,8 @@
+# DE: Windows (MSVC): Control Flow Guard gegen Sprünge an unerwartete Ziele.
+#     ASLR (auch High-Entropy) und DEP/NX sind beim MSVC-Linker Standard.
+#     Linux: PIE, Full RELRO und NX sind bei Rust Standard; geprüft per scripts/check_binary.py.
+# EN: Windows (MSVC): Control Flow Guard against jumps to unexpected targets.
+#     ASLR (incl. high entropy) and DEP/NX are MSVC linker defaults.
+#     Linux: PIE, full RELRO and NX are Rust defaults; verified by scripts/check_binary.py.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "control-flow-guard"]

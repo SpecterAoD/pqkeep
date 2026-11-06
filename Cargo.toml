@@ -48,6 +48,13 @@ overflow-checks = true
 lto = true
 codegen-units = 1
 strip = true
+# DE: Bei Panik sofort beenden (kein Unwinding). Destruktoren laufen dann nicht, Geheimnisse
+#     werden nicht genullt; der Speicher geht direkt ans Betriebssystem zurück, Core Dumps
+#     sind gesperrt (siehe docs/MEMORY_HARDENING.md). Tests nutzen weiter Unwinding.
+# EN: Abort immediately on panic (no unwinding). Destructors do not run, so secrets are not
+#     zeroed; memory goes straight back to the OS and core dumps are disabled (see
+#     docs/MEMORY_HARDENING.md). Tests keep using unwinding.
+panic = "abort"
 
 [dev-dependencies]
 hex = "0.4"
