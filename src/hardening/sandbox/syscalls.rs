@@ -111,6 +111,28 @@ const API: &[i64] = &[
     libc::SYS_ppoll,
 ];
 
+/// DE: Zusätzlich für die CLI (Dateien und Ordner anlegen, umbenennen, entfernen, syncen).
+/// EN: Additional for the CLI (create, rename, remove, sync files and directories).
+const CLI: &[i64] = &[
+    libc::SYS_getdents64,
+    libc::SYS_mkdirat,
+    libc::SYS_unlinkat,
+    libc::SYS_linkat,
+    libc::SYS_renameat,
+    libc::SYS_renameat2,
+    libc::SYS_readlinkat,
+    libc::SYS_faccessat,
+    libc::SYS_faccessat2,
+    libc::SYS_fsync,
+    libc::SYS_fdatasync,
+    libc::SYS_ftruncate,
+    libc::SYS_fchmod,
+    libc::SYS_fchmodat,
+    libc::SYS_getcwd,
+    libc::SYS_geteuid,
+    libc::SYS_ppoll,
+];
+
 /// DE: Nur `x86_64` (`aarch64` kennt diese Aufrufe nicht). EN: `x86_64` only (absent on `aarch64`).
 #[cfg(target_arch = "x86_64")]
 const LEGACY: &[i64] = &[
@@ -122,18 +144,33 @@ const LEGACY: &[i64] = &[
 #[cfg(not(target_arch = "x86_64"))]
 const LEGACY: &[i64] = &[];
 
+/// DE: Alte Dateiaufrufe der CLI, nur `x86_64`. EN: Legacy file calls of the CLI, `x86_64` only.
+#[cfg(target_arch = "x86_64")]
+const CLI_LEGACY: &[i64] = &[
+    libc::SYS_mkdir,
+    libc::SYS_rmdir,
+    libc::SYS_unlink,
+    libc::SYS_link,
+    libc::SYS_rename,
+    libc::SYS_readlink,
+];
+#[cfg(not(target_arch = "x86_64"))]
+const CLI_LEGACY: &[i64] = &[];
+
 /// DE: Erlaubte Aufrufe. Mehrere Einträge desselben Aufrufs gelten als ODER, die
 /// Bedingungen innerhalb eines Eintrags als UND.
 /// EN: Allowed calls. Several entries of the same call act as OR, the conditions
 /// within one entry as AND.
-pub(super) fn allow_list(profile: Profile) -> Vec<(i64, Vec<Rule>)> {
-    let extra = match profile {
-        Profile::Api => API,
+pub(super) fn allow_list(profile: &Profile) -> Vec<(i64, Vec<Rule>)> {
+    let (extra, extra_legacy): (&[i64], &[i64]) = match profile {
+        Profile::Api => (API, &[]),
+        Profile::Cli(_) => (CLI, CLI_LEGACY),
     };
     let mut list: Vec<(i64, Vec<Rule>)> = BASE
         .iter()
         .chain(extra)
         .chain(LEGACY)
+        .chain(extra_legacy)
         .map(|&nr| (nr, vec![Rule::Always]))
         .collect();
     list.push((libc::SYS_clone, CLONE_THREAD_ONLY.to_vec()));
@@ -146,7 +183,7 @@ pub(super) fn allow_list(profile: Profile) -> Vec<(i64, Vec<Rule>)> {
 }
 
 /// DE: Aufrufe, die den Prozess sofort beenden. EN: Calls that kill the process at once.
-pub(super) fn deny_list(profile: Profile) -> Vec<i64> {
+pub(super) fn deny_list(profile: &Profile) -> Vec<i64> {
     let mut list = vec![
         libc::SYS_execve,
         libc::SYS_execveat,
@@ -156,13 +193,16 @@ pub(super) fn deny_list(profile: Profile) -> Vec<i64> {
     ];
     #[cfg(target_arch = "x86_64")]
     list.extend([libc::SYS_fork, libc::SYS_vfork]);
-    match profile {
-        Profile::Api => list.extend([
-            libc::SYS_socket,
-            libc::SYS_connect,
-            libc::SYS_bind,
-            libc::SYS_listen,
-        ]),
+    // DE: Keine neuen Sockets (API: der vorhandene genügt; CLI: kein Netzwerk).
+    // EN: No new sockets (API: the existing one suffices; CLI: no network).
+    list.extend([
+        libc::SYS_socket,
+        libc::SYS_connect,
+        libc::SYS_bind,
+        libc::SYS_listen,
+    ]);
+    if let Profile::Cli(_) = profile {
+        list.extend([libc::SYS_accept, libc::SYS_accept4, libc::SYS_socketpair]);
     }
     list
 }

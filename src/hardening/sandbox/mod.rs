@@ -27,10 +27,12 @@ mod syscalls;
 
 #[cfg(target_os = "linux")]
 use crate::Error;
+use std::path::PathBuf;
+
 use crate::Result;
 
 /// DE: Einsatzprofil. EN: Usage profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Profile {
     /// DE: REST-API nach dem Binden des Sockets: kein Dateizugriff, keine neuen
@@ -38,6 +40,20 @@ pub enum Profile {
     /// EN: REST API after binding the socket: no file access, no new sockets,
     /// only `accept` on the existing one.
     Api,
+    /// DE: Ein CLI-Befehl: nur die genannten Pfade, Terminal, kein Netzwerk.
+    /// EN: One CLI command: only the named paths, terminal, no network.
+    Cli(CliAccess),
+}
+
+/// DE: Freigegebene Pfade eines CLI-Befehls. Alle Pfade müssen existieren.
+/// EN: Permitted paths of a CLI command. All paths must exist.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CliAccess {
+    /// DE: Nur lesen (Datei oder Ordner rekursiv). EN: Read only (file or directory recursively).
+    pub read: Vec<PathBuf>,
+    /// DE: Zielordner: anlegen, schreiben, umbenennen, entfernen (rekursiv).
+    /// EN: Target directories: create, write, rename, remove (recursively).
+    pub write_dirs: Vec<PathBuf>,
 }
 
 /// DE: Zustand einer Schutzschicht. EN: State of one protection layer.
@@ -99,11 +115,12 @@ impl SandboxReport {
 /// and all threads created afterwards).
 ///
 /// # Errors
-/// DE/EN: [`Error::Sandbox`], wenn Seccomp auf einer unterstützten Architektur
-/// scheitert / if seccomp fails on a supported architecture.
+/// DE/EN: [`Error::Sandbox`], wenn eine Landlock-Regel nicht angelegt werden kann
+/// oder Seccomp auf einer unterstützten Architektur scheitert / if a Landlock rule
+/// cannot be created or seccomp fails on a supported architecture.
 #[cfg(target_os = "linux")]
-pub fn apply(profile: Profile) -> Result<SandboxReport> {
-    let landlock = landlock::restrict(profile);
+pub fn apply(profile: &Profile) -> Result<SandboxReport> {
+    let landlock = landlock::restrict(profile).map_err(|()| Error::Sandbox)?;
     let seccomp = seccomp::install(profile).map_err(|()| Error::Sandbox)?;
     Ok(SandboxReport { landlock, seccomp })
 }
@@ -114,7 +131,7 @@ pub fn apply(profile: Profile) -> Result<SandboxReport> {
 /// # Errors
 /// DE/EN: keine / none.
 #[cfg(not(target_os = "linux"))]
-pub fn apply(profile: Profile) -> Result<SandboxReport> {
+pub fn apply(profile: &Profile) -> Result<SandboxReport> {
     let _ = profile;
     Ok(SandboxReport {
         landlock: Status::Unsupported,
