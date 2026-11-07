@@ -28,7 +28,7 @@ pub use walk::{SkipReason, Skipped};
 
 use crate::Result;
 use crate::crypto::kdf::KdfParams;
-use crate::envelope::{KeyFile, UnlockedKey};
+use crate::envelope::{PublicKeyFile, UnlockedKey};
 use crate::security::{Passphrase, StrongPassphrase};
 
 /// DE: Empfohlene Dateiendung. EN: Recommended file extension.
@@ -43,9 +43,9 @@ pub enum Protection<'a> {
         /// DE: KDF-Parameter. EN: KDF parameters.
         params: KdfParams,
     },
-    /// DE: Öffentlicher ML-KEM-Schlüssel des Empfängers (aus dessen Schlüsseldatei).
-    /// EN: Recipient's public ML-KEM key (from their key file).
-    Recipient(&'a KeyFile),
+    /// DE: Öffentlicher ML-KEM-Schlüssel des Empfängers (`*.pub.json`).
+    /// EN: Recipient's public ML-KEM key (`*.pub.json`).
+    Recipient(&'a PublicKeyFile),
 }
 
 /// DE: Schlüssel zum Entschlüsseln. EN: Key for decrypting.

@@ -13,10 +13,14 @@ pub mod io;
 mod keyfile;
 mod metadata;
 mod parse;
+mod public;
 pub mod time;
 
-pub(crate) use encoding::hex_encode;
+pub use encoding::hex_encode;
 pub use format::{FORMAT_VERSION, MAGIC};
-pub use io::{FileWarning, Overwrite, load, save, write_atomic};
+pub use io::{
+    FileWarning, Overwrite, load, load_public, read_limited, save, save_public, write_atomic,
+};
 pub use keyfile::{KEY_ID_LEN, KeyFile, MAX_FILE_BYTES, UnlockedKey};
 pub use metadata::{MAX_ACCOUNT_TYPE_CHARS, MAX_FIELD_CHARS, Metadata};
+pub use public::{PUBLIC_MAGIC, PublicKeyFile};
