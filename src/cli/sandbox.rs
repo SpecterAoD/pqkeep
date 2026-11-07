@@ -93,10 +93,7 @@ pub fn confirm_disabled(lang: Lang) -> CliResult {
 
 /// DE: Aktiviert die Sandbox (außer bei `--no-sandbox`) und meldet fehlende Schichten.
 /// EN: Enables the sandbox (unless `--no-sandbox`) and reports missing layers.
-// DE: Ohne Feature `api` bis Schritt 5a-2 (CLI-Profile) ungenutzt.
-// EN: Unused without feature `api` until step 5a-2 (CLI profiles).
-#[cfg_attr(not(feature = "api"), allow(dead_code))]
-pub fn enable(profile: Profile, enabled: bool, verbose: bool, lang: Lang) -> CliResult {
+pub fn enable(profile: &Profile, enabled: bool, verbose: bool, lang: Lang) -> CliResult {
     let s = texts(lang);
     let report = if enabled {
         sandbox::apply(profile).map_err(|e| Failure::from_error(&e, lang))?

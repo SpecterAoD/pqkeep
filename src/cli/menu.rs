@@ -1,10 +1,10 @@
 //! DE: Interaktives Menü (nur im Terminal, ohne Argumente). Jede Auswahl fragt die
-//! nötigen Angaben ab und führt denselben Befehl aus wie die Kommandozeile – es gibt
-//! keine zweite Logik. Kurzhinweise (Passphrase-Regeln, Metadaten im Klartext)
+//! nötigen Angaben ab und startet denselben Befehl wie die Kommandozeile als eigenen
+//! Prozess mit voller Sandbox – es gibt keine zweite Logik. Kurzhinweise (Passphrase-Regeln, Metadaten im Klartext)
 //! erscheinen an der passenden Stelle.
 //! EN: Interactive menu (terminal only, without arguments). Each choice asks for
-//! the required input and runs the same command as the command line – there is no
-//! second logic. Short hints (passphrase rules, plaintext metadata) appear where
+//! the required input and starts the same command as the command line as its own
+//! process with the full sandbox – there is no second logic. Short hints (passphrase rules, plaintext metadata) appear where
 //! relevant.
 
 use dialoguer::{Input, Select};

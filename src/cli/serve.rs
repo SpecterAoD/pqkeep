@@ -83,7 +83,7 @@ pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
     //     tokio threads start, so that Landlock applies to them as well.
     let listener = std::net::TcpListener::bind(addr).map_err(io_err)?;
     listener.set_nonblocking(true).map_err(io_err)?;
-    sandbox::enable(Profile::Api, sandboxed, m.get_flag("verbose"), lang)?;
+    sandbox::enable(&Profile::Api, sandboxed, m.get_flag("verbose"), lang)?;
     run(listener, hash, lang)
 }
 
