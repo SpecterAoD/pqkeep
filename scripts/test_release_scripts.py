@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Tests für release_package.py und release_smoke.py / tests for the release scripts.
+
+DE: Prüft Archivnamen, Inhalt und Reproduzierbarkeit (zweimal packen = bitgleich) für tar.gz und
+    zip sowie die Trockenlauf-Ausgabe des Rauchtests. Aufruf: python3 scripts/test_release_scripts.py
+EN: Checks archive names, content and reproducibility (packing twice = bit-identical) for tar.gz
+    and zip, and the smoke test dry run. Usage: python3 scripts/test_release_scripts.py
+"""
+
+import hashlib
+import os
+import sys
+import tarfile
+import tempfile
+import zipfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import release_package as rp  # noqa: E402
+import release_smoke as rs  # noqa: E402
+
+
+def digest(path: str) -> str:
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
+def pack(binary: str, target: str, out: str) -> str:
+    assert rp.main([binary, "1.2.3-beta.1", target, out]) == 0
+    return os.path.join(out, rp.archive_name("1.2.3-beta.1", target))
+
+
+def test_names() -> None:
+    assert rp.archive_name("0.1.0", "x86_64-unknown-linux-gnu") == "pqkeep-0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+    assert rp.archive_name("0.1.0", "x86_64-pc-windows-msvc") == "pqkeep-0.1.0-x86_64-pc-windows-msvc.zip"
+
+
+def test_reproducible_and_content() -> None:
+    os.environ["SOURCE_DATE_EPOCH"] = "1700000000"
+    with tempfile.TemporaryDirectory() as tmp:
+        for target, exe in [("x86_64-unknown-linux-gnu", "pqkeep"), ("x86_64-pc-windows-msvc", "pqkeep.exe")]:
+            binary = os.path.join(tmp, exe)
+            with open(binary, "wb") as f:
+                f.write(b"\x7fELF fake binary")
+            a = pack(binary, target, os.path.join(tmp, "a"))
+            b = pack(binary, target, os.path.join(tmp, "b"))
+            assert digest(a) == digest(b), f"nicht reproduzierbar / not reproducible: {target}"
+            prefix = f"pqkeep-1.2.3-beta.1-{target}/"
+            if a.endswith(".zip"):
+                names = zipfile.ZipFile(a).namelist()
+            else:
+                with tarfile.open(a) as t:
+                    names = t.getnames()
+                    assert all(m.uid == 0 and m.mtime == 1700000000 for m in t.getmembers())
+            assert sorted(names) == sorted(prefix + n for n in [exe, "LICENSE", "NOTICE", "README.md", "LICENSES-wordlists.md"]), names
+
+
+def test_smoke_dry_run() -> None:
+    assert rs.main(["pqkeep", "--dry-run"]) == 0
+    assert rs.main([]) == 2
+
+
+if __name__ == "__main__":
+    for name, fn in list(globals().items()):
+        if name.startswith("test_"):
+            fn()
+            print(f"ok  {name}")
+    print("alle Tests bestanden / all tests passed")
