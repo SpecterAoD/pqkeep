@@ -119,6 +119,9 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Sandbox (Linux) | [`docs/SANDBOX.md`](docs/SANDBOX.md) |
 | Memory hardening | [`docs/MEMORY_HARDENING.md`](docs/MEMORY_HARDENING.md) |
 | Passphrase rules | [`docs/SECURITY_PASSPHRASE.md`](docs/SECURITY_PASSPHRASE.md) |
+| Key management (backup, rotation) | [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md) |
+| Security self-review | [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) |
+| Release process | [`docs/RELEASE.md`](docs/RELEASE.md) |
 | Roadmap | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
 
 ### Project

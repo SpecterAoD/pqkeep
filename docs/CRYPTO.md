@@ -92,6 +92,19 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
 
 ---
 
+## Entscheidungen vor der ersten Beta
+
+- **Kein Hybrid-Verfahren (X25519 + ML-KEM) in der Beta.** ML-KEM ist seit FIPS 203 standardisiert;
+  ein Hybrid schützt zusätzlich gegen einen unerwarteten Bruch von ML-KEM, verdoppelt aber
+  Schlüsselformate, Tests und Angriffsfläche. Für ein Werkzeug ohne Echtzeit-Protokoll (gespeicherte
+  Dateien) überwiegt vorerst die Einfachheit. Neubewertung in Issue #56, sobald sich ein Format für
+  hybride Schlüssel etabliert hat.
+- **TLS nicht eingebaut** (SPEC 5b nennt optional rustls): Die API lauscht standardmäßig nur auf
+  127.0.0.1; für Netzzugriff ist ein Reverse Proxy mit TLS vorgesehen ([`API.md`](API.md)). Das hält
+  die TLS-Bibliothek samt eigener Sicherheitsmeldungen aus dem Programm heraus.
+- **Optionaler zweiter Faktor** (Pepper/Schlüsseldatei, SPEC 5b) auf ein Update verschoben
+  (Issues #39–#41), weil er eine neue Formatversion kurz vor der Beta erfordert hätte.
+
 ## English
 
 **Algorithms:** ML-KEM-512/768/1024 (FIPS 203, default 768) via `ml-kem` 0.3.4; ML-DSA-44/65/87
@@ -126,3 +139,9 @@ expanded key, which our seed-only API deliberately does not accept), RFC 9106 Ar
 the internal core (32 KiB is below our public minimum) and reference-implementation vectors through the
 public `derive()`. A round trip alone would not detect e.g. Argon2i used instead of Argon2id; this was
 confirmed by a mutation test.
+
+**Decisions before the first beta:** no hybrid scheme (X25519 + ML-KEM) yet – ML-KEM is standardised
+(FIPS 203); a hybrid would double key formats, tests and attack surface for a file tool without a
+real-time protocol; re-evaluation in issue #56. No built-in TLS – the API listens on 127.0.0.1 by
+default and relies on a reverse proxy for network access. The optional second factor is deferred to an
+update (issues #39–#41) because it requires a new format version.

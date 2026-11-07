@@ -19,22 +19,26 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9)
+## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9, Issues mit Label `update`)
 
-| Update | Inhalt | Hinweis |
+| Update | Inhalt | Issues |
 |---|---|---|
-| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, `[VERIFIED]`/`[INVALID]`, Absender-Signatur für `.pqkf` | Keine qualifizierte eIDAS-Signatur; Identität über Fingerabdruck bestätigen |
-| U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) | Neue Formatversion; Empfänger-IDs sichtbar oder verborgen (Entscheidung im Plan) |
-| U3 | Einrichtungs-Assistent in der Konsole: Master-Passphrase, ML-KEM-1024 + ML-DSA-87, Kontextmenü, Notfall-Backup | Erneut aufrufbar, überschreibt nie ohne Bestätigung |
-| U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog | Abweichung vom Non-Goal „GUI“ – nur Dialog, Umsetzung im Plan entscheiden |
-| – | Spiegel-Modus für Ordner | |
-| – | Diceware-Generator (DE/EN) | Wortlisten sind seit 2b vorhanden (EFF als freigegebene Ausnahme) |
+| U0 | Optionaler zweiter Faktor (Pepper/Schlüsseldatei) zusätzlich zur Passphrase | #39–#41 |
+| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur | #42–#44 |
+| U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) | #45–#47 |
+| U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |
+| U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog | #51–#53 |
+| GUI | Optionale moderne grafische Oberfläche, rein in Rust, ohne Web-Technik und Netzwerk; Sicherheit vorab neu bewerten (SPEC-Änderung nötig) | #58–#65 (Label `gui`) |
+| – | Spiegel-Modus für Ordner | #54 |
+| – | Diceware-Generator mit gemeinfreier Wortliste | #55 |
+| – | Hybrid-Verfahren (X25519 + ML-KEM) neu bewerten | #56 |
+| iOS | iOS-App (ferne Zukunft): Machbarkeit, Architektur, Bedrohungsmodell | #66–#67 (Label `zukunft`) |
 
 ## Offene Punkte außerhalb des Codes
 
-- [ ] Repository öffentlich schalten (Voraussetzung für SignPath)
-- [ ] Bei der SignPath Foundation bewerben (erst wenn Repo öffentlich und Lizenz vorhanden)
-- [ ] MFA für alle Beteiligten bei GitHub und SignPath aktivieren
-- [ ] Branch Protection auf `main`, signierte Commits erzwingen
-- [ ] Secret Scanning und Push Protection aktivieren
-- [ ] Signing-Key für Git-Tags einrichten (SSH oder GPG)
+- [x] Repository öffentlich schalten (Voraussetzung für SignPath) – 07.11.2026
+- [ ] Bei der SignPath Foundation bewerben (erst nach dem ersten Release, SignPath-Bedingung „already released“)
+- [x] MFA bei GitHub aktiv (SignPath bei der Bewerbung)
+- [x] Ruleset auf `main` (PR, Pflicht-Checks, signierte Commits) und Schutz der Release-Tags
+- [x] Secret Scanning und Push Protection aktiv
+- [x] Signing-Key für Git-Tags (SSH)
