@@ -1,7 +1,9 @@
-# DE: CI-Rumpf (Schritt 0): Format, Lints, Tests auf Linux und Windows, MSRV,
-#     Zeilenlimits, Binär-Härtung, cargo-deny. Ausbau (gitleaks, Fuzzing, Release) in Schritt 6.
-# EN: CI skeleton (step 0): format, lints, tests on Linux and Windows, MSRV,
-#     line limits, binary hardening, cargo-deny. Extended (gitleaks, fuzzing, release) in step 6.
+# DE: CI: Format, Lints, Tests auf Linux (aktuell und Ubuntu 22.04 = Basis der Release-Builds)
+#     und Windows, MSRV, Zeilenlimits, Binär-Härtung, cargo-deny, gitleaks (ganze Historie).
+#     Releases: release.yml. CodeQL: codeql.yml.
+# EN: CI: format, lints, tests on Linux (current and Ubuntu 22.04 = base of release builds)
+#     and Windows, MSRV, line limits, binary hardening, cargo-deny, gitleaks (full history).
+#     Releases: release.yml. CodeQL: codeql.yml.
 name: CI
 
 # DE: Push nur auf main; Branches laufen über den Pull Request (keine Doppelläufe).
@@ -28,7 +30,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # DE: ubuntu-22.04 (glibc 2.35) ist die Basis der Linux-Release-Builds; dort müssen
+        #     Sandbox und Seccomp-Liste ebenfalls funktionieren.
+        # EN: ubuntu-22.04 (glibc 2.35) is the base of Linux release builds; the sandbox and
+        #     seccomp list must work there as well.
+        os: [ubuntu-latest, ubuntu-22.04, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -98,3 +104,28 @@ jobs:
           persist-credentials: false
       - run: cargo install --locked cargo-deny --version 0.20.2
       - run: cargo deny check
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      # DE: SHA-256 des offiziellen Release-Archivs (Prüfsummendatei, GitHub-Digest und eigener
+      #     Hash am 07.11.2026 übereinstimmend). Kein Drittanbieter-Action-Code.
+      # EN: SHA-256 of the official release archive (checksum file, GitHub digest and own hash
+      #     matched on 2026-11-07). No third-party action code.
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: gitleaks installieren / install
+        run: |
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$f" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
+      - name: gitleaks (ganze Historie / full history)
+        run: '"$RUNNER_TEMP/gitleaks" git --no-banner --redact --exit-code 1 .'
