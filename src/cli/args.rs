@@ -176,7 +176,7 @@ fn help_commands(lang: Lang) -> [Command; 3] {
 /// DE: Vollständige Kommandozeile in der Sprache `lang`. EN: Full command line in language `lang`.
 pub fn build(lang: Lang) -> Command {
     let t = texts(lang);
-    base("keyforge", t.app_about, t.app_after, lang)
+    let cmd = base("keyforge", t.app_about, t.app_after, lang)
         .version(pqc_keyforge::VERSION)
         .disable_version_flag(true)
         .disable_help_subcommand(true)
@@ -219,7 +219,23 @@ pub fn build(lang: Lang) -> Command {
                 .args(out_args(lang, true)),
         )
         .subcommands(file_commands(lang))
-        .subcommands(help_commands(lang))
+        .subcommands(help_commands(lang));
+    with_serve(cmd, lang)
+}
+
+/// DE: Hängt `serve` an (nur mit Feature `api`). EN: Appends `serve` (feature `api` only).
+#[cfg(feature = "api")]
+fn with_serve(cmd: Command, lang: Lang) -> Command {
+    let s = super::serve_text::serve_texts(lang);
+    cmd.subcommand(super::serve::command(
+        base("serve", s.about, s.after, lang),
+        lang,
+    ))
+}
+
+#[cfg(not(feature = "api"))]
+fn with_serve(cmd: Command, _lang: Lang) -> Command {
+    cmd
 }
 
 /// DE: Sprache aus `--lang` (vor dem eigentlichen Parsen) oder dem System.

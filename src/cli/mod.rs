@@ -11,6 +11,10 @@ mod help;
 mod io;
 mod keys;
 mod menu;
+#[cfg(feature = "api")]
+mod serve;
+#[cfg(feature = "api")]
+mod serve_text;
 mod text;
 mod text_de;
 mod text_en;
@@ -83,6 +87,8 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
             Ok(())
         }
         Some(("man", _)) => help::man(lang),
+        #[cfg(feature = "api")]
+        Some(("serve", m)) => serve::serve(lang, m),
         _ => Err(Failure::new(code::USAGE, "")),
     }
 }
