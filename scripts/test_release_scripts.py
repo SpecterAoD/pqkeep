@@ -50,7 +50,7 @@ def test_reproducible_and_content() -> None:
                 with tarfile.open(a) as t:
                     names = t.getnames()
                     assert all(m.uid == 0 and m.mtime == 1700000000 for m in t.getmembers())
-            assert sorted(names) == sorted(prefix + n for n in [exe, "LICENSE", "NOTICE", "README.md"]), names
+            assert sorted(names) == sorted(prefix + n for n in [exe, "LICENSE", "NOTICE", "README.md", "LICENSES-wordlists.md"]), names
 
 
 def test_smoke_dry_run() -> None:

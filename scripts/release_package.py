@@ -2,10 +2,10 @@
 """Verpackt ein Release-Binary reproduzierbar / packages a release binary reproducibly.
 
 DE: Erzeugt `pqkeep-<version>-<ziel>.tar.gz` (Linux) bzw. `.zip` (Windows) mit Binary, LICENSE,
-    NOTICE und README.md. Feste Reihenfolge, feste Zeitstempel (SOURCE_DATE_EPOCH), keine
+    NOTICE, README.md und den Lizenztexten der eingebetteten Wortlisten (LICENSES-wordlists.md). Feste Reihenfolge, feste Zeitstempel (SOURCE_DATE_EPOCH), keine
     Benutzer-/Gruppennamen – gleiche Eingaben ergeben ein bitgleiches Archiv.
 EN: Creates `pqkeep-<version>-<target>.tar.gz` (Linux) or `.zip` (Windows) with binary, LICENSE,
-    NOTICE and README.md. Fixed order, fixed timestamps (SOURCE_DATE_EPOCH), no user/group
+    NOTICE, README.md and the licence texts of the embedded word lists (LICENSES-wordlists.md). Fixed order, fixed timestamps (SOURCE_DATE_EPOCH), no user/group
     names – equal inputs give a bit-identical archive.
 
 Aufruf / usage:
@@ -20,7 +20,16 @@ import sys
 import tarfile
 import zipfile
 
-EXTRA_FILES = ["LICENSE", "NOTICE", "README.md"]
+# DE: (Name im Archiv, Pfad im Repo). Die Wortlisten sind ins Binary eingebettet; ihre Lizenzen
+#     (MIT, BSD-3-Clause, CC BY 4.0) verlangen die Weitergabe der Lizenztexte.
+# EN: (name in archive, path in repo). The word lists are embedded in the binary; their licences
+#     (MIT, BSD-3-Clause, CC BY 4.0) require distributing the licence texts.
+EXTRA_FILES = [
+    ("LICENSE", "LICENSE"),
+    ("NOTICE", "NOTICE"),
+    ("README.md", "README.md"),
+    ("LICENSES-wordlists.md", "data/wordlists/LICENSES.md"),
+]
 
 
 def epoch() -> int:
@@ -38,7 +47,7 @@ def members(binary: str, root: str) -> list:
     """DE/EN: (Name im Archiv, Pfad, Modus) in fester Reihenfolge / in fixed order."""
     name = os.path.basename(binary)
     items = [(name, binary, 0o755)]
-    items += [(f, os.path.join(root, f), 0o644) for f in EXTRA_FILES]
+    items += [(name, os.path.join(root, src), 0o644) for name, src in EXTRA_FILES]
     return sorted(items)
 
 
