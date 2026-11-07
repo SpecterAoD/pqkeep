@@ -24,12 +24,22 @@ fn never_overwrites() {
     let unlocked = key_file.unlock(pass.as_ref()).unwrap();
     let enc = dir.path().join("a.pqkf");
     std::fs::write(&enc, b"vorhanden / existing").unwrap();
-    let err = files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).err();
+    let err = files::encrypt(
+        &src,
+        &enc,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .err();
     assert_eq!(err, Some(Error::Io(ErrorKind::AlreadyExists)));
     assert_eq!(std::fs::read(&enc).unwrap(), b"vorhanden / existing");
 
     std::fs::remove_file(&enc).unwrap();
-    files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).unwrap();
+    files::encrypt(
+        &src,
+        &enc,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     let existing_file = dir.path().join("da.txt");
     std::fs::write(&existing_file, b"alt / old").unwrap();
     let err = files::decrypt(&enc, &existing_file, &Unlock::Key(&unlocked)).err();
@@ -40,7 +50,12 @@ fn never_overwrites() {
     let src_dir = dir.path().join("q");
     std::fs::create_dir(&src_dir).unwrap();
     let enc_dir = dir.path().join("q.pqkf");
-    files::encrypt(&src_dir, &enc_dir, &Protection::Recipient(&key_file)).unwrap();
+    files::encrypt(
+        &src_dir,
+        &enc_dir,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     let empty_target = dir.path().join("leer");
     std::fs::create_dir(&empty_target).unwrap();
     let err = files::decrypt(&enc_dir, &empty_target, &Unlock::Key(&unlocked)).err();
@@ -88,7 +103,12 @@ fn permissions_and_skipped_entries() {
 
     let (key_file, pass) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem512));
     let enc = dir.path().join("q.pqkf");
-    let report = files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).unwrap();
+    let report = files::encrypt(
+        &src,
+        &enc,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     assert_eq!((report.files, report.directories), (1, 1));
     let mut reasons: Vec<_> = report
         .skipped
@@ -128,7 +148,7 @@ fn symlink_as_source_rejected() {
     let err = files::encrypt(
         &link,
         &dir.path().join("x.pqkf"),
-        &Protection::Recipient(&key_file),
+        &Protection::Recipient(&key_file.public_part().unwrap()),
     );
     assert_eq!(err.err(), Some(Error::InvalidInput { field: "source" }));
 }

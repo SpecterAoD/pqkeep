@@ -31,7 +31,12 @@ fn sample() -> &'static Sample {
         common::write_sample_tree(&src);
         let (key_file, pass) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem512));
         let enc = dir.path().join("baum.pqkf");
-        files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).unwrap();
+        files::encrypt(
+            &src,
+            &enc,
+            &Protection::Recipient(&key_file.public_part().unwrap()),
+        )
+        .unwrap();
         Sample {
             bytes: std::fs::read(&enc).unwrap(),
             key: key_file.unlock(pass.as_ref()).unwrap(),

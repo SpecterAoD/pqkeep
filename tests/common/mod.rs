@@ -115,3 +115,30 @@ pub fn dir_names(dir: &std::path::Path) -> Vec<String> {
     names.sort();
     names
 }
+
+/// DE: Führt `keyforge` aus (Stdin als Text). EN: Runs `keyforge` (stdin as text).
+/// Rückgabe / returns: (Exit-Code, Stdout, Stderr).
+pub fn keyforge(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, String, String) {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut child = Command::new(env!("CARGO_BIN_EXE_keyforge"))
+        .args(args)
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(stdin.as_bytes())
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}

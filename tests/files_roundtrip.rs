@@ -73,7 +73,12 @@ fn recipient_mode_all_kem_sets() {
         std::fs::create_dir(&src).unwrap();
         common::write_sample_tree(&src);
         let enc = dir.path().join("baum.pqkf");
-        files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).unwrap();
+        files::encrypt(
+            &src,
+            &enc,
+            &Protection::Recipient(&key_file.public_part().unwrap()),
+        )
+        .unwrap();
         let out = dir.path().join("zurück");
         files::decrypt(&enc, &out, &Unlock::Key(&unlocked)).unwrap();
         assert_eq!(common::read_tree(&out), common::read_tree(&src), "{alg:?}");
@@ -87,7 +92,12 @@ fn inspect_shows_mode_without_key() {
     std::fs::write(&src, b"x").unwrap();
     let (key_file, _) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem768));
     let enc = dir.path().join("a.pqkf");
-    files::encrypt(&src, &enc, &Protection::Recipient(&key_file)).unwrap();
+    files::encrypt(
+        &src,
+        &enc,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     let header = files::inspect(&enc).unwrap();
     assert_eq!(header.content, Content::File);
     let HeaderMode::Recipient {
@@ -129,7 +139,17 @@ fn same_input_encrypts_differently() {
     let (key_file, _) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem512));
     let a = dir.path().join("a1.pqkf");
     let b = dir.path().join("a2.pqkf");
-    files::encrypt(&src, &a, &Protection::Recipient(&key_file)).unwrap();
-    files::encrypt(&src, &b, &Protection::Recipient(&key_file)).unwrap();
+    files::encrypt(
+        &src,
+        &a,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
+    files::encrypt(
+        &src,
+        &b,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     assert_ne!(std::fs::read(a).unwrap(), std::fs::read(b).unwrap());
 }

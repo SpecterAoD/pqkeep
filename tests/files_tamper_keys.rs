@@ -30,7 +30,12 @@ fn fixture() -> Fixture {
     common::write_sample_tree(&src);
     let (key_file, pass) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem768));
     let enc_path = dir.path().join("baum.pqkf");
-    files::encrypt(&src, &enc_path, &Protection::Recipient(&key_file)).unwrap();
+    files::encrypt(
+        &src,
+        &enc_path,
+        &Protection::Recipient(&key_file.public_part().unwrap()),
+    )
+    .unwrap();
     let work = dir.path().join("arbeit");
     std::fs::create_dir(&work).unwrap();
     Fixture {
@@ -145,17 +150,19 @@ fn wrong_recipient_and_non_kem_keys() {
 
     let src = f.work.join("x.txt");
     std::fs::write(&src, b"x").unwrap();
-    for alg in [
-        KeyAlgorithm::Dsa(DsaAlgorithm::MlDsa65),
-        KeyAlgorithm::Aes256,
-    ] {
-        let (kf, _) = common::key_file(alg);
-        let err = files::encrypt(&src, &f.work.join("x.pqkf"), &Protection::Recipient(&kf)).err();
-        assert_eq!(
-            err,
-            Some(Error::InvalidInput { field: "recipient" }),
-            "{alg:?}"
-        );
-    }
+    // DE: ML-DSA hat einen öffentlichen Schlüssel, taugt aber nicht als Empfänger.
+    // EN: ML-DSA has a public key but is not usable as a recipient.
+    let (dsa, _) = common::key_file(KeyAlgorithm::Dsa(DsaAlgorithm::MlDsa65));
+    let public = dsa.public_part().unwrap();
+    let err = files::encrypt(
+        &src,
+        &f.work.join("x.pqkf"),
+        &Protection::Recipient(&public),
+    )
+    .err();
+    assert_eq!(err, Some(Error::InvalidInput { field: "recipient" }));
+    // DE: AES hat keinen öffentlichen Teil. EN: AES has no public part.
+    let (aes, _) = common::key_file(KeyAlgorithm::Aes256);
+    assert_eq!(aes.public_part().err(), Some(Error::Unsupported));
     assert!(!f.work.join("x.pqkf").exists());
 }

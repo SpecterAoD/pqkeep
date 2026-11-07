@@ -1,18 +1,21 @@
-//! DE: Rauchtest: Das Binary startet und beendet sich erfolgreich.
-//! EN: Smoke test: the binary starts and exits successfully.
+//! DE: Rauchtest: Das Binary startet; `--version` liefert die Version, ohne
+//! Argumente erscheint die Hilfe mit Exit-Code 2.
+//! EN: Smoke test: the binary starts; `--version` prints the version, without
+//! arguments the help appears with exit code 2.
 
 // DE: Tests dürfen unwrap/expect nutzen (auch in Hilfsfunktionen); Produktionscode nicht.
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use std::process::Command;
+mod common;
 
 #[test]
-fn binary_runs_and_prints_version() {
-    let out = Command::new(env!("CARGO_BIN_EXE_keyforge"))
-        .output()
-        .unwrap();
-    assert!(out.status.success());
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    assert!(stdout.contains(env!("CARGO_PKG_VERSION")));
+fn version_and_no_args() {
+    let dir = std::env::temp_dir();
+    let (code, out, _) = common::keyforge(&["--version"], "", &dir);
+    assert_eq!(code, 0);
+    assert!(out.contains(env!("CARGO_PKG_VERSION")));
+    let (code, _, err) = common::keyforge(&["--lang", "en"], "", &dir);
+    assert_eq!(code, 2);
+    assert!(err.contains("generate"));
 }
