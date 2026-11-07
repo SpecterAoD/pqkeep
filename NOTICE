@@ -11,3 +11,10 @@ Test vectors / Testvektoren (tests/kat/):
 - NIST ACVP-Server (usnistgov/ACVP-Server): public domain / gemeinfrei (US Government work).
 - Project Wycheproof (C2SP/wycheproof): Copyright the Wycheproof authors,
   licensed under the Apache License, Version 2.0.
+
+Word lists / Wortlisten (data/wordlists/, see README.md and LICENSES.md there):
+- EFF word lists, (c) Electronic Frontier Foundation, CC BY 4.0
+  (https://www.eff.org/dice). Modified: dice numbers removed, NFKC, lowercase.
+- BIP-39 word lists, (c) the BIP-39 authors, MIT License.
+- dys2p/wordlists-de, Copyright 2022 dys2p, BSD-3-Clause.
+- bjoernalbers/diceware-wordlist-german, Copyright (c) 2023 Björn Albers, MIT License.
