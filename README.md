@@ -2,7 +2,7 @@
 
 **DE** | [EN](#english)
 
-> Status: in Entwicklung (Schritte 0–5: Kern, Passphrasen, Container, Datei-/Ordnerverschlüsselung, CLI, REST-API). Noch keine veröffentlichte Version – bitte noch nicht für echte Geheimnisse verwenden. Die verbindliche Spezifikation liegt in [`docs/SPEC.md`](docs/SPEC.md), der Fahrplan in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> Status: in Entwicklung (Schritte 0–5a: Kern, Passphrasen, Container, Datei-/Ordnerverschlüsselung, CLI, REST-API, Sandbox). Noch keine veröffentlichte Version – bitte noch nicht für echte Geheimnisse verwenden. Die verbindliche Spezifikation liegt in [`docs/SPEC.md`](docs/SPEC.md), der Fahrplan in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Sichere, speichersichere Anwendung (Windows und Linux) in reinem Rust zur Erzeugung und Verwaltung von Post-Quanten-Schlüsseln (ML-KEM nach FIPS 203, ML-DSA nach FIPS 204) und symmetrischen AES-256-Schlüsseln. Private Schlüssel werden mit AES-256-GCM verschlüsselt, der Schlüssel wird per Argon2id aus einer starken Passphrase abgeleitet. Bedienung per CLI und REST-API, keine Telemetrie, keine ausgehenden Netzwerkverbindungen.
 
@@ -27,13 +27,13 @@ keyforge help security                     # Hilfethemen: passphrase, algorithms
 keyforge serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
 keyforge serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token), siehe docs/API.md
 ```
-Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder über `--passphrase-stdin`.
+Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder über `--passphrase-stdin`. Unter Linux läuft jeder Befehl in einer Sandbox (Landlock/Seccomp, siehe [docs/SANDBOX.md](docs/SANDBOX.md)).
 
 ---
 
 ## English
 
-> Status: in development (steps 0–5: core, passphrases, container, file/directory encryption, CLI, REST API). No published release yet – please do not use for real secrets yet. The binding specification is in [`docs/SPEC.md`](docs/SPEC.md) (German), the roadmap in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> Status: in development (steps 0–5a: core, passphrases, container, file/directory encryption, CLI, REST API, sandbox). No published release yet – please do not use for real secrets yet. The binding specification is in [`docs/SPEC.md`](docs/SPEC.md) (German), the roadmap in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 A secure, memory-safe application (Windows and Linux) written in pure Rust to generate and manage post-quantum keys (ML-KEM per FIPS 203, ML-DSA per FIPS 204) and symmetric AES-256 keys. Private keys are encrypted with AES-256-GCM; the key is derived from a strong passphrase using Argon2id. Usable via CLI and REST API, with no telemetry and no outbound network connections.
 
@@ -58,4 +58,4 @@ keyforge help security                     # topics: passphrase, algorithms, con
 keyforge serve --init-token --token-file api.token   # show API token once, store hash only
 keyforge serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token), see docs/API.md
 ```
-Language: `--lang de|en` (default: system language). Passphrases are never arguments, only hidden or via `--passphrase-stdin`.
+Language: `--lang de|en` (default: system language). Passphrases are never arguments, only hidden or via `--passphrase-stdin`. On Linux every command runs in a sandbox (Landlock/seccomp, see [docs/SANDBOX.md](docs/SANDBOX.md)).

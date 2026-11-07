@@ -18,7 +18,8 @@ fn source(m: &ArgMatches) -> PathBuf {
     m.get_one::<PathBuf>("source").cloned().unwrap_or_default()
 }
 
-fn default_encrypted(src: &Path) -> Option<PathBuf> {
+/// DE: Standardziel beim Verschlüsseln. EN: Default target when encrypting.
+pub fn default_encrypted(src: &Path) -> Option<PathBuf> {
     let name = src.file_name()?;
     let mut out = OsString::from(name);
     out.push(".");
@@ -26,7 +27,8 @@ fn default_encrypted(src: &Path) -> Option<PathBuf> {
     Some(src.with_file_name(out))
 }
 
-fn default_decrypted(src: &Path) -> Option<PathBuf> {
+/// DE: Standardziel beim Entschlüsseln. EN: Default target when decrypting.
+pub fn default_decrypted(src: &Path) -> Option<PathBuf> {
     let name = src.file_name()?.to_str()?;
     let suffix = format!(".{}", files::EXTENSION);
     let stem = name.strip_suffix(&suffix).filter(|s| !s.is_empty());

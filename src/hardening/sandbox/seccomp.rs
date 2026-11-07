@@ -81,7 +81,7 @@ fn arch_supported() -> bool {
 
 /// DE: Installiert die drei Filter (für alle Threads). `Err` nur bei echtem Fehlschlag.
 /// EN: Installs the three filters (for all threads). `Err` only on real failure.
-pub(super) fn install(profile: Profile) -> Result<Status, ()> {
+pub(super) fn install(profile: &Profile) -> Result<Status, ()> {
     if !arch_supported() {
         return Ok(Status::Unsupported);
     }

@@ -28,7 +28,7 @@ fn zz_probe_entry() {
         return;
     };
     let dir = std::env::var("KF_PROBE_DIR").unwrap();
-    let report = sandbox::apply(Profile::Api).unwrap();
+    let report = sandbox::apply(&Profile::Api).unwrap();
     println!("LANDLOCK={}", report.landlock.as_str());
     println!("SECCOMP={}", report.seccomp.as_str());
     let outcome = run_probe(&probe, &dir);

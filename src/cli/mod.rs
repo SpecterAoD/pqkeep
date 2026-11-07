@@ -5,6 +5,7 @@
 //! On start: process hardening, warning when root, language from `--lang` or system.
 //! Without arguments in a terminal: interactive menu.
 
+mod access;
 mod args;
 mod files_cmd;
 mod help;
@@ -26,6 +27,7 @@ mod validate;
 use std::io::IsTerminal;
 use std::process::ExitCode;
 
+use pqc_keyforge::hardening::sandbox::Profile;
 use pqc_keyforge::hardening::{self, HardeningReport, memlock};
 use pqc_keyforge::security::Lang;
 
@@ -41,11 +43,43 @@ pub fn run() -> ExitCode {
     warn_if_root(t);
     let interactive = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
     let result = if argv.len() <= 1 && interactive {
-        menu::run(t, lang, |a| execute(&a, lang, report))
+        menu::run(t, lang, |a| run_child(&a, lang))
     } else {
         execute(&argv, lang, report)
     };
     finish(result, t)
+}
+
+/// DE: Menüaktion als eigener Prozess mit voller Sandbox (Landlock lässt sich nicht
+/// lockern; der Menü-Prozess selbst verarbeitet keine Passphrasen oder Schlüssel).
+/// Fehlermeldungen gibt der Kindprozess selbst aus.
+/// EN: Menu action as its own process with the full sandbox (Landlock cannot be
+/// relaxed; the menu process itself handles no passphrases or keys). The child
+/// prints its own error messages.
+fn run_child(argv: &[String], lang: Lang) -> CliResult {
+    let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
+    let exe = std::env::current_exe().map_err(fail)?;
+    let status = std::process::Command::new(exe)
+        .args(argv.iter().skip(1))
+        .status()
+        .map_err(fail)?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(Failure::new(code::ERROR, ""))
+    }
+}
+
+fn print_hardening(t: &Texts, report: HardeningReport) {
+    let lock = memlock::stats();
+    eprintln!(
+        "{}: core_dumps_disabled={} not_dumpable={} locked_pages={} failed_locks={}",
+        t.msg_hardening,
+        report.core_dumps_disabled,
+        report.not_dumpable,
+        lock.locked_pages,
+        lock.failed_attempts
+    );
 }
 
 /// DE: Parst und führt einen Befehl aus. EN: Parses and runs a command.
@@ -67,16 +101,16 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
     if !sandboxed {
         sandbox::confirm_disabled(lang)?;
     }
-    if matches.get_flag("verbose") {
-        let lock = memlock::stats();
-        eprintln!(
-            "{}: core_dumps_disabled={} not_dumpable={} locked_pages={} failed_locks={}",
-            t.msg_hardening,
-            report.core_dumps_disabled,
-            report.not_dumpable,
-            lock.locked_pages,
-            lock.failed_attempts
-        );
+    let verbose = matches.get_flag("verbose");
+    if verbose {
+        print_hardening(t, report);
+    }
+    // DE: Sandbox nach dem Parsen, vor jeder Eingabe und jedem Dateizugriff.
+    // EN: Sandbox after parsing, before any input and any file access.
+    if let Some((name, m)) = matches.subcommand()
+        && let Some(access) = access::for_command(name, m, lang)?
+    {
+        sandbox::enable(&Profile::Cli(access), sandboxed, verbose, lang)?;
     }
     match matches.subcommand() {
         Some(("generate", m)) => keys::generate(t, lang, m),

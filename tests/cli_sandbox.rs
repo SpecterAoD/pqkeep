@@ -139,3 +139,29 @@ fn help_lists_no_sandbox_with_warning() {
         "{out}"
     );
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn cli_commands_run_sandboxed() {
+    let dir = tempfile::tempdir().unwrap();
+    let pass = format!("{}\n", common::random_passphrase().as_ref().expose_str());
+    let args = [
+        "--lang",
+        "de",
+        "--verbose",
+        "validate",
+        "--passphrase-stdin",
+    ];
+    let (code, _, err) = common::keyforge(&args, &pass, dir.path());
+    assert_eq!(code, 0, "{err}");
+    assert!(
+        err.contains("Sandbox: landlock=") && err.contains("seccomp=full"),
+        "{err}"
+    );
+    // DE: Fehlende Quelle bleibt „nicht gefunden“ (nicht „Zugriff verweigert“).
+    // EN: A missing source stays "not found" (not "permission denied").
+    let (code, _, err) =
+        common::keyforge(&["--lang", "de", "inspect", "fehlt.json"], "", dir.path());
+    assert_eq!(code, 1);
+    assert!(err.contains("nicht gefunden"), "{err}");
+}
