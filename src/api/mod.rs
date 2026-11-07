@@ -1,15 +1,18 @@
 //! DE: REST-API (Feature `api`, Standard an). Endpunkte: `GET /v1/health` (ohne
-//! Anmeldung), `POST /v1/validate` (Token). Härtung: Bind standardmäßig nur auf
-//! 127.0.0.1 (Prüfung in der CLI), Token nur als Hash gespeichert, Rate-Limit und
-//! Sperre je Client, Größen- und Zeitlimits, generische Fehler, keine Inhalts-Logs,
+//! Anmeldung), `POST /v1/validate` und `POST /v1/generate` (Token); siehe `docs/API.md`.
+//! Härtung: Bind standardmäßig nur auf 127.0.0.1 (Prüfung in der CLI), Token nur als
+//! Hash gespeichert, Rate-Limit und Sperre je Client, Größen- und Zeitlimits,
+//! Speicherbudget für Argon2, generische Fehler, keine Inhalts-Logs,
 //! Sicherheits-Header, kein CORS. TLS ist nicht eingebaut (Reverse Proxy).
 //!
 //! EN: REST API (feature `api`, on by default). Endpoints: `GET /v1/health` (no
-//! authentication), `POST /v1/validate` (token). Hardening: bind to 127.0.0.1 only
-//! by default (checked in the CLI), token stored as hash only, per-client rate limit
-//! and lockout, size and time limits, generic errors, no content logs, security
-//! headers, no CORS. TLS is not built in (reverse proxy).
+//! authentication), `POST /v1/validate` and `POST /v1/generate` (token); see `docs/API.md`.
+//! Hardening: bind to 127.0.0.1 only by default (checked in the CLI), token stored as
+//! hash only, per-client rate limit and lockout, size and time limits, memory budget
+//! for Argon2, generic errors, no content logs, security headers, no CORS. TLS is not
+//! built in (reverse proxy).
 
+mod generate;
 mod guard;
 mod handlers;
 mod middleware;
@@ -22,6 +25,7 @@ use std::time::Duration;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{get, post};
+use tokio::sync::Semaphore;
 
 pub use guard::{Guard, MAX_TRACKED_CLIENTS, client_key};
 pub use server::serve;
@@ -52,6 +56,11 @@ pub struct Limits {
     pub request_timeout: Duration,
     /// DE: Zeit für das Lesen der Header (10 s). EN: Time to read the headers (10 s).
     pub header_timeout: Duration,
+    /// DE: Speicherbudget aller gleichzeitigen Argon2-Läufe in MiB (1024 = vier
+    /// Standard- oder ein Hardened-Lauf). Reicht es nicht, antwortet die API sofort 503.
+    /// EN: Memory budget of all concurrent Argon2 runs in MiB (1024 = four standard
+    /// or one hardened run). If insufficient, the API answers 503 immediately.
+    pub kdf_budget_mib: u32,
 }
 
 impl Default for Limits {
@@ -65,6 +74,7 @@ impl Default for Limits {
             max_connections: 64,
             request_timeout: Duration::from_secs(30),
             header_timeout: Duration::from_secs(10),
+            kdf_budget_mib: 1024,
         }
     }
 }
@@ -74,6 +84,7 @@ pub struct AppState {
     token: TokenHash,
     guard: Guard,
     limits: Limits,
+    kdf_budget: Arc<Semaphore>,
 }
 
 impl AppState {
@@ -83,6 +94,7 @@ impl AppState {
         Arc::new(Self {
             token,
             guard: Guard::new(limits.clone()),
+            kdf_budget: Arc::new(Semaphore::new(limits.kdf_budget_mib as usize)),
             limits,
         })
     }
@@ -101,6 +113,7 @@ impl AppState {
 pub fn router(state: Arc<AppState>) -> Router {
     let protected = Router::new()
         .route("/v1/validate", post(handlers::validate))
+        .route("/v1/generate", post(generate::generate))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::auth,
