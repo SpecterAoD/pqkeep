@@ -31,9 +31,24 @@ fn roundtrip_without_secrets() {
     assert_eq!(public.key_id(), key.key_id());
     assert_eq!(public.public_key(), key.public_key());
     assert_eq!(public.metadata(), key.metadata());
-    let text = serde_json::to_string(&v).unwrap();
+    // DE: Nur Feldnamen prüfen – im Base64-Text des öffentlichen Schlüssels können
+    //     Folgen wie „kdf“ zufällig vorkommen (früher sporadisch fehlschlagend).
+    // EN: Check field names only – sequences like "kdf" can occur by chance in the
+    //     base64 text of the public key (used to fail sporadically).
+    let names = field_names(&v);
     for secret_field in ["kdf", "cipher", "salt", "ciphertext", "nonce"] {
-        assert!(!text.contains(secret_field), "{secret_field}");
+        assert!(!names.iter().any(|n| n == secret_field), "{secret_field}");
+    }
+}
+
+fn field_names(v: &Value) -> Vec<String> {
+    match v {
+        Value::Object(map) => map
+            .iter()
+            .flat_map(|(k, inner)| std::iter::once(k.clone()).chain(field_names(inner)))
+            .collect(),
+        Value::Array(items) => items.iter().flat_map(field_names).collect(),
+        _ => Vec::new(),
     }
 }
 
