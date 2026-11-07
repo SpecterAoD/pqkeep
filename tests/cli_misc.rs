@@ -100,25 +100,13 @@ fn help_per_command_in_both_languages() {
 
 #[test]
 fn help_contains_no_example_secrets() {
-    // DE: Kein Wort in einem Hilfetext darf die Passphrase-Regeln erfüllen.
-    // EN: No word in any help text may satisfy the passphrase rules.
     for lang in ["de", "en"] {
         let mut texts = vec![common::keyforge(&["--lang", lang, "--help"], "", &tmp()).1];
         for cmd in COMMANDS {
             texts.push(common::keyforge(&["--lang", lang, cmd, "--help"], "", &tmp()).1);
         }
-        // DE: Satzzeichen/Klammern am Wortrand gehören zum Text, nicht zum Wort
-        //     (sonst erfüllt z. B. „Argon2id-Profil:“ formal die Regeln).
-        // EN: Punctuation/brackets at word edges belong to the text, not the word
-        //     (otherwise e.g. "Argon2id-Profil:" formally meets the rules).
-        let edge = |c: char| ".,:;!?()[]\"'„“<>".contains(c);
-        for word in texts.iter().flat_map(|t| t.split_whitespace()) {
-            let word = word.trim_matches(edge);
-            if word.is_empty() {
-                continue;
-            }
-            let strong = StrongPassphrase::try_from(Passphrase::new(word).unwrap());
-            assert!(strong.is_err(), "{lang}: {word}");
+        for text in texts {
+            common::assert_no_secret_like_words(&text, lang);
         }
     }
 }

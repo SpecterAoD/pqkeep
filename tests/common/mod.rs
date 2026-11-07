@@ -142,3 +142,23 @@ pub fn keyforge(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, Stri
         String::from_utf8_lossy(&out.stderr).into_owned(),
     )
 }
+
+/// DE: Fachbegriffe aus Hilfetexten, die formal die Passphrase-Regeln erfüllen, aber
+/// keine Geheimnisse sind (zeigt zugleich die Grenze der Heuristik, siehe
+/// `docs/SECURITY_PASSPHRASE.md`). Bewusst kurz und sichtbar gehalten.
+/// EN: Technical terms from help texts that formally meet the passphrase rules but
+/// are not secrets (also shows the heuristic's limit). Kept short and visible.
+pub const HELP_TERMS: [&str; 1] = ["FIPS-140-validiert"];
+
+/// DE: Prüft, dass kein Wort eines Hilfetexts die Passphrase-Regeln erfüllt.
+/// EN: Checks that no word of a help text meets the passphrase rules.
+pub fn assert_no_secret_like_words(text: &str, context: &str) {
+    let edge = |c: char| ".,:;!?()[]\"'„“<>".contains(c);
+    for word in text.split_whitespace().map(|w| w.trim_matches(edge)) {
+        if word.is_empty() || HELP_TERMS.contains(&word) {
+            continue;
+        }
+        let strong = StrongPassphrase::try_from(Passphrase::new(word).unwrap());
+        assert!(strong.is_err(), "{context}: {word}");
+    }
+}
