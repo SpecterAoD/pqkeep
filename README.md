@@ -4,7 +4,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-> **Status: early development – not yet released, not audited.**
+> **Status: beta (`v0.1.0-beta.1`) – not audited, not FIPS 140 validated.**
 > File formats and options may still change before 1.0. Please do not use PQKeep to protect
 > secrets you cannot afford to lose. See [Status and limitations](#status-and-limitations).
 
@@ -33,7 +33,9 @@ telemetry and opens no outgoing network connections.
 
 ### Quick start
 
-PQKeep is not released yet; build it from source (Rust ≥ 1.88):
+Download the archive for your platform from the [releases page](https://github.com/SpecterAoD/pqkeep/releases),
+[verify it](#verifying-a-release) and unpack it. Linux builds need glibc ≥ 2.35 (e.g. Ubuntu 22.04+,
+Debian 12+, Linux Mint 21+). Alternatively build from source (Rust ≥ 1.88):
 
 ```
 git clone https://github.com/SpecterAoD/pqkeep
@@ -71,8 +73,8 @@ arguments – only a hidden prompt or `--passphrase-stdin`.
 
 ### Status and limitations
 
-- **Development status:** active development, no release yet. Formats and options may change
-  before 1.0.
+- **Development status:** first beta (`v0.1.0-beta.1`), active development. Formats and options
+  may change before 1.0. Changes: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit status:** no external security audit has been performed. An independent review is
   planned before 1.0.
 - **Validation status:** the libraries implement FIPS 203 and FIPS 204 but are **not FIPS 140
@@ -141,13 +143,15 @@ dokumentierten JSON-Container, verschlüsselt mit **AES-256-GCM**; der Schlüsse
 **Argon2id** aus einer starken Passphrase abgeleitet. Läuft unter Windows und Linux, ohne
 Telemetrie und ohne ausgehende Netzwerkverbindungen.
 
-> **Status: frühe Entwicklung – noch kein Release, nicht auditiert.** Dateiformate und Optionen
+> **Status: Beta (`v0.1.0-beta.1`), nicht auditiert.** Dateiformate und Optionen
 > können sich bis 1.0 ändern. Bitte nicht für Geheimnisse verwenden, deren Verlust nicht
 > verkraftbar ist. Die verwendeten Krypto-Bibliotheken sind nicht FIPS-140-validiert.
 
 ### Kurzanleitung
 
-Noch kein Release – Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --locked`,
+Archiv für die eigene Plattform von der [Release-Seite](https://github.com/SpecterAoD/pqkeep/releases)
+laden, [prüfen](#release-prüfen) und entpacken (Linux: glibc ≥ 2.35, z. B. Ubuntu 22.04+, Debian 12+,
+Linux Mint 21+). Alternativ Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --locked`,
 Programm unter `target/release/pqkeep`.
 
 ```
