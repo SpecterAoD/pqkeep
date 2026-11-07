@@ -8,6 +8,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 1 | Core-Krypto: ML-KEM, ML-DSA, AES-256, Argon2id, AES-256-GCM-Container-Verschlüsselung ([CRYPTO.md](CRYPTO.md)) | Roundtrip-, Manipulations-, KAT- und Zeroize-Tests |
 | 2 | `security.rs`: Passphrase-Prüfung, Entropie, Generator | Schwach abgelehnt, stark akzeptiert, Generator getestet |
 | 2a | `hardening/`: Speichersperre (mlock/VirtualLock), Core-Dump-Sperre, sofortiges Nullen ([MEMORY_HARDENING.md](MEMORY_HARDENING.md)) | Sperr-/Freigabe-Tests, Best-effort bei Limit |
+| 2b | Wort-Modell + Wortlisten (EFF, BIP-39, deutsche Diceware-Listen) für die Passphrase-Prüfung ([SECURITY_PASSPHRASE.md](SECURITY_PASSPHRASE.md)) | Zusammengesetzte Wörter abgelehnt, Sätze/Zufall angenommen |
 | 3 | `envelope/`: JSON-Container, Metadaten, Parser-Härtung ([FORMAT.md](FORMAT.md)) | Roundtrip, Pfadkonventionen Windows/Linux, Fuzz/Property-Tests |
 | 3a | `files/`: Datei- und Ordnerverschlüsselung (Passphrase oder ML-KEM-Empfänger), Streaming-AEAD, Archiv, Pfadsicherheit ([FILE_FORMAT.md](FILE_FORMAT.md)) | Roundtrip, Manipulation, bösartige Archive, keine Teilausgabe |
 | 4 | `cli.rs`: Menü, Subcommands, integrierte zweisprachige Hilfe | CLI-Integrationstests, Hilfetests DE/EN |
@@ -25,7 +26,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | U3 | Einrichtungs-Assistent in der Konsole: Master-Passphrase, ML-KEM-1024 + ML-DSA-87, Kontextmenü, Notfall-Backup | Erneut aufrufbar, überschreibt nie ohne Bestätigung |
 | U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog | Abweichung vom Non-Goal „GUI“ – nur Dialog, Umsetzung im Plan entscheiden |
 | – | Spiegel-Modus für Ordner | |
-| – | Diceware mit eigener/gemeinfreier Wortliste (DE/EN) | Keine CC-BY-Liste |
+| – | Diceware-Generator (DE/EN) | Wortlisten sind seit 2b vorhanden (EFF als freigegebene Ausnahme) |
 
 ## Offene Punkte außerhalb des Codes
 

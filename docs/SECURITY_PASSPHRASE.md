@@ -31,18 +31,29 @@ erst, wenn sie mindestens ein Drittel der Passphrase ausmachen. Sonst würden no
 „Mein Test: 7 Kühe, 3 Pferde & Hund!“ abgelehnt. Die Liste ist klein und selbst erstellt (DE/EN);
 sie ersetzt keine Prüfung gegen große Passwortlisten.
 
-## Entropieschätzung
+## Entropieschätzung (Wort-Modell)
 
-`log2(Zeichenvorrat) × effektive Länge`. Zeichenvorrat = Summe der vorkommenden Klassen
-(Kleinbuchstaben 26, Großbuchstaben 26, Ziffern 10, ASCII-Sonderzeichen inkl. Leerzeichen 33,
-Nicht-ASCII pauschal 100). Zeichen, die zu einem erkannten Muster gehören, zählen nicht zur Länge.
+Angreifer raten Wörter und Muster, nicht einzelne Buchstaben. Deshalb:
 
-**Grenze:** Das ist eine Heuristik. Sie bewertet die Form, nicht wie die Passphrase gewählt wurde.
-Eine bekannte Zeile aus einem Lied kann die Regeln erfüllen und trotzdem leicht zu erraten sein.
-Die sicherste Wahl ist der eingebaute Generator.
-Beispiel aus den Tests: Das Fachwort „FIPS-140-validiert“ erfüllt alle Regeln (18 Zeichen, alle
-Klassen, keine Muster), wäre aber leicht zu erraten. Eine größere Wörterbuchprüfung ist eine mögliche
-spätere Verbesserung.
+| Teil | Wert |
+|---|---|
+| einzelnes zufälliges Zeichen | log2(Zeichenvorrat), Vorrat = Summe der vorkommenden Klassen (26/26/10/33, Nicht-ASCII 100) |
+| Buchstabenfolge | höchstens wie Wörter: Wort aus den Listen ≈ 12,9 Bit (+1 bei Großbuchstaben), unbekanntes Wort 18 Bit je angefangene 10 Buchstaben |
+| Ziffer | log2(10) ≈ 3,3 Bit (Jahreszahlen, PINs) |
+| wiederholtes Sonder-/Trennzeichen | 1 Bit |
+| erkannte Muster (Wiederholung, Folge, Tastatur, Blocklist) | 0 Bit |
+
+**Wortlisten** (`data/wordlists/`, rund 38 500 Wörter): EFF (Englisch, CC BY 4.0 – freigegebene
+Ausnahme), BIP-39 (10 Sprachen, MIT), dys2p (Deutsch, nach EFF-Regeln, BSD-3), Björn Albers
+(Deutsch, MIT). Zusammengesetzte deutsche Wörter, die in keiner Liste stehen, fängt das Modell
+„unbekanntes Wort“ ab.
+
+Beispiele: „FIPS-140-validiert“ ≈ 53 Bit, „Hund-Katze-Maus-2024!“ ≈ 70 Bit → abgelehnt mit dem Grund
+„besteht überwiegend aus Wörtern“. „Kaffee Tasse Wolke Garten Fenster Brot 7!“ ≈ 105 Bit → angenommen.
+Faustregel: etwa 6 Wörter oder zufällige Zeichen.
+
+**Grenze:** Das bleibt eine Heuristik. Bekannte Zitate, Liedzeilen oder persönliche Daten (Namen,
+Geburtstage) kann sie nicht erkennen. Die sicherste Wahl ist der eingebaute Generator.
 
 ## Generator
 
@@ -77,11 +88,13 @@ umlauts as letters); no control characters; no repetition ≥ 4, sequence ≥ 4 
 estimated entropy ≥ 80 bits. Blocklisted words always reduce the estimate but only cause rejection
 from one third upwards, so that ordinary sentences are not rejected for containing e.g. "test".
 
-**Entropy estimate:** `log2(pool) × effective length`; pool = sum of classes present (26/26/10/33,
-non-ASCII 100); characters in detected patterns do not count. It is a heuristic that judges shape,
-not how the passphrase was chosen; the built-in generator is the safest choice. Example from the tests:
-the technical term "FIPS-140-validiert" meets every rule yet would be easy to guess; a larger dictionary
-check is a possible later improvement.
+**Entropy estimate (word model):** single random characters count log2(pool); a letter run counts at most
+like words (listed word ≈ 12.9 bits, +1 for capitals; unknown word 18 bits per started 10 letters);
+digits log2(10); a repeated special/separator 1 bit; detected patterns 0. Bundled word lists (≈ 38,500
+words): EFF (CC BY 4.0, approved exception), BIP-39 (10 languages, MIT), dys2p (German, BSD-3), Björn
+Albers (German, MIT). "FIPS-140-validiert" ≈ 53 bits and "Hund-Katze-Maus-2024!" ≈ 70 bits are rejected
+("consists mostly of words"); a 6-word sentence passes. Still a heuristic: quotes, lyrics or personal data
+are not recognised; the built-in generator is the safest choice.
 
 **Generator:** OS randomness, rejection sampling without modulo bias, 94 printable ASCII characters
 (85 without ambiguous ones), default 24 characters ≈ 157 bits, length 16–256. Candidates failing any
