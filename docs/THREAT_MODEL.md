@@ -18,7 +18,9 @@
 | Manipulierte `.pqkf`-Dateien | STREAM-Konstruktion (Kippen, Vertauschen, Abschneiden, Anhängen), Header-Hash als AAD, Prüfsummen |
 | **Bösartige, korrekt verschlüsselte Archive** (Empfänger-Modus: jeder mit dem öffentlichen Schlüssel kann sie bauen) | Strenge Pfadregeln, keine Symlinks/Geräte, Grenzen, Ausgabe nur über Temporärordner, keine Teilausgabe, kein Überschreiben |
 | Fehlerhafte/bösartige Eingaben (CLI, API) | Validierung, Größen- und Längengrenzen, Property-Tests „keine Panik“ |
-| Ressourcenerschöpfung über die API | KDF-Obergrenzen vor der Ableitung, Body-Limits, Rate-Limiting, Semaphore (Schritt 5); keine Dateiverschlüsselung über die API |
+| Ressourcenerschöpfung über die API | Body ≤ 64 KiB, Header-Timeout 10 s, Gesamt-Timeout 30 s, kein Keep-Alive, max. 64 Verbindungen, Rate-Limit je Client, Speicherbudget für Argon2 (sonst 503); keine Dateiverschlüsselung über die API (`API.md`) |
+| Unbefugter API-Zugriff, Token-Raten | Standard nur 127.0.0.1, 256-Bit-Token nur als Hash gespeichert, Vergleich in konstanter Zeit, Sperre nach 5 Fehlversuchen; Netzwerkzugriff nur hinter Reverse Proxy mit TLS |
+| Rückschlüsse aus der Antwortzeit von `/v1/validate` | Jede Antwort wird auf eine feste Mindestdauer aufgefüllt |
 | Geheimnisse in Swap/Core Dumps | Speichersperre, Core-Dump-Sperre (Linux), sofortiges Nullen (best effort, siehe `MEMORY_HARDENING.md`) |
 | Lieferkette | Gesperrte Abhängigkeiten, `cargo deny`, wöchentliches Audit, signierte Commits/Releases |
 
@@ -51,8 +53,10 @@ the key file, and of encrypted files/directories (`.pqkf`), also against future 
 files (STREAM, header hash as AAD, checksums); **malicious but correctly encrypted archives** in
 recipient mode (strict path rules, no symlinks/devices, limits, temporary output, no partial output,
 no overwriting); malformed CLI/API input (validation, limits, property tests); API resource
-exhaustion (KDF bounds before derivation, body limits, rate limiting, semaphore; no file encryption via
-API); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
+exhaustion (body ≤ 64 KiB, header/overall timeouts, no keep-alive, connection cap, per-client rate
+limit, Argon2 memory budget → 503; no file encryption via API); unauthorised API access (loopback by
+default, 256-bit token stored as hash, constant-time comparison, lockout after 5 failures, TLS via reverse
+proxy); timing of `/v1/validate` (padded to a fixed minimum duration); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
 best effort); supply chain (locked dependencies, cargo-deny, weekly audit, signed commits/releases).
 
 **Visible despite encryption:** key file metadata, public key, algorithm, creation time; `.pqkf`
