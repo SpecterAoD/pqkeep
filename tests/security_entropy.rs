@@ -8,7 +8,9 @@
 mod common;
 
 use pqc_keyforge::security::generator::Options;
-use pqc_keyforge::security::{MIN_ENTROPY_BITS, Reason, formula_bits};
+use pqc_keyforge::security::{
+    GENERIC_WORD_BITS, LIST_WORD_BITS, MIN_ENTROPY_BITS, Reason, formula_bits,
+};
 
 fn bits(text: &str) -> f64 {
     common::passphrase(text).assess().entropy_bits
@@ -26,29 +28,98 @@ fn formula_matches_specification() {
     assert!(close(formula_bits(0, 50), 0.0));
 }
 
-#[test]
-fn all_ascii_classes_give_pool_95() {
-    // DE: 26 + 26 + 10 + 33 = 95. EN: 26 + 26 + 10 + 33 = 95.
-    assert!(close(bits("Bm7#qLx2!Vp9$Kd4"), 95f64.log2() * 16.0));
+fn per(pool: f64) -> f64 {
+    pool.log2()
 }
 
 #[test]
-fn single_class_pool() {
-    assert!(close(bits("kxvmqpwhgjdbnfsy"), 26f64.log2() * 16.0));
-    assert!(close(bits("KXVMQPWHGJDBNFSY"), 26f64.log2() * 16.0));
+fn random_characters_follow_the_formula() {
+    // DE: Keine Buchstabenfolge > 2, keine Ziffern, alle Sonderzeichen verschieden:
+    //     reine Formel log2(85) × 16 (Klein 26 + Groß 26 + Sonder 33).
+    // EN: No letter run > 2, no digits, all specials distinct: pure formula.
+    assert!(close(bits("Bm#qL!Vp$Kd&Wn%x"), per(85.0) * 16.0));
+}
+
+#[test]
+fn digits_count_log2_10() {
+    let expected = per(95.0) * 15.0 + 10f64.log2();
+    assert!(close(bits("Bm#qL!Vp$Kd&Wn%7"), expected));
+}
+
+#[test]
+fn repeated_separator_counts_one_bit() {
+    // DE: 10 Buchstaben (Folgen à 2) + erstes „-“ voll + 3 Wiederholungen à 1 Bit.
+    // EN: 10 letters (runs of 2) + first "-" in full + 3 repeats at 1 bit each.
+    let expected = per(85.0) * 11.0 + 3.0;
+    assert!(close(bits("Ab-Cd-Ef-Gh-Ij"), expected));
+}
+
+#[test]
+fn unknown_letter_run_counts_like_words() {
+    // DE: 16 Buchstaben ohne Listenwort → höchstens 2 unbekannte Wörter à 18 Bit.
+    // EN: 16 letters without a listed word → at most 2 unknown words at 18 bits.
+    assert!(close(bits("kxvmqpwhgjdbnfsy"), 2.0 * GENERIC_WORD_BITS));
+}
+
+#[test]
+fn listed_words_count_as_list_entries() {
+    assert!(close(bits("battery"), LIST_WORD_BITS));
+    assert!(close(bits("Battery"), LIST_WORD_BITS + 1.0));
+    assert!(close(bits("correcthorse"), 2.0 * LIST_WORD_BITS));
+    assert!(pqc_keyforge::security::dictionary::contains("abarbeiten"));
+    assert!(pqc_keyforge::security::dictionary::len() > 30_000);
 }
 
 #[test]
 fn non_ascii_extends_pool() {
-    // DE: Kleinbuchstaben (26) + Nicht-ASCII (100). EN: lowercase (26) + non-ASCII (100).
-    assert!(close(bits("kxvmqpwhgjdbnfsä"), 126f64.log2() * 16.0));
+    // DE: Kleinbuchstaben (26) + Nicht-ASCII (100), Folge aus 2 Zeichen.
+    // EN: lowercase (26) + non-ASCII (100), run of 2 characters.
+    assert!(close(bits("kä"), per(126.0) * 2.0));
+}
+
+#[test]
+fn compound_words_are_weak() {
+    for weak in [
+        "FIPS-140-validiert",
+        "Sommer2026!Urlaub",
+        "Hund-Katze-Maus-2024!",
+    ] {
+        let a = common::passphrase(weak).assess();
+        assert!(
+            a.entropy_bits < MIN_ENTROPY_BITS,
+            "{weak}: {}",
+            a.entropy_bits
+        );
+        assert!(
+            a.reasons.contains(&Reason::DictionaryWords),
+            "{weak}: {:?}",
+            a.reasons
+        );
+    }
+}
+
+#[test]
+fn long_sentences_and_random_strings_are_strong() {
+    for strong in [
+        "Kaffee Tasse Wolke Garten Fenster Brot 7!",
+        "Grüne Wiese, 7 Kühe & 3 Pferde!",
+        "zH8%rN2^eQ6*uJ4(wT",
+    ] {
+        let a = common::passphrase(strong).assess();
+        assert!(
+            a.is_strong(),
+            "{strong}: {:?} {}",
+            a.reasons,
+            a.entropy_bits
+        );
+    }
 }
 
 #[test]
 fn low_entropy_reported_with_bits() {
-    // DE: Nur 4 Zeichen zählen (Rest ist Wiederholung). EN: Only 4 characters count.
+    // DE: „Bm“ + „7“ + „#“, die Wiederholung zählt nicht. EN: "Bm" + "7" + "#", repetition not counted.
     let text = "Bm7#aaaaaaaaaaaa";
-    let expected = formula_bits(95, 4);
+    let expected = per(95.0) * 3.0 + 10f64.log2();
     assert!(close(bits(text), expected));
     let reasons = common::passphrase(text).assess().reasons;
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]

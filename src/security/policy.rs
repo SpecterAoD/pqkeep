@@ -46,6 +46,9 @@ pub enum Reason {
     KeyboardPattern,
     /// DE: Enthält ein häufiges Passwort/Muster. EN: Contains a common password/pattern.
     Blocklisted,
+    /// DE: Besteht überwiegend aus Wörtern (zu wenige für die nötige Stärke).
+    /// EN: Consists mostly of words (too few for the required strength).
+    DictionaryWords,
     /// DE: Geschätzte Entropie zu gering. EN: Estimated entropy too low.
     LowEntropy {
         /// DE: Geschätzte Bits (abgerundet). EN: Estimated bits (rounded down).
@@ -90,6 +93,10 @@ impl Reason {
             Self::Blocklisted => s(
                 "enthält ein häufig verwendetes Passwort oder Wort",
                 "contains a commonly used password or word",
+            ),
+            Self::DictionaryWords => s(
+                "besteht überwiegend aus Wörtern – mehr Wörter (etwa 6) oder zufällige Zeichen verwenden",
+                "consists mostly of words – use more words (about 6) or random characters",
             ),
             Self::LowEntropy { bits } => (
                 format!("geschätzte Stärke {bits} Bit, mindestens {MIN_ENTROPY_BITS} Bit"),
@@ -168,7 +175,13 @@ pub(super) fn assess(text: &str) -> (Vec<Reason>, f64) {
     }
     let found = patterns::find(&chars);
     reasons.extend(found.reasons.iter().copied());
-    let bits = entropy::estimate(&chars, &found.marked);
+    let low: Zeroizing<Vec<char>> =
+        Zeroizing::new(chars.iter().map(|&c| patterns::lower(c)).collect());
+    let estimate = entropy::estimate(&chars, &low, &found.marked);
+    let bits = estimate.bits;
+    if bits < MIN_ENTROPY_BITS && estimate.word_model {
+        reasons.push(Reason::DictionaryWords);
+    }
     if bits < MIN_ENTROPY_BITS {
         // DE: Abrunden für die Anzeige; Werte sind klein und nicht negativ.
         // EN: Round down for display; values are small and non-negative.

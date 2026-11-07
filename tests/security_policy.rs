@@ -128,6 +128,7 @@ fn messages_bilingual_and_distinct() {
         Reason::Sequence,
         Reason::KeyboardPattern,
         Reason::Blocklisted,
+        Reason::DictionaryWords,
         Reason::LowEntropy { bits: 42 },
     ];
     for r in all {
