@@ -41,7 +41,7 @@ fn characters_not_bytes_are_counted() {
 
 #[test]
 fn sixteen_unicode_characters_are_enough() {
-    let text = "Äpfel&Birnen7Öl!";
+    let text = "Ä7#qL!xÖ2pV$kÜ9d";
     let p = common::passphrase(text);
     assert_eq!(p.char_count(), 16);
     assert!(p.expose().len() > 16);

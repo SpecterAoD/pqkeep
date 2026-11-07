@@ -1,8 +1,9 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.3: PQC KeyForge (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.4: PQC KeyForge (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
 > Änderung v2.3 (07.11.2026, freigegeben von SpecterAoD): geplante Updates nach der ersten Beta (Abschnitt 9): Signaturen, mehrere Empfänger, Einrichtungs-Assistent, Kontextmenü.
+> Änderung v2.4 (07.11.2026, freigegeben von SpecterAoD): Wortlisten für die Passphrase-Prüfung (Schritt 2b), Ausnahme von 5c für die EFF-Wortlisten (CC BY 4.0).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -122,6 +123,7 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 ## 5c. Lizenz & Open-Source-Reinheit
 
 - **Lizenz (festgelegt):** **Apache License 2.0** (OSI-anerkannt, enthält eine Patentklausel, passend für Kryptografie). Datei `LICENSE` (Volltext) und `NOTICE` im Repo-Root, `license = "Apache-2.0"` in `Cargo.toml`. Alle Abhängigkeiten müssen mit Apache-2.0 kompatibel sein (Allowlist in `deny.toml`, z. B. Apache-2.0, MIT, BSD-2/3-Clause, ISC, Unicode-3.0; GPL/AGPL-Abhängigkeiten sind ausgeschlossen).
+- **Ausnahme (freigegeben 07.11.2026):** Die EFF-Wortlisten (Daten, keine Software) stehen unter **CC BY 4.0** (keine OSI-Lizenz). Sie werden als Datendateien unter `data/wordlists/` mit Namensnennung in `NOTICE` mitgeliefert. Alle übrigen Wortlisten stehen unter OSI-Lizenzen (MIT, BSD-3-Clause). Listen mit „nicht kommerziell“-Klauseln (z. B. CC BY-NC) bleiben ausgeschlossen.
 - **Kein proprietärer Code:** Weder im eigenen Code noch in Abhängigkeiten, Vendor-Verzeichnissen, Binärblobs oder eingebetteten Ressourcen. Keine vorkompilierten Binärdateien im Repo.
 - **Automatische Prüfung:** `cargo deny` mit Lizenz-Allowlist (nur OSI-anerkannte, kompatible Lizenzen), Verbot unbekannter Registries/Git-Quellen und Prüfung auf Crates ohne Lizenzangabe. Zusätzlich Check, dass keine Binärdateien eingecheckt sind.
 - **Beiträge:** `CONTRIBUTING.md` (DE/EN) mit Hinweis, dass eingereichter Code unter derselben Lizenz steht und keinen proprietären Code enthalten darf.
@@ -184,6 +186,10 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 ### Schritt 2a: Speicher- und Prozesshärtung (`hardening/`)
 - Aufgabe: Speicherseiten mit Geheimnissen sperren (mlock/VirtualLock, Seitenzähler), Core-Dump-Sperre und „nicht dumpbar“ (Linux), sofortiges Nullen nach Nutzung; ohne eigenen `unsafe`-Code. Details: `docs/MEMORY_HARDENING.md`.
 - Tests: Sperren/Freigeben, gemeinsame Seiten, Weiterlaufen bei verbotenem Sperren, Core-Dump-Grenze.
+
+### Schritt 2b: Wortlisten und Wort-Modell (`security/dictionary.rs`)
+- Aufgabe: Entropieschätzung nach dem Wort-Modell (Buchstabenfolgen höchstens wie Wörter, Listenwörter ≈ 12,9 Bit, Ziffern log2(10), wiederholte Trennzeichen 1 Bit) mit eingebundenen Wortlisten (EFF, BIP-39, deutsche Diceware-Listen); Grund „besteht überwiegend aus Wörtern“.
+- Tests: zusammengesetzte Wörter werden abgelehnt (z. B. „FIPS-140-validiert“), lange Sätze und Zufallszeichen angenommen, Formelwerte nachgerechnet.
 
 ### Schritt 3: Container (`envelope.rs`)
 - Aufgabe: Struktur (Abschnitt 4), Serialisierung, Deserialisierung, Validierung der Metadaten.

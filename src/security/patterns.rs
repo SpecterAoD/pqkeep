@@ -24,7 +24,7 @@ pub(super) struct Found {
 
 /// DE: Kleinbuchstabe (erstes Zeichen von `to_lowercase`, damit Indizes passen).
 /// EN: Lowercase (first char of `to_lowercase`, so that indices line up).
-fn lower(c: char) -> char {
+pub(super) fn lower(c: char) -> char {
     c.to_lowercase().next().unwrap_or(c)
 }
 

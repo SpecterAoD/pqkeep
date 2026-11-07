@@ -7,12 +7,13 @@
 //! a [`StrongPassphrase`]; opening only needs a [`Passphrase`].
 
 mod blocklist;
+pub mod dictionary;
 mod entropy;
 pub mod generator;
 mod patterns;
 mod policy;
 
-pub use entropy::formula_bits;
+pub use entropy::{GENERIC_WORD_BITS, LIST_WORD_BITS, formula_bits};
 pub use policy::{MAX_CHARS, MIN_CHARS, MIN_ENTROPY_BITS, Reason, Rejection};
 
 use unicode_normalization::UnicodeNormalization;
