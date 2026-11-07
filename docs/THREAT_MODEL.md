@@ -21,6 +21,7 @@
 | Ressourcenerschöpfung über die API | Body ≤ 64 KiB, Header-Timeout 10 s, Gesamt-Timeout 30 s, kein Keep-Alive, max. 64 Verbindungen, Rate-Limit je Client, Speicherbudget für Argon2 (sonst 503); keine Dateiverschlüsselung über die API (`API.md`) |
 | Unbefugter API-Zugriff, Token-Raten | Standard nur 127.0.0.1, 256-Bit-Token nur als Hash gespeichert, Vergleich in konstanter Zeit, Sperre nach 5 Fehlversuchen; Netzwerkzugriff nur hinter Reverse Proxy mit TLS |
 | Rückschlüsse aus der Antwortzeit von `/v1/validate` | Jede Antwort wird auf eine feste Mindestdauer aufgefüllt |
+| Ausnutzen einer Lücke in keyforge oder einer Bibliothek (Parser) | Sandbox unter Linux: Landlock (nur genannte Pfade, API gar keine) und Seccomp (kein `execve`/`fork`/`ptrace`, kein Netzwerk in der CLI, keine neuen Sockets in der API), Menü-Aktionen als eigene Prozesse (`SANDBOX.md`) |
 | Geheimnisse in Swap/Core Dumps | Speichersperre, Core-Dump-Sperre (Linux), sofortiges Nullen (best effort, siehe `MEMORY_HARDENING.md`) |
 | Lieferkette | Gesperrte Abhängigkeiten, `cargo deny`, wöchentliches Audit, signierte Commits/Releases |
 
@@ -56,7 +57,9 @@ no overwriting); malformed CLI/API input (validation, limits, property tests); A
 exhaustion (body ≤ 64 KiB, header/overall timeouts, no keep-alive, connection cap, per-client rate
 limit, Argon2 memory budget → 503; no file encryption via API); unauthorised API access (loopback by
 default, 256-bit token stored as hash, constant-time comparison, lockout after 5 failures, TLS via reverse
-proxy); timing of `/v1/validate` (padded to a fixed minimum duration); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
+proxy); timing of `/v1/validate` (padded to a fixed minimum duration); exploitation of a bug in keyforge or a library (Linux sandbox: Landlock limits paths – none for the
+API – and seccomp forbids `execve`/`fork`/`ptrace`, network in the CLI and new sockets in the API; menu
+actions run as separate processes, see `SANDBOX.md`); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
 best effort); supply chain (locked dependencies, cargo-deny, weekly audit, signed commits/releases).
 
 **Visible despite encryption:** key file metadata, public key, algorithm, creation time; `.pqkf`
