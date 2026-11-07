@@ -1,5 +1,5 @@
-//! DE: Einstiegspunkt des Binaries `keyforge` (CLI). Die API folgt in Schritt 5.
-//! EN: Entry point of the `keyforge` binary (CLI). The API follows in step 5.
+//! DE: Einstiegspunkt des Binaries `keyforge` (CLI und, mit Feature `api`, `keyforge serve`).
+//! EN: Entry point of the `keyforge` binary (CLI and, with feature `api`, `keyforge serve`).
 
 #![forbid(unsafe_code)]
 

@@ -16,6 +16,8 @@ mod parse;
 mod public;
 pub mod time;
 
+#[cfg(feature = "api")]
+pub(crate) use encoding::hex_decode;
 pub use encoding::hex_encode;
 pub use format::{FORMAT_VERSION, MAGIC};
 pub use io::{
