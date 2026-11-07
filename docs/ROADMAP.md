@@ -2,6 +2,8 @@
 
 Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
 
+**Stand / status (07.11.2026):** Schritte 0–5a abgeschlossen; als Nächstes Schritt 6 (CI/CD und Release-Signierung), dann Schritt 7 (erste signierte Beta). / Steps 0–5a done; next step 6 (CI/CD and release signing), then step 7 (first signed beta).
+
 | Schritt | Inhalt | Ergebnis |
 |---|---|---|
 | 0 | Projekt-Grundgerüst, Lints, `error.rs`, CI-Rumpf, Zeilenlimit-Check | Leerer Build grün auf Linux und Windows |
