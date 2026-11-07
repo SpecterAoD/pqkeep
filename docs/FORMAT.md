@@ -82,6 +82,14 @@ fehlerhafte Eingaben führen nie zu einem Absturz (Property-Tests).
   ACLs setzt das Programm nicht (dafür wäre `unsafe`-Code nötig).
 - Der Container enthält keine Pfade.
 
+## Öffentliche Schlüsseldatei (`*.pub.json`)
+
+Zum Weitergeben (z. B. damit andere Dateien für Sie verschlüsseln): `magic` = `PQC-KEYFORGE-PUB`,
+`format_version`, `algorithm` (nur ML-KEM/ML-DSA), `key_id`, `created_utc`, `metadata`,
+`public_key`. Enthält **nichts Geheimes** (kein `kdf`, kein `cipher`). Die Datei ist **nicht
+signiert**: Ob der Schlüssel wirklich der genannten Person gehört, muss über den Fingerabdruck
+(`keyforge inspect`) auf einem zweiten Weg bestätigt werden. Signaturen folgen mit Update U1.
+
 ---
 
 ## English
@@ -109,3 +117,6 @@ verified without the passphrase.
 with explicit overwrite; FAT fallback check + rename). Linux mode `0600` and a warning when loading
 group/world-readable files. On Windows the file inherits the directory ACL; store keys in the user
 profile. No paths inside the container.
+
+**Public key file (`*.pub.json`):** magic `PQC-KEYFORGE-PUB`, ML-KEM/ML-DSA only, contains nothing
+secret. Not signed – confirm the fingerprint with the owner through a second channel.
