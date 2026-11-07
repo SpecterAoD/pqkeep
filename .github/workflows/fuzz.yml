@@ -56,8 +56,13 @@ jobs:
         working-directory: fuzz
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then t=60; else t=600; fi
+          # DE: stream_tamper bis ~4 Blöcke (CHUNK_SIZE = 64 KiB), damit Fehler zwischen Blöcken
+          #     (Kürzen an Blockgrenzen, Folgeblöcke) erreichbar sind; sonst 64 KiB.
+          # EN: stream_tamper up to ~4 chunks (CHUNK_SIZE = 64 KiB) so that errors across chunks
+          #     are reachable; otherwise 64 KiB.
+          if [ "${{ matrix.target }}" = "stream_tamper" ]; then len=270000; else len=65536; fi
           cargo +"$NIGHTLY" fuzz run "${{ matrix.target }}" -- \
-            -max_total_time="$t" -rss_limit_mb=4096 -max_len=65536
+            -max_total_time="$t" -rss_limit_mb=4096 -max_len="$len"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
