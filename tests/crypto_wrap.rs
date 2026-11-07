@@ -9,9 +9,9 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::wrap::{self, FILE_KEY_LEN, RecipientWrap, WRAPPED_LEN};
-use pqc_keyforge::crypto::{KemAlgorithm, aead, kem, rng};
+use pqkeep::Error;
+use pqkeep::crypto::wrap::{self, FILE_KEY_LEN, RecipientWrap, WRAPPED_LEN};
+use pqkeep::crypto::{KemAlgorithm, aead, kem, rng};
 
 const AAD: &[u8] = b"file header without wrap";
 const ID: &[u8] = &[0x42; 32];

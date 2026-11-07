@@ -14,16 +14,15 @@ mod common;
 
 use std::sync::OnceLock;
 
-use pqc_keyforge::crypto::KeyAlgorithm;
-use pqc_keyforge::envelope::KeyFile;
+use pqkeep::crypto::KeyAlgorithm;
+use pqkeep::envelope::KeyFile;
 use proptest::prelude::*;
 
 fn valid_json() -> &'static str {
     static JSON: OnceLock<String> = OnceLock::new();
     JSON.get_or_init(|| {
-        let (file, _) = common::key_file(KeyAlgorithm::Kem(
-            pqc_keyforge::crypto::KemAlgorithm::default(),
-        ));
+        let (file, _) =
+            common::key_file(KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::default()));
         file.to_json().unwrap()
     })
 }

@@ -9,7 +9,7 @@
 
 mod common;
 
-use pqc_keyforge::security::{Passphrase, StrongPassphrase};
+use pqkeep::security::{Passphrase, StrongPassphrase};
 
 const COMMANDS: [&str; 5] = ["generate", "validate", "passphrase", "inspect", "export"];
 
@@ -19,7 +19,7 @@ fn tmp() -> std::path::PathBuf {
 
 #[test]
 fn passphrase_command_outputs_only_the_passphrase() {
-    let (code, out, err) = common::keyforge(
+    let (code, out, err) = common::pqkeep(
         &["--lang", "de", "passphrase", "--length", "32"],
         "",
         &tmp(),
@@ -30,16 +30,16 @@ fn passphrase_command_outputs_only_the_passphrase() {
     assert_eq!(line.chars().count(), 32);
     assert!(StrongPassphrase::try_from(Passphrase::new(line).unwrap()).is_ok());
     assert!(err.contains("Geschätzte Stärke"));
-    let (code, out, _) = common::keyforge(&["passphrase", "--no-ambiguous"], "", &tmp());
+    let (code, out, _) = common::pqkeep(&["passphrase", "--no-ambiguous"], "", &tmp());
     assert_eq!(code, 0);
     assert!(!out.trim_end().chars().any(|c| "0O1lI|`'\"".contains(c)));
-    let (code, _, _) = common::keyforge(&["passphrase", "--length", "8"], "", &tmp());
+    let (code, _, _) = common::pqkeep(&["passphrase", "--length", "8"], "", &tmp());
     assert_eq!(code, 1);
 }
 
 #[test]
 fn validate_reports_reasons_and_exit_codes() {
-    let (code, _, err) = common::keyforge(
+    let (code, _, err) = common::pqkeep(
         &["--lang", "de", "validate", "--passphrase-stdin"],
         "aaaa\n",
         &tmp(),
@@ -49,7 +49,7 @@ fn validate_reports_reasons_and_exit_codes() {
         assert!(err.contains(reason), "{reason}: {err}");
     }
     let strong = common::random_passphrase().as_ref().expose_str().to_owned();
-    let (code, out, _) = common::keyforge(
+    let (code, out, _) = common::pqkeep(
         &["--lang", "en", "validate", "--passphrase-stdin"],
         &format!("{strong}\r\n"),
         &tmp(),
@@ -60,7 +60,7 @@ fn validate_reports_reasons_and_exit_codes() {
 
 #[test]
 fn no_tty_without_stdin_flag_is_usage_error() {
-    let (code, _, err) = common::keyforge(&["--lang", "en", "validate"], "", &tmp());
+    let (code, _, err) = common::pqkeep(&["--lang", "en", "validate"], "", &tmp());
     assert_eq!(code, 2);
     assert!(err.contains("--passphrase-stdin"));
 }
@@ -71,7 +71,7 @@ fn passphrase_cannot_be_given_as_argument() {
         ["validate", "--passphrase", "x"],
         ["validate", "--password", "x"],
     ] {
-        let (code, _, _) = common::keyforge(&attempt, "", &tmp());
+        let (code, _, _) = common::pqkeep(&attempt, "", &tmp());
         assert_eq!(code, 2, "{attempt:?}");
     }
 }
@@ -82,28 +82,28 @@ fn help_per_command_in_both_languages() {
         ("de", "Beispiel", "Exit-Codes"),
         ("en", "Example", "Exit codes"),
     ] {
-        let (code, out, _) = common::keyforge(&["--lang", lang, "--help"], "", &tmp());
+        let (code, out, _) = common::pqkeep(&["--lang", lang, "--help"], "", &tmp());
         assert_eq!(code, 0);
         assert!(out.contains(example) && out.contains(exit), "{lang}");
         for cmd in COMMANDS {
-            let (code, out, _) = common::keyforge(&["--lang", lang, cmd, "--help"], "", &tmp());
+            let (code, out, _) = common::pqkeep(&["--lang", lang, cmd, "--help"], "", &tmp());
             assert_eq!(code, 0, "{lang} {cmd}");
             assert!(out.contains(example), "{lang} {cmd}: Beispiel / example");
             assert!(out.contains(exit), "{lang} {cmd}: Exit-Codes");
-            assert!(out.contains("keyforge"), "{lang} {cmd}");
+            assert!(out.contains("pqkeep"), "{lang} {cmd}");
         }
     }
-    let (_, de, _) = common::keyforge(&["--lang", "de", "generate", "--help"], "", &tmp());
-    let (_, en, _) = common::keyforge(&["--lang", "en", "generate", "--help"], "", &tmp());
+    let (_, de, _) = common::pqkeep(&["--lang", "de", "generate", "--help"], "", &tmp());
+    let (_, en, _) = common::pqkeep(&["--lang", "en", "generate", "--help"], "", &tmp());
     assert!(de.contains("Neuen Schlüssel erzeugen") && en.contains("Generate a new key"));
 }
 
 #[test]
 fn help_contains_no_example_secrets() {
     for lang in ["de", "en"] {
-        let mut texts = vec![common::keyforge(&["--lang", lang, "--help"], "", &tmp()).1];
+        let mut texts = vec![common::pqkeep(&["--lang", lang, "--help"], "", &tmp()).1];
         for cmd in COMMANDS {
-            texts.push(common::keyforge(&["--lang", lang, cmd, "--help"], "", &tmp()).1);
+            texts.push(common::pqkeep(&["--lang", lang, cmd, "--help"], "", &tmp()).1);
         }
         for text in texts {
             common::assert_no_secret_like_words(&text, lang);

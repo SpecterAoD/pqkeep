@@ -1,16 +1,16 @@
-//! DE: `keyforge serve`: Token anlegen oder REST-API starten (Feature `api`).
+//! DE: `pqkeep serve`: Token anlegen oder REST-API starten (Feature `api`).
 //! Standard-Bind 127.0.0.1:8787; andere Adressen nur mit `--allow-remote` und Warnung.
-//! EN: `keyforge serve`: create a token or start the REST API (feature `api`).
+//! EN: `pqkeep serve`: create a token or start the REST API (feature `api`).
 //! Default bind 127.0.0.1:8787; other addresses only with `--allow-remote` and a warning.
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
-use pqc_keyforge::api::{self, AppState, Limits, TokenHash, token};
-use pqc_keyforge::envelope::Overwrite;
-use pqc_keyforge::hardening::sandbox::Profile;
-use pqc_keyforge::security::Lang;
+use pqkeep::api::{self, AppState, Limits, TokenHash, token};
+use pqkeep::envelope::Overwrite;
+use pqkeep::hardening::sandbox::Profile;
+use pqkeep::security::Lang;
 
 use super::io::{CliResult, Failure, code};
 use super::sandbox;
@@ -48,7 +48,7 @@ pub fn command(base: Command, lang: Lang) -> Command {
     .arg(flag("force", s.arg_force).requires("init-token"))
 }
 
-/// DE: `keyforge serve`. EN: `keyforge serve`.
+/// DE: `pqkeep serve`. EN: `pqkeep serve`.
 pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
     let s = serve_texts(lang);
     let path = m

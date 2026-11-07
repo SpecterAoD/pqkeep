@@ -12,8 +12,8 @@
 #[cfg(target_os = "linux")]
 #[test]
 fn locking_failure_is_tolerated_and_reported() {
-    use pqc_keyforge::crypto::{SecretBytes, aead};
-    use pqc_keyforge::hardening::memlock;
+    use pqkeep::crypto::{SecretBytes, aead};
+    use pqkeep::hardening::memlock;
     use rustix::process::{Resource, Rlimit, getuid, setrlimit};
 
     if getuid().is_root() {

@@ -13,4 +13,4 @@ labels: bug
 ## Erwartet / Expected
 
 ## Umgebung / Environment
-OS, Version (`keyforge --version`):
+OS, Version (`pqkeep --version`):

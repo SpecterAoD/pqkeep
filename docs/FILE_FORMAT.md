@@ -29,7 +29,7 @@ Alle Zahlen Little Endian; Pfade UTF-8, Trenner „/“.
 - **Dateischlüssel:** pro Verschlüsselung neu, 256 Bit aus dem OS-CSPRNG; ebenso das Nonce-Präfix.
 - **Passphrase:** Argon2id(Passphrase, Salt) → Packschlüssel → AES-256-GCM(Dateischlüssel).
 - **Empfänger:** ML-KEM-Kapselung an den öffentlichen Schlüssel aus der Schlüsseldatei des
-  Empfängers → HKDF-SHA3-256 (Salt = KEM-Chiffrat, Info = `PQC-KeyForge/file/v1/kek\0` ‖
+  Empfängers → HKDF-SHA3-256 (Salt = KEM-Chiffrat, Info = `PQKeep/file/v1/kek\0` ‖
   Empfänger-ID) → Packschlüssel → AES-256-GCM(Dateischlüssel). Empfänger-ID = Schlüssel-ID
   (SHA3-256 des öffentlichen Schlüssels); `inspect` zeigt sie ohne Schlüssel an.
 - **AAD:** Der eingepackte Schlüssel ist an alle Header-Felder davor gebunden (das KEM-Chiffrat über

@@ -1,4 +1,4 @@
-# PQC KeyForge
+# PQKeep
 
 **DE** | [EN](#english)
 
@@ -16,16 +16,16 @@ Hinweis: Die verwendeten Krypto-Bibliotheken sind nicht FIPS-140-validiert. Das 
 ## Kurzanleitung
 
 ```
-keyforge                                   # interaktives Menü (im Terminal)
-keyforge passphrase                        # sichere Passphrase erzeugen
-keyforge generate --name "Max Muster" --out max.key.json
-keyforge export max.key.json --out max.pub.json   # öffentlichen Schlüssel weitergeben
-keyforge encrypt bericht.pdf               # mit Passphrase
-keyforge encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
-keyforge decrypt Ordner.pqkf --key anna.key.json
-keyforge help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
-keyforge serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
-keyforge serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token), siehe docs/API.md
+pqkeep                                   # interaktives Menü (im Terminal)
+pqkeep passphrase                        # sichere Passphrase erzeugen
+pqkeep generate --name "Max Muster" --out max.key.json
+pqkeep export max.key.json --out max.pub.json   # öffentlichen Schlüssel weitergeben
+pqkeep encrypt bericht.pdf               # mit Passphrase
+pqkeep encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
+pqkeep decrypt Ordner.pqkf --key anna.key.json
+pqkeep help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
+pqkeep serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
+pqkeep serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token), siehe docs/API.md
 ```
 Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder über `--passphrase-stdin`. Unter Linux läuft jeder Befehl in einer Sandbox (Landlock/Seccomp, siehe [docs/SANDBOX.md](docs/SANDBOX.md)).
 
@@ -47,15 +47,15 @@ Note: the cryptographic libraries used are not FIPS 140 validated. The project h
 ## Quick start
 
 ```
-keyforge                                   # interactive menu (in a terminal)
-keyforge passphrase                        # generate a secure passphrase
-keyforge generate --name "Jane Doe" --out jane.key.json
-keyforge export jane.key.json --out jane.pub.json # share your public key
-keyforge encrypt report.pdf                # with a passphrase
-keyforge encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
-keyforge decrypt folder.pqkf --key anna.key.json
-keyforge help security                     # topics: passphrase, algorithms, container, files, security, verify
-keyforge serve --init-token --token-file api.token   # show API token once, store hash only
-keyforge serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token), see docs/API.md
+pqkeep                                   # interactive menu (in a terminal)
+pqkeep passphrase                        # generate a secure passphrase
+pqkeep generate --name "Jane Doe" --out jane.key.json
+pqkeep export jane.key.json --out jane.pub.json # share your public key
+pqkeep encrypt report.pdf                # with a passphrase
+pqkeep encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
+pqkeep decrypt folder.pqkf --key anna.key.json
+pqkeep help security                     # topics: passphrase, algorithms, container, files, security, verify
+pqkeep serve --init-token --token-file api.token   # show API token once, store hash only
+pqkeep serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token), see docs/API.md
 ```
 Language: `--lang de|en` (default: system language). Passphrases are never arguments, only hidden or via `--passphrase-stdin`. On Linux every command runs in a sandbox (Landlock/seccomp, see [docs/SANDBOX.md](docs/SANDBOX.md)).

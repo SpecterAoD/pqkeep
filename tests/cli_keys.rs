@@ -11,8 +11,8 @@
 
 mod common;
 
-use pqc_keyforge::envelope;
-use pqc_keyforge::security::Passphrase;
+use pqkeep::envelope;
+use pqkeep::security::Passphrase;
 
 fn new_pass() -> String {
     common::random_passphrase().as_ref().expose_str().to_owned()
@@ -34,7 +34,7 @@ fn generate_max(dir: &std::path::Path, pass: &str) -> (String, String) {
         "max.key.json",
         "--passphrase-stdin",
     ];
-    let (code, out, err) = common::keyforge(&args, &format!("{pass}\n"), dir);
+    let (code, out, err) = common::pqkeep(&args, &format!("{pass}\n"), dir);
     assert_eq!(code, 0, "{err}");
     (out, err)
 }
@@ -57,7 +57,7 @@ fn inspect_shows_metadata_not_secrets() {
     let pass = new_pass();
     generate_max(dir.path(), &pass);
     let (code, out, _) =
-        common::keyforge(&["--lang", "en", "inspect", "max.key.json"], "", dir.path());
+        common::pqkeep(&["--lang", "en", "inspect", "max.key.json"], "", dir.path());
     assert_eq!(code, 0);
     for expected in [
         "Key file",
@@ -79,7 +79,7 @@ fn export_public_key() {
     let dir = tempfile::tempdir().unwrap();
     generate_max(dir.path(), &new_pass());
     let (key, _) = envelope::load(&dir.path().join("max.key.json")).unwrap();
-    let (code, out, _) = common::keyforge(
+    let (code, out, _) = common::pqkeep(
         &["export", "max.key.json", "--out", "max.pub.json"],
         "",
         dir.path(),
@@ -89,7 +89,7 @@ fn export_public_key() {
     assert_eq!(public.key_id(), key.key_id());
     assert!(out.contains(&key.key_id_hex()[..4]));
     let (code, out, _) =
-        common::keyforge(&["--lang", "de", "inspect", "max.pub.json"], "", dir.path());
+        common::pqkeep(&["--lang", "de", "inspect", "max.pub.json"], "", dir.path());
     assert_eq!(code, 0);
     assert!(out.contains("Öffentliche Schlüsseldatei"));
 }
@@ -107,7 +107,7 @@ fn weak_passphrase_exit_4_and_no_file() {
         "k.json",
         "--passphrase-stdin",
     ];
-    let (code, _, err) = common::keyforge(&args, "password123\n", dir.path());
+    let (code, _, err) = common::pqkeep(&args, "password123\n", dir.path());
     assert_eq!(code, 4);
     assert!(err.contains("too short") && err.contains("Passphrase rejected"));
     assert!(!dir.path().join("k.json").exists());
@@ -128,7 +128,7 @@ fn existing_target_exit_5_and_force_yes() {
         "k.json",
         "--passphrase-stdin",
     ];
-    let (code, _, err) = common::keyforge(&base, &pass, dir.path());
+    let (code, _, err) = common::pqkeep(&base, &pass, dir.path());
     assert_eq!(code, 5);
     assert!(err.contains("existiert bereits"));
     assert_eq!(std::fs::read(dir.path().join("k.json")).unwrap(), b"alt");
@@ -136,10 +136,10 @@ fn existing_target_exit_5_and_force_yes() {
     // DE: --force ohne Terminal und ohne --yes wird verweigert. EN: --force without TTY/--yes refused.
     let mut forced = base.to_vec();
     forced.push("--force");
-    let (code, _, _) = common::keyforge(&forced, &pass, dir.path());
+    let (code, _, _) = common::pqkeep(&forced, &pass, dir.path());
     assert_eq!(code, 2);
     forced.push("--yes");
-    let (code, _, err) = common::keyforge(&forced, &pass, dir.path());
+    let (code, _, err) = common::pqkeep(&forced, &pass, dir.path());
     assert_eq!(code, 0, "{err}");
     assert!(envelope::load(&dir.path().join("k.json")).is_ok());
 }
@@ -147,12 +147,11 @@ fn existing_target_exit_5_and_force_yes() {
 #[test]
 fn missing_and_invalid_inputs() {
     let dir = tempfile::tempdir().unwrap();
-    let (code, _, err) =
-        common::keyforge(&["--lang", "de", "inspect", "fehlt.json"], "", dir.path());
+    let (code, _, err) = common::pqkeep(&["--lang", "de", "inspect", "fehlt.json"], "", dir.path());
     assert_eq!(code, 1);
     assert!(err.contains("nicht gefunden"));
     std::fs::write(dir.path().join("kaputt.json"), b"{}").unwrap();
-    let (code, _, _) = common::keyforge(&["inspect", "kaputt.json"], "", dir.path());
+    let (code, _, _) = common::pqkeep(&["inspect", "kaputt.json"], "", dir.path());
     assert_eq!(code, 1);
     let args = [
         "generate",
@@ -162,7 +161,7 @@ fn missing_and_invalid_inputs() {
         "k.json",
         "--passphrase-stdin",
     ];
-    let (code, _, _) = common::keyforge(&args, "x\n", dir.path());
+    let (code, _, _) = common::pqkeep(&args, "x\n", dir.path());
     assert_eq!(code, 1, "leerer Name / empty name");
     let args = [
         "generate",
@@ -173,7 +172,7 @@ fn missing_and_invalid_inputs() {
         "--out",
         "k.json",
     ];
-    let (code, _, _) = common::keyforge(&args, "", dir.path());
+    let (code, _, _) = common::pqkeep(&args, "", dir.path());
     assert_eq!(code, 2);
 }
 
@@ -190,10 +189,9 @@ fn aes_key_has_no_public_export() {
         "a.json",
         "--passphrase-stdin",
     ];
-    let (code, _, _) = common::keyforge(&args, &format!("{}\n", new_pass()), dir.path());
+    let (code, _, _) = common::pqkeep(&args, &format!("{}\n", new_pass()), dir.path());
     assert_eq!(code, 0);
-    let (code, _, _) =
-        common::keyforge(&["export", "a.json", "--out", "a.pub.json"], "", dir.path());
+    let (code, _, _) = common::pqkeep(&["export", "a.json", "--out", "a.pub.json"], "", dir.path());
     assert_eq!(code, 1);
     assert!(!dir.path().join("a.pub.json").exists());
 }

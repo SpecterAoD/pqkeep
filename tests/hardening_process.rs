@@ -7,7 +7,7 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::hardening::harden_process;
+use pqkeep::hardening::harden_process;
 
 #[test]
 fn harden_process_applies_and_is_idempotent() {

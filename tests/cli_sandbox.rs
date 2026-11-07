@@ -20,7 +20,7 @@ fn start(dir: &Path, extra: &[&str]) -> (Child, String, Vec<String>) {
     let mut args = vec!["--lang", "en"];
     args.extend_from_slice(extra);
     args.extend(["serve", "--token-file", "t", "--bind", "127.0.0.1:0"]);
-    let mut child = Command::new(env!("CARGO_BIN_EXE_keyforge"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_pqkeep"))
         .args(&args)
         .current_dir(dir)
         .stdin(Stdio::null())
@@ -54,7 +54,7 @@ fn post(addr: &str, path: &str, token: &str, body: &str) -> String {
 }
 
 fn init_token(dir: &Path) -> String {
-    let (code, out, _) = common::keyforge(&["serve", "--init-token", "--token-file", "t"], "", dir);
+    let (code, out, _) = common::pqkeep(&["serve", "--init-token", "--token-file", "t"], "", dir);
     assert_eq!(code, 0);
     out.trim().to_owned()
 }
@@ -92,7 +92,7 @@ fn sandboxed_serve_generates_keys() {
 #[test]
 fn no_sandbox_warns_with_risks() {
     let dir = tempfile::tempdir().unwrap();
-    let (code, out, err) = common::keyforge(
+    let (code, out, err) = common::pqkeep(
         &["--lang", "de", "--no-sandbox", "passphrase"],
         "",
         dir.path(),
@@ -104,7 +104,7 @@ fn no_sandbox_warns_with_risks() {
         err.contains("Risiken") && err.contains("ALLE Ihre Dateien"),
         "{err}"
     );
-    let (_, _, err) = common::keyforge(
+    let (_, _, err) = common::pqkeep(
         &["--lang", "en", "--no-sandbox", "passphrase"],
         "",
         dir.path(),
@@ -133,7 +133,7 @@ fn no_sandbox_serve_reports_disabled() {
 #[test]
 fn help_lists_no_sandbox_with_warning() {
     let dir = tempfile::tempdir().unwrap();
-    let (_, out, _) = common::keyforge(&["--lang", "de", "--help"], "", dir.path());
+    let (_, out, _) = common::pqkeep(&["--lang", "de", "--help"], "", dir.path());
     assert!(
         out.contains("--no-sandbox") && out.contains("NUR zur Fehlersuche"),
         "{out}"
@@ -152,7 +152,7 @@ fn cli_commands_run_sandboxed() {
         "validate",
         "--passphrase-stdin",
     ];
-    let (code, _, err) = common::keyforge(&args, &pass, dir.path());
+    let (code, _, err) = common::pqkeep(&args, &pass, dir.path());
     assert_eq!(code, 0, "{err}");
     assert!(
         err.contains("Sandbox: landlock=") && err.contains("seccomp=full"),
@@ -160,8 +160,7 @@ fn cli_commands_run_sandboxed() {
     );
     // DE: Fehlende Quelle bleibt „nicht gefunden“ (nicht „Zugriff verweigert“).
     // EN: A missing source stays "not found" (not "permission denied").
-    let (code, _, err) =
-        common::keyforge(&["--lang", "de", "inspect", "fehlt.json"], "", dir.path());
+    let (code, _, err) = common::pqkeep(&["--lang", "de", "inspect", "fehlt.json"], "", dir.path());
     assert_eq!(code, 1);
     assert!(err.contains("nicht gefunden"), "{err}");
 }

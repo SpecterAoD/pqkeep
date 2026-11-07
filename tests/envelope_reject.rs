@@ -11,15 +11,13 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::KeyAlgorithm;
-use pqc_keyforge::envelope::{KeyFile, MAX_FILE_BYTES};
+use pqkeep::Error;
+use pqkeep::crypto::KeyAlgorithm;
+use pqkeep::envelope::{KeyFile, MAX_FILE_BYTES};
 use serde_json::{Value, json};
 
 fn valid() -> Value {
-    let (file, _) = common::key_file(KeyAlgorithm::Kem(
-        pqc_keyforge::crypto::KemAlgorithm::default(),
-    ));
+    let (file, _) = common::key_file(KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::default()));
     serde_json::from_str(&file.to_json().unwrap()).unwrap()
 }
 
@@ -216,6 +214,6 @@ fn size_limit_and_garbage() {
 #[test]
 fn duplicate_keys_rejected() {
     let text = serde_json::to_string(&valid()).unwrap();
-    let dup = text.replacen('{', "{\"magic\":\"PQC-KEYFORGE-KEY\",", 1);
+    let dup = text.replacen('{', "{\"magic\":\"PQKEEP-KEY\",", 1);
     assert_eq!(KeyFile::from_json(&dup).err(), invalid("json"));
 }

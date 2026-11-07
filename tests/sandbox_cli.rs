@@ -13,9 +13,9 @@ use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use pqc_keyforge::hardening::sandbox::{self, CliAccess, Profile};
+use pqkeep::hardening::sandbox::{self, CliAccess, Profile};
 
-const ENV: &str = "KF_SANDBOX_CLI_PROBE";
+const ENV: &str = "PQK_SANDBOX_CLI_PROBE";
 const SIGSYS: i32 = 31;
 
 /// DE: Einstieg im Kindprozess. EN: Entry point in the child process.
@@ -24,7 +24,7 @@ fn zz_probe_entry() {
     let Ok(probe) = std::env::var(ENV) else {
         return;
     };
-    let root = PathBuf::from(std::env::var("KF_PROBE_DIR").unwrap());
+    let root = PathBuf::from(std::env::var("PQK_PROBE_DIR").unwrap());
     let access = CliAccess {
         read: vec![root.join("quelle.txt")],
         write_dirs: vec![root.join("ziel")],
@@ -79,7 +79,7 @@ fn probe(name: &str) -> (Output, PathBuf, tempfile::TempDir) {
             "--test-threads=1",
         ])
         .env(ENV, name)
-        .env("KF_PROBE_DIR", dir.path())
+        .env("PQK_PROBE_DIR", dir.path())
         .output()
         .unwrap();
     (out, dir.path().to_path_buf(), dir)
@@ -152,7 +152,7 @@ fn missing_path_is_an_error_not_a_silent_gap() {
             "--nocapture",
             "--test-threads=1",
         ])
-        .env("KF_SANDBOX_MISSING", dir.path().join("fehlt"))
+        .env("PQK_SANDBOX_MISSING", dir.path().join("fehlt"))
         .output()
         .unwrap();
     assert!(result(&out).contains("MISSING=err"), "{}", result(&out));
@@ -161,7 +161,7 @@ fn missing_path_is_an_error_not_a_silent_gap() {
 /// DE: Einstieg für den Test mit fehlendem Pfad. EN: Entry for the missing-path test.
 #[test]
 fn zz_missing_entry() {
-    let Ok(path) = std::env::var("KF_SANDBOX_MISSING") else {
+    let Ok(path) = std::env::var("PQK_SANDBOX_MISSING") else {
         return;
     };
     let access = CliAccess {

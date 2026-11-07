@@ -31,7 +31,7 @@ const TOPICS: [&str; 6] = [
 ];
 
 fn run(args: &[&str]) -> (i32, String, String) {
-    common::keyforge(args, "", &std::env::temp_dir())
+    common::pqkeep(args, "", &std::env::temp_dir())
 }
 
 fn all_help_texts(lang: &str) -> Vec<String> {
@@ -107,8 +107,8 @@ fn no_example_secrets_anywhere() {
 fn completions_and_man_page() {
     for (shell, marker) in [
         ("bash", "complete"),
-        ("zsh", "#compdef keyforge"),
-        ("fish", "complete -c keyforge"),
+        ("zsh", "#compdef pqkeep"),
+        ("fish", "complete -c pqkeep"),
         ("powershell", "Register-ArgumentCompleter"),
     ] {
         let (code, out, _) = run(&["completions", shell]);
@@ -117,7 +117,7 @@ fn completions_and_man_page() {
     }
     let (code, out, _) = run(&["--lang", "de", "man"]);
     assert_eq!(code, 0);
-    assert!(out.contains(".TH keyforge 1") && out.contains("verschlüsseln"));
+    assert!(out.contains(".TH pqkeep 1") && out.contains("verschlüsseln"));
 }
 
 #[test]

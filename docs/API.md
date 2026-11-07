@@ -4,7 +4,7 @@ Deutsch zuerst, [English below](#english).
 
 ## Überblick
 
-`keyforge serve` startet eine kleine HTTP-API (HTTP/1.1, JSON). Sie ist für den Zugriff
+`pqkeep serve` startet eine kleine HTTP-API (HTTP/1.1, JSON). Sie ist für den Zugriff
 **vom selben Rechner** gedacht (Standard `127.0.0.1:8787`). Der Server speichert nichts:
 erzeugte Schlüssel werden nur in der Antwort zurückgegeben. Datei- und Ordnerverschlüsselung
 gibt es bewusst **nicht** über die API (SPEC Abschnitt 4a).
@@ -15,12 +15,12 @@ Die API ist ein Cargo-Feature (`api`, standardmäßig an). Mit
 ## Start und Token
 
 ```sh
-keyforge serve --init-token --token-file api.token   # Token einmal anzeigen, nur Hash speichern
-keyforge serve --token-file api.token                # API auf 127.0.0.1:8787
-keyforge serve --token-file api.token --bind 127.0.0.1:9000
+pqkeep serve --init-token --token-file api.token   # Token einmal anzeigen, nur Hash speichern
+pqkeep serve --token-file api.token                # API auf 127.0.0.1:8787
+pqkeep serve --token-file api.token --bind 127.0.0.1:9000
 ```
 
-- Das Token (`kf1_…`, 256 Bit Zufall) wird **nur beim Anlegen** angezeigt. Die Datei enthält
+- Das Token (`pqk1_…`, 256 Bit Zufall) wird **nur beim Anlegen** angezeigt. Die Datei enthält
   nur dessen SHA3-256-Hash (Linux: Rechte `0600`). `--force` ersetzt eine vorhandene Datei; das
   alte Token wird damit ungültig.
 - Tokens aus Umgebungsvariablen werden bewusst nicht unterstützt (landen leicht in Logs und
@@ -45,7 +45,7 @@ Ohne Anmeldung. Antwort `200 {"status":"ok"}` – bewusst ohne Versionsangabe.
 
 ### `POST /v1/validate`
 
-Prüft eine Passphrase (gleiche Regeln wie `keyforge validate`).
+Prüft eine Passphrase (gleiche Regeln wie `pqkeep validate`).
 
 ```json
 { "passphrase": "…", "lang": "de" }
@@ -154,16 +154,16 @@ Fehler sind bewusst generisch: `{"error":"<code>"}`, nie mit Eingabedaten.
 
 ## English
 
-`keyforge serve` starts a small HTTP API (HTTP/1.1, JSON) meant for access **from the same
+`pqkeep serve` starts a small HTTP API (HTTP/1.1, JSON) meant for access **from the same
 machine** (default `127.0.0.1:8787`). The server stores nothing: generated keys are only returned
 in the response. File and directory encryption is deliberately **not** available via the API.
 The API is a cargo feature (`api`, on by default); `cargo build --no-default-features` builds a
 pure CLI without network code.
 
-**Start and token:** `keyforge serve --init-token --token-file api.token` shows the token
-(`kf1_…`, 256 random bits) **once** and stores only its SHA3-256 hash (Linux mode `0600`);
+**Start and token:** `pqkeep serve --init-token --token-file api.token` shows the token
+(`pqk1_…`, 256 random bits) **once** and stores only its SHA3-256 hash (Linux mode `0600`);
 `--force` replaces an existing file and invalidates the old token. Then
-`keyforge serve --token-file api.token [--bind 127.0.0.1:9000]`. Every request except
+`pqkeep serve --token-file api.token [--bind 127.0.0.1:9000]`. Every request except
 `/v1/health` needs `Authorization: Bearer <token>`. Tokens from environment variables are
 deliberately unsupported. Stop with Ctrl+C.
 

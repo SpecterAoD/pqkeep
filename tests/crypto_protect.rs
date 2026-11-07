@@ -10,11 +10,9 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::protect::{self, AAD_DOMAIN};
-use pqc_keyforge::crypto::{
-    ALL_ALGORITHMS, DsaAlgorithm, KemAlgorithm, KeyAlgorithm, aead, dsa, kem,
-};
+use pqkeep::Error;
+use pqkeep::crypto::protect::{self, AAD_DOMAIN};
+use pqkeep::crypto::{ALL_ALGORITHMS, DsaAlgorithm, KemAlgorithm, KeyAlgorithm, aead, dsa, kem};
 
 const META: &[u8] = b"name=Test;org=Example";
 

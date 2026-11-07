@@ -8,8 +8,8 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use dialoguer::{Confirm, Password};
-use pqc_keyforge::Error;
-use pqc_keyforge::security::{Lang, Passphrase};
+use pqkeep::Error;
+use pqkeep::security::{Lang, Passphrase};
 use zeroize::Zeroize;
 
 use super::text::Texts;

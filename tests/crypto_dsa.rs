@@ -7,9 +7,9 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::DsaAlgorithm::{self, MlDsa44, MlDsa65, MlDsa87};
-use pqc_keyforge::crypto::dsa;
+use pqkeep::Error;
+use pqkeep::crypto::DsaAlgorithm::{self, MlDsa44, MlDsa65, MlDsa87};
+use pqkeep::crypto::dsa;
 
 /// DE: (Algorithmus, Länge öffentl. Schlüssel, Länge Signatur) laut FIPS 204.
 /// EN: (algorithm, public key length, signature length) per FIPS 204.
@@ -19,8 +19,8 @@ const SIZES: [(DsaAlgorithm, usize, usize); 3] = [
     (MlDsa87, 2592, 4627),
 ];
 
-const MSG: &[u8] = b"PQC KeyForge test message";
-const CTX: &[u8] = b"keyforge-test";
+const MSG: &[u8] = b"PQKeep test message";
+const CTX: &[u8] = b"pqkeep-test";
 
 #[test]
 fn default_is_ml_dsa_65() {

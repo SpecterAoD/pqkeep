@@ -36,7 +36,7 @@ crates.io und RustSec-Datenbank).
   Schlüssel wird beim Laden neu abgeleitet.
 - Schutz (`crypto::protect`): Argon2id(Passphrase, Salt 32 Byte) → AES-256-GCM-Schlüssel, Nonce 96 Bit.
   Für **jede** Verschlüsselung werden Salt, Schlüssel und Nonce neu erzeugt.
-- Als AAD authentifiziert: Domänen-Tag `PQC-KeyForge/protect/v1`, Algorithmus-ID, m/t/p, Salt und die
+- Als AAD authentifiziert: Domänen-Tag `PQKeep/protect/v1`, Algorithmus-ID, m/t/p, Salt und die
   Metadaten des Aufrufers (Längenpräfixe, feste Reihenfolge). Die Nonce ist durch GCM gebunden.
 - Falsche Passphrase und Manipulation sind bewusst nicht unterscheidbar (`Error::Decrypt`).
 

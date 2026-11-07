@@ -1,9 +1,9 @@
 //! DE: Sandbox-Profil `Api` (nur Linux). Jede Probe läuft in einem eigenen Kindprozess
-//! (dieses Testprogramm startet sich selbst mit `KF_SANDBOX_PROBE=<name>`), weil die
+//! (dieses Testprogramm startet sich selbst mit `PQK_SANDBOX_PROBE=<name>`), weil die
 //! Sandbox unumkehrbar ist. Verbotenes muss scheitern oder den Prozess beenden (SIGSYS),
 //! Erlaubtes (Threads, Argon2, Zufall) muss funktionieren.
 //! EN: Sandbox profile `Api` (Linux only). Every probe runs in its own child process
-//! (this test program restarts itself with `KF_SANDBOX_PROBE=<name>`) because the
+//! (this test program restarts itself with `PQK_SANDBOX_PROBE=<name>`) because the
 //! sandbox is irreversible. Forbidden things must fail or kill the process (SIGSYS);
 //! allowed things (threads, Argon2, randomness) must work.
 #![cfg(target_os = "linux")]
@@ -14,10 +14,10 @@ mod common;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Command, Output};
 
-use pqc_keyforge::crypto::{kdf, rng};
-use pqc_keyforge::hardening::sandbox::{self, Profile, Status};
+use pqkeep::crypto::{kdf, rng};
+use pqkeep::hardening::sandbox::{self, Profile, Status};
 
-const ENV: &str = "KF_SANDBOX_PROBE";
+const ENV: &str = "PQK_SANDBOX_PROBE";
 const SIGSYS: i32 = 31;
 
 /// DE: Einstieg im Kindprozess; im normalen Testlauf ohne Wirkung.
@@ -27,7 +27,7 @@ fn zz_probe_entry() {
     let Ok(probe) = std::env::var(ENV) else {
         return;
     };
-    let dir = std::env::var("KF_PROBE_DIR").unwrap();
+    let dir = std::env::var("PQK_PROBE_DIR").unwrap();
     let report = sandbox::apply(&Profile::Api).unwrap();
     println!("LANDLOCK={}", report.landlock.as_str());
     println!("SECCOMP={}", report.seccomp.as_str());
@@ -77,7 +77,7 @@ fn probe(name: &str) -> (Output, bool) {
             "--test-threads=1",
         ])
         .env(ENV, name)
-        .env("KF_PROBE_DIR", dir.path())
+        .env("PQK_PROBE_DIR", dir.path())
         .output()
         .unwrap();
     // DE: `mkdirat` ist nie erlaubt. EN: `mkdirat` is never allowed.

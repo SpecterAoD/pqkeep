@@ -5,10 +5,10 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
-use pqc_keyforge::crypto::kdf::KdfProfile;
-use pqc_keyforge::envelope;
-use pqc_keyforge::files::{self, HeaderMode, Protection, Report, SkipReason, Unlock};
-use pqc_keyforge::security::{Lang, StrongPassphrase};
+use pqkeep::crypto::kdf::KdfProfile;
+use pqkeep::envelope;
+use pqkeep::files::{self, HeaderMode, Protection, Report, SkipReason, Unlock};
+use pqkeep::security::{Lang, StrongPassphrase};
 
 use super::io::{CliResult, Failure, code, read_passphrase, read_passphrase_as};
 use super::text::Texts;
@@ -61,9 +61,9 @@ fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report: &Report) 
     let _ = lang;
 }
 
-/// DE: `keyforge encrypt`. EN: `keyforge encrypt`.
+/// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
-    let fail = |e: pqc_keyforge::Error| Failure::from_error(&e, lang);
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let src = source(m);
     let out = target(t, m, default_encrypted(&src))?;
     let report = if let Some(to) = m.get_one::<PathBuf>("to") {
@@ -90,9 +90,9 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-/// DE: `keyforge decrypt`. EN: `keyforge decrypt`.
+/// DE: `pqkeep decrypt`. EN: `pqkeep decrypt`.
 pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
-    let fail = |e: pqc_keyforge::Error| Failure::from_error(&e, lang);
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let src = source(m);
     let header = files::inspect(&src).map_err(fail)?;
     let out = target(t, m, default_decrypted(&src))?;

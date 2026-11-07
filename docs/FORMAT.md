@@ -10,7 +10,7 @@
 
 ```json
 {
-  "magic": "PQC-KEYFORGE-KEY",
+  "magic": "PQKEEP-KEY",
   "format_version": 1,
   "algorithm": "ML-KEM-768",
   "key_id": "3f9c…(64 Hex-Zeichen)…",
@@ -42,7 +42,7 @@
 
 | Feld | Inhalt | Prüfung beim Einlesen |
 |---|---|---|
-| `magic` | `PQC-KEYFORGE-KEY` | exakt |
+| `magic` | `PQKEEP-KEY` | exakt |
 | `format_version` | `1` | nur `1` (Downgrade-Schutz, neuere Versionen: „nicht unterstützt“) |
 | `algorithm` | `ML-KEM-512/768/1024`, `ML-DSA-44/65/87`, `AES-256` | bekannte ID |
 | `key_id` | ML-KEM/ML-DSA: SHA3-256 des öffentlichen Schlüssels; AES: 32 Zufallsbytes | 64 Hex-Zeichen, nur Kleinbuchstaben; bei ML-KEM/ML-DSA muss sie zum öffentlichen Schlüssel passen |
@@ -84,11 +84,11 @@ fehlerhafte Eingaben führen nie zu einem Absturz (Property-Tests).
 
 ## Öffentliche Schlüsseldatei (`*.pub.json`)
 
-Zum Weitergeben (z. B. damit andere Dateien für Sie verschlüsseln): `magic` = `PQC-KEYFORGE-PUB`,
+Zum Weitergeben (z. B. damit andere Dateien für Sie verschlüsseln): `magic` = `PQKEEP-PUB`,
 `format_version`, `algorithm` (nur ML-KEM/ML-DSA), `key_id`, `created_utc`, `metadata`,
 `public_key`. Enthält **nichts Geheimes** (kein `kdf`, kein `cipher`). Die Datei ist **nicht
 signiert**: Ob der Schlüssel wirklich der genannten Person gehört, muss über den Fingerabdruck
-(`keyforge inspect`) auf einem zweiten Weg bestätigt werden. Signaturen folgen mit Update U1.
+(`pqkeep inspect`) auf einem zweiten Weg bestätigt werden. Signaturen folgen mit Update U1.
 
 ---
 
@@ -97,7 +97,7 @@ signiert**: Ob der Schlüssel wirklich der genannten Person gehört, muss über 
 > **Important:** metadata (name, organisation, company, department, account type) and the public key
 > are **not encrypted**, only protected against modification. Be deliberate with personal data.
 
-**Fields:** `magic` (`PQC-KEYFORGE-KEY`), `format_version` (only `1`; downgrade protection),
+**Fields:** `magic` (`PQKEEP-KEY`), `format_version` (only `1`; downgrade protection),
 `algorithm`, `key_id` (SHA3-256 of the public key for ML-KEM/ML-DSA, 32 random bytes for AES;
 lowercase hex, checked against the public key), `created_utc` (strict RFC 3339 UTC
 `YYYY-MM-DDThh:mm:ssZ`), `metadata` (name required, others optional; 1–128 characters, account type
@@ -118,5 +118,5 @@ with explicit overwrite; FAT fallback check + rename). Linux mode `0600` and a w
 group/world-readable files. On Windows the file inherits the directory ACL; store keys in the user
 profile. No paths inside the container.
 
-**Public key file (`*.pub.json`):** magic `PQC-KEYFORGE-PUB`, ML-KEM/ML-DSA only, contains nothing
+**Public key file (`*.pub.json`):** magic `PQKEEP-PUB`, ML-KEM/ML-DSA only, contains nothing
 secret. Not signed – confirm the fingerprint with the owner through a second channel.

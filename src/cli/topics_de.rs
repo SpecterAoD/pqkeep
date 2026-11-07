@@ -12,8 +12,8 @@ Regeln für neue Passphrasen:\n\
   - häufige Passwörter/Wörter dürfen höchstens ein Drittel ausmachen\n\
   - geschätzte Stärke mindestens 80 Bit\n\n\
 Eingabe nur verdeckt im Terminal oder über --passphrase-stdin, nie als Argument.\n\
-Am sichersten: keyforge passphrase (24 Zeichen, ca. 157 Bit).\n\n\
-Beispiel:\n  keyforge passphrase --length 32 --no-ambiguous",
+Am sichersten: pqkeep passphrase (24 Zeichen, ca. 157 Bit).\n\n\
+Beispiel:\n  pqkeep passphrase --length 32 --no-ambiguous",
     ),
     (
         "algorithms",
@@ -24,7 +24,7 @@ Beispiel:\n  keyforge passphrase --length 32 --no-ambiguous",
   Argon2id             Schlüsselableitung aus der Passphrase (256 MiB bzw. 1 GiB)\n\n\
 Private Schlüssel werden als kompakter Seed gespeichert. Die Bibliotheken sind nicht\n\
 FIPS-140-validiert und nicht extern auditiert.\n\n\
-Beispiel:\n  keyforge generate --algorithm ml-kem-1024 --name \"Max Muster\" --out max.key.json",
+Beispiel:\n  pqkeep generate --algorithm ml-kem-1024 --name \"Max Muster\" --out max.key.json",
     ),
     (
         "container",
@@ -34,18 +34,18 @@ Schlüssel und dem mit Passphrase verschlüsselten privaten Teil.\n\
 ACHTUNG: Metadaten (Name, Organisation …) sind NICHT verschlüsselt, nur gegen\n\
 Änderung geschützt. Linux: Rechte 0600.\n\
 *.pub.json enthält nur den öffentlichen Teil und darf weitergegeben werden.\n\n\
-Beispiel:\n  keyforge inspect max.key.json",
+Beispiel:\n  pqkeep inspect max.key.json",
     ),
     (
         "files",
         "DATEIEN UND ORDNER\n\n\
-keyforge encrypt verschlüsselt eine Datei oder einen ganzen Ordner (rekursiv) in eine\n\
+pqkeep encrypt verschlüsselt eine Datei oder einen ganzen Ordner (rekursiv) in eine\n\
 .pqkf-Datei: mit Passphrase oder mit --to für einen Empfänger (ML-KEM).\n\
 Symlinks, Geräte und nicht portable Namen werden übersprungen und gemeldet.\n\
 Beim Entschlüsseln wird nichts überschrieben und bei Fehlern nichts hinterlassen.\n\
 Sichtbar bleibt die ungefähre Größe. Zeitstempel und Rechte werden nicht übernommen.\n\
 Originale werden nicht gelöscht.\n\n\
-Beispiel:\n  keyforge encrypt Ordner --to anna.pub.json\n  keyforge decrypt Ordner.pqkf --key anna.key.json",
+Beispiel:\n  pqkeep encrypt Ordner --to anna.pub.json\n  pqkeep decrypt Ordner.pqkf --key anna.key.json",
     ),
     (
         "security",
@@ -56,14 +56,14 @@ Beispiel:\n  keyforge encrypt Ordner --to anna.pub.json\n  keyforge decrypt Ordn
   - Empfohlen: Festplattenverschlüsselung, verschlüsselter Swap, kein Ruhezustand.\n\
   - Fingerabdruck öffentlicher Schlüssel immer auf einem zweiten Weg abgleichen.\n\
   - Nicht als root/Administrator ausführen.\n\n\
-Beispiel:\n  keyforge --verbose inspect max.key.json",
+Beispiel:\n  pqkeep --verbose inspect max.key.json",
     ),
     (
         "verify",
         "RELEASES PRÜFEN\n\n\
 Jedes Release (auch Betas) wird signiert und mit Prüfsummen veröffentlicht.\n\
   sha256sum -c SHA256SUMS\n\
-  gh attestation verify <datei> --repo SpecterAoD/PQC-KeyForge\n\
+  gh attestation verify <datei> --repo SpecterAoD/pqkeep\n\
   cosign verify-blob … (siehe README)\n\
 Windows: Authenticode-Signatur in den Dateieigenschaften prüfen (sobald verfügbar).\n\n\
 Beispiel:\n  sha256sum -c SHA256SUMS",

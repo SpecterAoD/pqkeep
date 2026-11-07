@@ -8,7 +8,7 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::crypto::{SecretBytes, aead};
+use pqkeep::crypto::{SecretBytes, aead};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 fn assert_zeroize_on_drop<T: ZeroizeOnDrop>() {}

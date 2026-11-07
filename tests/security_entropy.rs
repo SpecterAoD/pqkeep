@@ -7,10 +7,8 @@
 
 mod common;
 
-use pqc_keyforge::security::generator::Options;
-use pqc_keyforge::security::{
-    GENERIC_WORD_BITS, LIST_WORD_BITS, MIN_ENTROPY_BITS, Reason, formula_bits,
-};
+use pqkeep::security::generator::Options;
+use pqkeep::security::{GENERIC_WORD_BITS, LIST_WORD_BITS, MIN_ENTROPY_BITS, Reason, formula_bits};
 
 fn bits(text: &str) -> f64 {
     common::passphrase(text).assess().entropy_bits
@@ -66,8 +64,8 @@ fn listed_words_count_as_list_entries() {
     assert!(close(bits("battery"), LIST_WORD_BITS));
     assert!(close(bits("Battery"), LIST_WORD_BITS + 1.0));
     assert!(close(bits("correcthorse"), 2.0 * LIST_WORD_BITS));
-    assert!(pqc_keyforge::security::dictionary::contains("abarbeiten"));
-    assert!(pqc_keyforge::security::dictionary::len() > 30_000);
+    assert!(pqkeep::security::dictionary::contains("abarbeiten"));
+    assert!(pqkeep::security::dictionary::len() > 30_000);
 }
 
 #[test]

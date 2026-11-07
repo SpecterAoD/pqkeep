@@ -4,11 +4,11 @@
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
-use pqc_keyforge::crypto::kdf::KdfProfile;
-use pqc_keyforge::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::envelope::{self, KeyFile, Metadata, Overwrite, PUBLIC_MAGIC};
-use pqc_keyforge::files::{self, Content, HeaderMode};
-use pqc_keyforge::security::{Lang, StrongPassphrase};
+use pqkeep::crypto::kdf::KdfProfile;
+use pqkeep::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
+use pqkeep::envelope::{self, KeyFile, Metadata, Overwrite, PUBLIC_MAGIC};
+use pqkeep::files::{self, Content, HeaderMode};
+use pqkeep::security::{Lang, StrongPassphrase};
 
 use super::io::{CliResult, Failure, allow_overwrite, code, fingerprint, read_passphrase};
 use super::text::Texts;
@@ -43,7 +43,7 @@ fn target(t: &Texts, m: &ArgMatches) -> CliResult<(PathBuf, Overwrite)> {
     ))
 }
 
-/// DE: `keyforge generate`. EN: `keyforge generate`.
+/// DE: `pqkeep generate`. EN: `pqkeep generate`.
 pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let alg = algorithm(&s(m, "algorithm").unwrap_or_default());
     let meta = Metadata {
@@ -59,7 +59,7 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
         KdfProfile::Standard
     };
     let (out, overwrite) = target(t, m)?;
-    let fail = |e: pqc_keyforge::Error| Failure::from_error(&e, lang);
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     meta.normalized().map_err(fail)?;
     let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?;
     let strong = match StrongPassphrase::try_from(pass) {
@@ -79,9 +79,9 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-/// DE: `keyforge export`. EN: `keyforge export`.
+/// DE: `pqkeep export`. EN: `pqkeep export`.
 pub fn export(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
-    let fail = |e: pqc_keyforge::Error| Failure::from_error(&e, lang);
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let file = m.get_one::<PathBuf>("file").cloned().unwrap_or_default();
     let (key, _warnings) = envelope::load(&file).map_err(fail)?;
     let public = key.public_part().map_err(fail)?;
@@ -112,9 +112,9 @@ fn print_meta(t: &Texts, meta: &Metadata) {
     }
 }
 
-/// DE: `keyforge inspect`. EN: `keyforge inspect`.
+/// DE: `pqkeep inspect`. EN: `pqkeep inspect`.
 pub fn inspect(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
-    let fail = |e: pqc_keyforge::Error| Failure::from_error(&e, lang);
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let file = m.get_one::<PathBuf>("file").cloned().unwrap_or_default();
     if is_encrypted_file(&file) {
         return inspect_encrypted(t, lang, &file);

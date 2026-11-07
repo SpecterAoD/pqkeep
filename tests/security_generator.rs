@@ -7,8 +7,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use pqc_keyforge::Error;
-use pqc_keyforge::security::generator::{self, AMBIGUOUS, MAX_LEN, MIN_LEN, Options};
+use pqkeep::Error;
+use pqkeep::security::generator::{self, AMBIGUOUS, MAX_LEN, MIN_LEN, Options};
 
 const RUNS: usize = 1000;
 

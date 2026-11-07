@@ -3,7 +3,7 @@
 # EN: Creates labels and issues for the roadmap. Run once after the repo exists and `gh auth login` is done.
 # Usage: ./scripts/create_issues.sh [owner/repo]
 set -euo pipefail
-REPO="${1:-SpecterAoD/PQC-KeyForge}"
+REPO="${1:-SpecterAoD/pqkeep}"
 
 gh label create roadmap  -R "$REPO" -c 0E8A16 -d "Roadmap step" 2>/dev/null || true
 gh label create security -R "$REPO" -c B60205 -d "Security relevant" 2>/dev/null || true

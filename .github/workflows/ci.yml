@@ -84,7 +84,7 @@ jobs:
       # DE: Linux: PIE, Full RELRO, NX. Windows: ASLR, DEP, Control Flow Guard.
       # EN: Linux: PIE, full RELRO, NX. Windows: ASLR, DEP, Control Flow Guard.
       - run: |
-          bin=target/release/keyforge
+          bin=target/release/pqkeep
           [ -f "$bin.exe" ] && bin="$bin.exe"
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
           "$py" scripts/check_binary.py "$bin"
