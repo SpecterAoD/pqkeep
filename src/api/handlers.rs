@@ -35,6 +35,8 @@ pub enum ApiError {
     TooManyRequests,
     /// 500
     Internal,
+    /// DE: 503 – Schlüsselableitung ausgelastet. EN: 503 – key derivation busy.
+    Busy,
 }
 
 impl ApiError {
@@ -50,6 +52,7 @@ impl ApiError {
             }
             Self::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "too_many_requests"),
             Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
+            Self::Busy => (StatusCode::SERVICE_UNAVAILABLE, "busy"),
         }
     }
 }
@@ -61,6 +64,10 @@ impl IntoResponse for ApiError {
         if self == Self::Unauthorized {
             res.headers_mut()
                 .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer"));
+        }
+        if self == Self::Busy {
+            res.headers_mut()
+                .insert(header::RETRY_AFTER, HeaderValue::from_static("5"));
         }
         res
     }
@@ -100,11 +107,23 @@ pub struct ValidateRequest {
     lang: Option<ReqLang>,
 }
 
+/// DE: Sprache der Meldungen in Anfragen. EN: Message language in requests.
 #[derive(Deserialize, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
-enum ReqLang {
+pub enum ReqLang {
+    /// Deutsch
     De,
+    /// English
     En,
+}
+
+/// DE: Sprache aus der Anfrage, Standard Deutsch. EN: Language from the request, default German.
+#[must_use]
+pub fn lang_of(lang: Option<ReqLang>) -> Lang {
+    match lang {
+        Some(ReqLang::En) => Lang::En,
+        _ => Lang::De,
+    }
 }
 
 /// DE: Ein Ablehnungsgrund. EN: One rejection reason.
@@ -116,7 +135,7 @@ struct ReasonOut {
 
 /// DE: Antwort von `/v1/validate`. EN: Response of `/v1/validate`.
 #[derive(Serialize)]
-struct ValidateResponse {
+pub struct ValidateResponse {
     strong: bool,
     entropy_bits: u32,
     reasons: Vec<ReasonOut>,
@@ -141,7 +160,8 @@ fn reason_code(reason: &Reason) -> &'static str {
     }
 }
 
-fn to_response(assessment: &Assessment, lang: Lang) -> ValidateResponse {
+/// DE: Bewertung als Antwort (keine Geheimnisse). EN: Assessment as response (no secrets).
+pub fn to_response(assessment: &Assessment, lang: Lang) -> ValidateResponse {
     ValidateResponse {
         strong: assessment.is_strong(),
         // DE: Abgerundet, begrenzt auf u32. EN: Rounded down, clamped to u32.
@@ -163,10 +183,7 @@ fn to_response(assessment: &Assessment, lang: Lang) -> ValidateResponse {
 
 /// DE: Prüfung außerhalb des Async-Executors. EN: Check outside the async executor.
 async fn assess(req: ValidateRequest) -> Result<ValidateResponse, ApiError> {
-    let lang = match req.lang {
-        Some(ReqLang::En) => Lang::En,
-        _ => Lang::De,
-    };
+    let lang = lang_of(req.lang);
     let job = move || {
         // DE: `from_string` nullt die Eingabe. EN: `from_string` zeroes the input.
         let pass = Passphrase::from_string(req.passphrase).map_err(|_| ApiError::BadRequest)?;
