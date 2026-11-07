@@ -15,6 +15,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 
 use super::keyfile::{KeyFile, MAX_FILE_BYTES};
+use super::public::PublicKeyFile;
 use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::security::Lang;
 use crate::{Error, Result};
@@ -79,6 +80,36 @@ pub fn load(path: &Path) -> Result<(KeyFile, Vec<FileWarning>)> {
         .read_to_string(&mut text)
         .map_err(|_| Error::InvalidInput { field: "file" })?;
     Ok((KeyFile::from_json(&text)?, warnings))
+}
+
+/// DE: Speichert eine öffentliche Schlüsseldatei atomar. EN: Saves a public key file atomically.
+///
+/// # Errors
+/// DE/EN: [`Error::Io`] (u. a. `AlreadyExists`).
+pub fn save_public(key: &PublicKeyFile, path: &Path, overwrite: Overwrite) -> Result<()> {
+    write_atomic(path, key.to_json()?.as_bytes(), overwrite)
+}
+
+/// DE: Lädt eine öffentliche Schlüsseldatei. EN: Loads a public key file.
+///
+/// # Errors
+/// DE/EN: [`Error::Io`], [`Error::InvalidInput`], [`Error::Unsupported`].
+pub fn load_public(path: &Path) -> Result<PublicKeyFile> {
+    PublicKeyFile::from_json(&read_limited(path)?)
+}
+
+/// DE: Liest höchstens 64 KiB + 1 als Text. EN: Reads at most 64 KiB + 1 as text.
+///
+/// # Errors
+/// DE/EN: [`Error::Io`], [`Error::InvalidInput`] (`file`).
+pub fn read_limited(path: &Path) -> Result<String> {
+    let mut text = String::new();
+    let limit = u64::try_from(MAX_FILE_BYTES + 1).unwrap_or(u64::MAX);
+    File::open(path)?
+        .take(limit)
+        .read_to_string(&mut text)
+        .map_err(|_| Error::InvalidInput { field: "file" })?;
+    Ok(text)
 }
 
 #[cfg(unix)]

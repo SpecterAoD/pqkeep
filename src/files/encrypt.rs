@@ -17,7 +17,7 @@ use crate::crypto::kdf::SALT_LEN;
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
 use crate::crypto::wrap::{self, Wrapped};
 use crate::crypto::{KeyAlgorithm, SecretBytes, aead, rng};
-use crate::envelope::{KEY_ID_LEN, KeyFile};
+use crate::envelope::{KEY_ID_LEN, PublicKeyFile};
 use crate::security::StrongPassphrase;
 use crate::{Error, Result};
 
@@ -128,7 +128,7 @@ fn passphrase_header(
 fn recipient_header(
     content: Content,
     prefix: [u8; PREFIX_LEN],
-    key: &KeyFile,
+    key: &PublicKeyFile,
     file_key: &SecretBytes,
 ) -> Result<FileHeader> {
     let KeyAlgorithm::Kem(algorithm) = key.algorithm() else {
