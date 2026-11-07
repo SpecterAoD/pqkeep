@@ -1,0 +1,76 @@
+# DE: Fuzzing mit cargo-fuzz (libFuzzer). Eigenes Cargo-Projekt außerhalb des Haupt-Builds;
+#     nichts davon gelangt in das ausgelieferte Programm. Läuft per .github/workflows/fuzz.yml.
+# EN: Fuzzing with cargo-fuzz (libFuzzer). Separate Cargo project outside the main build;
+#     nothing of it ends up in the shipped program. Runs via .github/workflows/fuzz.yml.
+[package]
+name = "pqkeep-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+pqkeep = { path = ".." }
+axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1.54.1", default-features = false, features = ["rt"] }
+tower = { version = "0.5.3", default-features = false, features = ["util"] }
+
+# DE: Eigenständiger Workspace. EN: Standalone workspace.
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "keyfile_parse"
+path = "fuzz_targets/keyfile_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "public_key_parse"
+path = "fuzz_targets/public_key_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pqkf_header"
+path = "fuzz_targets/pqkf_header.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "archive_paths"
+path = "fuzz_targets/archive_paths.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "stream_tamper"
+path = "fuzz_targets/stream_tamper.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "passphrase"
+path = "fuzz_targets/passphrase.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "api_requests"
+path = "fuzz_targets/api_requests.rs"
+test = false
+doc = false
+bench = false

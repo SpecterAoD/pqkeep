@@ -1,0 +1,66 @@
+# DE: Fuzzing (SPEC 5b) mit cargo-fuzz/libFuzzer: Schlüsseldatei- und Public-Key-Parser,
+#     `.pqkf`-Header, Archivpfade, Streaming-AEAD mit Manipulation, Passphrase-Prüfung, REST-API.
+#     Wöchentlich und manuell je Ziel 10 Minuten; in Pull Requests, die fuzz/ ändern, je 60 s
+#     als Bau- und Kurztest. Funde werden als Artefakt gesichert.
+# EN: Fuzzing (SPEC 5b) with cargo-fuzz/libFuzzer: key file and public key parsers, `.pqkf`
+#     header, archive paths, streaming AEAD with tampering, passphrase check, REST API.
+#     Weekly and manually 10 minutes per target; 60 s per target in pull requests changing
+#     fuzz/ as build and short test. Findings are kept as artifacts.
+name: Fuzzing
+
+on:
+  schedule:
+    - cron: "23 2 * * 0"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "fuzz/**"
+      - ".github/workflows/fuzz.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # DE: Feste Nightly für reproduzierbare Läufe (nur hier, nicht für Releases).
+  # EN: Pinned nightly for reproducible runs (only here, not for releases).
+  NIGHTLY: nightly-2026-11-01
+  CARGO_FUZZ_VERSION: "0.13.2"
+
+jobs:
+  fuzz:
+    name: fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - keyfile_parse
+          - public_key_parse
+          - pqkf_header
+          - archive_paths
+          - stream_tamper
+          - passphrase
+          - api_requests
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install "$NIGHTLY" --profile minimal
+      - run: cargo +"$NIGHTLY" install --locked cargo-fuzz --version "$CARGO_FUZZ_VERSION"
+      - name: Fuzzing
+        working-directory: fuzz
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then t=60; else t=600; fi
+          cargo +"$NIGHTLY" fuzz run "${{ matrix.target }}" -- \
+            -max_total_time="$t" -rss_limit_mb=4096 -max_len=65536
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: fuzz-findings-${{ matrix.target }}
+          path: fuzz/artifacts/
+          retention-days: 30
