@@ -5,8 +5,8 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::aead;
+use pqkeep::Error;
+use pqkeep::crypto::aead;
 
 #[test]
 fn roundtrip_with_aad() {

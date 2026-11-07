@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use super::Metadata;
 
 /// DE: Kennung des Dateityps. EN: File type identifier.
-pub const MAGIC: &str = "PQC-KEYFORGE-KEY";
+pub const MAGIC: &str = "PQKEEP-KEY";
 /// DE: Aktuelle Formatversion. EN: Current format version.
 pub const FORMAT_VERSION: u32 = 1;
 /// DE: KDF-Bezeichner. EN: KDF identifier.

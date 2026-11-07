@@ -12,12 +12,12 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::protect::{self, ProtectedKey};
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm, aead, kem};
-use pqc_keyforge::security::{Passphrase, StrongPassphrase};
+use pqkeep::Error;
+use pqkeep::crypto::protect::{self, ProtectedKey};
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm, aead, kem};
+use pqkeep::security::{Passphrase, StrongPassphrase};
 
-const AAD: &[u8] = b"PQC-KeyForge test header with metadata";
+const AAD: &[u8] = b"PQKeep test header with metadata";
 
 #[test]
 fn every_ciphertext_and_tag_byte() {
@@ -139,7 +139,7 @@ fn malformed_protected_key_fails_fast() {
 
     // DE: Andere Seed-Länge (ML-DSA: 32 statt 64 Byte). EN: Other seed length.
     let mut k = key.clone();
-    k.algorithm = KeyAlgorithm::Dsa(pqc_keyforge::crypto::DsaAlgorithm::MlDsa65);
+    k.algorithm = KeyAlgorithm::Dsa(pqkeep::crypto::DsaAlgorithm::MlDsa65);
     expect_decrypt_error(pass.as_ref(), &k, AAD, "algorithm with other length");
 
     let mut k = key.clone();

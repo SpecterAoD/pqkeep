@@ -5,9 +5,9 @@
 // EN: Helpers are not #[test] functions; unwrap deliberately allowed here.
 #![allow(dead_code, clippy::unwrap_used)]
 
-use pqc_keyforge::crypto::kdf::{self, KdfParams};
-use pqc_keyforge::crypto::rng;
-use pqc_keyforge::security::{Passphrase, StrongPassphrase, generator};
+use pqkeep::crypto::kdf::{self, KdfParams};
+use pqkeep::crypto::rng;
+use pqkeep::security::{Passphrase, StrongPassphrase, generator};
 
 /// DE: Kleinste zulässige Parameter (schnellster gültiger Fall).
 /// EN: Smallest permitted parameters (fastest valid case).
@@ -48,18 +48,17 @@ pub fn flip(data: &[u8], i: usize) -> Vec<u8> {
 /// DE: Schlüsseldatei mit Minimalparametern; liefert Datei und Passphrase.
 /// EN: Key file with minimal parameters; returns file and passphrase.
 pub fn key_file(
-    algorithm: pqc_keyforge::crypto::KeyAlgorithm,
-) -> (pqc_keyforge::envelope::KeyFile, StrongPassphrase) {
+    algorithm: pqkeep::crypto::KeyAlgorithm,
+) -> (pqkeep::envelope::KeyFile, StrongPassphrase) {
     let pass = random_passphrase();
-    let meta = pqc_keyforge::envelope::Metadata {
+    let meta = pqkeep::envelope::Metadata {
         name: "Test User".to_owned(),
         organization: Some("Example Org".to_owned()),
         company: None,
         department: Some("IT-Sicherheit".to_owned()),
         account_type: Some("service".to_owned()),
     };
-    let file =
-        pqc_keyforge::envelope::KeyFile::generate(&pass, algorithm, &meta, &min_params()).unwrap();
+    let file = pqkeep::envelope::KeyFile::generate(&pass, algorithm, &meta, &min_params()).unwrap();
     (file, pass)
 }
 
@@ -116,12 +115,12 @@ pub fn dir_names(dir: &std::path::Path) -> Vec<String> {
     names
 }
 
-/// DE: Führt `keyforge` aus (Stdin als Text). EN: Runs `keyforge` (stdin as text).
+/// DE: Führt `pqkeep` aus (Stdin als Text). EN: Runs `pqkeep` (stdin as text).
 /// Rückgabe / returns: (Exit-Code, Stdout, Stderr).
-pub fn keyforge(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, String, String) {
+pub fn pqkeep(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, String, String) {
     use std::io::Write;
     use std::process::{Command, Stdio};
-    let mut child = Command::new(env!("CARGO_BIN_EXE_keyforge"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_pqkeep"))
         .args(args)
         .current_dir(cwd)
         .stdin(Stdio::piped())
@@ -129,9 +128,9 @@ pub fn keyforge(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, Stri
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    // DE: Beendet sich keyforge vor dem Lesen (z. B. Ziel existiert), ist die Pipe zu –
+    // DE: Beendet sich pqkeep vor dem Lesen (z. B. Ziel existiert), ist die Pipe zu –
     //     das ist kein Testfehler (früher sporadisch „Broken pipe“).
-    // EN: If keyforge exits before reading (e.g. target exists), the pipe is closed –
+    // EN: If pqkeep exits before reading (e.g. target exists), the pipe is closed –
     //     not a test failure (used to fail sporadically with "broken pipe").
     if let Err(e) = child.stdin.take().unwrap().write_all(stdin.as_bytes()) {
         assert_eq!(e.kind(), std::io::ErrorKind::BrokenPipe, "{e}");

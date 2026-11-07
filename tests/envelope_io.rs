@@ -13,9 +13,9 @@ mod common;
 
 use std::path::{Path, PathBuf};
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::KeyAlgorithm;
-use pqc_keyforge::envelope::{self, MAX_FILE_BYTES, Overwrite};
+use pqkeep::Error;
+use pqkeep::crypto::KeyAlgorithm;
+use pqkeep::envelope::{self, MAX_FILE_BYTES, Overwrite};
 
 fn leftover_temp_files(dir: &Path) -> Vec<PathBuf> {
     std::fs::read_dir(dir)
@@ -119,6 +119,6 @@ fn mode_0600_and_permission_warning() {
         warnings,
         vec![envelope::FileWarning::PermissiveMode { mode: 0o644 }]
     );
-    let text = warnings[0].message(pqc_keyforge::security::Lang::De);
+    let text = warnings[0].message(pqkeep::security::Lang::De);
     assert!(text.contains("chmod 600"));
 }

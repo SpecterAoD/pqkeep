@@ -5,9 +5,9 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::unnecessary_wraps)]
 
-use pqc_keyforge::Error;
-use pqc_keyforge::envelope::time::{format_unix, parse_rfc3339};
-use pqc_keyforge::envelope::{MAX_ACCOUNT_TYPE_CHARS, MAX_FIELD_CHARS, Metadata};
+use pqkeep::Error;
+use pqkeep::envelope::time::{format_unix, parse_rfc3339};
+use pqkeep::envelope::{MAX_ACCOUNT_TYPE_CHARS, MAX_FIELD_CHARS, Metadata};
 
 fn err(field: &'static str) -> Option<Error> {
     Some(Error::InvalidInput { field })

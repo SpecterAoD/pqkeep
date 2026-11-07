@@ -11,10 +11,10 @@ mod common;
 
 use std::path::{Path, PathBuf};
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::envelope::UnlockedKey;
-use pqc_keyforge::files::{self, Protection, Unlock};
+use pqkeep::Error;
+use pqkeep::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
+use pqkeep::envelope::UnlockedKey;
+use pqkeep::files::{self, Protection, Unlock};
 
 struct Fixture {
     _dir: tempfile::TempDir,
@@ -106,7 +106,7 @@ fn stream_tampering() {
     assert_eq!(try_decrypt(&f, &appended).err(), Some(Error::Decrypt));
 }
 
-fn encrypt_with_passphrase(dir: &Path) -> (PathBuf, pqc_keyforge::security::StrongPassphrase) {
+fn encrypt_with_passphrase(dir: &Path) -> (PathBuf, pqkeep::security::StrongPassphrase) {
     let src = dir.join("a.txt");
     std::fs::write(&src, b"geheim / secret").unwrap();
     let pass = common::random_passphrase();

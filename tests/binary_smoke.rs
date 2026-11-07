@@ -12,10 +12,10 @@ mod common;
 #[test]
 fn version_and_no_args() {
     let dir = std::env::temp_dir();
-    let (code, out, _) = common::keyforge(&["--version"], "", &dir);
+    let (code, out, _) = common::pqkeep(&["--version"], "", &dir);
     assert_eq!(code, 0);
     assert!(out.contains(env!("CARGO_PKG_VERSION")));
-    let (code, _, err) = common::keyforge(&["--lang", "en"], "", &dir);
+    let (code, _, err) = common::pqkeep(&["--lang", "en"], "", &dir);
     assert_eq!(code, 2);
     assert!(err.contains("generate"));
 }

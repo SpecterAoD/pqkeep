@@ -8,7 +8,7 @@
 
 use super::kek_from_shared;
 
-const EXPECTED: &str = "090be48ded7505f8441c074033ed15afd055c253b10f9845f2fcada81564ff05";
+const EXPECTED: &str = "17503d3d557a8cfc3beea7cb11ceaf04aa172d4c2351eb7d417c0394a42ec686";
 
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write;

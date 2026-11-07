@@ -2,8 +2,8 @@
 //! EN: Passphrase commands: validate (check) and passphrase (generate).
 
 use clap::ArgMatches;
-use pqc_keyforge::security::generator::{self, Options};
-use pqc_keyforge::security::{Lang, Rejection};
+use pqkeep::security::generator::{self, Options};
+use pqkeep::security::{Lang, Rejection};
 
 use super::io::{CliResult, Failure, code, read_passphrase};
 use super::text::Texts;
@@ -17,7 +17,7 @@ pub fn print_rejection(t: &Texts, lang: Lang, rejection: &Rejection) {
     eprintln!("{}: {}", t.msg_entropy, rejection.entropy_bits.floor());
 }
 
-/// DE: `keyforge validate`. EN: `keyforge validate`.
+/// DE: `pqkeep validate`. EN: `pqkeep validate`.
 pub fn validate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), false)?;
     let assessment = pass.assess();
@@ -39,8 +39,8 @@ pub fn validate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     }
 }
 
-/// DE: `keyforge passphrase`: nur die Passphrase auf Stdout, Hinweise auf Stderr.
-/// EN: `keyforge passphrase`: only the passphrase on stdout, notes on stderr.
+/// DE: `pqkeep passphrase`: nur die Passphrase auf Stdout, Hinweise auf Stderr.
+/// EN: `pqkeep passphrase`: only the passphrase on stdout, notes on stderr.
 pub fn passphrase(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let options = Options {
         length: m

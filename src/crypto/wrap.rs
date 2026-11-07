@@ -35,7 +35,7 @@ pub const FILE_KEY_LEN: usize = 32;
 /// DE: Länge des eingepackten Schlüssels (inkl. Tag). EN: Wrapped key length (incl. tag).
 pub const WRAPPED_LEN: usize = FILE_KEY_LEN + TAG_LEN;
 /// DE: Domänen-Tag für HKDF. EN: Domain tag for HKDF.
-pub const HKDF_INFO: &[u8] = b"PQC-KeyForge/file/v1/kek\0";
+pub const HKDF_INFO: &[u8] = b"PQKeep/file/v1/kek\0";
 
 /// DE: Eingepackter Dateischlüssel (öffentlich speicherbar).
 /// EN: Wrapped file key (safe to store publicly).

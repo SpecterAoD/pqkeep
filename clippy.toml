@@ -7,4 +7,4 @@ allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 
 # DE: Projektname nicht als Code markieren. EN: Do not require backticks for the project name.
-doc-valid-idents = ["KeyForge", "RustCrypto", "DoS", ".."]
+doc-valid-idents = ["PQKeep", "RustCrypto", "DoS", ".."]

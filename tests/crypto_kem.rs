@@ -7,9 +7,9 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::KemAlgorithm::{self, MlKem512, MlKem768, MlKem1024};
-use pqc_keyforge::crypto::kem;
+use pqkeep::Error;
+use pqkeep::crypto::KemAlgorithm::{self, MlKem512, MlKem768, MlKem1024};
+use pqkeep::crypto::kem;
 
 /// DE: (Algorithmus, Länge öffentl. Schlüssel, Länge Chiffrat) laut FIPS 203.
 /// EN: (algorithm, public key length, ciphertext length) per FIPS 203.

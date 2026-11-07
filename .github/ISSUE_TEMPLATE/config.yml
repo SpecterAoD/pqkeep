@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Sicherheitslücke melden / Report a vulnerability
-    url: https://github.com/SpecterAoD/PQC-KeyForge/security/advisories/new
+    url: https://github.com/SpecterAoD/pqkeep/security/advisories/new
     about: Bitte nicht als öffentliches Issue melden. / Please do not report publicly.

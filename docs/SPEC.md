@@ -1,9 +1,10 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.4: PQC KeyForge (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.5: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
 > Änderung v2.3 (07.11.2026, freigegeben von SpecterAoD): geplante Updates nach der ersten Beta (Abschnitt 9): Signaturen, mehrere Empfänger, Einrichtungs-Assistent, Kontextmenü.
 > Änderung v2.4 (07.11.2026, freigegeben von SpecterAoD): Wortlisten für die Passphrase-Prüfung (Schritt 2b), Ausnahme von 5c für die EFF-Wortlisten (CC BY 4.0).
+> Änderung v2.5 (07.11.2026, freigegeben von SpecterAoD): Umbenennung von „PQC KeyForge“ in **PQKeep** (Crate, Bibliothek und Binary `pqkeep`, Repository `SpecterAoD/pqkeep`) wegen Namenskonflikt mit dem Kartenspiel „KeyForge“. Formatkennungen `PQKEEP-KEY`/`PQKEEP-PUB`, Domänentrennung `PQKeep/…`, Token-Präfix `pqk1_`; Endung `.pqkf` und `PQKFENC` bleiben. Vor dem ersten Release, daher ohne Kompatibilität zu Dateien des alten Namens.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -147,7 +148,7 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 ## 6. Verzeichnisstruktur (Vorschlag)
 
 ```
-pqc-keyforge/
+pqkeep/
 ├─ Cargo.toml / Cargo.lock / deny.toml / rust-toolchain.toml
 ├─ src/  lib.rs  main.rs  error.rs  security.rs  envelope.rs  cli.rs  api.rs
 │        crypto/ (mod.rs, kem.rs, dsa.rs, kdf.rs, aead.rs, stream.rs, wrap.rs)
@@ -204,9 +205,9 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 - **Minimale Rechte:** Die CLI benötigt keine Administrator-/root-Rechte und gibt eine deutliche Warnung aus, wenn sie mit solchen Rechten gestartet wird. Erster Aufruf beim Start: `hardening::harden_process()`.
 - **Integrierte Hilfe (zweisprachig DE/EN, per `--lang de|en`, Standard aus System-Locale):**
   - `--help` und `-h` global und pro Subcommand, jeweils mit Beschreibung, Parametern, Beispielen und Exit-Codes.
-  - `keyforge help <thema>` mit Themen: `passphrase` (Regeln und Generator), `files` (Datei-/Ordnerverschlüsselung, Modi, Grenzen), `algorithms` (ML-KEM/ML-DSA/AES, Parametersätze), `container` (Format und Metadaten), `security` (Sicherheitshinweise und Grenzen), `verify` (Release-Signaturen prüfen).
+  - `pqkeep help <thema>` mit Themen: `passphrase` (Regeln und Generator), `files` (Datei-/Ordnerverschlüsselung, Modi, Grenzen), `algorithms` (ML-KEM/ML-DSA/AES, Parametersätze), `container` (Format und Metadaten), `security` (Sicherheitshinweise und Grenzen), `verify` (Release-Signaturen prüfen).
   - Im interaktiven Menü ein Eintrag „Hilfe / Help“ sowie kontextbezogene Kurzhinweise bei jeder Eingabe (z. B. Passphrase-Regeln, Hinweis auf Metadaten im Klartext).
-  - Manpage (`clap_mangen`) und Shell-Completions (`clap_complete`, bash/zsh/fish/PowerShell) werden per Subcommand `keyforge completions <shell>` bzw. `keyforge man` erzeugt, ohne Netzwerkzugriff.
+  - Manpage (`clap_mangen`) und Shell-Completions (`clap_complete`, bash/zsh/fish/PowerShell) werden per Subcommand `pqkeep completions <shell>` bzw. `pqkeep man` erzeugt, ohne Netzwerkzugriff.
 - Tests (in eigenen Dateien): simulierte Eingaben (Integrationstests mit `assert_cmd`), erfolgreicher Export des Containers, erneutes Einlesen und Entschlüsseln, saubere Fehlermeldungen bei ungültigen Eingaben, Exit-Codes. Hilfetests: Jeder Subcommand und jedes Hilfethema liefert Text in **beiden** Sprachen, `--help` enthält mindestens ein Beispiel, kein Hilfetext enthält Beispielgeheimnisse, die wie echte Zugangsdaten aussehen.
 
 ### Schritt 5: API (`api.rs`, Axum)
@@ -242,7 +243,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 
 ### U3: Einrichtungs-Assistent (Konsole)
 - Beim ersten Start ein farbiger, interaktiver Konsolen-Assistent (Terminal-UI-Crates, Auswahl im Plan): 1. sichere Master-Passphrase (Regeln aus 3.3, Argon2id), 2. eigenes Schlüsselpaar ML-KEM-1024 (Verschlüsselung) und ML-DSA-87 (Signaturen), 3. optional Registrierung des Kontextmenüs (U4), 4. Einweisung und Notfall-Backup (Kopie der Schlüsseldateien an einen gewählten Ort, Hinweise zur sicheren Aufbewahrung, Prüf-Wiederherstellung).
-- Ablage im Benutzerprofil (Linux `~/.local/share/pqc-keyforge`, Windows `%APPDATA%\PQC-KeyForge`), Rechte wie Abschnitt 4. Erneut aufrufbar (`keyforge setup`), überschreibt nie ohne Bestätigung.
+- Ablage im Benutzerprofil (Linux `~/.local/share/pqkeep`, Windows `%APPDATA%\PQKeep`), Rechte wie Abschnitt 4. Erneut aufrufbar (`pqkeep setup`), überschreibt nie ohne Bestätigung.
 
 ### U4: Kontextmenü (Rechtsklick) mit Passphrase-Dialog
 - Aktionen „Mit PQC sichern“ / „PQC entschlüsseln“ (später „Signieren“/„Prüfen“) im Dateimanager. Registrierung nur auf Benutzerebene, ohne Administratorrechte, vollständig rückgängig zu machen: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo-Actions (Cinnamon/Mint), Nautilus-Skripte, Dolphin-Service-Menüs.

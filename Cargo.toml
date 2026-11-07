@@ -1,19 +1,19 @@
 [package]
-name = "pqc-keyforge"
+name = "pqkeep"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.88"
 license = "Apache-2.0"
 description = "Post-quantum key generation and storage (ML-KEM, ML-DSA, AES-256)"
-repository = "https://github.com/SpecterAoD/PQC-KeyForge"
+repository = "https://github.com/SpecterAoD/pqkeep"
 publish = false
 
 [lib]
-name = "pqc_keyforge"
+name = "pqkeep"
 path = "src/lib.rs"
 
 [[bin]]
-name = "keyforge"
+name = "pqkeep"
 path = "src/main.rs"
 
 [dependencies]
@@ -84,9 +84,9 @@ libc = "0.2.191"
 rustix = { version = "1.1.6", default-features = false, features = ["std", "process"] }
 seccompiler = { version = "0.5.0", default-features = false }
 
-# DE: `api` (Standard) baut den REST-Server `keyforge serve` ein. Ohne das Feature
+# DE: `api` (Standard) baut den REST-Server `pqkeep serve` ein. Ohne das Feature
 #     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.
-# EN: `api` (default) builds in the REST server `keyforge serve`. Without the feature
+# EN: `api` (default) builds in the REST server `pqkeep serve`. Without the feature
 #     (`--no-default-features`) a pure CLI without network code is built.
 [features]
 default = ["api"]

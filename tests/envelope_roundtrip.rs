@@ -8,9 +8,9 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::{ALL_ALGORITHMS, KeyAlgorithm, aead, dsa, kem};
-use pqc_keyforge::envelope::{self, KeyFile, Metadata};
+use pqkeep::Error;
+use pqkeep::crypto::{ALL_ALGORITHMS, KeyAlgorithm, aead, dsa, kem};
+use pqkeep::envelope::{self, KeyFile, Metadata};
 
 fn check_key_works(unlocked: &envelope::UnlockedKey) {
     let secret = unlocked.secret().expose();
@@ -50,12 +50,11 @@ fn all_algorithms_roundtrip() {
 
 #[test]
 fn json_contains_expected_fields_and_no_secret() {
-    let (file, _pass) = common::key_file(KeyAlgorithm::Kem(
-        pqc_keyforge::crypto::KemAlgorithm::default(),
-    ));
+    let (file, _pass) =
+        common::key_file(KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::default()));
     let json = file.to_json().unwrap();
     for key in [
-        "\"magic\": \"PQC-KEYFORGE-KEY\"",
+        "\"magic\": \"PQKEEP-KEY\"",
         "\"format_version\": 1",
         "\"algorithm\": \"ML-KEM-768\"",
         "\"argon2id\"",
@@ -74,9 +73,7 @@ fn json_contains_expected_fields_and_no_secret() {
 #[test]
 fn asymmetric_key_id_is_sha3_of_public_key() {
     use sha3::{Digest, Sha3_256};
-    let (file, _) = common::key_file(KeyAlgorithm::Dsa(
-        pqc_keyforge::crypto::DsaAlgorithm::default(),
-    ));
+    let (file, _) = common::key_file(KeyAlgorithm::Dsa(pqkeep::crypto::DsaAlgorithm::default()));
     let expected = hex::encode(Sha3_256::digest(file.public_key()));
     assert_eq!(file.key_id_hex(), expected);
 }
@@ -101,9 +98,9 @@ fn metadata_is_nfc_normalised_on_create() {
 #[test]
 fn create_rejects_mismatched_public_key() {
     let pass = common::random_passphrase();
-    let a = kem::generate(pqc_keyforge::crypto::KemAlgorithm::default()).unwrap();
-    let b = kem::generate(pqc_keyforge::crypto::KemAlgorithm::default()).unwrap();
-    let alg = KeyAlgorithm::Kem(pqc_keyforge::crypto::KemAlgorithm::default());
+    let a = kem::generate(pqkeep::crypto::KemAlgorithm::default()).unwrap();
+    let b = kem::generate(pqkeep::crypto::KemAlgorithm::default()).unwrap();
+    let alg = KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::default());
     let meta = Metadata::with_name("x");
     let err = KeyFile::create(
         &pass,

@@ -6,8 +6,8 @@
 use std::io::IsTerminal;
 
 use dialoguer::Confirm;
-use pqc_keyforge::hardening::sandbox::{self, Profile, SandboxReport, Status};
-use pqc_keyforge::security::Lang;
+use pqkeep::hardening::sandbox::{self, Profile, SandboxReport, Status};
+use pqkeep::security::Lang;
 
 use super::io::{CliResult, Failure, code};
 
@@ -25,15 +25,15 @@ static DE: SandboxTexts = SandboxTexts {
     arg_no_sandbox: "Sandbox (Landlock/Seccomp) abschalten – NUR zur Fehlersuche, erhebliches Risiko (siehe Warnung)",
     warning: "WARNUNG: --no-sandbox schaltet die Sandbox (Landlock und Seccomp) ab.\n\
 Risiken:\n  \
-- Eine Sicherheitslücke in keyforge oder einer Bibliothek (z. B. im JSON-, HTTP- oder\n    \
+- Eine Sicherheitslücke in pqkeep oder einer Bibliothek (z. B. im JSON-, HTTP- oder\n    \
 Archiv-Parser) kann dann auf ALLE Ihre Dateien zugreifen, sie verändern oder löschen.\n  \
 - Eingeschleuster Code kann Programme starten und Netzwerkverbindungen aufbauen –\n    \
 also Schlüssel und Passphrasen unbemerkt nach außen senden.\n  \
-- Bei der API (keyforge serve) ist das Risiko am größten, weil sie Eingaben von\n    \
+- Bei der API (pqkeep serve) ist das Risiko am größten, weil sie Eingaben von\n    \
 anderen Programmen oder aus dem Netz verarbeitet.\n\
-Nur verwenden, wenn keyforge mit Sandbox nicht startet – und das Problem bitte melden.",
+Nur verwenden, wenn pqkeep mit Sandbox nicht startet – und das Problem bitte melden.",
     prompt: "Trotzdem OHNE Sandbox fortfahren?",
-    aborted: "Abgebrochen – keyforge läuft nicht ohne Sandbox.",
+    aborted: "Abgebrochen – pqkeep läuft nicht ohne Sandbox.",
     landlock_missing: "WARNUNG: Landlock ist auf diesem System nicht verfügbar (Kernel zu alt oder abgeschaltet). Dateizugriffe sind nicht eingeschränkt; Seccomp bleibt aktiv.",
     seccomp_missing: "WARNUNG: Seccomp-Filter werden auf dieser Architektur nicht unterstützt (nur x86_64/aarch64). Systemaufrufe sind nicht eingeschränkt.",
     status: "Sandbox",
@@ -43,15 +43,15 @@ static EN: SandboxTexts = SandboxTexts {
     arg_no_sandbox: "Disable the sandbox (Landlock/seccomp) – ONLY for troubleshooting, considerable risk (see warning)",
     warning: "WARNING: --no-sandbox disables the sandbox (Landlock and seccomp).\n\
 Risks:\n  \
-- A vulnerability in keyforge or a library (e.g. in the JSON, HTTP or archive parser)\n    \
+- A vulnerability in pqkeep or a library (e.g. in the JSON, HTTP or archive parser)\n    \
 can then access, modify or delete ALL of your files.\n  \
 - Injected code can start programs and open network connections – i.e. send keys\n    \
 and passphrases out unnoticed.\n  \
-- The risk is highest for the API (keyforge serve), because it processes input from\n    \
+- The risk is highest for the API (pqkeep serve), because it processes input from\n    \
 other programs or the network.\n\
-Only use it if keyforge does not start with the sandbox – and please report the problem.",
+Only use it if pqkeep does not start with the sandbox – and please report the problem.",
     prompt: "Continue WITHOUT the sandbox anyway?",
-    aborted: "Aborted – keyforge does not run without the sandbox.",
+    aborted: "Aborted – pqkeep does not run without the sandbox.",
     landlock_missing: "WARNING: Landlock is not available on this system (kernel too old or disabled). File access is not restricted; seccomp stays active.",
     seccomp_missing: "WARNING: seccomp filters are not supported on this architecture (x86_64/aarch64 only). System calls are not restricted.",
     status: "Sandbox",

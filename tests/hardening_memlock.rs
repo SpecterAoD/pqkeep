@@ -9,8 +9,8 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::crypto::SecretBytes;
-use pqc_keyforge::hardening::memlock;
+use pqkeep::crypto::SecretBytes;
+use pqkeep::hardening::memlock;
 
 #[cfg(target_os = "linux")]
 fn vm_lck_kib() -> u64 {

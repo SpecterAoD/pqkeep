@@ -9,8 +9,8 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::security::{Lang, MAX_CHARS, Passphrase, Reason, StrongPassphrase};
+use pqkeep::Error;
+use pqkeep::security::{Lang, MAX_CHARS, Passphrase, Reason, StrongPassphrase};
 
 /// DE: Musterfreie Beispielwerte mit allen Klassen. EN: Pattern-free examples with all classes.
 const STRONG: [&str; 3] = [
@@ -145,6 +145,6 @@ fn empty_and_oversized_input_rejected() {
         field: "passphrase",
     };
     assert_eq!(Passphrase::new("").err(), Some(field.clone()));
-    let huge = "x".repeat(pqc_keyforge::security::INPUT_LIMIT_CHARS + 1);
+    let huge = "x".repeat(pqkeep::security::INPUT_LIMIT_CHARS + 1);
     assert_eq!(Passphrase::new(&huge).err(), Some(field));
 }

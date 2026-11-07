@@ -1,7 +1,7 @@
-//! DE: Texte für `keyforge serve` (nur mit Feature `api`).
-//! EN: Texts for `keyforge serve` (feature `api` only).
+//! DE: Texte für `pqkeep serve` (nur mit Feature `api`).
+//! EN: Texts for `pqkeep serve` (feature `api` only).
 
-use pqc_keyforge::security::Lang;
+use pqkeep::security::Lang;
 
 /// DE: Texte einer Sprache. EN: Texts of one language.
 #[allow(missing_docs)]
@@ -23,7 +23,7 @@ pub struct ServeTexts {
 
 static DE: ServeTexts = ServeTexts {
     about: "REST-API starten (POST /v1/generate, POST /v1/validate, GET /v1/health)",
-    after: "Beispiele:\n  keyforge serve --init-token --token-file api.token\n  keyforge serve --token-file api.token\n  keyforge serve --token-file api.token --bind 127.0.0.1:9000\n\nAnfragen brauchen den Header „Authorization: Bearer <Token>“ (außer /v1/health).\nDie Token-Datei enthält nur einen Hash; das Token wird beim Anlegen einmal angezeigt.\nKein TLS eingebaut: für Zugriff über das Netz einen Reverse Proxy mit TLS davorschalten.\nDetails: docs/API.md",
+    after: "Beispiele:\n  pqkeep serve --init-token --token-file api.token\n  pqkeep serve --token-file api.token\n  pqkeep serve --token-file api.token --bind 127.0.0.1:9000\n\nAnfragen brauchen den Header „Authorization: Bearer <Token>“ (außer /v1/health).\nDie Token-Datei enthält nur einen Hash; das Token wird beim Anlegen einmal angezeigt.\nKein TLS eingebaut: für Zugriff über das Netz einen Reverse Proxy mit TLS davorschalten.\nDetails: docs/API.md",
     arg_bind: "Adresse:Port (Standard 127.0.0.1:8787)",
     arg_token_file: "Datei mit dem Token-Hash (Pflicht)",
     arg_allow_remote: "Andere Adressen als localhost erlauben (nur hinter Reverse Proxy mit TLS!)",
@@ -39,7 +39,7 @@ static DE: ServeTexts = ServeTexts {
 
 static EN: ServeTexts = ServeTexts {
     about: "Start the REST API (POST /v1/generate, POST /v1/validate, GET /v1/health)",
-    after: "Examples:\n  keyforge serve --init-token --token-file api.token\n  keyforge serve --token-file api.token\n  keyforge serve --token-file api.token --bind 127.0.0.1:9000\n\nRequests need the header \"Authorization: Bearer <token>\" (except /v1/health).\nThe token file holds a hash only; the token is shown once when created.\nNo built-in TLS: for network access put a reverse proxy with TLS in front.\nDetails: docs/API.md",
+    after: "Examples:\n  pqkeep serve --init-token --token-file api.token\n  pqkeep serve --token-file api.token\n  pqkeep serve --token-file api.token --bind 127.0.0.1:9000\n\nRequests need the header \"Authorization: Bearer <token>\" (except /v1/health).\nThe token file holds a hash only; the token is shown once when created.\nNo built-in TLS: for network access put a reverse proxy with TLS in front.\nDetails: docs/API.md",
     arg_bind: "Address:port (default 127.0.0.1:8787)",
     arg_token_file: "File with the token hash (required)",
     arg_allow_remote: "Allow addresses other than localhost (only behind a reverse proxy with TLS!)",

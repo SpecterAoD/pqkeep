@@ -1,7 +1,7 @@
-//! DE: Kommandozeile `keyforge`. Nutzt ausschließlich die Core-API der Bibliothek.
+//! DE: Kommandozeile `pqkeep`. Nutzt ausschließlich die Core-API der Bibliothek.
 //! Beim Start: Prozesshärtung, Warnung bei root, Sprache aus `--lang` bzw. System.
 //! Ohne Argumente im Terminal: interaktives Menü.
-//! EN: Command line `keyforge`. Uses the library's core API only.
+//! EN: Command line `pqkeep`. Uses the library's core API only.
 //! On start: process hardening, warning when root, language from `--lang` or system.
 //! Without arguments in a terminal: interactive menu.
 
@@ -27,9 +27,9 @@ mod validate;
 use std::io::IsTerminal;
 use std::process::ExitCode;
 
-use pqc_keyforge::hardening::sandbox::Profile;
-use pqc_keyforge::hardening::{self, HardeningReport, memlock};
-use pqc_keyforge::security::Lang;
+use pqkeep::hardening::sandbox::Profile;
+use pqkeep::hardening::{self, HardeningReport, memlock};
+use pqkeep::security::Lang;
 
 use self::io::{CliResult, Failure, code, finish};
 use self::text::{Texts, texts};

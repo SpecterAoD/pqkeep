@@ -19,7 +19,7 @@ use crate::security::{Passphrase, StrongPassphrase};
 use crate::{Error, Result};
 
 /// DE: Domänen-Tag der AAD (Version 1). EN: AAD domain tag (version 1).
-pub const AAD_DOMAIN: &[u8] = b"PQC-KeyForge/protect/v1\0";
+pub const AAD_DOMAIN: &[u8] = b"PQKeep/protect/v1\0";
 
 /// DE: Geschützter Schlüssel; alle Felder sind öffentlich speicherbar.
 /// EN: Protected key; all fields are safe to store publicly.

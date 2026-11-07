@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 
 use clap::{Arg, ArgAction, Command, value_parser};
-use pqc_keyforge::security::Lang;
+use pqkeep::security::Lang;
 
 use super::text::{exit_codes, texts};
 
@@ -176,8 +176,8 @@ fn help_commands(lang: Lang) -> [Command; 3] {
 /// DE: Vollständige Kommandozeile in der Sprache `lang`. EN: Full command line in language `lang`.
 pub fn build(lang: Lang) -> Command {
     let t = texts(lang);
-    let cmd = base("keyforge", t.app_about, t.app_after, lang)
-        .version(pqc_keyforge::VERSION)
+    let cmd = base("pqkeep", t.app_about, t.app_after, lang)
+        .version(pqkeep::VERSION)
         .disable_version_flag(true)
         .disable_help_subcommand(true)
         .subcommand_required(true)

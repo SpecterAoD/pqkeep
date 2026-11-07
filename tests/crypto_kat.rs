@@ -5,7 +5,7 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::crypto::{DsaAlgorithm, KemAlgorithm, dsa, kem};
+use pqkeep::crypto::{DsaAlgorithm, KemAlgorithm, dsa, kem};
 use serde_json::Value;
 
 fn cases(file: &str) -> Vec<Value> {
@@ -91,7 +91,7 @@ fn ml_dsa_sigver_vectors() {
 /// (argon2-cffi 25.1.0 / argon2-cffi-bindings 26.1.0), see tests/kat/README.md.
 #[test]
 fn argon2id_reference_vectors_via_public_api() {
-    use pqc_keyforge::crypto::kdf::{self, KdfParams};
+    use pqkeep::crypto::kdf::{self, KdfParams};
     let cases = [
         (
             1,

@@ -12,9 +12,9 @@ mod common;
 
 use std::sync::OnceLock;
 
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::envelope::UnlockedKey;
-use pqc_keyforge::files::{self, FileHeader, Protection, Unlock};
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm};
+use pqkeep::envelope::UnlockedKey;
+use pqkeep::files::{self, FileHeader, Protection, Unlock};
 use proptest::prelude::*;
 
 struct Sample {

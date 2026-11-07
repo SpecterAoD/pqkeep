@@ -9,10 +9,10 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm, kem};
-use pqc_keyforge::envelope::KeyFile;
-use pqc_keyforge::security::StrongPassphrase;
+use pqkeep::Error;
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm, kem};
+use pqkeep::envelope::KeyFile;
+use pqkeep::security::StrongPassphrase;
 use serde_json::{Value, json};
 use sha3::{Digest, Sha3_256};
 
@@ -79,9 +79,7 @@ fn swapped_public_key_with_matching_key_id_detected() {
 
 #[test]
 fn crypto_fields_are_authenticated() {
-    let (base, pass) = setup(KeyAlgorithm::Dsa(
-        pqc_keyforge::crypto::DsaAlgorithm::default(),
-    ));
+    let (base, pass) = setup(KeyAlgorithm::Dsa(pqkeep::crypto::DsaAlgorithm::default()));
     for (outer, inner) in [
         ("kdf", "salt"),
         ("cipher", "nonce"),

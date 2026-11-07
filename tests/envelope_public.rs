@@ -9,12 +9,12 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::envelope::PublicKeyFile;
+use pqkeep::Error;
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm};
+use pqkeep::envelope::PublicKeyFile;
 use serde_json::{Value, json};
 
-fn valid() -> (Value, pqc_keyforge::envelope::KeyFile) {
+fn valid() -> (Value, pqkeep::envelope::KeyFile) {
     let (file, _) = common::key_file(KeyAlgorithm::Kem(KemAlgorithm::MlKem1024));
     let json = file.public_part().unwrap().to_json().unwrap();
     (serde_json::from_str(&json).unwrap(), file)
@@ -57,7 +57,7 @@ fn strict_parsing() {
     let cases: [(&str, Value, Error); 5] = [
         (
             "magic",
-            json!("PQC-KEYFORGE-KEY"),
+            json!("PQKEEP-KEY"),
             Error::InvalidInput { field: "magic" },
         ),
         ("format_version", json!(2), Error::Unsupported),

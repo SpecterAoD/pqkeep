@@ -5,7 +5,7 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::Error;
+use pqkeep::Error;
 
 fn all_variants() -> Vec<Error> {
     vec![
@@ -44,7 +44,7 @@ fn invalid_input_shows_field_name_only() {
 fn io_error_does_not_leak_path() {
     // DE: Der Pfad wird zur Laufzeit erzeugt und darf nicht in der Meldung stehen.
     // EN: The path is generated at runtime and must not appear in the message.
-    let dir = std::env::temp_dir().join(format!("keyforge-missing-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("pqkeep-missing-{}", std::process::id()));
     let io_err = std::fs::read(&dir).unwrap_err();
     let msg = Error::from(io_err).to_string();
     let dir_str = dir.to_string_lossy();
@@ -52,7 +52,7 @@ fn io_error_does_not_leak_path() {
         !msg.contains(dir_str.as_ref()),
         "Pfad in Meldung / path in message"
     );
-    assert!(!msg.contains("keyforge-missing"));
+    assert!(!msg.contains("pqkeep-missing"));
 }
 
 #[test]

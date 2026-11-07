@@ -7,8 +7,8 @@
 
 mod common;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::kdf::{self, KdfParams, KdfProfile};
+use pqkeep::Error;
+use pqkeep::crypto::kdf::{self, KdfParams, KdfProfile};
 
 fn with(memory_kib: u32, iterations: u32, parallelism: u32) -> KdfParams {
     KdfParams {

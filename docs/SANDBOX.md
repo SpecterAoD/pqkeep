@@ -2,17 +2,17 @@
 
 **DE** | [EN](#english)
 
-keyforge schränkt sich nach dem Start selbst ein – **unumkehrbar** und ohne eigene
-Root-Rechte. Ziel: Selbst wenn eine Sicherheitslücke in keyforge oder einer Bibliothek
+pqkeep schränkt sich nach dem Start selbst ein – **unumkehrbar** und ohne eigene
+Root-Rechte. Ziel: Selbst wenn eine Sicherheitslücke in pqkeep oder einer Bibliothek
 (JSON-, HTTP- oder Archiv-Parser) ausgenutzt wird, kann der eingeschleuste Code keine
 fremden Dateien lesen oder verändern, keine Programme starten und keine Daten über das
 Netz senden. Umgesetzt mit zwei Kernel-Mechanismen (SPEC Schritt 5a):
 
 - **Landlock** (ab Linux 5.13): erlaubt nur bestimmte Pfade; ab 6.7 auch kein TCP-Bind/-Connect,
   ab 6.12 keine Signale und abstrakten Unix-Sockets außerhalb der Sandbox.
-- **Seccomp-BPF**: erlaubt nur die Systemaufrufe, die keyforge tatsächlich braucht.
+- **Seccomp-BPF**: erlaubt nur die Systemaufrufe, die pqkeep tatsächlich braucht.
 
-`keyforge --verbose …` zeigt den Zustand, z. B. `Sandbox: landlock=full seccomp=full`.
+`pqkeep --verbose …` zeigt den Zustand, z. B. `Sandbox: landlock=full seccomp=full`.
 
 ## Was erlaubt ist
 
@@ -28,7 +28,7 @@ Netz senden. Umgesetzt mit zwei Kernel-Mechanismen (SPEC Schritt 5a):
 | immer | `/dev/tty` (Passphrase-Abfrage), `/dev/urandom` (Rückfall für Zufall) | – |
 
 „Zielordner“ ist der Ordner, in dem das Ergebnis entsteht (bei `--out bericht.pqkf` also der
-aktuelle Ordner). Dort braucht keyforge Schreibrechte, weil zuerst eine Temporärdatei
+aktuelle Ordner). Dort braucht pqkeep Schreibrechte, weil zuerst eine Temporärdatei
 angelegt und dann atomar veröffentlicht wird. Andere Dateien in diesem Ordner sind dadurch
 ebenfalls erreichbar – wer das vermeiden will, schreibt in einen eigenen Ordner.
 
@@ -53,9 +53,9 @@ fragt nur Pfade und Namen ab.
 
 ## `--no-sandbox`
 
-Schaltet beides ab – **nur zur Fehlersuche**, falls keyforge mit Sandbox nicht startet. Es
+Schaltet beides ab – **nur zur Fehlersuche**, falls pqkeep mit Sandbox nicht startet. Es
 erscheint eine Warnung mit den Risiken; im Terminal muss zusätzlich bestätigt werden
-(Standard: Nein). Bitte das Problem dann melden (Distribution, Kernel, `keyforge --verbose`).
+(Standard: Nein). Bitte das Problem dann melden (Distribution, Kernel, `pqkeep --verbose`).
 
 ## Grenzen
 
@@ -81,12 +81,12 @@ Strg+C). Bei neuen Funktionen oder Abhängigkeiten erneut prüfen; die Tests `sa
 
 ## English
 
-keyforge restricts itself after start – **irreversibly** and without root privileges. Goal:
-even if a vulnerability in keyforge or a library (JSON, HTTP or archive parser) is exploited,
+pqkeep restricts itself after start – **irreversibly** and without root privileges. Goal:
+even if a vulnerability in pqkeep or a library (JSON, HTTP or archive parser) is exploited,
 injected code cannot read or modify other files, start programs or send data over the network.
 Implemented with two kernel mechanisms (SPEC step 5a): **Landlock** (from Linux 5.13; TCP
 bind/connect from 6.7; signal/abstract-socket scope from 6.12) restricts paths, **seccomp-BPF**
-allows only the system calls keyforge actually needs. `keyforge --verbose …` shows the state,
+allows only the system calls pqkeep actually needs. `pqkeep --verbose …` shows the state,
 e.g. `Sandbox: landlock=full seccomp=full`.
 
 **What is allowed:** `generate` – the target directory of `--out` (create, write, rename,

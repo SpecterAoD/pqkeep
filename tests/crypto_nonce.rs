@@ -7,7 +7,7 @@
 
 use std::collections::HashSet;
 
-use pqc_keyforge::crypto::{aead, rng};
+use pqkeep::crypto::{aead, rng};
 
 const RUNS: usize = 10_000;
 

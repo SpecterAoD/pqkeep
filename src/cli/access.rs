@@ -12,9 +12,9 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
-use pqc_keyforge::Error;
-use pqc_keyforge::hardening::sandbox::CliAccess;
-use pqc_keyforge::security::Lang;
+use pqkeep::Error;
+use pqkeep::hardening::sandbox::CliAccess;
+use pqkeep::security::Lang;
 
 use super::files_cmd::{default_decrypted, default_encrypted};
 use super::io::{CliResult, Failure};

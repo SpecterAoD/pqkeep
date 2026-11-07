@@ -5,10 +5,10 @@
 
 use std::net::IpAddr;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::api::token::{self, TOKEN_PREFIX};
-use pqc_keyforge::api::{TokenHash, client_key};
-use pqc_keyforge::envelope::Overwrite;
+use pqkeep::Error;
+use pqkeep::api::token::{self, TOKEN_PREFIX};
+use pqkeep::api::{TokenHash, client_key};
+use pqkeep::envelope::Overwrite;
 
 #[test]
 fn created_token_verifies_and_file_holds_only_hash() {
@@ -18,7 +18,7 @@ fn created_token_verifies_and_file_holds_only_hash() {
     assert!(tok.starts_with(TOKEN_PREFIX));
     assert_eq!(tok.len(), TOKEN_PREFIX.len() + 43);
     let text = std::fs::read_to_string(&path).unwrap();
-    assert!(text.starts_with("keyforge-token-v1 sha3-256 "));
+    assert!(text.starts_with("pqkeep-token-v1 sha3-256 "));
     assert!(!text.contains(&tok[TOKEN_PREFIX.len()..]));
     let hash = TokenHash::load(&path).unwrap();
     assert!(hash.verify(&tok));
@@ -67,15 +67,15 @@ fn malformed_token_files_are_rejected() {
     let good_hex = "ab".repeat(32);
     for content in [
         String::new(),
-        "kf1_klartext-token".to_owned(),
-        format!("keyforge-token-v2 sha3-256 {good_hex}"),
-        format!("keyforge-token-v1 sha3-256 {}", "AB".repeat(32)),
-        format!("keyforge-token-v1 sha3-256 {}", "ab".repeat(31)),
+        "pqk1_klartext-token".to_owned(),
+        format!("pqkeep-token-v2 sha3-256 {good_hex}"),
+        format!("pqkeep-token-v1 sha3-256 {}", "AB".repeat(32)),
+        format!("pqkeep-token-v1 sha3-256 {}", "ab".repeat(31)),
     ] {
         std::fs::write(&path, content).unwrap();
         assert!(TokenHash::load(&path).is_err());
     }
-    std::fs::write(&path, format!("keyforge-token-v1 sha3-256 {good_hex}\n")).unwrap();
+    std::fs::write(&path, format!("pqkeep-token-v1 sha3-256 {good_hex}\n")).unwrap();
     assert!(TokenHash::load(&path).is_ok());
     let missing = TokenHash::load(&dir.path().join("fehlt")).err();
     assert_eq!(missing, Some(Error::Io(std::io::ErrorKind::NotFound)));

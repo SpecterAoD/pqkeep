@@ -20,7 +20,7 @@ fn pass() -> String {
 fn run(dir: &Path, args: &[&str], stdin: &str) -> (i32, String, String) {
     let mut full = vec!["--lang", "de"];
     full.extend_from_slice(args);
-    common::keyforge(&full, stdin, dir)
+    common::pqkeep(&full, stdin, dir)
 }
 
 #[test]

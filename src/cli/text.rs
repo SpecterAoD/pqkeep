@@ -3,7 +3,7 @@
 //! EN: All CLI texts as a struct; one complete instance each for German and
 //! English (`text_de.rs`, `text_en.rs`). A missing text fails to compile.
 
-use pqc_keyforge::security::Lang;
+use pqkeep::security::Lang;
 
 /// DE: Texte einer Sprache. EN: Texts of one language.
 #[allow(missing_docs)]

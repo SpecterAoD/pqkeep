@@ -7,7 +7,7 @@
 
 mod common;
 
-use pqc_keyforge::security::Reason;
+use pqkeep::security::Reason;
 
 fn bytes(text: &str) -> Vec<u8> {
     common::passphrase(text).expose().to_vec()
@@ -83,6 +83,6 @@ fn fullwidth_sequence_detected_after_normalisation() {
 
 #[test]
 fn from_string_normalises_like_new() {
-    let p = pqc_keyforge::security::Passphrase::from_string("Ａｂｃ１".to_owned()).unwrap();
+    let p = pqkeep::security::Passphrase::from_string("Ａｂｃ１".to_owned()).unwrap();
     assert_eq!(p.expose(), b"Abc1");
 }

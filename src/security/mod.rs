@@ -154,7 +154,7 @@ impl Assessment {
 /// an unchecked [`Passphrase`] does not fit (the following example does not compile).
 ///
 /// ```compile_fail
-/// use pqc_keyforge::security::{Passphrase, StrongPassphrase};
+/// use pqkeep::security::{Passphrase, StrongPassphrase};
 /// let p: StrongPassphrase = Passphrase::new("weak").unwrap();
 /// ```
 pub struct StrongPassphrase {

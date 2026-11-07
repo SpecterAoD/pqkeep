@@ -16,10 +16,10 @@ use axum::Router;
 use axum::body::{Body, to_bytes};
 use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode, header};
-use pqc_keyforge::api::{self, AppState, Limits, MAX_BODY_BYTES, TokenHash};
+use pqkeep::api::{self, AppState, Limits, MAX_BODY_BYTES, TokenHash};
 use serde_json::{Value, json};
 
-const TOKEN: &str = "kf1_test-token-only-for-tests";
+const TOKEN: &str = "pqk1_test-token-only-for-tests";
 
 fn fast_limits() -> Limits {
     Limits {
@@ -83,7 +83,7 @@ async fn health_without_auth_and_with_security_headers() {
 async fn validate_requires_token() {
     let app = app();
     let body = pass_body("irrelevant");
-    for token in [None, Some("kf1_wrong"), Some("")] {
+    for token in [None, Some("pqk1_wrong"), Some("")] {
         let (status, headers, value) = send(&app, validate_req(token, &body)).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(headers[header::WWW_AUTHENTICATE], "Bearer");
@@ -228,7 +228,7 @@ async fn lockout_after_failed_tokens_even_with_correct_token() {
     let b = api::router(state).layer(Extension(ConnectInfo(addr("10.0.0.2"))));
     let body = pass_body("kurz");
     for _ in 0..5 {
-        let status = send(&a, validate_req(Some("kf1_falsch"), &body)).await.0;
+        let status = send(&a, validate_req(Some("pqk1_falsch"), &body)).await.0;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
     }
     let status = send(&a, validate_req(Some(TOKEN), &body)).await.0;
@@ -245,7 +245,7 @@ async fn successful_auth_resets_failures() {
     let app = app();
     let body = pass_body("kurz");
     for _ in 0..3 {
-        let _ = send(&app, validate_req(Some("kf1_falsch"), &body)).await;
+        let _ = send(&app, validate_req(Some("pqk1_falsch"), &body)).await;
         assert_eq!(
             send(&app, validate_req(Some(TOKEN), &body)).await.0,
             StatusCode::OK

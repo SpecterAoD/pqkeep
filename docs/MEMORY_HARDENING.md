@@ -42,7 +42,7 @@ Festplattenverschlüsselung nutzen.
 - **Windows:** Die Fehlerberichterstattung (WER) kann ein Programm nicht zuverlässig selbst
   abschalten. Empfehlung für Rechner mit Schlüsselmaterial:
   - Lokale Absturzabbilder nicht aktivieren (Registry `HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps`
-    nicht anlegen bzw. für `keyforge.exe` `DumpType` = 0).
+    nicht anlegen bzw. für `pqkeep.exe` `DumpType` = 0).
   - WER für die Anwendung ausschließen, z. B. per Gruppenrichtlinie „Windows-Fehlerberichterstattung
     deaktivieren“.
   - Speicherabbilder bei Systemabsturz („Kernelspeicherabbild“) auf „Keine“ stellen, wenn möglich.
@@ -96,7 +96,7 @@ for Linux process settings).
    avoid hibernation or use full-disk encryption.
 2. **Core dumps:** `harden_process()` (called first by CLI and API) sets `RLIMIT_CORE` = 0 and
    `PR_SET_DUMPABLE` = 0 on Linux (the latter also blocks `ptrace` by same-user processes). On Windows,
-   WER cannot be reliably disabled by the program; do not enable `LocalDumps` for `keyforge.exe`,
+   WER cannot be reliably disabled by the program; do not enable `LocalDumps` for `pqkeep.exe`,
    exclude it from WER via policy and set system crash dumps to "None" where possible.
 3. **Immediate zeroing:** all secrets live in zeroize-on-drop types; derived keys are released right
    after last use; intermediate copies are avoided or zeroed (seed parsing, shared secrets, passphrase

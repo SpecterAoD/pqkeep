@@ -13,12 +13,12 @@ use axum::body::{Body, to_bytes};
 use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode, header};
 use axum::{Extension, Router};
-use pqc_keyforge::api::{self, AppState, Limits, TokenHash};
-use pqc_keyforge::envelope::{KeyFile, PublicKeyFile};
+use pqkeep::api::{self, AppState, Limits, TokenHash};
+use pqkeep::envelope::{KeyFile, PublicKeyFile};
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
-const TOKEN: &str = "kf1_test-token-only-for-tests";
+const TOKEN: &str = "pqk1_test-token-only-for-tests";
 
 fn app(kdf_budget_mib: u32) -> Router {
     let limits = Limits {
@@ -131,7 +131,7 @@ async fn invalid_requests_are_400() {
 
 #[tokio::test]
 async fn generate_requires_token() {
-    let (status, _, _) = send(&app(1024), req("kf1_falsch", &body("x", "aes-256"))).await;
+    let (status, _, _) = send(&app(1024), req("pqk1_falsch", &body("x", "aes-256"))).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 

@@ -11,9 +11,9 @@ mod common;
 
 use std::io::ErrorKind;
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::files::{self, Protection, Unlock};
+use pqkeep::Error;
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm};
+use pqkeep::files::{self, Protection, Unlock};
 
 #[test]
 fn never_overwrites() {

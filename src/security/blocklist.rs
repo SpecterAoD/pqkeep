@@ -123,7 +123,8 @@ pub(super) const BLOCKLIST: &[&str] = &[
     "borussia",
     "werder",
     "eintracht",
-    // DE/EN: Projekt und Kontext / project and context
+    // DE/EN: Projekt und Kontext (auch der frühere Name) / project and context (incl. former name)
+    "pqkeep",
     "keyforge",
     "pqckey",
     "passphrase",

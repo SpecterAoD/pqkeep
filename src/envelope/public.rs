@@ -18,7 +18,7 @@ use crate::crypto::KeyAlgorithm;
 use crate::{Error, Result};
 
 /// DE: Kennung der öffentlichen Schlüsseldatei. EN: Public key file magic.
-pub const PUBLIC_MAGIC: &str = "PQC-KEYFORGE-PUB";
+pub const PUBLIC_MAGIC: &str = "PQKEEP-PUB";
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

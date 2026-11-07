@@ -9,8 +9,8 @@
 
 mod common;
 
-use pqc_keyforge::crypto::{KemAlgorithm, KeyAlgorithm};
-use pqc_keyforge::files::{self, Content, HeaderMode, Protection, Unlock};
+use pqkeep::crypto::{KemAlgorithm, KeyAlgorithm};
+use pqkeep::files::{self, Content, HeaderMode, Protection, Unlock};
 
 #[test]
 fn single_file_sizes_with_passphrase() {

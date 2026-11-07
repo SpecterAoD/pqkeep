@@ -8,7 +8,7 @@
 //! relevant.
 
 use dialoguer::{Input, Select};
-use pqc_keyforge::security::Lang;
+use pqkeep::security::Lang;
 
 use super::args::ALGORITHMS;
 use super::io::{CliResult, Failure, code};
@@ -96,7 +96,7 @@ pub fn run(t: &Texts, lang: Lang, execute: impl Fn(Vec<String>) -> CliResult) ->
         };
         let lang_code = if lang == Lang::De { "de" } else { "en" };
         let mut argv = vec![
-            "keyforge".to_owned(),
+            "pqkeep".to_owned(),
             "--lang".to_owned(),
             lang_code.to_owned(),
         ];

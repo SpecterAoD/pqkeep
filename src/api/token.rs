@@ -1,9 +1,9 @@
-//! DE: Zugangstoken der API. Ein Token besteht aus 256 Bit Zufall (Präfix `kf1_`,
+//! DE: Zugangstoken der API. Ein Token besteht aus 256 Bit Zufall (Präfix `pqk1_`,
 //! Base64url). Gespeichert wird nur der SHA3-256-Hash in einer Datei (Linux 0600);
 //! das Token selbst wird genau einmal angezeigt. Der Vergleich erfolgt in konstanter
 //! Zeit über die Hashes. Tokens aus Umgebungsvariablen werden bewusst nicht unterstützt.
 //!
-//! EN: API access token. A token consists of 256 bits of randomness (prefix `kf1_`,
+//! EN: API access token. A token consists of 256 bits of randomness (prefix `pqk1_`,
 //! base64url). Only the SHA3-256 hash is stored in a file (Linux 0600); the token
 //! itself is shown exactly once. Comparison is done in constant time on the hashes.
 //! Tokens from environment variables are deliberately not supported.
@@ -21,9 +21,9 @@ use crate::{Error, Result};
 
 /// DE: Präfix jedes Tokens (erleichtert Secret-Scannern das Erkennen).
 /// EN: Prefix of every token (helps secret scanners recognise it).
-pub const TOKEN_PREFIX: &str = "kf1_";
+pub const TOKEN_PREFIX: &str = "pqk1_";
 /// DE: Kennung am Anfang der Hash-Datei. EN: Tag at the start of the hash file.
-const FILE_TAG: &str = "keyforge-token-v1 sha3-256 ";
+const FILE_TAG: &str = "pqkeep-token-v1 sha3-256 ";
 /// DE: Länge des Hashes in Byte. EN: Hash length in bytes.
 const HASH_LEN: usize = 32;
 /// DE: Höchstlänge eines vorgelegten Tokens. EN: Maximum length of a presented token.

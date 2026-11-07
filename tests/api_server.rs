@@ -8,7 +8,7 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use pqc_keyforge::api::{self, AppState, Limits, TokenHash};
+use pqkeep::api::{self, AppState, Limits, TokenHash};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::oneshot;
@@ -23,7 +23,7 @@ type Server = (
 async fn start(limits: Limits) -> Server {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
-    let state = AppState::new(TokenHash::of("kf1_x"), limits);
+    let state = AppState::new(TokenHash::of("pqk1_x"), limits);
     let (tx, rx) = oneshot::channel::<()>();
     let handle = tokio::spawn(api::serve(listener, state, async {
         let _ = rx.await;

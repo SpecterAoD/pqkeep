@@ -1,11 +1,11 @@
-//! DE: `keyforge help [thema]`, `keyforge completions <shell>`, `keyforge man`.
+//! DE: `pqkeep help [thema]`, `pqkeep completions <shell>`, `pqkeep man`.
 //! Alles wird lokal erzeugt, ohne Netzwerkzugriff.
-//! EN: `keyforge help [topic]`, `keyforge completions <shell>`, `keyforge man`.
+//! EN: `pqkeep help [topic]`, `pqkeep completions <shell>`, `pqkeep man`.
 //! Everything is generated locally, without network access.
 
 use clap::ArgMatches;
 use clap_complete::Shell;
-use pqc_keyforge::security::Lang;
+use pqkeep::security::Lang;
 
 use super::args;
 use super::io::{CliResult, Failure, code};
@@ -20,7 +20,7 @@ pub fn topic(lang: Lang, name: &str) -> Option<&'static str> {
     list.iter().find(|(n, _)| *n == name).map(|(_, text)| *text)
 }
 
-/// DE: `keyforge help`. EN: `keyforge help`.
+/// DE: `pqkeep help`. EN: `pqkeep help`.
 pub fn help(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     if let Some(name) = m.get_one::<String>("topic") {
         let text = topic(lang, name)
@@ -35,7 +35,7 @@ pub fn help(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-/// DE: `keyforge completions`. EN: `keyforge completions`.
+/// DE: `pqkeep completions`. EN: `pqkeep completions`.
 pub fn completions(lang: Lang, m: &ArgMatches) {
     let shell = match m.get_one::<String>("shell").map(String::as_str) {
         Some("zsh") => Shell::Zsh,
@@ -44,10 +44,10 @@ pub fn completions(lang: Lang, m: &ArgMatches) {
         _ => Shell::Bash,
     };
     let mut cmd = args::build(lang);
-    clap_complete::generate(shell, &mut cmd, "keyforge", &mut std::io::stdout());
+    clap_complete::generate(shell, &mut cmd, "pqkeep", &mut std::io::stdout());
 }
 
-/// DE: `keyforge man` (roff auf Stdout). EN: `keyforge man` (roff on stdout).
+/// DE: `pqkeep man` (roff auf Stdout). EN: `pqkeep man` (roff on stdout).
 pub fn man(lang: Lang) -> CliResult {
     clap_mangen::Man::new(args::build(lang))
         .render(&mut std::io::stdout())

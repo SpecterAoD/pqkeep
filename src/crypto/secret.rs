@@ -21,12 +21,12 @@ use crate::hardening::memlock::{self, LockedRange};
 /// EN: The following examples must **not** compile (no `Debug`/`Clone`).
 ///
 /// ```compile_fail
-/// let s = pqc_keyforge::crypto::SecretBytes::new(vec![1, 2, 3]);
+/// let s = pqkeep::crypto::SecretBytes::new(vec![1, 2, 3]);
 /// println!("{s:?}");
 /// ```
 ///
 /// ```compile_fail
-/// let s = pqc_keyforge::crypto::SecretBytes::new(vec![1, 2, 3]);
+/// let s = pqkeep::crypto::SecretBytes::new(vec![1, 2, 3]);
 /// let t = s.clone();
 /// ```
 pub struct SecretBytes {

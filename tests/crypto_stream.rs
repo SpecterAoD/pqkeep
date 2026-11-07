@@ -7,10 +7,10 @@
 // EN: Tests may use unwrap/expect (also in helpers); production code may not.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use pqc_keyforge::Error;
-use pqc_keyforge::crypto::aead::TAG_LEN;
-use pqc_keyforge::crypto::stream::{self, CHUNK_SIZE, ENCRYPTED_CHUNK_SIZE, PREFIX_LEN};
-use pqc_keyforge::crypto::{aead, rng};
+use pqkeep::Error;
+use pqkeep::crypto::aead::TAG_LEN;
+use pqkeep::crypto::stream::{self, CHUNK_SIZE, ENCRYPTED_CHUNK_SIZE, PREFIX_LEN};
+use pqkeep::crypto::{aead, rng};
 
 const AAD: &[u8] = b"header-hash";
 

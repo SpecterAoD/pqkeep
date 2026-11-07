@@ -7,7 +7,7 @@
 
 mod common;
 
-use pqc_keyforge::security::Reason;
+use pqkeep::security::Reason;
 
 /// DE: Starke, musterfreie Basis. EN: Strong, pattern-free base.
 const BASE: &str = "Bm7#qLx2!Vp9$Kd4";
