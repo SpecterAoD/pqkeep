@@ -91,6 +91,22 @@ pub fn read_passphrase(
     from_stdin: bool,
     confirm: bool,
 ) -> CliResult<Passphrase> {
+    let prompt = if confirm {
+        t.prompt_new_passphrase
+    } else {
+        t.prompt_passphrase
+    };
+    read_passphrase_as(t, lang, from_stdin, confirm, prompt)
+}
+
+/// DE: Wie [`read_passphrase`], mit eigenem Eingabetext. EN: Like [`read_passphrase`] with own prompt.
+pub fn read_passphrase_as(
+    t: &Texts,
+    lang: Lang,
+    from_stdin: bool,
+    confirm: bool,
+    prompt_text: &str,
+) -> CliResult<Passphrase> {
     let text = if from_stdin {
         let mut line = String::new();
         std::io::stdin()
@@ -104,11 +120,7 @@ pub fn read_passphrase(
         if !std::io::stdin().is_terminal() {
             return Err(Failure::new(code::USAGE, t.msg_no_tty));
         }
-        let mut prompt = Password::new().with_prompt(if confirm {
-            t.prompt_new_passphrase
-        } else {
-            t.prompt_passphrase
-        });
+        let mut prompt = Password::new().with_prompt(prompt_text);
         if confirm {
             prompt = prompt.with_confirmation(t.prompt_confirm, t.prompt_mismatch);
         }

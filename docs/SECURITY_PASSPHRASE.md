@@ -40,6 +40,9 @@ Nicht-ASCII pauschal 100). Zeichen, die zu einem erkannten Muster gehören, zäh
 **Grenze:** Das ist eine Heuristik. Sie bewertet die Form, nicht wie die Passphrase gewählt wurde.
 Eine bekannte Zeile aus einem Lied kann die Regeln erfüllen und trotzdem leicht zu erraten sein.
 Die sicherste Wahl ist der eingebaute Generator.
+Beispiel aus den Tests: Das Fachwort „FIPS-140-validiert“ erfüllt alle Regeln (18 Zeichen, alle
+Klassen, keine Muster), wäre aber leicht zu erraten. Eine größere Wörterbuchprüfung ist eine mögliche
+spätere Verbesserung.
 
 ## Generator
 
@@ -76,7 +79,9 @@ from one third upwards, so that ordinary sentences are not rejected for containi
 
 **Entropy estimate:** `log2(pool) × effective length`; pool = sum of classes present (26/26/10/33,
 non-ASCII 100); characters in detected patterns do not count. It is a heuristic that judges shape,
-not how the passphrase was chosen; the built-in generator is the safest choice.
+not how the passphrase was chosen; the built-in generator is the safest choice. Example from the tests:
+the technical term "FIPS-140-validiert" meets every rule yet would be easy to guess; a larger dictionary
+check is a possible later improvement.
 
 **Generator:** OS randomness, rejection sampling without modulo bias, 94 printable ASCII characters
 (85 without ambiguous ones), default 24 characters ≈ 157 bits, length 16–256. Candidates failing any
