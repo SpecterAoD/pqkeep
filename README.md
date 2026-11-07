@@ -24,6 +24,8 @@ keyforge encrypt bericht.pdf               # mit Passphrase
 keyforge encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
 keyforge decrypt Ordner.pqkf --key anna.key.json
 keyforge help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
+keyforge serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
+keyforge serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token)
 ```
 Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder über `--passphrase-stdin`.
 
@@ -53,5 +55,7 @@ keyforge encrypt report.pdf                # with a passphrase
 keyforge encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
 keyforge decrypt folder.pqkf --key anna.key.json
 keyforge help security                     # topics: passphrase, algorithms, container, files, security, verify
+keyforge serve --init-token --token-file api.token   # show API token once, store hash only
+keyforge serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token)
 ```
 Language: `--lang de|en` (default: system language). Passphrases are never arguments, only hidden or via `--passphrase-stdin`.

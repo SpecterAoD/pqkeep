@@ -39,6 +39,9 @@ jobs:
       - run: rustup show active-toolchain || rustup toolchain install
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked -- -D warnings
+      # DE: Reine CLI ohne API/Netzwerkcode muss baubar bleiben.
+      # EN: The pure CLI without API/network code must stay buildable.
+      - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
       - run: cargo test --locked
 
   msrv:
