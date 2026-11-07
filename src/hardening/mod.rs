@@ -10,6 +10,7 @@
 //! not abort but are reported. CLI and API call [`harden_process`] first thing.
 
 pub mod memlock;
+pub mod sandbox;
 
 /// DE: Ergebnis der Prozesshärtung. EN: Result of process hardening.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
