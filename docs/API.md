@@ -138,6 +138,7 @@ Fehler sind bewusst generisch: `{"error":"<code>"}`, nie mit Eingabedaten.
 | Rate-Limit | 60 Anfragen/Minute je Client (IPv6: je /64-Netz) |
 | Sperre | 15 min nach 5 falschen Tokens |
 | Argon2-Speicherbudget | 1024 MiB gesamt: 4 × `standard` oder 1 × `hardened` gleichzeitig, sonst sofort 503 |
+| Sandbox (Linux) | Nach dem Binden: kein Dateizugriff (Landlock), keine neuen Sockets, kein `execve`/`fork`/`ptrace` (Seccomp); `--no-sandbox` nur zur Fehlersuche (mit Warnung) |
 | Antwort-Header | `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`; kein CORS |
 
 ## Bekannte Grenzen
@@ -194,7 +195,8 @@ table above (400 `bad_request`, 401 `unauthorized`, 404, 405, 413, 415, 422, 429
 concurrent connections (more are closed immediately); 60 requests/minute per client (IPv6 per
 /64); lockout for 15 min after 5 wrong tokens; Argon2 memory budget 1024 MiB in total (4 ×
 `standard` or 1 × `hardened` at a time, otherwise 503 immediately); security headers as listed
-above; no CORS.
+above; no CORS. Sandbox (Linux): after binding no file access (Landlock), no new sockets, no
+`execve`/`fork`/`ptrace` (seccomp); `--no-sandbox` only for troubleshooting (with a warning).
 
 **Known limitations:** no built-in TLS; hyper/axum buffers holding the request body cannot be
 zeroed (the passphrase itself is zeroed after reading); `hardened` may exceed 30 s on slow

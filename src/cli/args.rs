@@ -195,6 +195,7 @@ pub fn build(lang: Lang) -> Command {
                 .value_parser(["de", "en"]),
         )
         .arg(flag("verbose", t.arg_verbose).short('v').global(true))
+        .arg(flag("no-sandbox", super::sandbox::arg_help(lang)).global(true))
         .subcommand(generate(lang))
         .subcommand(
             base("validate", t.validate_about, t.validate_after, lang)

@@ -9,9 +9,11 @@ use std::path::PathBuf;
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 use pqc_keyforge::api::{self, AppState, Limits, TokenHash, token};
 use pqc_keyforge::envelope::Overwrite;
+use pqc_keyforge::hardening::sandbox::Profile;
 use pqc_keyforge::security::Lang;
 
 use super::io::{CliResult, Failure, code};
+use super::sandbox;
 use super::serve_text::serve_texts;
 
 /// DE: Standardadresse. EN: Default address.
@@ -47,7 +49,7 @@ pub fn command(base: Command, lang: Lang) -> Command {
 }
 
 /// DE: `keyforge serve`. EN: `keyforge serve`.
-pub fn serve(lang: Lang, m: &ArgMatches) -> CliResult {
+pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
     let s = serve_texts(lang);
     let path = m
         .get_one::<PathBuf>("token-file")
@@ -74,12 +76,20 @@ pub fn serve(lang: Lang, m: &ArgMatches) -> CliResult {
         eprintln!("{}", s.msg_remote_warning);
     }
     let hash = TokenHash::load(path).map_err(|e| Failure::from_error(&e, lang))?;
-    run(addr, hash, lang)
+    let io_err = |e: std::io::Error| Failure::from_error(&e.into(), lang);
+    // DE: Socket binden, solange `bind` noch erlaubt ist; danach Sandbox – vor dem Start
+    //     der tokio-Threads, damit Landlock auch für sie gilt.
+    // EN: Bind the socket while `bind` is still allowed; then the sandbox – before the
+    //     tokio threads start, so that Landlock applies to them as well.
+    let listener = std::net::TcpListener::bind(addr).map_err(io_err)?;
+    listener.set_nonblocking(true).map_err(io_err)?;
+    sandbox::enable(Profile::Api, sandboxed, m.get_flag("verbose"), lang)?;
+    run(listener, hash, lang)
 }
 
 /// DE: Startet die Laufzeit und bedient Anfragen bis Strg+C.
 /// EN: Starts the runtime and serves requests until Ctrl+C.
-fn run(addr: SocketAddr, hash: TokenHash, lang: Lang) -> CliResult {
+fn run(listener: std::net::TcpListener, hash: TokenHash, lang: Lang) -> CliResult {
     let s = serve_texts(lang);
     let io_err = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -87,7 +97,7 @@ fn run(addr: SocketAddr, hash: TokenHash, lang: Lang) -> CliResult {
         .build()
         .map_err(io_err)?;
     runtime.block_on(async {
-        let listener = tokio::net::TcpListener::bind(addr).await.map_err(io_err)?;
+        let listener = tokio::net::TcpListener::from_std(listener).map_err(io_err)?;
         let local = listener.local_addr().map_err(io_err)?;
         eprintln!("{} http://{local}", s.msg_listening);
         let state = AppState::new(hash, Limits::default());
