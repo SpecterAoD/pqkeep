@@ -1,0 +1,59 @@
+# Release-Ablauf / Release process
+
+**DE** | [EN](#english)
+
+Für den Maintainer. Technische Grundlage: `.github/workflows/release.yml`, Anforderungen: SPEC 5a,
+Häkchenliste: [`CHECKLIST.md`](CHECKLIST.md) („Release-Checkliste“).
+
+## Trockenlauf (ohne Veröffentlichung)
+
+1. GitHub → *Actions* → *Release* → *Run workflow* (Branch `main`).
+2. Nach Build und Rauchtest wartet der Job „Signieren und bereitstellen“ auf die Freigabe:
+   *Review deployments* → `release` → *Approve*.
+3. Ergebnis: Artefakt `release-bundle` (Pakete, SBOMs, `SHA256SUMS`, Sigstore-Bundles); der Job
+   „Prüfung“ muss grün sein. Es entsteht **kein** GitHub-Release. Hinweis: Attestationen und
+   Sigstore-Einträge sind öffentlich und dauerhaft (nur Prüfsummen und Workflow-Identität).
+
+## Release oder Beta
+
+1. Version in `Cargo.toml` setzen (z. B. `0.1.0-beta.1`), `Cargo.lock` aktualisieren, per PR mergen.
+2. Lokal auf dem aktuellen `main` einen **signierten** Tag erstellen und prüfen:
+   ```
+   git switch main && git pull --ff-only
+   git tag -s v0.1.0-beta.1 -m "PQKeep v0.1.0-beta.1"
+   git verify-tag v0.1.0-beta.1
+   git push origin v0.1.0-beta.1
+   ```
+   Der Workflow bricht ab, wenn die Signatur nicht zu `.github/allowed_signers` passt oder Tag und
+   `Cargo.toml` nicht übereinstimmen.
+3. Freigabe wie beim Trockenlauf (*Review deployments*).
+4. Wenn „Prüfung“ grün ist: *Releases* → Entwurf öffnen, Assets und Text prüfen (Betas sind als
+   *Pre-release* markiert) → *Publish release*.
+5. Fehlgeschlagen: Entwurf löschen, Ursache beheben, Tag löschen (`git push --delete origin <tag>`,
+   `git tag -d <tag>`) und neu erstellen – nur solange nichts veröffentlicht wurde.
+
+## Windows-Signatur (SignPath)
+
+Erst nach Zusage der SignPath Foundation: Signierschritt vor dem Verpacken einbauen, Zugangsdaten
+nur als Secret im Environment `release`, Hinweis gemäß [`CODE_SIGNING_POLICY.md`](../CODE_SIGNING_POLICY.md).
+
+---
+
+## English
+
+For the maintainer. Implementation: `.github/workflows/release.yml`; requirements: SPEC 5a;
+checklist: [`CHECKLIST.md`](CHECKLIST.md).
+
+**Dry run:** Actions → Release → Run workflow (`main`); approve the `release` environment when asked;
+the artifact `release-bundle` is produced and the "verification" job must pass. No GitHub release
+is created. Attestations and Sigstore entries are public and permanent (checksums and workflow
+identity only).
+
+**Release or beta:** set the version in `Cargo.toml` via PR; on current `main` run
+`git tag -s v<version> -m "PQKeep v<version>"`, `git verify-tag v<version>`,
+`git push origin v<version>`; approve the `release` environment; when verification is green, open
+the draft under Releases, review it and publish. If something fails before publishing: delete the
+draft and the tag, fix, tag again.
+
+**Windows signing (SignPath):** only after approval by the SignPath Foundation – add the signing
+step before packaging, credentials only as secrets of the `release` environment.
