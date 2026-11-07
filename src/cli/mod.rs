@@ -11,6 +11,7 @@ mod help;
 mod io;
 mod keys;
 mod menu;
+mod sandbox;
 #[cfg(feature = "api")]
 mod serve;
 #[cfg(feature = "api")]
@@ -62,6 +63,10 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
             return Ok(());
         }
     };
+    let sandboxed = !matches.get_flag("no-sandbox");
+    if !sandboxed {
+        sandbox::confirm_disabled(lang)?;
+    }
     if matches.get_flag("verbose") {
         let lock = memlock::stats();
         eprintln!(
@@ -88,7 +93,7 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
         }
         Some(("man", _)) => help::man(lang),
         #[cfg(feature = "api")]
-        Some(("serve", m)) => serve::serve(lang, m),
+        Some(("serve", m)) => serve::serve(lang, m, sandboxed),
         _ => Err(Failure::new(code::USAGE, "")),
     }
 }

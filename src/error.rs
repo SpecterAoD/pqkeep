@@ -59,6 +59,12 @@ pub enum Error {
     /// EN: I/O error; only the error kind, no path.
     #[error("Ein-/Ausgabefehler / I/O error: {0}")]
     Io(std::io::ErrorKind),
+
+    /// DE: Sandbox (Seccomp) konnte nicht aktiviert werden. EN: Sandbox (seccomp) could not be enabled.
+    #[error(
+        "Sandbox konnte nicht aktiviert werden (Diagnose: --no-sandbox) / sandbox could not be enabled (diagnosis: --no-sandbox)"
+    )]
+    Sandbox,
 }
 
 impl From<std::io::Error> for Error {
