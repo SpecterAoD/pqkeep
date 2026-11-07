@@ -66,4 +66,8 @@ fn warn_if_root(t: &Texts) {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn warn_if_root(_t: &Texts) {}
+fn warn_if_root(t: &Texts) {
+    // DE: Windows: Admin-Erkennung bräuchte eine unsafe-API; dokumentierte Lücke.
+    // EN: Windows: admin detection would need an unsafe API; documented gap.
+    let _ = t.msg_root_warning;
+}
