@@ -26,5 +26,6 @@
 - [ ] Artefakte: Build-Provenance-Attestation, Sigstore-Signatur, `SHA256SUMS` (signiert), SBOM
 - [ ] Windows-Binary mit SignPath signiert (sobald freigegeben), sonst Hinweis auf SmartScreen in den Release-Notes
 - [ ] Verifikations-Job grün (Attestation, Signatur, Prüfsumme)
+- [ ] Release-Entwurf geprüft (Assets, Notes) und von Hand veröffentlicht
 - [ ] Beta als „Pre-release“ markiert
 - [ ] Release-Notes zweisprachig, inkl. Verifikationsanleitung

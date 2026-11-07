@@ -89,6 +89,24 @@ on Linux and Windows (formatting, lints, tests, known-answer tests, dependency a
 merged only by the maintainer. AI-assisted commits carry a `Co-Authored-By` trailer. AI
 assistance is not a substitute for an independent security review.
 
+### Verifying a release
+
+Releases are built by GitHub Actions from this repository only. Each archive comes with a
+SHA-256 checksum, a build provenance attestation, a Sigstore signature and an SBOM (CycloneDX).
+Replace `<version>` and `<target>` with the values of the file you downloaded:
+
+```
+sha256sum -c SHA256SUMS --ignore-missing          # Windows: Get-FileHash <file> -Algorithm SHA256
+gh attestation verify pqkeep-<version>-<target>.tar.gz --repo SpecterAoD/pqkeep
+cosign verify-blob --bundle pqkeep-<version>-<target>.tar.gz.sigstore.json \
+  --certificate-identity "https://github.com/SpecterAoD/pqkeep/.github/workflows/release.yml@refs/tags/v<version>" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  pqkeep-<version>-<target>.tar.gz
+```
+
+The Windows binary is not yet Authenticode-signed (see the [code signing policy](CODE_SIGNING_POLICY.md)),
+so Windows SmartScreen may warn when it is started for the first time.
+
 ### Documentation
 
 | Topic | Document |
@@ -157,6 +175,14 @@ Jede Änderung folgt der Spezifikation ([`docs/SPEC.md`](docs/SPEC.md)), wird vo
 freigegeben, läuft per Pull Request durch die CI (Linux und Windows) und wird nur vom Maintainer
 gemergt. KI-gestützte Commits tragen einen `Co-Authored-By`-Vermerk. Das ersetzt kein
 unabhängiges Sicherheitsreview.
+
+### Release prüfen
+
+Releases baut ausschließlich GitHub Actions aus diesem Repository. Jedes Archiv hat eine
+SHA-256-Prüfsumme, eine Build-Attestation, eine Sigstore-Signatur und eine SBOM. Prüfung wie im
+englischen Abschnitt „Verifying a release“ (`sha256sum -c`, `gh attestation verify`,
+`cosign verify-blob`). Das Windows-Programm ist noch nicht Authenticode-signiert; SmartScreen kann
+beim ersten Start warnen.
 
 ### Projekt
 

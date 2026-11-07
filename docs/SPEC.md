@@ -1,10 +1,11 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.5: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.6: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
 > Änderung v2.3 (07.11.2026, freigegeben von SpecterAoD): geplante Updates nach der ersten Beta (Abschnitt 9): Signaturen, mehrere Empfänger, Einrichtungs-Assistent, Kontextmenü.
 > Änderung v2.4 (07.11.2026, freigegeben von SpecterAoD): Wortlisten für die Passphrase-Prüfung (Schritt 2b), Ausnahme von 5c für die EFF-Wortlisten (CC BY 4.0).
 > Änderung v2.5 (07.11.2026, freigegeben von SpecterAoD): Umbenennung von „PQC KeyForge“ in **PQKeep** (Crate, Bibliothek und Binary `pqkeep`, Repository `SpecterAoD/pqkeep`) wegen Namenskonflikt mit dem Kartenspiel „KeyForge“. Formatkennungen `PQKEEP-KEY`/`PQKEEP-PUB`, Domänentrennung `PQKeep/…`, Token-Präfix `pqk1_`; Endung `.pqkf` und `PQKFENC` bleiben. Vor dem ersten Release, daher ohne Kompatibilität zu Dateien des alten Namens.
+> Änderung v2.6 (07.11.2026, freigegeben von SpecterAoD): Schritt 6 an die Umsetzung angeglichen – `main` per Ruleset ohne Pflicht-Review (ein Maintainer; Prüfung über Pflicht-Checks), offizieller SignPath-Wortlaut, Linux-Release-Build auf Ubuntu 22.04, Release zunächst als Entwurf, SignPath-Action erst nach Zusage, gitleaks als geprüftes Binary statt Action.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -107,17 +108,18 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen signiert und nachprüfbar sein. Betas durchlaufen **denselben** Prozess, nur mit Tag `vX.Y.Z-beta.N` und als „Pre-release“ markiert.
 
 - **Auslöser:** Nur ein **signierter Git-Tag** (`v*`) startet den Release-Workflow. Tags werden lokal signiert (SSH- oder GPG-Signatur). Der Workflow bricht ab, wenn die Tag-Signatur nicht verifizierbar ist.
-- **Schutz des Hauptzweigs:** Branch Protection auf `main`: Pull Request mit Review, erforderliche Status-Checks, **signierte Commits erforderlich**, keine Force-Pushes, `CODEOWNERS`.
+- **Schutz des Hauptzweigs:** Ruleset auf `main`: nur per Pull Request, erforderliche Status-Checks, **signierte Commits erforderlich**, lineare Historie, keine Force-Pushes, kein Löschen, `CODEOWNERS`. Solange es nur einen Maintainer gibt, **0 Pflicht-Reviews** (sonst blockiert er sich selbst); Beiträge Dritter werden vor dem Merge geprüft.
 - **Build-Provenienz:** `actions/attest-build-provenance` (GitHub Artifact Attestations, SLSA-Provenance) für jedes Artefakt, Linux und Windows.
 - **Keyless-Signatur:** Zusätzlich `cosign sign-blob` (Sigstore, OIDC-Identität des Workflows). Dafür sind **keine** hinterlegten privaten Schlüssel nötig, passend zur Regel „keine Secrets im Repo“.
 - **Prüfsummen:** `SHA256SUMS` für alle Artefakte, selbst signiert und als Release-Asset beigefügt.
 - **SBOM:** CycloneDX- oder SPDX-SBOM (z. B. `cargo-cyclonedx`) erzeugen, an das Release hängen und attestieren.
 - **Windows-Binary:** Zusätzlich Authenticode-Signatur gegen SmartScreen-Warnungen über die **SignPath Foundation** (kostenlos für Open Source). Azure Artifact Signing (kostenpflichtig) ist nur die Ausweichlösung. Zugangsdaten (SignPath-API-Token) ausschließlich als GitHub-Environment-Secret, niemals im Repo.
   - **Voraussetzungen (müssen dauerhaft erfüllt bleiben):** öffentliches Repository, OSI-anerkannte Lizenz (Abschnitt 5c), **kein proprietärer Code** im Projekt, Multi-Faktor-Authentifizierung für alle Teammitglieder bei GitHub und SignPath, nur eigene Binaries signieren, Build ausschließlich über GitHub Actions aus dem öffentlichen Repository (Origin Verification).
-  - **Pflichthinweis** in README und Release-Notes: „Free code signing provided by SignPath.io, certificate by SignPath Foundation.“ sowie eine Seite „Code Signing Policy“ mit Teamrollen.
-  - **Bis zur Freigabe:** Der Signierschritt ist im Workflow optional (läuft nur, wenn die SignPath-Variablen gesetzt sind). Ohne ihn werden Windows-Artefakte unsigniert veröffentlicht, aber weiterhin per Attestation, Sigstore und Prüfsumme abgesichert. Die README weist dann auf die SmartScreen-Warnung hin.
+  - **Pflichthinweis** (nach Zusage) in README und Release-Notes, offizieller Wortlaut: „Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org)“ sowie die Seite „Code signing policy“ mit Teamrollen und Datenschutzsatz (`CODE_SIGNING_POLICY.md`).
+  - **Bis zur Freigabe:** Im Workflow ist die Stelle für die Signatur (vor dem Verpacken) vorgesehen; die SignPath-Action wird erst nach der Zusage eingebaut, weil dafür die Projektdaten von SignPath nötig sind. Ohne ihn werden Windows-Artefakte unsigniert veröffentlicht, aber weiterhin per Attestation, Sigstore und Prüfsumme abgesichert. Die README weist dann auf die SmartScreen-Warnung hin.
 - **Härtung des Release-Jobs:** Eigener Job mit GitHub Environment `release` (erforderlicher Reviewer), Berechtigungen nur dort: `contents: write`, `id-token: write`, `attestations: write`. Alle anderen Jobs: `contents: read`. Actions auf Commit-SHA gepinnt.
-- **Reproduzierbarkeit:** `cargo build --release --locked`, `--remap-path-prefix`, festes `SOURCE_DATE_EPOCH`. Ziel: identischer Hash bei Wiederholung (soweit möglich, Abweichungen dokumentieren).
+- **Reproduzierbarkeit:** `cargo build --release --locked`, `--remap-path-prefix`, festes `SOURCE_DATE_EPOCH`; Archive mit fester Reihenfolge und festen Zeitstempeln. Ziel: identischer Hash bei Wiederholung (soweit möglich, Abweichungen dokumentieren). Linux-Build auf Ubuntu 22.04 (glibc 2.35) für breite Kompatibilität.
+- **Veröffentlichung:** Der Workflow erzeugt einen Release-**Entwurf**; der Maintainer veröffentlicht ihn nach grünem Prüf-Job von Hand (Ablauf: `docs/RELEASE.md`).
 - **Verifikationsanleitung** (zweisprachig in der README): `gh attestation verify <datei> --repo <owner>/<repo>`, `cosign verify-blob ...`, `sha256sum -c SHA256SUMS`, Prüfung der Authenticode-Signatur unter Windows.
 - **Tests:** Trockenlauf des Release-Workflows mit Beta-Tag; ein Verifikations-Job lädt die erzeugten Artefakte und prüft Attestation, Signatur und Prüfsumme automatisch.
 
