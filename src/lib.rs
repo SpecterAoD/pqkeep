@@ -8,6 +8,8 @@
 
 #![forbid(unsafe_code)]
 
+#[cfg(feature = "api")]
+pub mod api;
 pub mod crypto;
 pub mod envelope;
 pub mod error;

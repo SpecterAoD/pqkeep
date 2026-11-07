@@ -19,6 +19,7 @@ path = "src/main.rs"
 [dependencies]
 aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
+axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "tokio"], optional = true }
 base64ct = { version = "1.8.3", features = ["alloc"] }
 clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "color"] }
 clap_complete = "4.6.11"
@@ -26,14 +27,19 @@ clap_mangen = "0.3.3"
 dialoguer = { version = "0.12.0", default-features = false, features = ["password"] }
 getrandom = { version = "0.4.3", features = ["sys_rng"] }
 hkdf = "0.13.0"
+hyper = { version = "1.12.0", default-features = false, features = ["http1", "server"], optional = true }
+hyper-util = { version = "0.1.21", default-features = false, features = ["tokio"], optional = true }
 ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
 ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
 region = "4.0.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 sha3 = "0.12.0"
+subtle = { version = "2.6.1", optional = true }
 sys-locale = "0.3.2"
 thiserror = "2.0.21"
+tokio = { version = "1.54.1", default-features = false, features = ["rt-multi-thread", "net", "time", "signal", "sync"], optional = true }
+tower = { version = "0.5.3", default-features = false, features = ["util"], optional = true }
 unicode-normalization = "0.1.26"
 zeroize = "1.9.1"
 
@@ -70,9 +76,18 @@ panic = "abort"
 hex = "0.4"
 proptest = "1.12.0"
 tempfile = "3.27.0"
+tokio = { version = "1.54.1", default-features = false, features = ["macros", "rt-multi-thread", "net", "time", "io-util", "sync"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rustix = { version = "1.1.6", default-features = false, features = ["std", "process"] }
+
+# DE: `api` (Standard) baut den REST-Server `keyforge serve` ein. Ohne das Feature
+#     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.
+# EN: `api` (default) builds in the REST server `keyforge serve`. Without the feature
+#     (`--no-default-features`) a pure CLI without network code is built.
+[features]
+default = ["api"]
+api = ["dep:axum", "dep:hyper", "dep:hyper-util", "dep:tokio", "dep:tower", "dep:subtle"]
 
 # DE: Abhängigkeiten auch im Debug/Test-Build optimieren (Argon2 sonst extrem langsam).
 #     Betrifft nur die Laufzeit, nicht die Semantik; eigener Code bleibt unoptimiert.
