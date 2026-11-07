@@ -1,0 +1,246 @@
+# DE: Release-Workflow (SPEC 5a). Auslöser:
+#     - signierter Tag `v*`: Tag-Signatur und Version werden geprüft, Ergebnis ist ein Release-ENTWURF,
+#       den der Maintainer nach grüner Prüfung von Hand veröffentlicht;
+#     - manuell (`workflow_dispatch`): Trockenlauf mit allen Schritten außer dem GitHub-Release;
+#     - Pull Requests, die diesen Workflow oder die Release-Skripte ändern: nur Build, Rauchtest,
+#       Paket und SBOM (ohne Attestation, Signatur, Veröffentlichung).
+#     Schreibrechte, Attestationen und OIDC (Sigstore) gibt es nur im Job `publish`, der über das
+#     Environment `release` die Freigabe des Maintainers braucht.
+# EN: Release workflow (SPEC 5a). Triggers:
+#     - signed tag `v*`: tag signature and version are checked, the result is a release DRAFT that
+#       the maintainer publishes manually after verification passed;
+#     - manual (`workflow_dispatch`): dry run with all steps except the GitHub release;
+#     - pull requests changing this workflow or the release scripts: build, smoke test, package
+#       and SBOM only (no attestation, signature, publishing).
+#     Write access, attestations and OIDC (Sigstore) exist only in job `publish`, which needs the
+#     maintainer's approval via the `release` environment.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "scripts/release_*.py"
+      - "scripts/test_release_scripts.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CYCLONEDX_VERSION: "0.5.9"
+  COSIGN_VERSION: "v3.1.4"
+
+jobs:
+  prepare:
+    name: Vorbereitung / prepare
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      epoch: ${{ steps.meta.outputs.epoch }}
+      is_tag: ${{ steps.meta.outputs.is_tag }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Skript-Tests / script tests
+        run: python3 scripts/test_release_scripts.py
+      - name: Version, Zeitstempel, Tag-Signatur / version, timestamp, tag signature
+        id: meta
+        shell: bash
+        run: |
+          cargo_version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+            # DE: Annotierten Tag sicher holen und Signatur gegen allowed_signers prüfen.
+            # EN: Fetch the annotated tag and verify its signature against allowed_signers.
+            git fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+            git config gpg.ssh.allowedSignersFile .github/allowed_signers
+            git verify-tag "$tag"
+            if [ "v$cargo_version" != "$tag" ]; then
+              echo "Tag $tag passt nicht zu Cargo.toml $cargo_version / tag does not match" >&2
+              exit 1
+            fi
+            echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
+            echo "is_tag=true" >> "$GITHUB_OUTPUT"
+            case "$cargo_version" in *-*) pre=true ;; *) pre=false ;; esac
+            echo "prerelease=$pre" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$cargo_version-dev.$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+            echo "is_tag=false" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build (${{ matrix.target }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # DE: Ubuntu 22.04 (glibc 2.35) für breite Kompatibilität. EN: for wide compatibility.
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            exe: pqkeep
+            flags: ""
+          # DE: RUSTFLAGS überschreibt .cargo/config.toml – CFG daher hier ausdrücklich.
+          # EN: RUSTFLAGS overrides .cargo/config.toml – hence CFG explicitly here.
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            exe: pqkeep.exe
+            flags: "-C control-flow-guard"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show active-toolchain || rustup toolchain install
+      - name: Reproduzierbare Pfade / reproducible paths
+        run: |
+          if command -v cygpath >/dev/null; then ws=$(cygpath -w "$PWD"); ch=$(cygpath -w "$HOME/.cargo"); else ws="$PWD"; ch="$HOME/.cargo"; fi
+          echo "RUSTFLAGS=--remap-path-prefix=$ws=/build --remap-path-prefix=$ch=/cargo ${{ matrix.flags }}" >> "$GITHUB_ENV"
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Härtung prüfen / check hardening
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/check_binary.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
+      - name: Rauchtest / smoke test
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_smoke.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
+      # DE: Platz für die Windows-Signatur (SignPath) nach deren Zusage – vor dem Verpacken.
+      # EN: Place for the Windows signature (SignPath) after approval – before packaging.
+      - name: Paket / package
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_package.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "$VERSION" "${{ matrix.target }}" dist
+      - name: SBOM (CycloneDX)
+        run: |
+          cargo install --locked cargo-cyclonedx --version "$CYCLONEDX_VERSION"
+          cargo cyclonedx --format json --spec-version 1.5 --target "${{ matrix.target }}" \
+            --override-filename "pqkeep-$VERSION-${{ matrix.target }}.cdx"
+          mv "pqkeep-$VERSION-${{ matrix.target }}.cdx.json" dist/
+          ls -l dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Signieren und bereitstellen / sign and stage
+    needs: [prepare, build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+      - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.tar.gz
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.cdx.json
+      - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.zip
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.cdx.json
+      - name: Prüfsummen / checksums
+        working-directory: dist
+        run: sha256sum -- *.tar.gz *.zip *.cdx.json | sort -k2 > SHA256SUMS && cat SHA256SUMS
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+      - name: Sigstore-Signaturen (ohne gespeicherte Schlüssel) / keyless signatures
+        working-directory: dist
+        run: |
+          for f in *.tar.gz *.zip SHA256SUMS; do
+            cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
+          done
+          ls -l
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-bundle
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Release-Entwurf / release draft
+        if: needs.prepare.outputs.is_tag == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          pre=""
+          if [ "${{ needs.prepare.outputs.prerelease }}" = "true" ]; then pre="--prerelease"; fi
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag $pre \
+            --title "PQKeep $TAG" \
+            --notes "Verification: see README, section \"Verifying a release\". Code signing policy: CODE_SIGNING_POLICY.md"
+
+  verify:
+    name: Prüfung / verification
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-bundle
+          path: dist
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+      - name: Prüfsummen / checksums
+        working-directory: dist
+        run: sha256sum -c SHA256SUMS
+      - name: Build-Attestationen / build attestations
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in *.tar.gz *.zip; do
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml"
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --predicate-type https://cyclonedx.org/bom
+          done
+      - name: Sigstore-Signaturen / Sigstore signatures
+        working-directory: dist
+        run: |
+          id="https://github.com/${{ github.workflow_ref }}"
+          for f in *.tar.gz *.zip SHA256SUMS; do
+            cosign verify-blob --bundle "$f.sigstore.json" \
+              --certificate-identity "$id" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$f"
+          done
