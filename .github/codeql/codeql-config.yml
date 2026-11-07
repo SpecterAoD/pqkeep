@@ -1,0 +1,10 @@
+# DE: CodeQL-Konfiguration. Testdateien enthalten absichtlich feste Testvektoren
+#     (NIST ACVP, RFC 9106, Wycheproof) und Testschlüssel; sie werden nicht analysiert,
+#     damit jeder neue Testvektor keinen Fehlalarm erzeugt. Produktionscode bleibt vollständig erfasst.
+# EN: CodeQL configuration. Test files deliberately contain fixed test vectors
+#     (NIST ACVP, RFC 9106, Wycheproof) and test keys; they are not analysed so that
+#     new test vectors do not raise false positives. Production code stays fully covered.
+name: pqkeep-codeql
+paths-ignore:
+  - tests
+  - "src/**/*_tests.rs"
