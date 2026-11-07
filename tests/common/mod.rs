@@ -129,12 +129,13 @@ pub fn keyforge(args: &[&str], stdin: &str, cwd: &std::path::Path) -> (i32, Stri
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(stdin.as_bytes())
-        .unwrap();
+    // DE: Beendet sich keyforge vor dem Lesen (z. B. Ziel existiert), ist die Pipe zu –
+    //     das ist kein Testfehler (früher sporadisch „Broken pipe“).
+    // EN: If keyforge exits before reading (e.g. target exists), the pipe is closed –
+    //     not a test failure (used to fail sporadically with "broken pipe").
+    if let Err(e) = child.stdin.take().unwrap().write_all(stdin.as_bytes()) {
+        assert_eq!(e.kind(), std::io::ErrorKind::BrokenPipe, "{e}");
+    }
     let out = child.wait_with_output().unwrap();
     (
         out.status.code().unwrap_or(-1),
