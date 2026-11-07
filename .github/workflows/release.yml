@@ -136,6 +136,11 @@ jobs:
           cargo cyclonedx --format json --spec-version 1.5 --target "${{ matrix.target }}" \
             --override-filename "pqkeep-$VERSION-${{ matrix.target }}.cdx"
           mv "pqkeep-$VERSION-${{ matrix.target }}.cdx.json" dist/
+          # DE: serialNumber (von actions/attest verlangt) und reproduzierbarer Zeitstempel.
+          # EN: serialNumber (required by actions/attest) and reproducible timestamp.
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_sbom.py "dist/pqkeep-$VERSION-${{ matrix.target }}.cdx.json" \
+            "$VERSION" "${{ matrix.target }}" "$GITHUB_SHA"
           ls -l dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -167,11 +172,11 @@ jobs:
           subject-path: |
             dist/*.tar.gz
             dist/*.zip
-      - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.tar.gz
           sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.cdx.json
-      - uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.zip
           sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.cdx.json
