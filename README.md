@@ -54,6 +54,7 @@ pqkeep decrypt folder.pqkf --key anna.key.json
 pqkeep help security                     # topics: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # show API token once, store hash only
 pqkeep serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token)
+pqkeep integrate install                 # right-click menu in Nemo/Nautilus/Dolphin (Linux)
 ```
 
 Language: `--lang en|de` (default: system language). Passphrases are never command-line
@@ -121,6 +122,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Sandbox (Linux) | [`docs/SANDBOX.md`](docs/SANDBOX.md) |
 | Memory hardening | [`docs/MEMORY_HARDENING.md`](docs/MEMORY_HARDENING.md) |
 | Passphrase rules | [`docs/SECURITY_PASSPHRASE.md`](docs/SECURITY_PASSPHRASE.md) |
+| File manager context menu (Linux) | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) |
 | Key management (backup, rotation) | [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md) |
 | Security self-review | [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) |
 | Release process | [`docs/RELEASE.md`](docs/RELEASE.md) |
@@ -168,6 +170,7 @@ pqkeep decrypt Ordner.pqkf --key anna.key.json
 pqkeep help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
 pqkeep serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token)
+pqkeep integrate install                 # Rechtsklick-Menü in Nemo/Nautilus/Dolphin (Linux)
 ```
 
 Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder
