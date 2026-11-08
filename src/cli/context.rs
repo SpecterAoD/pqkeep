@@ -1,0 +1,178 @@
+//! DE: `pqkeep context encrypt|decrypt -- <pfad>`: vom Kontextmenü im Terminal gestartet. Fragt
+//! nur Modus und Pfade ab; die eigentliche Arbeit (inkl. verdeckter Passphrase-Eingabe) läuft wie im
+//! Menü als eigener Prozess mit voller Sandbox. Dieser Prozess verarbeitet keine Geheimnisse.
+//! EN: `pqkeep context encrypt|decrypt -- <path>`: started by the context menu in a terminal. Only
+//! asks for mode and paths; the actual work (incl. hidden passphrase input) runs, as in the menu, as
+//! a separate process with the full sandbox. This process handles no secrets.
+
+use std::io::{BufRead, IsTerminal};
+use std::path::{Path, PathBuf};
+
+use clap::{Arg, ArgMatches, Command, value_parser};
+use dialoguer::{Confirm, Input, Select};
+use pqkeep::files::{self, HeaderMode};
+use pqkeep::security::Lang;
+
+use super::files_cmd::{default_decrypted, default_encrypted};
+use super::integrate_text::{IntegrateTexts, integrate_texts};
+use super::io::{CliResult, Failure, code};
+use super::text::Texts;
+
+/// DE: Argumente von `context`. EN: Arguments of `context`.
+pub fn command(base: Command, lang: Lang) -> Command {
+    let s = integrate_texts(lang);
+    base.arg(
+        Arg::new("action")
+            .help(s.ctx_arg_action)
+            .required(true)
+            .hide_possible_values(true)
+            .value_parser(["encrypt", "decrypt"]),
+    )
+    .arg(
+        Arg::new("path")
+            .help(s.ctx_arg_path)
+            .required(true)
+            .value_parser(value_parser!(PathBuf)),
+    )
+}
+
+fn lang_code(lang: Lang) -> &'static str {
+    if lang == Lang::De { "de" } else { "en" }
+}
+
+/// DE: Startet `pqkeep --lang <x> <args…>` als Kindprozess. EN: Runs pqkeep as a child process.
+fn child(lang: Lang, extra: &[&str]) -> CliResult {
+    let mut argv = vec![
+        "pqkeep".to_owned(),
+        "--lang".to_owned(),
+        lang_code(lang).to_owned(),
+    ];
+    argv.extend(extra.iter().map(|a| (*a).to_owned()));
+    super::run_child(&argv, lang)
+}
+
+/// DE: Pfad abfragen; Anführungszeichen vom Hineinziehen ins Terminal werden entfernt.
+/// EN: Ask for a path; quotes from drag and drop into the terminal are removed.
+fn ask_path(prompt: &str) -> CliResult<String> {
+    let raw: String = Input::new()
+        .with_prompt(prompt)
+        .interact_text()
+        .map_err(|_| Failure::new(code::ERROR, ""))?;
+    let trimmed = raw.trim();
+    let unquoted = trimmed
+        .strip_prefix('\'')
+        .and_then(|t| t.strip_suffix('\''))
+        .or_else(|| trimmed.strip_prefix('"').and_then(|t| t.strip_suffix('"')))
+        .unwrap_or(trimmed);
+    Ok(unquoted.to_owned())
+}
+
+/// DE: Freier Zielname neben der Quelle: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
+/// Es wird nie überschrieben – der Kindprozess lehnt ein vorhandenes Ziel ohnehin ab.
+/// EN: Free target name next to the source: `name.ext`, else `name (2).ext` … `name (99).ext`.
+/// Nothing is ever overwritten – the child process rejects an existing target anyway.
+fn free_target(target: &Path) -> Option<PathBuf> {
+    if !target.exists() {
+        return Some(target.to_path_buf());
+    }
+    let stem = target.file_stem()?.to_str()?;
+    let ext = target.extension().and_then(|e| e.to_str());
+    (2..100)
+        .map(|n| {
+            let name = match ext {
+                Some(e) => format!("{stem} ({n}).{e}"),
+                None => format!("{stem} ({n})"),
+            };
+            target.with_file_name(name)
+        })
+        .find(|p| !p.exists())
+}
+
+/// DE: `--out` mit freiem Namen. EN: `--out` with a free name.
+fn out_arg(target: Option<&Path>, lang: Lang) -> CliResult<String> {
+    let free = target.and_then(free_target);
+    let path = free.ok_or_else(|| {
+        Failure::from_error(&pqkeep::Error::Io(std::io::ErrorKind::AlreadyExists), lang)
+    })?;
+    utf8(&path, lang)
+}
+
+fn utf8(path: &Path, lang: Lang) -> CliResult<String> {
+    path.to_str()
+        .map(str::to_owned)
+        .ok_or_else(|| Failure::from_error(&pqkeep::Error::InvalidInput { field: "path" }, lang))
+}
+
+fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
+    let modes: Vec<&str> = s.ctx_modes.split('|').collect();
+    let mode = Select::new()
+        .with_prompt(s.ctx_mode)
+        .items(&modes)
+        .default(0)
+        .interact()
+        .map_err(|_| Failure::new(code::ERROR, ""))?;
+    let out = out_arg(default_encrypted(Path::new(path)).as_deref(), lang)?;
+    if mode == 0 {
+        return child(lang, &["encrypt", "--out", &out, "--", path]);
+    }
+    let public = ask_path(s.ctx_prompt_pub)?;
+    child(lang, &["inspect", "--", &public])?;
+    let ok = Confirm::new()
+        .with_prompt(s.ctx_confirm)
+        .default(false)
+        .interact()
+        .map_err(|_| Failure::new(code::ERROR, ""))?;
+    if !ok {
+        return Err(Failure::new(code::USAGE, ""));
+    }
+    child(
+        lang,
+        &["encrypt", "--to", &public, "--out", &out, "--", path],
+    )
+}
+
+fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResult {
+    if source.extension().and_then(|e| e.to_str()) != Some(files::EXTENSION) {
+        return Err(Failure::new(code::USAGE, s.ctx_not_pqkf));
+    }
+    let header = files::inspect(source).map_err(|e| Failure::from_error(&e, lang))?;
+    let out = out_arg(default_decrypted(source).as_deref(), lang)?;
+    if let HeaderMode::Recipient { .. } = header.mode {
+        let key = ask_path(s.ctx_prompt_key)?;
+        return child(lang, &["decrypt", "--key", &key, "--out", &out, "--", path]);
+    }
+    child(lang, &["decrypt", "--out", &out, "--", path])
+}
+
+/// DE: `pqkeep context`. EN: `pqkeep context`.
+pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
+    let s = integrate_texts(lang);
+    if !std::io::stdin().is_terminal() {
+        return Err(Failure::new(code::USAGE, t.msg_no_tty));
+    }
+    let source = m.get_one::<PathBuf>("path").cloned().unwrap_or_default();
+    let result = utf8(&source, lang).and_then(|path| {
+        if !source.exists() {
+            let e = pqkeep::Error::Io(std::io::ErrorKind::NotFound);
+            return Err(Failure::from_error(&e, lang));
+        }
+        match m.get_one::<String>("action").map(String::as_str) {
+            Some("decrypt") => decrypt(s, lang, &source, &path),
+            _ => encrypt(s, lang, &path),
+        }
+    });
+    match &result {
+        Ok(()) => println!("{}", s.ctx_done),
+        Err(f) => {
+            if !f.message.is_empty() {
+                eprintln!("{}: {}", t.msg_error, f.message);
+            }
+            eprintln!("{}", s.ctx_failed);
+        }
+    }
+    eprintln!("{}", s.ctx_enter);
+    let _ = std::io::stdin().lock().read_line(&mut String::new());
+    // DE: Meldung wurde schon ausgegeben; nur den Exit-Code weiterreichen.
+    // EN: Message already printed; only pass on the exit code.
+    result.map_err(|f| Failure::new(f.code, ""))
+}

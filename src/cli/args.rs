@@ -221,7 +221,20 @@ pub fn build(lang: Lang) -> Command {
         )
         .subcommands(file_commands(lang))
         .subcommands(help_commands(lang));
-    with_serve(cmd, lang)
+    with_integration(with_serve(cmd, lang), lang)
+}
+
+/// DE: Kontextmenü-Befehle `integrate` und `context`. EN: Context menu commands.
+fn with_integration(cmd: Command, lang: Lang) -> Command {
+    let s = super::integrate_text::integrate_texts(lang);
+    cmd.subcommand(super::integrate::command(
+        base("integrate", s.about, s.after, lang),
+        lang,
+    ))
+    .subcommand(super::context::command(
+        base("context", s.ctx_about, s.ctx_after, lang),
+        lang,
+    ))
 }
 
 /// DE: Hängt `serve` an (nur mit Feature `api`). EN: Appends `serve` (feature `api` only).

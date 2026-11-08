@@ -75,7 +75,11 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             })
         }
         "serve" if m.get_flag("init-token") => path_arg(m, "token-file"),
-        "serve" => return Ok(None),
+        // DE: Diese Befehle richten ihre Sandbox selbst ein (`serve`, `integrate`: Ziele erst später
+        //     bekannt) bzw. starten Kindprozesse mit voller Sandbox (`context`, keine Geheimnisse).
+        // EN: These commands set up their own sandbox (`serve`, `integrate`: targets known later) or
+        //     start child processes with the full sandbox (`context`, no secrets).
+        "serve" | "integrate" | "context" => return Ok(None),
         _ => None,
     };
     if let Some(target) = target {
