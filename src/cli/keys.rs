@@ -30,9 +30,9 @@ fn s(m: &ArgMatches, id: &str) -> Option<String> {
     m.get_one::<String>(id).cloned()
 }
 
-fn target(t: &Texts, m: &ArgMatches) -> CliResult<(PathBuf, Overwrite)> {
+fn target(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(PathBuf, Overwrite)> {
     let out = m.get_one::<PathBuf>("out").cloned().unwrap_or_default();
-    let replace = allow_overwrite(t, &out, m.get_flag("force"), m.get_flag("yes"))?;
+    let replace = allow_overwrite(t, lang, &out, m.get_flag("force"), m.get_flag("yes"))?;
     Ok((
         out,
         if replace {
@@ -58,7 +58,7 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     } else {
         KdfProfile::Standard
     };
-    let (out, overwrite) = target(t, m)?;
+    let (out, overwrite) = target(t, lang, m)?;
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     meta.normalized().map_err(fail)?;
     let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?;
@@ -85,7 +85,7 @@ pub fn export(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let file = m.get_one::<PathBuf>("file").cloned().unwrap_or_default();
     let (key, _warnings) = envelope::load(&file).map_err(fail)?;
     let public = key.public_part().map_err(fail)?;
-    let (out, overwrite) = target(t, m)?;
+    let (out, overwrite) = target(t, lang, m)?;
     envelope::save_public(&public, &out, overwrite).map_err(fail)?;
     println!("{}: {}", t.msg_exported, out.display());
     println!(

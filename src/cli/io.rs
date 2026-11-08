@@ -110,6 +110,9 @@ pub fn read_passphrase_as(
     confirm: bool,
     prompt_text: &str,
 ) -> CliResult<Passphrase> {
+    if let Some(result) = super::unattended::read_pass_file(lang, from_stdin) {
+        return result;
+    }
     let text = if from_stdin {
         let mut line = String::new();
         std::io::stdin()
@@ -120,6 +123,9 @@ pub fn read_passphrase_as(
         line.truncate(trimmed_len);
         line
     } else {
+        if super::unattended::batch() {
+            return Err(super::unattended::batch_failure(lang));
+        }
         if !std::io::stdin().is_terminal() {
             return Err(Failure::new(code::USAGE, t.msg_no_tty));
         }
@@ -162,12 +168,21 @@ pub fn read_confirmed_stdin(t: &Texts, lang: Lang) -> CliResult<Passphrase> {
 }
 
 /// DE: Klärt, ob ein vorhandenes Ziel ersetzt werden darf. EN: Decides whether an existing target may be replaced.
-pub fn allow_overwrite(t: &Texts, path: &Path, force: bool, yes: bool) -> CliResult<bool> {
+pub fn allow_overwrite(
+    t: &Texts,
+    lang: Lang,
+    path: &Path,
+    force: bool,
+    yes: bool,
+) -> CliResult<bool> {
     if !path.exists() || !force {
         return Ok(false);
     }
     if yes {
         return Ok(true);
+    }
+    if super::unattended::batch() {
+        return Err(super::unattended::batch_failure(lang));
     }
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));

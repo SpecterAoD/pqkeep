@@ -212,8 +212,7 @@ pub fn build(lang: Lang) -> Command {
                 .global(true)
                 .value_parser(["de", "en"]),
         )
-        .arg(flag("verbose", t.arg_verbose).short('v').global(true))
-        .arg(flag("no-sandbox", super::sandbox::arg_help(lang)).global(true))
+        .args(global_args(lang))
         .subcommand(generate(lang))
         .subcommand(
             base("validate", t.validate_about, t.validate_after, lang)
@@ -240,6 +239,19 @@ pub fn build(lang: Lang) -> Command {
         .subcommands(file_commands(lang))
         .subcommands(help_commands(lang));
     with_integration(with_serve(cmd, lang), lang)
+}
+
+/// DE: Globale Schalter (gelten für alle Befehle). EN: Global switches (apply to all commands).
+fn global_args(lang: Lang) -> [Arg; 4] {
+    let t = texts(lang);
+    [
+        flag("verbose", t.arg_verbose).short('v').global(true),
+        flag("no-sandbox", super::sandbox::arg_help(lang)).global(true),
+        flag("batch", t.arg_batch).global(true),
+        opt("passphrase-file", t.arg_passphrase_file)
+            .global(true)
+            .value_parser(value_parser!(PathBuf)),
+    ]
 }
 
 /// DE: Kontextmenü-Befehle `integrate` und `context`. EN: Context menu commands.

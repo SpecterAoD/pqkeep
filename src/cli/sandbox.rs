@@ -76,7 +76,9 @@ pub fn arg_help(lang: Lang) -> &'static str {
 pub fn confirm_disabled(lang: Lang) -> CliResult {
     let s = texts(lang);
     eprintln!("{}", s.warning);
-    if !(std::io::stdin().is_terminal() && std::io::stderr().is_terminal()) {
+    // DE: Ohne Terminal oder mit --batch: nur Warnung, keine Rückfrage. EN: Warning only.
+    let interactive = std::io::stdin().is_terminal() && std::io::stderr().is_terminal();
+    if !interactive || super::unattended::batch() {
         return Ok(());
     }
     let ok = Confirm::new()

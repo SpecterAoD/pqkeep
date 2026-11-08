@@ -19,6 +19,8 @@ pub static EN: Texts = Texts {
     arg_profile: "Argon2id profile: standard (256 MiB, default) or hardened (1 GiB)",
     arg_out: "Target file",
     arg_passphrase_stdin: "Read the passphrase from standard input (one line) instead of a hidden prompt",
+    arg_passphrase_file: "Read the passphrase from a file (one line; Linux: readable by the owner only, e.g. a systemd credential)",
+    arg_batch: "Never prompt – missing input aborts (for scripts, cron, systemd)",
     arg_force: "Replace an existing target file (after confirmation)",
     arg_yes: "Confirm --force without asking (for scripts)",
     validate_about: "Check the strength of a passphrase (all reasons, estimated entropy)",

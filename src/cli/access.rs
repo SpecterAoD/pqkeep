@@ -46,6 +46,10 @@ fn path_arg(m: &ArgMatches, id: &str) -> Option<PathBuf> {
 /// (`serve` without `--init-token`).
 pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<CliAccess>> {
     let mut access = CliAccess::default();
+    // DE: Passphrase-Datei (global) immer lesbar. EN: Passphrase file (global) always readable.
+    if let Some(p) = super::unattended::pass_file() {
+        access.read.push(existing(p.to_path_buf(), lang)?);
+    }
     let mut read = |p: Option<PathBuf>| -> CliResult {
         if let Some(p) = p {
             access.read.push(existing(p, lang)?);
