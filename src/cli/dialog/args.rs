@@ -31,6 +31,8 @@ pub enum Request<'a> {
     Question { text: &'a str },
     /// DE/EN: Hinweis / information.
     Info { text: &'a str },
+    /// DE/EN: Warnung / warning.
+    Warning { text: &'a str },
     /// DE/EN: Fehler / error.
     Error { text: &'a str },
     /// DE: Passphrase einmal. EN: Passphrase once.
@@ -87,6 +89,7 @@ fn zenity(title: &str, req: &Request<'_>) -> Vec<String> {
         }
         Request::Question { text } => a.extend([q("--question"), nm(), t(text)]),
         Request::Info { text } => a.extend([q("--info"), nm(), t(text)]),
+        Request::Warning { text } => a.extend([q("--warning"), nm(), t(text)]),
         Request::Error { text } => a.extend([q("--error"), nm(), t(text)]),
         Request::Password { .. } => a.push("--password".to_owned()),
         Request::NewPassword {
@@ -164,6 +167,7 @@ fn kdialog(title: &str, req: &Request<'_>) -> Option<Vec<String>> {
         ]),
         Request::Question { text } => a.extend(owned(&["--yesno", text])),
         Request::Info { text } => a.extend(owned(&["--msgbox", text])),
+        Request::Warning { text } => a.extend(owned(&["--sorry", text])),
         Request::Error { text } => a.extend(owned(&["--error", text])),
         Request::Password { text } => a.extend(owned(&["--password", text])),
         Request::NewPassword { text, .. } => a.extend(owned(&["--newpassword", text])),

@@ -17,6 +17,7 @@ fn zenity_messages_are_literal() {
     let text = "<b>bericht & co</b>.pdf";
     for req in [
         Request::Info { text },
+        Request::Warning { text },
         Request::Error { text },
         Request::Question { text },
     ] {
@@ -102,6 +103,12 @@ fn password_and_progress() {
     });
     assert!(p.contains(&"--pulsate".to_owned()) && p.contains(&"--auto-close".to_owned()));
     assert!(args(Kind::Kdialog, "PQKeep", &Request::Progress { text: "x" }).is_none());
+}
+
+#[test]
+fn warning_uses_the_tools_warning_window() {
+    assert!(z(&Request::Warning { text: "x" }).contains(&"--warning".to_owned()));
+    assert_eq!(&k(&Request::Warning { text: "x" })[2..], ["--sorry", "x"]);
 }
 
 #[test]

@@ -121,6 +121,11 @@ impl Dialog {
         let _ = self.ask(&Request::Info { text });
     }
 
+    /// DE: Warnfenster. EN: Warning window.
+    pub fn warning(&self, text: &str) {
+        let _ = self.ask(&Request::Warning { text });
+    }
+
     /// DE: Fehlerfenster. EN: Error window.
     pub fn error(&self, text: &str) {
         let _ = self.ask(&Request::Error { text });

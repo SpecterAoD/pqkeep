@@ -23,7 +23,8 @@ const ATTEMPTS: usize = 3;
 
 /// DE: Ergebnis eines Kindprozesses. EN: Result of a child process.
 enum Outcome {
-    Done,
+    /// DE: Erfolg; Inhalt = Warnungen (z. B. übersprungene Einträge). EN: Success; content = warnings.
+    Done(String),
     Cancelled,
     Failed(String),
 }
@@ -61,10 +62,11 @@ fn wait(lang: Lang, child: Child) -> CliResult<Output> {
 }
 
 fn outcome(out: &Output) -> Outcome {
+    let stderr = String::from_utf8_lossy(&out.stderr).trim().to_owned();
     if out.status.success() {
-        Outcome::Done
+        Outcome::Done(stderr)
     } else {
-        Outcome::Failed(String::from_utf8_lossy(&out.stderr).trim().to_owned())
+        Outcome::Failed(stderr)
     }
 }
 
@@ -103,8 +105,18 @@ impl Ui<'_> {
     fn repeat(&self, out: &str, mut step: impl FnMut() -> CliResult<Outcome>) -> CliResult {
         for _ in 0..ATTEMPTS {
             match step()? {
-                Outcome::Done => {
+                Outcome::Done(warnings) if warnings.is_empty() => {
                     self.dlg.info(&format!("{}\n{out}", self.d.done));
+                    return Ok(());
+                }
+                // DE: Ein unvollständiges Archiv darf nicht wie ein voller Erfolg aussehen.
+                // EN: An incomplete archive must not look like a full success.
+                Outcome::Done(warnings) => {
+                    let d = self.d;
+                    self.dlg.warning(&format!(
+                        "{}\n{out}\n\n{}\n{warnings}",
+                        d.done, d.incomplete
+                    ));
                     return Ok(());
                 }
                 Outcome::Cancelled => return Err(cancelled()),

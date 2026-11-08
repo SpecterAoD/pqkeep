@@ -284,3 +284,24 @@ fn without_display_or_tool_it_fails_cleanly() {
     assert_eq!(out.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&out.stderr).contains("No window tool"));
 }
+
+#[test]
+fn skipped_entries_are_shown_as_warning_not_plain_success() {
+    let e = Env::new("zenity");
+    let dir = e.work().join("ordner");
+    fs::create_dir(&dir).unwrap();
+    fs::write(dir.join("a.txt"), b"a").unwrap();
+    std::os::unix::fs::symlink("/etc/hostname", dir.join("link")).unwrap();
+    let p = pass();
+    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
+    assert_eq!(e.context("encrypt", &dir), 0);
+    assert!(e.work().join("ordner.pqkf").is_file());
+    let calls = e.calls();
+    let last = calls.last().unwrap();
+    assert!(last.contains(&"--warning".to_owned()), "{calls:?}");
+    let text = last.join("\n");
+    assert!(
+        text.contains("not everything was included") && text.contains("link"),
+        "{text}"
+    );
+}

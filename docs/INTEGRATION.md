@@ -59,7 +59,8 @@ Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
 
 - Kleine Systemfenster: Modus wählen, Schlüsseldatei auswählen, Fingerabdruck bestätigen,
   Passphrase eingeben (neue Passphrase zweimal), Ergebnis bzw. Fehler; bei Fehlern (z. B. zu schwache
-  oder ungleiche Passphrase) „Erneut versuchen?“. Abbrechen startet nichts.
+  oder ungleiche Passphrase) „Erneut versuchen?“. Abbrechen startet nichts. Wurden Einträge übersprungen
+  (z. B. Symlinks), erscheint statt „Fertig“ ein **Warnfenster** mit der Liste.
 - **Die Passphrase durchläuft `pqkeep context` nie:** Das Passwortfenster schreibt per Pipe direkt
   in stdin des Kindprozesses (`--passphrase-stdin`, volle Sandbox), nie als Argument oder
   Umgebungsvariable. Die doppelte Eingabe vergleicht der Kindprozess selbst (bei zenity), kdialog
@@ -131,7 +132,8 @@ against the real registry (separate test branch); a check in the real Explorer i
 **Windows instead of a terminal (Linux):** if **zenity** or **kdialog** is installed, `integrate
 install` sets up the entries in **window mode** (`pqkeep context --dialog …`); `status` shows the mode,
 `--terminal` forces the terminal. Small system windows ask for mode, key file, fingerprint
-confirmation and passphrase (new passphrase twice) and show the result or error with "Try again?".
+confirmation and passphrase (new passphrase twice) and show the result or error with "Try again?";
+skipped entries (e.g. symlinks) are shown in a **warning window** instead of a plain "Done".
 **The passphrase never passes through `pqkeep context`:** the password window writes through a pipe
 straight into the child's stdin (`--passphrase-stdin`, full sandbox), never as an argument or
 environment variable; the child compares the two entries (zenity), kdialog compares in its own
