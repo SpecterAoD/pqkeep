@@ -4,7 +4,7 @@
 
 Rechtsklick auf eine Datei oder einen Ordner → **„Mit PQKeep verschlüsseln“**, Rechtsklick auf eine
 `.pqkf`-Datei → **„Mit PQKeep entschlüsseln“**. Unterstützt unter Linux: **Nemo** (Cinnamon/Linux
-Mint), **Nautilus** (GNOME) und **Dolphin** (KDE). Windows folgt (Issue #52).
+Mint), **Nautilus** (GNOME) und **Dolphin** (KDE); unter Windows der **Explorer** (siehe [Windows](#windows)).
 
 ## Einrichten und entfernen
 
@@ -26,9 +26,34 @@ pqkeep integrate uninstall    # alles wieder entfernen
 - Fehlt der Eintrag danach, den Dateimanager neu starten (z. B. `nemo -q`).
 - `integrate` läuft in der Sandbox und darf nur in die genannten Ordner schreiben.
 
+## Windows
+
+```
+pqkeep integrate install      # Einträge im Explorer einrichten
+pqkeep integrate status
+pqkeep integrate uninstall
+```
+
+- Nur unter `HKCU\Software\Classes` (aktueller Benutzer, **ohne Administratorrechte**):
+  `*\shell\PQKeep.Encrypt` (alle Dateien), `Directory\shell\PQKeep.Encrypt` (Ordner) und
+  `SystemFileAssociations\.pqkf\shell\PQKeep.Decrypt`. Befehl jeweils
+  `"<pfad>\pqkeep.exe" context encrypt|decrypt -- "%1"` als `REG_SZ` (keine Variablen-Erweiterung).
+- Nur **Einzelauswahl** (`MultiSelectModel=Single`); mehrere Dateien: Issue #72.
+- **Vollständig rückgängig:** Die Liste `%APPDATA%\PQKeep\integration.json` merkt sich jeden Eintrag
+  mit Prüfsumme über alle Werte und Unterschlüssel. `uninstall` entfernt nur unveränderte eigene
+  Einträge und danach leer gewordene Elternschlüssel; fremde oder geänderte bleiben stehen.
+- Programmpfad: absolut mit Laufwerksbuchstabe, kein Netzlaufwerk, nicht im Temp-Ordner, keine
+  Zeichen `"` `%`. Empfehlung: `%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`.
+- **Windows 11** zeigt klassische Einträge erst unter **„Weitere Optionen anzeigen“** (Umschalt+F10).
+  Ins neue, verkürzte Menü kommen nur Programme mit signiertem MSIX-Paket – das ist nicht vorgesehen.
+- Beim Rechtsklick öffnet sich ein Konsolenfenster mit demselben Ablauf wie unter Linux (unten).
+  Unter Windows gibt es **keine Sandbox** (`docs/SANDBOX.md`).
+- Getestet in der Windows-CI gegen die echte Registry (eigener Test-Zweig); eine Prüfung im echten
+  Explorer durch den Maintainer steht noch aus.
+
 ## Ablauf beim Rechtsklick
 
-Es öffnet sich ein Terminalfenster mit `pqkeep context`:
+Es öffnet sich ein Terminal- bzw. Konsolenfenster mit `pqkeep context`:
 
 - **Verschlüsseln:** Auswahl „Mit Passphrase“ oder „Für einen Empfänger“. Beim Empfänger wird nach
   dessen öffentlicher Schlüsseldatei gefragt (Pfad eintippen oder ins Fenster ziehen) und der
@@ -59,7 +84,7 @@ Es öffnet sich ein Terminalfenster mit `pqkeep context`:
 
 Right-click a file or folder → **"Encrypt with PQKeep"**, right-click a `.pqkf` file → **"Decrypt with
 PQKeep"**. Supported on Linux: **Nemo** (Cinnamon/Linux Mint), **Nautilus** (GNOME), **Dolphin** (KDE).
-Windows follows (issue #52).
+On Windows: **Explorer**.
 
 **Set up / remove:** `pqkeep integrate install` (found file managers, `--all` for all),
 `pqkeep integrate status`, `pqkeep integrate uninstall`. Current user only, no administrator rights;
@@ -70,7 +95,19 @@ registered; run `install` again after moving it. Temporary, world-writable or sp
 are rejected; recommended: `~/.local/bin/pqkeep`. Restart the file manager if the entry is missing
 (e.g. `nemo -q`). `integrate` runs in the sandbox.
 
-**On right-click** a terminal window opens with `pqkeep context`: choose passphrase or recipient (the
+**Windows:** `pqkeep integrate install|status|uninstall` writes only below `HKCU\Software\Classes`
+(no administrator rights): `*\shell\PQKeep.Encrypt`, `Directory\shell\PQKeep.Encrypt` and
+`SystemFileAssociations\.pqkf\shell\PQKeep.Decrypt`, command `"<path>\pqkeep.exe" context
+encrypt|decrypt -- "%1"` (`REG_SZ`), single selection only (`MultiSelectModel=Single`). The list
+`%APPDATA%\PQKeep\integration.json` (checksum over all values and subkeys) makes it fully reversible;
+only unchanged own entries and then-empty parent keys are removed. Program path: absolute with drive
+letter, no network drive, not in the temp folder, no `"` `%`; recommended
+`%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`. **Windows 11** shows classic entries under **"Show more
+options"** (Shift+F10); the new compact menu requires a signed MSIX package (not planned). A console
+window opens with the same flow as on Linux; there is **no sandbox** on Windows. Tested in Windows CI
+against the real registry (separate test branch); a check in the real Explorer is still pending.
+
+**On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase or recipient (the
 recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
 for your key file in recipient mode. The result is placed next to the source under a free name
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
