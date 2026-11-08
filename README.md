@@ -117,6 +117,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Cryptography | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
 | Key file format | [`docs/FORMAT.md`](docs/FORMAT.md) |
 | File encryption format | [`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md) |
+| Signature file format | [`docs/SIGNATURE_FORMAT.md`](docs/SIGNATURE_FORMAT.md) |
 | REST API | [`docs/API.md`](docs/API.md) |
 | Threat model | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) |
 | Sandbox (Linux) | [`docs/SANDBOX.md`](docs/SANDBOX.md) |

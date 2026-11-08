@@ -17,6 +17,7 @@ pub mod files;
 mod fsutil;
 pub mod hardening;
 pub mod security;
+pub mod sign;
 
 pub use error::{Error, Result};
 

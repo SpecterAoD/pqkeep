@@ -16,13 +16,13 @@ mod parse;
 mod public;
 pub mod time;
 
-#[cfg(feature = "api")]
-pub(crate) use encoding::hex_decode;
 pub use encoding::hex_encode;
+pub(crate) use encoding::{b64_decode, b64_encode, hex_decode};
 pub use format::{FORMAT_VERSION, MAGIC};
 pub use io::{
     FileWarning, Overwrite, load, load_public, read_limited, save, save_public, write_atomic,
 };
+pub(crate) use keyfile::fingerprint;
 pub use keyfile::{KEY_ID_LEN, KeyFile, MAX_FILE_BYTES, UnlockedKey};
 pub use metadata::{MAX_ACCOUNT_TYPE_CHARS, MAX_FIELD_CHARS, Metadata};
 pub use public::{PUBLIC_MAGIC, PublicKeyFile};

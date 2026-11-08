@@ -9,6 +9,8 @@ German release notes: see `docs/releases/`.
 ### Added
 - File manager context menu on Linux (Nemo, Nautilus, Dolphin): `pqkeep integrate install|uninstall|status`
   (current user only, fully reversible) and the terminal helper `pqkeep context` – see `docs/INTEGRATION.md`.
+- Detached file signatures in the library (`pqkeep::sign`): `.pqsig` format v1 with ML-DSA-87 over the
+  streamed SHA3-512 of the file – see `docs/SIGNATURE_FORMAT.md`. CLI commands follow.
 
 ## [0.1.0-beta.1] – 2026-11-07
 

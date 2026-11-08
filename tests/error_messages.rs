@@ -15,6 +15,8 @@ fn all_variants() -> Vec<Error> {
         Error::KdfParams,
         Error::Rng,
         Error::Unsupported,
+        Error::InvalidSignature,
+        Error::Sandbox,
         Error::Io(std::io::ErrorKind::NotFound),
     ]
 }

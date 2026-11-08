@@ -13,6 +13,7 @@
 | Zufall | ausschließlich OS-CSPRNG | `getrandom` 0.4.3 |
 | Streaming (Dateien) | STREAM-Konstruktion mit AES-256-GCM, 64-KiB-Blöcke, Nonce = 7 Byte Präfix ‖ Zähler ‖ Endmarke | `aes-gcm` 0.11.1 |
 | Schlüssel einpacken (Dateien) | Passphrase: Argon2id; Empfänger: ML-KEM → HKDF-SHA3-256 (Salt = KEM-Chiffrat, Info = Domäne ‖ Empfänger-ID) | `hkdf` 0.13.0, `sha3` 0.12.0 |
+| Dateisignaturen (`.pqsig`) | ML-DSA-87 über SHA3-512 der Datei (gestreamt), Kontext `PQKeep/sig/v1` ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)) | `ml-dsa` 0.1.2, `sha3` 0.12.0 |
 | Löschen von Geheimnissen | `Zeroize`/`ZeroizeOnDrop` | `zeroize` 1.9.1 |
 
 ## Begründung der Crate-Wahl
@@ -64,6 +65,7 @@ Durchläufe, Zeroize. Known-Answer-Tests (`tests/kat/`, `src/crypto/kdf_tests.rs
 | ML-DSA keyGen / sigVer | NIST ACVP | Seed → öffentlicher Schlüssel; gültige und ungültige Signaturen |
 | Argon2id intern | RFC 9106, Abschnitt 5.3 | Variante, Version, Parameter, Secret/AD des Argon2id-Kerns |
 | Argon2id öffentlich | C-Referenzimplementierung (argon2-cffi) | `derive()` mit unseren Mindestparametern (64 MiB, t=3, p=1 und p=4) |
+| SHA3-512 (Signaturen) | FIPS 202 (Leer-/„abc“-Beispiel) | gestreamter Hash über Blockgrenzen |
 | HKDF-SHA3-256 intern | unabhängige Python-Berechnung (hashlib/hmac, an RFC 5869 Fall 1 geprüft) | Ableitung des Packschlüssels: Hash, Rollen von Salt/IKM/Info, Domänen-Tag |
 
 Warum zwei Argon2id-Tests: Der RFC-Vektor nutzt 32 KiB und liegt unter unserer Mindestgrenze, er läuft
@@ -110,7 +112,8 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
 **Algorithms:** ML-KEM-512/768/1024 (FIPS 203, default 768) via `ml-kem` 0.3.4; ML-DSA-44/65/87
 (FIPS 204, default 65, hedged signing) via `ml-dsa` 0.1.2; AES-256 key generation and AES-256-GCM via
 `aes-gcm` 0.11.1; Argon2id (RFC 9106, multi-core) via `argon2` 0.6.0; OS CSPRNG only via `getrandom`;
-`zeroize` for secrets.
+`zeroize` for secrets. Detached file signatures (`.pqsig`): ML-DSA-87 over the streamed SHA3-512 of the
+file, context `PQKeep/sig/v1` (see SIGNATURE_FORMAT.md).
 
 **Why RustCrypto:** pure Rust from a single project, seed API, `ZeroizeOnDrop` private keys, no secrets
 in `Debug`, no open RustSec advisories for the versions used, MIT/Apache-2.0. `libcrux` is formally
