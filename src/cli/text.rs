@@ -81,8 +81,6 @@ pub struct Texts {
     pub enc_after: &'static str,
     pub dec_about: &'static str,
     pub dec_after: &'static str,
-    pub arg_source: &'static str,
-    pub arg_encrypted: &'static str,
     pub arg_out_optional: &'static str,
     pub arg_to: &'static str,
     pub arg_key: &'static str,

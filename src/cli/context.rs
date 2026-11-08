@@ -13,7 +13,7 @@ use dialoguer::{Confirm, Input, Select};
 use pqkeep::files::{self, HeaderMode};
 use pqkeep::security::Lang;
 
-use super::files_cmd::{default_decrypted, default_encrypted};
+use super::files_cmd::{default_decrypted, default_encrypted, free_target};
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
 use super::text::Texts;
@@ -77,27 +77,6 @@ fn ask_path(prompt: &str) -> CliResult<String> {
         .or_else(|| trimmed.strip_prefix('"').and_then(|t| t.strip_suffix('"')))
         .unwrap_or(trimmed);
     Ok(absolute(Path::new(unquoted)).to_string_lossy().into_owned())
-}
-
-/// DE: Freier Zielname neben der Quelle: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
-/// Es wird nie überschrieben – der Kindprozess lehnt ein vorhandenes Ziel ohnehin ab.
-/// EN: Free target name next to the source: `name.ext`, else `name (2).ext` … `name (99).ext`.
-/// Nothing is ever overwritten – the child process rejects an existing target anyway.
-fn free_target(target: &Path) -> Option<PathBuf> {
-    if !target.exists() {
-        return Some(target.to_path_buf());
-    }
-    let stem = target.file_stem()?.to_str()?;
-    let ext = target.extension().and_then(|e| e.to_str());
-    (2..100)
-        .map(|n| {
-            let name = match ext {
-                Some(e) => format!("{stem} ({n}).{e}"),
-                None => format!("{stem} ({n})"),
-            };
-            target.with_file_name(name)
-        })
-        .find(|p| !p.exists())
 }
 
 /// DE: `--out` mit freiem Namen. EN: `--out` with a free name.
