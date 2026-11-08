@@ -60,7 +60,8 @@ fn derive_public(algorithm: KeyAlgorithm, secret: &[u8]) -> Result<Vec<u8>> {
     })
 }
 
-fn fingerprint(public_key: &[u8]) -> Vec<u8> {
+/// DE: Schlüssel-ID = SHA3-256 des öffentlichen Schlüssels. EN: Key ID = SHA3-256 of the public key.
+pub(crate) fn fingerprint(public_key: &[u8]) -> Vec<u8> {
     Sha3_256::digest(public_key).to_vec()
 }
 

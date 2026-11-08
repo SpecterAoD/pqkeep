@@ -60,6 +60,12 @@ pub enum Error {
     #[error("Ein-/Ausgabefehler / I/O error: {0}")]
     Io(std::io::ErrorKind),
 
+    /// DE: Signatur ungültig: Datei verändert, falscher Schlüssel oder manipulierte Signatur.
+    /// Bewusst nicht unterscheidbar. EN: Signature invalid: file changed, wrong key or
+    /// tampered signature. Deliberately indistinguishable.
+    #[error("Signatur ungültig / signature invalid")]
+    InvalidSignature,
+
     /// DE: Sandbox (Seccomp) konnte nicht aktiviert werden. EN: Sandbox (seccomp) could not be enabled.
     #[error(
         "Sandbox konnte nicht aktiviert werden (Diagnose: --no-sandbox) / sandbox could not be enabled (diagnosis: --no-sandbox)"
