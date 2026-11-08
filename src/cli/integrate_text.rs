@@ -4,10 +4,9 @@
 use pqkeep::security::Lang;
 
 /// DE: Texte einer Sprache. EN: Texts of one language.
-// DE: Außerhalb von Linux nutzt nur `context` einen Teil der Texte (Windows folgt mit U4-2).
-// EN: Outside Linux only `context` uses some of the texts (Windows follows with U4-2).
-#[allow(missing_docs)]
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+// DE: Jedes System nutzt nur einen Teil der Texte (z. B. Terminal-Meldungen nur unter Linux).
+// EN: Each system uses only some of the texts (e.g. terminal messages only on Linux).
+#[allow(missing_docs, dead_code)]
 pub struct IntegrateTexts {
     pub about: &'static str,
     pub after: &'static str,
@@ -20,6 +19,7 @@ pub struct IntegrateTexts {
     pub comment_decrypt: &'static str,
     pub msg_unsupported: &'static str,
     pub msg_unsafe_binary: &'static str,
+    pub msg_unsafe_binary_win: &'static str,
     pub msg_group_writable: &'static str,
     pub msg_no_manager: &'static str,
     pub msg_no_terminal: &'static str,
@@ -29,6 +29,7 @@ pub struct IntegrateTexts {
     pub msg_removed: &'static str,
     pub msg_dry: &'static str,
     pub msg_restart: &'static str,
+    pub msg_restart_win: &'static str,
     pub msg_binary_moved: &'static str,
     pub lbl_found: &'static str,
     pub ctx_about: &'static str,
@@ -47,7 +48,7 @@ pub struct IntegrateTexts {
 }
 
 static DE: IntegrateTexts = IntegrateTexts {
-    about: "Kontextmenü im Dateimanager einrichten, entfernen oder prüfen (Linux: Nemo, Nautilus, Dolphin)",
+    about: "Kontextmenü im Dateimanager einrichten, entfernen oder prüfen (Linux: Nemo, Nautilus, Dolphin; Windows: Explorer)",
     after: "Beispiele:\n  pqkeep integrate install\n  pqkeep integrate status\n  pqkeep integrate uninstall\n\nNur für den aktuellen Benutzer, ohne Administratorrechte. Eingetragen wird der aktuelle\nPfad dieses Programms; nach dem Verschieben erneut „install“ ausführen. Details: docs/INTEGRATION.md",
     arg_action: "install (einrichten), uninstall (entfernen) oder status",
     arg_all: "Für alle unterstützten Dateimanager einrichten, nicht nur für gefundene",
@@ -56,7 +57,7 @@ static DE: IntegrateTexts = IntegrateTexts {
     name_decrypt: "Mit PQKeep entschlüsseln",
     comment_encrypt: "Datei oder Ordner mit Passphrase oder für einen Empfänger verschlüsseln",
     comment_decrypt: "PQKeep-Datei (.pqkf) entschlüsseln",
-    msg_unsupported: "Das Kontextmenü wird auf diesem System noch nicht unterstützt (Windows folgt mit U4-2).",
+    msg_unsupported: "Das Kontextmenü wird auf diesem System nicht unterstützt.",
     msg_unsafe_binary: "Programmpfad ungeeignet (temporärer Ordner, für andere beschreibbar oder Sonderzeichen \" ' ` $ \\ %). Bitte pqkeep z. B. nach ~/.local/bin verschieben.",
     msg_group_writable: "Hinweis: Programm oder Ordner ist für die Gruppe beschreibbar – Gruppenmitglieder könnten das Programm ersetzen.",
     msg_no_manager: "Kein unterstützter Dateimanager gefunden (Nemo, Nautilus, Dolphin). Mit --all trotzdem einrichten.",
@@ -66,7 +67,9 @@ static DE: IntegrateTexts = IntegrateTexts {
     msg_foreign: "Nicht angefasst (fremde oder geänderte Datei)",
     msg_removed: "Entfernt",
     msg_dry: "Trockenlauf – es wurde nichts geändert.",
+    msg_unsafe_binary_win: "Programmpfad ungeeignet (Temp-Ordner, Netzlaufwerk oder Zeichen \" %). Bitte pqkeep.exe z. B. nach %LOCALAPPDATA%\\Programs\\PQKeep verschieben.",
     msg_restart: "Falls der Eintrag fehlt: Dateimanager neu starten (z. B. „nemo -q“).",
+    msg_restart_win: "Windows 11: Die Einträge stehen unter „Weitere Optionen anzeigen“ (Umschalt+F10).",
     msg_binary_moved: "Eingetragenes Programm fehlt oder weicht ab – bitte „pqkeep integrate install“ erneut ausführen",
     lbl_found: "Dateimanager",
     ctx_about: "Hilfsbefehl für das Kontextmenü (öffnet sich im Terminal)",
@@ -85,7 +88,7 @@ static DE: IntegrateTexts = IntegrateTexts {
 };
 
 static EN: IntegrateTexts = IntegrateTexts {
-    about: "Set up, remove or check the file manager context menu (Linux: Nemo, Nautilus, Dolphin)",
+    about: "Set up, remove or check the file manager context menu (Linux: Nemo, Nautilus, Dolphin; Windows: Explorer)",
     after: "Examples:\n  pqkeep integrate install\n  pqkeep integrate status\n  pqkeep integrate uninstall\n\nFor the current user only, no administrator rights. The current path of this program is\nregistered; run \"install\" again after moving it. Details: docs/INTEGRATION.md",
     arg_action: "install, uninstall or status",
     arg_all: "Set up for all supported file managers, not only those found",
@@ -94,7 +97,7 @@ static EN: IntegrateTexts = IntegrateTexts {
     name_decrypt: "Decrypt with PQKeep",
     comment_encrypt: "Encrypt a file or folder with a passphrase or for a recipient",
     comment_decrypt: "Decrypt a PQKeep file (.pqkf)",
-    msg_unsupported: "The context menu is not yet supported on this system (Windows follows with U4-2).",
+    msg_unsupported: "The context menu is not supported on this system.",
     msg_unsafe_binary: "Unsuitable program path (temporary folder, writable by others, or special characters \" ' ` $ \\ %). Please move pqkeep, e.g. to ~/.local/bin.",
     msg_group_writable: "Note: program or folder is group-writable – group members could replace the program.",
     msg_no_manager: "No supported file manager found (Nemo, Nautilus, Dolphin). Use --all to set up anyway.",
@@ -104,7 +107,9 @@ static EN: IntegrateTexts = IntegrateTexts {
     msg_foreign: "Not touched (foreign or modified file)",
     msg_removed: "Removed",
     msg_dry: "Dry run – nothing was changed.",
+    msg_unsafe_binary_win: "Unsuitable program path (temp folder, network drive or characters \" %). Please move pqkeep.exe, e.g. to %LOCALAPPDATA%\\Programs\\PQKeep.",
     msg_restart: "If the entry is missing: restart the file manager (e.g. \"nemo -q\").",
+    msg_restart_win: "Windows 11: the entries are under \"Show more options\" (Shift+F10).",
     msg_binary_moved: "Registered program is missing or differs – please run \"pqkeep integrate install\" again",
     lbl_found: "File managers",
     ctx_about: "Helper command for the context menu (opens in a terminal)",

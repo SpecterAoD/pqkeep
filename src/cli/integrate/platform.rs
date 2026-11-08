@@ -1,12 +1,15 @@
-//! DE: Plattformteil von `integrate`: Linux schreibt Einträge, andere Systeme melden „noch nicht
-//! unterstützt“ (Windows folgt mit U4-2).
-//! EN: Platform part of `integrate`: Linux writes entries, other systems report "not yet
-//! supported" (Windows follows with U4-2).
+//! DE: Plattformteil von `integrate`: Linux schreibt Dateien, Windows Registry-Einträge (HKCU),
+//! andere Systeme melden „nicht unterstützt“.
+//! EN: Platform part of `integrate`: Linux writes files, Windows registry entries (HKCU), other
+//! systems report "not supported".
 
 #[cfg(target_os = "linux")]
 pub use super::linux::run;
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(windows)]
+pub use super::windows::run;
+
+#[cfg(not(any(target_os = "linux", windows)))]
 pub fn run(
     _action: &str,
     _opts: &super::Options,

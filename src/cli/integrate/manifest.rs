@@ -78,6 +78,7 @@ pub enum FileState {
 }
 
 /// DE: Ermittelt den Zustand anhand der Liste. EN: Determines the state from the list.
+#[cfg(target_os = "linux")]
 pub fn state(manifest: &Manifest, path: &Path) -> std::io::Result<FileState> {
     match fs::read(path) {
         Err(e) if e.kind() == ErrorKind::NotFound => Ok(FileState::Missing),
