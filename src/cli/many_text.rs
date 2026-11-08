@@ -1,0 +1,71 @@
+//! DE: Texte für mehrere Quellen bei `encrypt`/`decrypt` (Mehrfachauswahl).
+//! EN: Texts for several sources with `encrypt`/`decrypt` (multi-selection).
+
+use pqkeep::security::Lang;
+
+/// DE: Texte einer Sprache. EN: Texts of one language.
+#[allow(missing_docs)]
+pub struct ManyTexts {
+    pub arg_sources: &'static str,
+    pub arg_encrypted: &'static str,
+    pub arg_each: &'static str,
+    pub arg_rename: &'static str,
+    pub need_out: &'static str,
+    pub no_out: &'static str,
+    pub mixed: &'static str,
+    pub failed: &'static str,
+    pub summary: &'static str,
+    pub ctx_how: &'static str,
+    pub ctx_ways: &'static str,
+    pub ctx_name: &'static str,
+    pub ctx_selection: &'static str,
+    pub ctx_bad_name: &'static str,
+    pub ctx_cancelled: &'static str,
+    pub ctx_done: &'static str,
+    pub too_many: &'static str,
+}
+
+static DE: ManyTexts = ManyTexts {
+    arg_sources: "Datei(en) oder Ordner (bis 1000); mehrere: mit --out ein Container, mit --each jede einzeln",
+    arg_encrypted: "Verschlüsselte Datei(en) (.pqkf, bis 1000); mehrere werden einzeln neben sich entschlüsselt",
+    arg_each: "Jede Quelle einzeln verschlüsseln (Ziel jeweils daneben, Passphrase nur einmal)",
+    arg_rename: "Ist das Standardziel belegt, freien Namen wählen (z. B. „bericht (2).pdf“)",
+    need_out: "Mehrere Quellen: --out <container.pqkf> für einen Container oder --each für einzelne Dateien angeben.",
+    no_out: "Mehrere Dateien werden einzeln neben sich entschlüsselt; --out ist dann nicht möglich.",
+    mixed: "Die Dateien sind unterschiedlich geschützt (Passphrase/Empfänger). Bitte getrennt entschlüsseln.",
+    failed: "Fehlgeschlagen",
+    summary: "Erledigt",
+    ctx_how: "Mehrere Einträge ausgewählt – wie verschlüsseln?",
+    ctx_ways: "Jede Datei einzeln|Alles in einen Container",
+    ctx_name: "Name des Containers (wird neben der Auswahl gespeichert)",
+    ctx_selection: "Auswahl ({n} Einträge)",
+    ctx_bad_name: "Ungültiger Name – bitte nur einen Dateinamen ohne / oder \\ angeben.",
+    ctx_cancelled: "Abgebrochen. Bereits fertige Dateien bleiben erhalten, angefangene wurden entfernt.",
+    ctx_done: "Fertig.",
+    too_many: "Zu viele Einträge ausgewählt (höchstens {max}). Bitte weniger auswählen oder den übergeordneten Ordner wählen.",
+};
+
+static EN: ManyTexts = ManyTexts {
+    arg_sources: "File(s) or folder(s) (up to 1000); several: one container with --out, each separately with --each",
+    arg_encrypted: "Encrypted file(s) (.pqkf, up to 1000); several are decrypted separately next to themselves",
+    arg_each: "Encrypt each source separately (target next to it, passphrase only once)",
+    arg_rename: "If the default target exists, choose a free name (e.g. \"report (2).pdf\")",
+    need_out: "Several sources: pass --out <container.pqkf> for one container or --each for separate files.",
+    no_out: "Several files are decrypted separately next to themselves; --out is not possible then.",
+    mixed: "The files are protected differently (passphrase/recipient). Please decrypt them separately.",
+    failed: "Failed",
+    summary: "Done",
+    ctx_how: "Several entries selected – how to encrypt?",
+    ctx_ways: "Each file separately|Everything in one container",
+    ctx_name: "Name of the container (saved next to the selection)",
+    ctx_selection: "Selection ({n} entries)",
+    ctx_bad_name: "Invalid name – please give only a file name without / or \\.",
+    ctx_cancelled: "Cancelled. Finished files are kept, unfinished ones were removed.",
+    ctx_done: "Done.",
+    too_many: "Too many entries selected (at most {max}). Please select fewer or choose the parent folder.",
+};
+
+/// DE: Texte für `lang`. EN: Texts for `lang`.
+pub fn many_texts(lang: Lang) -> &'static ManyTexts {
+    if lang == Lang::De { &DE } else { &EN }
+}

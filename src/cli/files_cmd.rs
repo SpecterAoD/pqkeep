@@ -5,7 +5,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
-use pqkeep::crypto::kdf::KdfProfile;
+use pqkeep::crypto::kdf::{KdfParams, KdfProfile};
 use pqkeep::envelope;
 use pqkeep::files::{self, HeaderMode, Protection, Report, SkipReason, Unlock};
 use pqkeep::security::{Lang, StrongPassphrase};
@@ -16,8 +16,86 @@ use super::io::{
 use super::text::Texts;
 use super::validate::print_rejection;
 
+/// DE: Alle Quellen (eine oder mehrere). EN: All sources (one or more).
+pub(super) fn sources(m: &ArgMatches) -> Vec<PathBuf> {
+    m.get_many::<PathBuf>("source")
+        .map(|v| v.cloned().collect())
+        .unwrap_or_default()
+}
+
 fn source(m: &ArgMatches) -> PathBuf {
-    m.get_one::<PathBuf>("source").cloned().unwrap_or_default()
+    sources(m).into_iter().next().unwrap_or_default()
+}
+
+/// DE: Freier Name neben dem Ziel: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
+/// EN: Free name next to the target: `name.ext`, else `name (2).ext` … `name (99).ext`.
+pub fn free_target(target: &Path) -> Option<PathBuf> {
+    if !target.exists() {
+        return Some(target.to_path_buf());
+    }
+    let stem = target.file_stem()?.to_str()?;
+    let ext = target.extension().and_then(|e| e.to_str());
+    (2..100)
+        .map(|n| {
+            let name = match ext {
+                Some(e) => format!("{stem} ({n}).{e}"),
+                None => format!("{stem} ({n})"),
+            };
+            target.with_file_name(name)
+        })
+        .find(|p| !p.exists())
+}
+
+/// DE: Standardziel; mit `--rename` ein freier Name. EN: Default target; with `--rename` a free name.
+pub(super) fn default_for(m: &ArgMatches, default: Option<PathBuf>) -> Option<PathBuf> {
+    if m.get_flag("rename") {
+        default.as_deref().and_then(free_target)
+    } else {
+        default
+    }
+}
+
+/// DE: Eingelesener Schutz (öffentlicher Schlüssel bzw. geprüfte Passphrase).
+/// EN: Read protection (public key or checked passphrase).
+pub(super) enum OwnedProtection {
+    Recipient(envelope::PublicKeyFile),
+    Passphrase(StrongPassphrase, KdfParams),
+}
+
+impl OwnedProtection {
+    pub(super) fn get(&self) -> Protection<'_> {
+        match self {
+            Self::Recipient(public) => Protection::Recipient(public),
+            Self::Passphrase(passphrase, params) => Protection::Passphrase {
+                passphrase,
+                params: *params,
+            },
+        }
+    }
+}
+
+/// DE: Empfänger laden oder neue Passphrase (zweimal) lesen und prüfen.
+/// EN: Load the recipient or read and check a new passphrase (twice).
+pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<OwnedProtection> {
+    if let Some(to) = m.get_one::<PathBuf>("to") {
+        let public = envelope::load_public(to).map_err(|e| Failure::from_error(&e, lang))?;
+        return Ok(OwnedProtection::Recipient(public));
+    }
+    let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
+        KdfProfile::Hardened
+    } else {
+        KdfProfile::Standard
+    };
+    let pass = if m.get_flag("confirm-stdin") {
+        read_confirmed_stdin(t, lang)?
+    } else {
+        read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?
+    };
+    let strong = StrongPassphrase::try_from(pass).map_err(|rejection| {
+        print_rejection(t, lang, &rejection);
+        Failure::new(code::WEAK, "")
+    })?;
+    Ok(OwnedProtection::Passphrase(strong, profile.params()))
 }
 
 /// DE: Standardziel beim Verschlüsseln. EN: Default target when encrypting.
@@ -45,7 +123,7 @@ fn target(t: &Texts, m: &ArgMatches, default: Option<PathBuf>) -> CliResult<Path
         .ok_or_else(|| Failure::new(code::USAGE, t.arg_out_optional))
 }
 
-fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report: &Report) {
+pub(super) fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report: &Report) {
     println!("{verb}: {}", out.display());
     println!(
         "{}: {} / {} / {}",
@@ -64,44 +142,41 @@ fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report: &Report) 
 }
 
 /// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
+/// DE: Verstecktes `--temp-tag` (vom Kontextmenü) an die Bibliothek geben.
+/// EN: Pass the hidden `--temp-tag` (from the context menu) to the library.
+fn apply_temp_tag(m: &ArgMatches, lang: Lang) -> CliResult {
+    match m.get_one::<String>("temp-tag") {
+        Some(tag) => files::set_temp_tag(tag).map_err(|e| Failure::from_error(&e, lang)),
+        None => Ok(()),
+    }
+}
+
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
-    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
+    apply_temp_tag(m, lang)?;
+    let all = sources(m);
+    if all.len() > 1 || m.get_flag("each") {
+        return super::files_many::encrypt(t, lang, m, &all);
+    }
     let src = source(m);
-    let out = target(t, m, default_encrypted(&src))?;
-    let report = if let Some(to) = m.get_one::<PathBuf>("to") {
-        let public = envelope::load_public(to).map_err(fail)?;
-        files::encrypt(&src, &out, &Protection::Recipient(&public)).map_err(fail)?
-    } else {
-        let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
-            KdfProfile::Hardened
-        } else {
-            KdfProfile::Standard
-        };
-        let pass = if m.get_flag("confirm-stdin") {
-            read_confirmed_stdin(t, lang)?
-        } else {
-            read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?
-        };
-        let strong = StrongPassphrase::try_from(pass).map_err(|rejection| {
-            print_rejection(t, lang, &rejection);
-            Failure::new(code::WEAK, "")
-        })?;
-        let protection = Protection::Passphrase {
-            passphrase: &strong,
-            params: profile.params(),
-        };
-        files::encrypt(&src, &out, &protection).map_err(fail)?
-    };
+    let out = target(t, m, default_for(m, default_encrypted(&src)))?;
+    let protection = read_protection(t, lang, m)?;
+    let report =
+        files::encrypt(&src, &out, &protection.get()).map_err(|e| Failure::from_error(&e, lang))?;
     print_report(t, lang, t.msg_encrypted, &out, &report);
     Ok(())
 }
 
 /// DE: `pqkeep decrypt`. EN: `pqkeep decrypt`.
 pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
+    apply_temp_tag(m, lang)?;
+    let all = sources(m);
+    if all.len() > 1 {
+        return super::files_many::decrypt(t, lang, m, &all);
+    }
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let src = source(m);
     let header = files::inspect(&src).map_err(fail)?;
-    let out = target(t, m, default_decrypted(&src))?;
+    let out = target(t, m, default_for(m, default_decrypted(&src)))?;
     let stdin = m.get_flag("passphrase-stdin");
     let key = m.get_one::<PathBuf>("key");
     let report = match (&header.mode, key) {

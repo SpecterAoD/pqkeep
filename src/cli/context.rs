@@ -13,7 +13,7 @@ use dialoguer::{Confirm, Input, Select};
 use pqkeep::files::{self, HeaderMode};
 use pqkeep::security::Lang;
 
-use super::files_cmd::{default_decrypted, default_encrypted};
+use super::files_cmd::{default_decrypted, default_encrypted, free_target};
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
 use super::text::Texts;
@@ -26,12 +26,13 @@ pub fn command(base: Command, lang: Lang) -> Command {
             .help(s.ctx_arg_action)
             .required(true)
             .hide_possible_values(true)
-            .value_parser(["encrypt", "decrypt"]),
+            .value_parser(["encrypt", "decrypt", "auto"]),
     )
     .arg(
         Arg::new("path")
             .help(s.ctx_arg_path)
             .required(true)
+            .num_args(1..)
             .value_parser(value_parser!(PathBuf)),
     )
     .arg(
@@ -47,7 +48,7 @@ fn lang_code(lang: Lang) -> &'static str {
 }
 
 /// DE: Startet `pqkeep --lang <x> <args…>` als Kindprozess. EN: Runs pqkeep as a child process.
-fn child(lang: Lang, extra: &[&str]) -> CliResult {
+pub(super) fn child(lang: Lang, extra: &[&str]) -> CliResult {
     let mut argv = vec![
         "pqkeep".to_owned(),
         "--lang".to_owned(),
@@ -65,7 +66,7 @@ pub(super) fn absolute(path: &Path) -> PathBuf {
 
 /// DE: Pfad abfragen; Anführungszeichen vom Hineinziehen ins Terminal werden entfernt.
 /// EN: Ask for a path; quotes from drag and drop into the terminal are removed.
-fn ask_path(prompt: &str) -> CliResult<String> {
+pub(super) fn ask_path(prompt: &str) -> CliResult<String> {
     let raw: String = Input::new()
         .with_prompt(prompt)
         .interact_text()
@@ -77,27 +78,6 @@ fn ask_path(prompt: &str) -> CliResult<String> {
         .or_else(|| trimmed.strip_prefix('"').and_then(|t| t.strip_suffix('"')))
         .unwrap_or(trimmed);
     Ok(absolute(Path::new(unquoted)).to_string_lossy().into_owned())
-}
-
-/// DE: Freier Zielname neben der Quelle: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
-/// Es wird nie überschrieben – der Kindprozess lehnt ein vorhandenes Ziel ohnehin ab.
-/// EN: Free target name next to the source: `name.ext`, else `name (2).ext` … `name (99).ext`.
-/// Nothing is ever overwritten – the child process rejects an existing target anyway.
-fn free_target(target: &Path) -> Option<PathBuf> {
-    if !target.exists() {
-        return Some(target.to_path_buf());
-    }
-    let stem = target.file_stem()?.to_str()?;
-    let ext = target.extension().and_then(|e| e.to_str());
-    (2..100)
-        .map(|n| {
-            let name = match ext {
-                Some(e) => format!("{stem} ({n}).{e}"),
-                None => format!("{stem} ({n})"),
-            };
-            target.with_file_name(name)
-        })
-        .find(|p| !p.exists())
 }
 
 /// DE: `--out` mit freiem Namen. EN: `--out` with a free name.
@@ -159,25 +139,28 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
 /// DE: `pqkeep context`. EN: `pqkeep context`.
 pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let s = integrate_texts(lang);
+    let sources: Vec<PathBuf> = m
+        .get_many::<PathBuf>("path")
+        .map(|v| v.map(|p| absolute(p)).collect())
+        .unwrap_or_default();
+    let action = m
+        .get_one::<String>("action")
+        .map_or("encrypt", String::as_str);
     if m.get_flag("dialog") {
-        let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
-        let action = m
-            .get_one::<String>("action")
-            .map_or("encrypt", String::as_str);
-        return super::context_dialog::run(lang, action, &source);
+        return super::context_dialog::run(lang, action, &sources);
     }
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));
     }
-    let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
-    let result = utf8(&source, lang).and_then(|path| {
-        if !source.exists() {
-            let e = pqkeep::Error::Io(std::io::ErrorKind::NotFound);
-            return Err(Failure::from_error(&e, lang));
-        }
-        match m.get_one::<String>("action").map(String::as_str) {
-            Some("decrypt") => decrypt(s, lang, &source, &path),
-            _ => encrypt(s, lang, &path),
+    super::context_many::limit(&sources, lang)?;
+    let action = super::context_many::resolve_action(action, &sources);
+    let result = super::context_many::checked(&sources, lang).and_then(|paths| {
+        if paths.len() > 1 {
+            super::context_many::terminal(s, lang, action, &sources, &paths)
+        } else if action == "decrypt" {
+            decrypt(s, lang, &sources[0], &paths[0])
+        } else {
+            encrypt(s, lang, &paths[0])
         }
     });
     match &result {

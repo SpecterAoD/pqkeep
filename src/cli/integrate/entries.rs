@@ -2,12 +2,12 @@
 //! Terminalpfade sind vorab geprüft (keine Anführungszeichen, Backticks, Dollar, Backslash, Prozent
 //! und keine Steuerzeichen), daher genügt
 //! einfaches Quoting. Der Dateiname aus dem Dateimanager steht immer nach `--` und als genau ein
-//! Argument; `pqkeep context` akzeptiert genau einen Pfad, eingeschleuste Optionen sind so wirkungslos.
+//! Argument je Pfad; eingeschleuste Optionen sind so wirkungslos (Mehrfachauswahl: U4-4).
 //! EN: Contents of the context menu entries for Nemo, Nautilus and Dolphin. Program and terminal
 //! paths are checked beforehand (no quotes, backticks, dollar, backslash, percent and no control
 //! characters), so simple quoting
-//! suffices. The file name from the file manager always comes after `--` as exactly one argument;
-//! `pqkeep context` accepts exactly one path, so injected options have no effect.
+//! suffices. The file names from the file manager always come after `--`, one argument per path;
+//! injected options thus have no effect (multi-selection: U4-4).
 
 /// DE: Zeichen, die in Aktionsdateien oder Shell-Zeilen Sonderbedeutung haben.
 /// EN: Characters with special meaning in action files or shell lines.
@@ -70,7 +70,7 @@ pub fn nemo(action: Action, name: &str, comment: &str, bin: &str, dialog: bool) 
     };
     format!(
         "[Nemo Action]\n# pqkeep integrate – {remove}\nActive=true\nName={name}\nComment={comment}\n\
-         Exec=\"{bin}\" context {flag}{arg} -- %F\nIcon-Name=dialog-password\nSelection=s\n\
+         Exec=\"{bin}\" context {flag}{arg} -- %F\nIcon-Name=dialog-password\nSelection=notnone\n\
          Extensions={extensions}\nTerminal={terminal}\n",
         remove = "pqkeep integrate uninstall",
         arg = action.arg(),
@@ -79,19 +79,19 @@ pub fn nemo(action: Action, name: &str, comment: &str, bin: &str, dialog: bool) 
     )
 }
 
-/// DE: Nautilus-Skript (Dateiname = Menüeintrag); bricht bei Mehrfachauswahl ab.
-/// EN: Nautilus script (file name = menu entry); stops on multiple selection.
+/// DE: Nautilus-Skript (Dateiname = Menüeintrag); alle gewählten Pfade als je ein Argument.
+/// EN: Nautilus script (file name = menu entry); all selected paths as one argument each.
 pub fn nautilus(action: Action, bin: &str, launch: Launch<'_>) -> String {
     let Launch::Terminal(term) = launch else {
         return format!(
-            "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -eq 1 ] || exit 0\n\
-             exec '{bin}' context --dialog {arg} -- \"$1\"\n",
+            "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -ge 1 ] || exit 0\n\
+             exec '{bin}' context --dialog {arg} -- \"$@\"\n",
             arg = action.arg(),
         );
     };
     format!(
-        "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -eq 1 ] || exit 0\n\
-         exec '{tp}' {flag} '{bin}' context {arg} -- \"$1\"\n",
+        "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -ge 1 ] || exit 0\n\
+         exec '{tp}' {flag} '{bin}' context {arg} -- \"$@\"\n",
         tp = term.path,
         flag = term.exec_flag,
         arg = action.arg(),
@@ -106,12 +106,12 @@ pub fn dolphin(action: Action, name: &str, bin: &str, launch: Launch<'_>) -> Str
     };
     let exec = match launch {
         Launch::Terminal(term) => format!(
-            "\"{tp}\" {flag} \"{bin}\" context {arg} -- %f",
+            "\"{tp}\" {flag} \"{bin}\" context {arg} -- %F",
             tp = term.path,
             flag = term.exec_flag,
             arg = action.arg()
         ),
-        Launch::Dialog => format!("\"{bin}\" context --dialog {} -- %f", action.arg()),
+        Launch::Dialog => format!("\"{bin}\" context --dialog {} -- %F", action.arg()),
     };
     format!(
         "[Desktop Entry]\n# pqkeep integrate – pqkeep integrate uninstall\nType=Service\n\

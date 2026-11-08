@@ -98,12 +98,15 @@ jobs:
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             exe: pqkeep
+            extra: ""
             flags: ""
           # DE: RUSTFLAGS überschreibt .cargo/config.toml – CFG daher hier ausdrücklich.
           # EN: RUSTFLAGS overrides .cargo/config.toml – hence CFG explicitly here.
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             exe: pqkeep.exe
+            # DE: Startprogramm ohne Konsolenfenster (Kontextmenü). EN: Launcher without console window.
+            extra: pqkeepw.exe
             flags: "-C control-flow-guard"
     runs-on: ${{ matrix.os }}
     defaults:
@@ -125,7 +128,9 @@ jobs:
       - name: Härtung prüfen / check hardening
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
-          "$py" scripts/check_binary.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
+          for exe in ${{ matrix.exe }} ${{ matrix.extra }}; do
+            "$py" scripts/check_binary.py "target/${{ matrix.target }}/release/$exe"
+          done
       - name: Rauchtest / smoke test
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi

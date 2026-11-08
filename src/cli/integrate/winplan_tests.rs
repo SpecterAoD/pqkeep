@@ -11,7 +11,7 @@ const BIN: &str = r"C:\Program Files\PQKeep\pqkeep.exe";
 
 #[test]
 fn plans_three_single_selection_verbs() {
-    let verbs = plan(integrate_texts(Lang::De), BIN);
+    let verbs = plan(integrate_texts(Lang::De), BIN, None);
     let paths: Vec<&str> = verbs.iter().map(|v| v.path.as_str()).collect();
     assert_eq!(
         paths,
@@ -32,7 +32,7 @@ fn plans_three_single_selection_verbs() {
 
 #[test]
 fn command_quotes_program_and_path_after_double_dash() {
-    let verbs = plan(integrate_texts(Lang::En), BIN);
+    let verbs = plan(integrate_texts(Lang::En), BIN, None);
     assert_eq!(
         verbs[0].command,
         r#""C:\Program Files\PQKeep\pqkeep.exe" context encrypt -- "%1""#
@@ -45,15 +45,15 @@ fn command_quotes_program_and_path_after_double_dash() {
 
 #[test]
 fn labels_follow_the_language() {
-    let de = plan(integrate_texts(Lang::De), BIN);
-    let en = plan(integrate_texts(Lang::En), BIN);
+    let de = plan(integrate_texts(Lang::De), BIN, None);
+    let en = plan(integrate_texts(Lang::En), BIN, None);
     assert_ne!(de[0].values[0].1, en[0].values[0].1);
     assert_eq!(de[0].values[0].0, "MUIVerb");
 }
 
 #[test]
 fn canonical_form_detects_every_change() {
-    let v = &plan(integrate_texts(Lang::De), BIN)[0];
+    let v = &plan(integrate_texts(Lang::De), BIN, None)[0];
     let base = v.snapshot();
     let same = base.canonical();
     assert_eq!(v.snapshot().canonical(), same);
@@ -74,7 +74,7 @@ fn canonical_form_detects_every_change() {
 
 #[test]
 fn canonical_form_ignores_order_and_name_case() {
-    let v = &plan(integrate_texts(Lang::De), BIN)[0];
+    let v = &plan(integrate_texts(Lang::De), BIN, None)[0];
     let mut s = v.snapshot();
     s.values.reverse();
     s.values[0].0 = s.values[0].0.to_uppercase();
@@ -120,4 +120,23 @@ fn windows_path_rules() {
         &temp
     ));
     assert!(safe_windows_path(BIN, &[String::new()]));
+}
+
+#[test]
+fn launcher_runs_windows_without_console() {
+    let w = r"C:\Program Files\PQKeep\pqkeepw.exe";
+    let verbs = plan(integrate_texts(Lang::En), BIN, Some(w));
+    assert_eq!(
+        verbs[0].command,
+        r#""C:\Program Files\PQKeep\pqkeepw.exe" encrypt -- "%1""#
+    );
+    assert_eq!(
+        verbs[2].command,
+        r#""C:\Program Files\PQKeep\pqkeepw.exe" decrypt -- "%1""#
+    );
+    assert!(
+        verbs[0]
+            .values
+            .contains(&("Icon".into(), format!("{BIN},0")))
+    );
 }

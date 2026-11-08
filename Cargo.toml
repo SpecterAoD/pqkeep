@@ -16,6 +16,12 @@ path = "src/lib.rs"
 name = "pqkeep"
 path = "src/main.rs"
 
+# DE: Startprogramm ohne Konsolenfenster für das Kontextmenü unter Windows (U4-3b).
+# EN: Launcher without a console window for the context menu on Windows (U4-3b).
+[[bin]]
+name = "pqkeepw"
+path = "src/bin/pqkeepw.rs"
+
 [dependencies]
 aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }

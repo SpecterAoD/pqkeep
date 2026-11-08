@@ -14,6 +14,10 @@ Häkchenliste: [`CHECKLIST.md`](CHECKLIST.md) („Release-Checkliste“).
    „Prüfung“ muss grün sein. Es entsteht **kein** GitHub-Release. Hinweis: Attestationen und
    Sigstore-Einträge sind öffentlich und dauerhaft (nur Prüfsummen und Workflow-Identität).
 
+**Paketinhalt:** Linux `pqkeep`; Windows `pqkeep.exe` und das Startprogramm `pqkeepw.exe` (Kontextmenü
+ohne Konsolenfenster). Beide Windows-Programme durchlaufen die Härtungsprüfung; fehlt `pqkeepw.exe`,
+bricht das Verpacken ab. Mit SignPath wären beide zu signieren.
+
 ## Release oder Beta
 
 1. Version in `Cargo.toml` setzen (z. B. `0.1.0-beta.1`), `Cargo.lock` aktualisieren, per PR mergen.
@@ -54,6 +58,10 @@ identity only).
 `git push origin v<version>`; approve the `release` environment; when verification is green, open
 the draft under Releases, review it and publish. If something fails before publishing: delete the
 draft and the tag, fix, tag again.
+
+**Package content:** Linux `pqkeep`; Windows `pqkeep.exe` plus the launcher `pqkeepw.exe` (context menu
+without a console window). Both Windows programs pass the hardening check; packaging fails if
+`pqkeepw.exe` is missing. With SignPath both would have to be signed.
 
 **Windows signing (SignPath):** only after approval by the SignPath Foundation – add the signing
 step before packaging, credentials only as secrets of the `release` environment.

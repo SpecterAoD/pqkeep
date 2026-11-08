@@ -35,6 +35,33 @@ pub fn encrypt(source: &Path, target: &Path, protection: &Protection<'_>) -> Res
     } else {
         (vec![walk::collect_file(source)?], Vec::new(), Content::File)
     };
+    write_archive(&entries, skipped, content, target, protection)
+}
+
+/// DE: Verschlüsselt mehrere Quellen als **einen** Container nach `target` (Inhalt „Ordner“,
+/// oberste Einträge = Quellen; kein neues Format). Entschlüsselt entsteht ein Ordner.
+/// EN: Encrypts several sources as **one** container into `target` (content "directory",
+/// top-level entries = sources; no new format). Decrypting yields a directory.
+///
+/// # Errors
+/// DE/EN: wie [`encrypt`]; zusätzlich [`Error::InvalidInput`] mit `duplicate` (gleiche Namen) /
+/// as [`encrypt`]; additionally `duplicate` (equal names).
+pub fn encrypt_many(
+    sources: &[&Path],
+    target: &Path,
+    protection: &Protection<'_>,
+) -> Result<Report> {
+    let (entries, skipped) = walk::collect_many(sources)?;
+    write_archive(&entries, skipped, Content::Directory, target, protection)
+}
+
+fn write_archive(
+    entries: &[SourceEntry],
+    skipped: Vec<super::Skipped>,
+    content: Content,
+    target: &Path,
+    protection: &Protection<'_>,
+) -> Result<Report> {
     let file_key = aead::generate_key()?;
     let header = build_header(content, protection, &file_key)?;
 
@@ -48,7 +75,7 @@ pub fn encrypt(source: &Path, target: &Path, protection: &Protection<'_>) -> Res
         skipped,
         ..Report::default()
     };
-    for entry in &entries {
+    for entry in entries {
         write_entry(&mut archive, entry, &mut report)?;
     }
     let file = archive

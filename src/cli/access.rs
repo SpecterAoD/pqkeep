@@ -63,16 +63,27 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             path_arg(m, "out")
         }
         "encrypt" | "decrypt" => {
-            let source = path_arg(m, "source").unwrap_or_default();
-            read(Some(source.clone()))?;
+            let sources = super::files_cmd::sources(m);
+            for source in &sources {
+                read(Some(source.clone()))?;
+            }
             read(path_arg(m, if name == "encrypt" { "to" } else { "key" }))?;
-            path_arg(m, "out").or_else(|| {
-                if name == "encrypt" {
-                    default_encrypted(&source)
-                } else {
-                    default_decrypted(&source)
+            if let Some(out) = path_arg(m, "out") {
+                Some(out)
+            } else {
+                // DE: Ziele entstehen jeweils neben der Quelle. EN: Targets are created next to each source.
+                for source in &sources {
+                    let target = if name == "encrypt" {
+                        default_encrypted(source)
+                    } else {
+                        default_decrypted(source)
+                    };
+                    if let Some(t) = target {
+                        access.write_dirs.push(existing(parent(&t), lang)?);
+                    }
                 }
-            })
+                None
+            }
         }
         "serve" if m.get_flag("init-token") => path_arg(m, "token-file"),
         // DE: Diese Befehle richten ihre Sandbox selbst ein (`serve`, `integrate`: Ziele erst später

@@ -193,11 +193,26 @@ fn nautilus_script_passes_malicious_name_as_one_argument() {
         .map(str::to_owned)
         .collect();
     assert_eq!(args, ["--", &real_bin(), "context", "decrypt", "--", nasty]);
-    // DE: Mehrfachauswahl wird ignoriert. EN: Multiple selection is ignored.
+    // DE: Mehrfachauswahl: jeder Pfad ein eigenes Argument; ohne Auswahl nichts.
+    // EN: Multi-selection: each path its own argument; no selection, nothing.
     fs::remove_file(&record).unwrap();
     let status = Command::new("/bin/sh")
         .arg(&script)
-        .args(["a", "b"])
+        .args(["a b", "-c"])
+        .env("RECORD", &record)
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let args: Vec<String> = fs::read_to_string(&record)
+        .unwrap()
+        .split('\0')
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned)
+        .collect();
+    assert_eq!(args[args.len() - 3..], ["--", "a b", "-c"]);
+    fs::remove_file(&record).unwrap();
+    let status = Command::new("/bin/sh")
+        .arg(&script)
         .env("RECORD", &record)
         .status()
         .unwrap();
@@ -205,7 +220,7 @@ fn nautilus_script_passes_malicious_name_as_one_argument() {
 }
 
 #[test]
-fn context_needs_terminal_and_exactly_one_path() {
+fn context_needs_terminal_without_dialog() {
     let e = env(&[]);
     let (code, _, _) = run(&e, &["context", "encrypt", "--", "x"]);
     assert_eq!(code, 2);

@@ -7,6 +7,7 @@ use pqkeep::security::Lang;
 #[allow(missing_docs)]
 pub struct DialogTexts {
     pub title: &'static str,
+    pub cancel: &'static str,
     pub arg_dialog: &'static str,
     pub pass: &'static str,
     pub new_pass: &'static str,
@@ -18,6 +19,7 @@ pub struct DialogTexts {
     pub filter_pub: &'static str,
     pub filter_key: &'static str,
     pub working: &'static str,
+    pub step: &'static str,
     pub done: &'static str,
     pub incomplete: &'static str,
     pub failed: &'static str,
@@ -27,7 +29,8 @@ pub struct DialogTexts {
 
 static DE: DialogTexts = DialogTexts {
     title: "PQKeep",
-    arg_dialog: "Kleine Fenster statt Terminal verwenden (zenity oder kdialog)",
+    cancel: "Abbrechen",
+    arg_dialog: "Kleine Fenster statt Terminal verwenden (Linux: zenity oder kdialog, Windows: PowerShell)",
     pass: "Passphrase",
     new_pass: "Neue Passphrase für die verschlüsselte Datei (mindestens 80 Bit, z. B. vier bis fünf zufällige Wörter)",
     first: "Passphrase",
@@ -38,16 +41,18 @@ static DE: DialogTexts = DialogTexts {
     filter_pub: "Öffentliche Schlüssel (*.pub.json)",
     filter_key: "Schlüsseldateien (*.json)",
     working: "Bitte warten …",
+    step: "Datei {i} von {n}",
     done: "Fertig. Gespeichert unter:",
     incomplete: "Achtung – nicht alles wurde übernommen. Originale erst löschen, wenn das geprüft ist:",
     failed: "Fehlgeschlagen.",
     retry: "Erneut versuchen?",
-    no_tool: "Kein Fenster-Werkzeug (zenity oder kdialog) oder keine grafische Sitzung gefunden.",
+    no_tool: "Kein Fenster-Werkzeug (zenity, kdialog bzw. PowerShell mit Windows Forms) oder keine grafische Sitzung gefunden.",
 };
 
 static EN: DialogTexts = DialogTexts {
     title: "PQKeep",
-    arg_dialog: "Use small windows instead of a terminal (zenity or kdialog)",
+    cancel: "Cancel",
+    arg_dialog: "Use small windows instead of a terminal (Linux: zenity or kdialog, Windows: PowerShell)",
     pass: "Passphrase",
     new_pass: "New passphrase for the encrypted file (at least 80 bits, e.g. four to five random words)",
     first: "Passphrase",
@@ -58,11 +63,12 @@ static EN: DialogTexts = DialogTexts {
     filter_pub: "Public keys (*.pub.json)",
     filter_key: "Key files (*.json)",
     working: "Please wait …",
+    step: "File {i} of {n}",
     done: "Done. Saved as:",
     incomplete: "Warning – not everything was included. Only delete originals after checking this:",
     failed: "Failed.",
     retry: "Try again?",
-    no_tool: "No window tool (zenity or kdialog) or no graphical session found.",
+    no_tool: "No window tool (zenity, kdialog or PowerShell with Windows Forms) or no graphical session found.",
 };
 
 /// DE: Texte für `lang`. EN: Texts for `lang`.

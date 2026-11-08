@@ -28,6 +28,9 @@ pub mod code {
     pub const WEAK: u8 = 4;
     /// DE/EN: Ziel existiert / target exists.
     pub const EXISTS: u8 = 5;
+    /// DE: Keine Fenster möglich (`context --dialog`; `pqkeepw.exe` öffnet dann eine Konsole).
+    /// EN: No windows possible (`context --dialog`; `pqkeepw.exe` then opens a console).
+    pub const NO_WINDOWS: u8 = 6;
 }
 
 /// DE: Fehler der CLI mit Exit-Code. EN: CLI error with exit code.

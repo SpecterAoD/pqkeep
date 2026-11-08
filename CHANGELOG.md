@@ -7,11 +7,19 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- Context menu with multi-selection: each separately or one container (suggested, freely editable name),
+  passphrase once, progress with cancel (unfinished output removed); Windows via "Send to → PQKeep" –
+  see `docs/INTEGRATION.md`.
+- Several sources at once: `pqkeep encrypt a b folder -o selection.pqkf` (one container, no new format),
+  `--each` (each separately, passphrase entered once), `decrypt` of several files, `--rename` for free
+  target names – see `docs/FILE_FORMAT.md`.
 - File manager context menu on Linux (Nemo, Nautilus, Dolphin): `pqkeep integrate install|uninstall|status`
   (current user only, fully reversible) and the terminal helper `pqkeep context` – see `docs/INTEGRATION.md`.
 - Context menu on Linux in window mode: small zenity/kdialog windows instead of a terminal
   (`pqkeep context --dialog`, `integrate install --terminal` to opt out); the passphrase goes through a
   pipe straight into the sandboxed child process – see `docs/INTEGRATION.md`.
+- Windows context menu in window mode: launcher `pqkeepw.exe` (no console window, part of the Windows
+  package) and PowerShell/Windows Forms windows; console fallback if PowerShell is restricted.
 - Explorer context menu on Windows (`HKCU\Software\Classes`, no administrator rights, fully reversible,
   single selection; console window) – see `docs/INTEGRATION.md`.
 - Detached file signatures in the library (`pqkeep::sign`): `.pqsig` format v1 with ML-DSA-87 over the

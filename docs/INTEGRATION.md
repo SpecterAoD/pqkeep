@@ -38,7 +38,9 @@ pqkeep integrate uninstall
   `*\shell\PQKeep.Encrypt` (alle Dateien), `Directory\shell\PQKeep.Encrypt` (Ordner) und
   `SystemFileAssociations\.pqkf\shell\PQKeep.Decrypt`. Befehl jeweils
   `"<pfad>\pqkeep.exe" context encrypt|decrypt -- "%1"` als `REG_SZ` (keine Variablen-Erweiterung).
-- Nur **Einzelauswahl** (`MultiSelectModel=Single`); mehrere Dateien: Issue #72.
+- Rechtsklick-Einträge nur für **eine** Datei (`MultiSelectModel=Single`): Der Explorer würde klassische
+  Einträge bei Mehrfachauswahl je Datei einzeln starten. Für **mehrere Dateien** richtet `install`
+  zusätzlich **„Senden an → PQKeep“** ein (siehe [Mehrere Dateien](#mehrere-dateien)).
 - **Vollständig rückgängig:** Die Liste `%APPDATA%\PQKeep\integration.json` merkt sich jeden Eintrag
   mit Prüfsumme über alle Werte und Unterschlüssel. `uninstall` entfernt nur unveränderte eigene
   Einträge und danach leer gewordene Elternschlüssel; fremde oder geänderte bleiben stehen.
@@ -46,7 +48,15 @@ pqkeep integrate uninstall
   Zeichen `"` `%`. Empfehlung: `%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`.
 - **Windows 11** zeigt klassische Einträge erst unter **„Weitere Optionen anzeigen“** (Umschalt+F10).
   Ins neue, verkürzte Menü kommen nur Programme mit signiertem MSIX-Paket – das ist nicht vorgesehen.
-- Beim Rechtsklick öffnet sich ein Konsolenfenster mit demselben Ablauf wie unter Linux (unten).
+- **Fenster statt Konsole:** Liegt `pqkeepw.exe` neben `pqkeep.exe` (im Release-Paket enthalten), zeigt
+  der Eintrag auf `"<pfad>\pqkeepw.exe" encrypt|decrypt -- "%1"`. Dieses kleine Startprogramm (ohne
+  Konsole, nur sichere Standard-API) startet `pqkeep.exe context --dialog …` ohne Konsolenfenster;
+  die Fenster kommen von PowerShell mit Windows Forms (Skript fest im Programm, als
+  `-EncodedCommand`, alle Texte als Literale, PowerShell aus `%SystemRoot%\System32`, nicht über `PATH`).
+  `install --terminal` richtet stattdessen den Konsolen-Weg ein; `status` zeigt den Modus.
+- Ist PowerShell eingeschränkt (Constrained Language Mode, AppLocker) oder fehlt Windows Forms, meldet
+  `context --dialog` Exit-Code 6 und `pqkeepw.exe` öffnet ein Konsolenfenster mit dem gewohnten Ablauf
+  (unten). Alle Unterprozesse laufen ohne eigenes Konsolenfenster (`CREATE_NO_WINDOW`).
   Unter Windows gibt es **keine Sandbox** (`docs/SANDBOX.md`).
 - Getestet in der Windows-CI gegen die echte Registry (eigener Test-Zweig); eine Prüfung im echten
   Explorer durch den Maintainer steht noch aus.
@@ -71,7 +81,8 @@ Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
 - Bekannte Grenze: Dateinamen mit Steuerzeichen (z. B. Zeilenumbruch) oder `\ : < > " | ? *` lehnt
   die Verschlüsselung grundsätzlich ab (Archiv-Regeln, `FILE_FORMAT.md`); die Meldung erscheint im
   Fenster.
-- Windows: Fenster folgen mit U4-3b (vorerst Konsolenfenster).
+- Windows: siehe [Windows](#windows) (`pqkeepw.exe`, PowerShell); dort hält PowerShell/.NET die
+  Passphrase kurz ungenullt im eigenen Speicher.
 
 ## Ablauf beim Rechtsklick
 
@@ -86,12 +97,39 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   (`bericht (2).txt`); überschrieben wird nie.
 - Die Passphrase wird verdeckt im Terminal eingegeben – in einem eigenen Prozess mit voller Sandbox,
   wie im Menü. Unter Linux gibt es dafür auch kleine Fenster (siehe oben).
-- Vorerst nur **eine** Datei bzw. ein Ordner pro Aufruf (mehrere: Issue #72).
+
+## Mehrere Dateien
+
+- **Linux:** Nemo (`Selection=notnone`), Nautilus und Dolphin (`%F`) übergeben alle markierten Einträge
+  – jeder Pfad ein eigenes Argument nach `--`.
+- **Windows:** **„Senden an → PQKeep“** (Verknüpfung `%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`, über
+  PowerShell angelegt, mit Prüfsumme im Manifest, `uninstall` entfernt sie nur unverändert). Aktion
+  `auto`: sind alle Dateien `.pqkf`, wird entschlüsselt, sonst verschlüsselt.
+- Beim Verschlüsseln fragt PQKeep: **jede Datei einzeln** oder **alles in einen Container**. Der
+  Container-Name ist vorgeschlagen (`<Ordnername>.pqkf`, sonst `Auswahl (N Einträge).pqkf`) und **frei
+  änderbar**; er wird neben der Auswahl gespeichert (freier Name, nie überschrieben).
+- Passphrase bzw. Empfänger nur **einmal**; die Arbeit macht **ein** Kindprozess mit voller Sandbox
+  (`encrypt --each --rename`, `encrypt --out`, `decrypt --rename`).
+- **Fortschritt je Datei** („Datei 3 von 10“ mit Balken) beim einzelnen Verschlüsseln und beim
+  Entschlüsseln mehrerer Dateien; der Kindprozess meldet dazu über ein verstecktes Flag nur
+  Nummer/Anzahl und den Namen fertiger Ziele, nie Geheimnisse. Ein Container ist ein Vorgang
+  (pulsierender Balken). kdialog (KDE) hat kein Fortschrittsfenster und damit auch kein Abbrechen.
+- **Ergebnis:** Zusammenfassung (`Erledigt: 3 / 3`); bei bis zu 20 Dateien jede einzeln („OK: …“),
+  fehlgeschlagene Dateien immer mit Grund.
+- **Abbrechen** im Fortschrittsfenster (zenity, PowerShell; kdialog hat keins) beendet die Arbeit:
+  fertige Dateien bleiben, angefangene werden entfernt. Entfernt wird nur, was dieser Vorgang angelegt
+  hat: Der Kindprozess bekommt eine zufällige Kennung (`--temp-tag`), die in jedem Temporärnamen steht
+  (`.<ziel>.tmp-<kennung>…`) – parallele Vorgänge mit gleichem Ziel bleiben unberührt.
+- „Erneut versuchen“ nur, solange noch nichts geschrieben wurde (zu schwache oder ungleiche Passphrase).
+- Höchstens 1000 Einträge pro Aufruf; mehr ergibt eine Meldung im Fenster (kein stiller Abbruch).
+- **Windows „Senden an“:** Die Befehlszeile ist auf ca. 32.000 Zeichen begrenzt – je nach Pfadlänge
+  sind das einige Hundert Dateien. Darüber startet der Explorer PQKeep nicht (keine Meldung von
+  PQKeep möglich). Dann besser den übergeordneten Ordner wählen.
 
 ## Sicherheit
 
-- Der Dateiname aus dem Dateimanager wird nie über eine Shell zusammengesetzt, sondern nach `--` als
-  genau ein Argument übergeben; `pqkeep context` akzeptiert genau einen Pfad. Getestet mit Namen
+- Dateinamen aus dem Dateimanager werden nie über eine Shell zusammengesetzt, sondern nach `--` als je
+  ein Argument übergeben. Getestet mit Namen
   voller Sonderzeichen (`'`, `"`, `;`, `$()`, Backticks, Zeilenumbruch, führendes `--`).
 - Der Hilfsprozess `pqkeep context` verarbeitet keine Geheimnisse; Verschlüsseln und Entschlüsseln
   laufen als Kindprozess mit voller Sandbox (`docs/SANDBOX.md`).
@@ -125,8 +163,14 @@ encrypt|decrypt -- "%1"` (`REG_SZ`), single selection only (`MultiSelectModel=Si
 only unchanged own entries and then-empty parent keys are removed. Program path: absolute with drive
 letter, no network drive, not in the temp folder, no `"` `%`; recommended
 `%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`. **Windows 11** shows classic entries under **"Show more
-options"** (Shift+F10); the new compact menu requires a signed MSIX package (not planned). A console
-window opens with the same flow as on Linux; there is **no sandbox** on Windows. Tested in Windows CI
+options"** (Shift+F10); the new compact menu requires a signed MSIX package (not planned). With
+`pqkeepw.exe` next to `pqkeep.exe` (included in the release package) the entry runs
+`"<path>\pqkeepw.exe" encrypt|decrypt -- "%1"`: this small launcher (no console, safe standard API only)
+starts `pqkeep.exe context --dialog …` without a console window, and the windows come from PowerShell
+with Windows Forms (script built into the program, passed as `-EncodedCommand`, all texts as literals,
+PowerShell from `%SystemRoot%\System32`). `install --terminal` sets up the console way instead. If
+PowerShell is restricted (Constrained Language Mode, AppLocker) a console window with the usual flow
+opens automatically. There is **no sandbox** on Windows. Tested in Windows CI
 against the real registry (separate test branch); a check in the real Explorer is still pending.
 
 **Windows instead of a terminal (Linux):** if **zenity** or **kdialog** is installed, `integrate
@@ -139,15 +183,31 @@ straight into the child's stdin (`--passphrase-stdin`, full sandbox), never as a
 environment variable; the child compares the two entries (zenity), kdialog compares in its own
 window. Limit: zenity/kdialog keep the passphrase briefly in their own memory, which PQKeep cannot
 zero. File names with control characters or `\ : < > " | ? *` are rejected by the archive rules.
-Windows windows follow with U4-3b.
+On Windows PowerShell/.NET keep the passphrase briefly unzeroed in their own memory.
 
 **On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase or recipient (the
 recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
 for your key file in recipient mode. The result is placed next to the source under a free name
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
-sandboxed process (on Linux also via small windows, see above); multiple files: issue #72.
+sandboxed process (on Linux also via small windows, see above).
 
-**Security:** the file name is passed after `--` as exactly one argument, never through a shell, and
-`pqkeep context` accepts exactly one path (tested with hostile names). The helper process handles no
+**Several files:** Linux: Nemo (`Selection=notnone`), Nautilus and Dolphin (`%F`) pass all selected
+entries, one argument each after `--`. Windows: classic entries would start one process per file,
+so `install` also sets up **"Send to → PQKeep"** (`%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`,
+created via PowerShell, checksum in the manifest); action `auto` decrypts if all are `.pqkf`, else
+encrypts. When encrypting PQKeep asks: **each file separately** or **everything in one container**
+(name suggested as `<folder name>.pqkf` or `Selection (N entries).pqkf` and **freely editable**). The
+passphrase or recipient is asked once, one sandboxed child does the work. **Progress per file**
+("File 3 of 10" with a bar) when encrypting separately and decrypting several files (the child reports
+only number/count and names of finished targets via a hidden flag); a container is one operation;
+kdialog has no progress window and thus no cancel. **Result:** summary, each file listed ("OK: …") for
+up to 20 files, failures always with reason. More than 1000 entries give a message in a window.
+**Windows "Send to"** is limited by the ~32,000-character command line (a few hundred files depending
+on path length); beyond that Explorer does not start PQKeep – select the parent folder instead. **Cancel** in the progress window keeps finished files and removes unfinished ones – only those
+of this operation: the child gets a random tag (`--temp-tag`) that is part of every temporary name, so
+parallel operations with the same target stay untouched. Retry only while nothing has been written yet. At most 1000 entries.
+
+**Security:** file names are passed after `--` as one argument each, never through a shell (tested
+with hostile names). The helper process handles no
 secrets. Nautilus and Dolphin are covered by tests of the generated files, not in the running file
 manager.
