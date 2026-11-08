@@ -7,12 +7,16 @@
 
 /// DE: Unterstütztes Werkzeug. EN: Supported tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// DE: Je System wird nur ein Teil der Werkzeuge erzeugt. EN: Each system creates only some tools.
 pub enum Kind {
     /// GNOME/GTK (`zenity`)
+    #[cfg_attr(windows, allow(dead_code))]
     Zenity,
     /// KDE/Qt (`kdialog`)
+    #[cfg_attr(windows, allow(dead_code))]
     Kdialog,
     /// Windows: PowerShell + Windows Forms (`powershell.rs`)
+    #[cfg_attr(not(windows), allow(dead_code))]
     PowerShell,
 }
 
