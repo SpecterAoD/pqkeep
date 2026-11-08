@@ -53,7 +53,17 @@ fn each_separately_then_decrypt_several() {
     let p = pass();
     e.answer(&[(0, "0\n"), (0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
     assert_eq!(e.context_many("encrypt", &refs(&src)), 0);
-    assert!(last_call(&e).contains("Done: 3 / 3"), "{:?}", e.calls());
+    let result = last_call(&e);
+    assert!(result.contains("Done: 3 / 3"), "{:?}", e.calls());
+    assert!(result.contains("OK: b ä.txt.pqkf"), "{result}");
+    let progress = e.progress();
+    for step in [
+        "# File 1 of 3\n0\n",
+        "# File 2 of 3\n33\n",
+        "# File 3 of 3\n66\n",
+    ] {
+        assert!(progress.contains(step), "{progress:?}");
+    }
     for s in &src {
         fs::remove_file(s).unwrap();
     }
@@ -156,4 +166,16 @@ fn weak_passphrase_may_be_retried_but_wrong_one_not() {
     let calls = e.calls();
     assert!(calls[1].contains(&"--error".to_owned()), "{calls:?}");
     assert_eq!(calls.len(), 2, "keine Wiederholung / no retry");
+}
+
+#[test]
+fn more_than_the_limit_is_reported_in_a_window() {
+    let e = Env::new("zenity");
+    let list: Vec<String> = (0..1001).map(|i| format!("x{i}")).collect();
+    let src = files(&e, &list.iter().map(String::as_str).collect::<Vec<_>>());
+    e.answer(&[(0, "")]);
+    assert_eq!(e.context_many("encrypt", &refs(&src)), 2);
+    let calls = e.calls();
+    assert_eq!(calls.len(), 1, "nur die Meldung / only the message");
+    assert!(last_call(&e).contains("at most 1000"), "{calls:?}");
 }

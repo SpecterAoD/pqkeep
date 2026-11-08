@@ -51,9 +51,15 @@ pub enum Request<'a> {
     },
     /// DE: Texteingabe mit Vorgabe. EN: Text input with a default.
     Entry { text: &'a str, default: &'a str },
-    /// DE: Pulsierender Fortschritt (zenity, PowerShell); `cancel` = mit Abbrechen-Knopf.
-    /// EN: Pulsating progress (zenity, PowerShell); `cancel` = with a cancel button.
-    Progress { text: &'a str, cancel: bool },
+    /// DE: Fortschritt (zenity, PowerShell); `cancel` = mit Abbrechen-Knopf, `steps` = Balken mit
+    /// Prozent und Text über stdin (sonst pulsierend).
+    /// EN: Progress (zenity, PowerShell); `cancel` = with a cancel button, `steps` = bar with percent
+    /// and text via stdin (else pulsating).
+    Progress {
+        text: &'a str,
+        cancel: bool,
+        steps: bool,
+    },
 }
 
 impl Kind {
@@ -116,8 +122,16 @@ fn zenity(title: &str, req: &Request<'_>) -> Vec<String> {
         Request::Entry { text, default } => {
             a.extend([q("--entry"), t(text), format!("--entry-text={default}")]);
         }
-        Request::Progress { text, cancel } => {
-            a.extend(owned(&["--progress", "--pulsate", "--auto-close"]));
+        Request::Progress {
+            text,
+            cancel,
+            steps,
+        } => {
+            a.push("--progress".to_owned());
+            if !steps {
+                a.push("--pulsate".to_owned());
+            }
+            a.push("--auto-close".to_owned());
             if !cancel {
                 a.push("--no-cancel".to_owned());
             }

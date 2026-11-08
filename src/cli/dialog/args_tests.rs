@@ -101,6 +101,7 @@ fn password_and_progress() {
     let p = z(&Request::Progress {
         text: "Bitte warten",
         cancel: false,
+        steps: false,
     });
     assert!(p.contains(&"--no-cancel".to_owned()));
     assert!(p.contains(&"--pulsate".to_owned()) && p.contains(&"--auto-close".to_owned()));
@@ -110,7 +111,8 @@ fn password_and_progress() {
             "PQKeep",
             &Request::Progress {
                 text: "x",
-                cancel: true
+                cancel: true,
+                steps: false,
             }
         )
         .is_none()
@@ -146,6 +148,17 @@ fn entry_and_cancelable_progress() {
     let p = z(&Request::Progress {
         text: "x",
         cancel: true,
+        steps: false,
     });
     assert!(!p.contains(&"--no-cancel".to_owned()));
+}
+
+#[test]
+fn progress_with_steps_is_not_pulsating() {
+    let p = z(&Request::Progress {
+        text: "x",
+        cancel: true,
+        steps: true,
+    });
+    assert!(!p.contains(&"--pulsate".to_owned()) && p.contains(&"--progress".to_owned()));
 }

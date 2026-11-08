@@ -221,34 +221,61 @@ impl Dialog {
         ok.then_some(line)
     }
 
-    /// DE: Pulsierender Fortschritt, solange der Rückgabewert lebt (zenity, PowerShell);
-    /// `cancel` = mit Abbrechen-Knopf (siehe [`Progress::closed`]).
-    /// EN: Pulsating progress while the return value lives (zenity, PowerShell); `cancel` = with
-    /// a cancel button (see [`Progress::closed`]).
-    pub fn progress(&self, text: &str, cancel: bool) -> Progress {
+    /// DE: Fortschritt, solange der Rückgabewert lebt (zenity, PowerShell); `cancel` = mit
+    /// Abbrechen-Knopf (siehe [`Progress::closed`]), `steps` = Balken für [`Progress::step`].
+    /// EN: Progress while the return value lives (zenity, PowerShell); `cancel` = with a cancel
+    /// button (see [`Progress::closed`]), `steps` = bar for [`Progress::step`].
+    pub fn progress(&self, text: &str, cancel: bool, steps: bool) -> Progress {
+        let req = Request::Progress {
+            text,
+            cancel,
+            steps,
+        };
         let child = self
-            .command(&Request::Progress { text, cancel })
+            .command(&req)
             .and_then(|mut c| c.stdin(Stdio::piped()).stdout(Stdio::null()).spawn().ok());
-        Progress(child)
+        Progress {
+            child,
+            kind: self.kind,
+        }
     }
 }
 
 /// DE: Laufendes Fortschrittsfenster; wird beim Drop geschlossen.
 /// EN: Running progress window; closed on drop.
-pub struct Progress(Option<Child>);
+pub struct Progress {
+    child: Option<Child>,
+    kind: Kind,
+}
 
 impl Progress {
     /// DE: Hat der Benutzer das Fenster geschlossen bzw. abgebrochen? EN: Did the user close/cancel it?
     pub fn closed(&mut self) -> bool {
-        self.0
+        self.child
             .as_mut()
             .is_some_and(|c| c.try_wait().ok().flatten().is_some())
+    }
+
+    /// DE: Stand setzen (0–99 %, nie 100: zenity würde sich sonst schließen) und Text.
+    /// EN: Set the state (0–99 %, never 100: zenity would close itself) and text.
+    pub fn step(&mut self, percent: u8, text: &str) {
+        use std::io::Write;
+        let percent = percent.min(99);
+        let line = match self.kind {
+            Kind::Zenity => format!("# {text}\n{percent}\n"),
+            Kind::PowerShell => format!("{percent}|{text}\n"),
+            Kind::Kdialog => return,
+        };
+        if let Some(stdin) = self.child.as_mut().and_then(|c| c.stdin.as_mut()) {
+            let _ = stdin.write_all(line.as_bytes());
+            let _ = stdin.flush();
+        }
     }
 }
 
 impl Drop for Progress {
     fn drop(&mut self) {
-        if let Some(child) = &mut self.0 {
+        if let Some(child) = &mut self.child {
             let _ = child.kill();
             let _ = child.wait();
         }

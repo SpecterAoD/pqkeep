@@ -144,6 +144,7 @@ fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(flag("each", m.arg_each).conflicts_with("out"))
             .arg(flag("rename", m.arg_rename))
             .arg(opt("temp-tag", "").hide(true))
+            .arg(flag("progress", "").hide(true))
             .arg(opt("to", t.arg_to).value_parser(value_parser!(PathBuf)))
             .arg(profile(lang))
             .arg(out_optional(lang))
@@ -159,6 +160,7 @@ fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(path("source", m.arg_encrypted).num_args(1..=MAX_SOURCES))
             .arg(flag("rename", m.arg_rename))
             .arg(opt("temp-tag", "").hide(true))
+            .arg(flag("progress", "").hide(true))
             .arg(
                 opt("key", t.arg_key)
                     .short('k')

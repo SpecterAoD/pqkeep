@@ -18,7 +18,7 @@ const FAKE: &str = r#"#!/bin/sh
 d="$ANSWERS"
 case " $* " in *" --progress "*)
   if [ -f "$d/cancel" ]; then sleep "$(cat "$d/cancel")"; exit 1; fi
-  exec sleep 60;;
+  exec cat >> "$d/progress";;
 esac
 for a in "$@"; do printf '%s\037' "$a"; done >> "$d/record"
 printf '\036' >> "$d/record"
@@ -87,6 +87,11 @@ impl Env {
     /// DE: Fortschrittsfenster bricht nach `secs` Sekunden ab. EN: Progress window cancels after `secs`.
     pub fn cancel_after(&self, secs: &str) {
         fs::write(self.answers.join("cancel"), secs).unwrap();
+    }
+
+    /// DE: Was das Fortschrittsfenster über stdin erhielt. EN: What the progress window got via stdin.
+    pub fn progress(&self) -> String {
+        fs::read_to_string(self.answers.join("progress")).unwrap_or_default()
     }
 
     pub fn context(&self, action: &str, path: &Path) -> i32 {

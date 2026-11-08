@@ -14,7 +14,7 @@ use pqkeep::files::{self, HeaderMode};
 use pqkeep::security::Lang;
 
 use super::context::{out_arg, utf8};
-use super::context_child::{Outcome, finish, new_tag, spawn, with_tag};
+use super::context_child::{Outcome, Watch, finish, new_tag, spawn, with_tag};
 use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
 use super::files_cmd::{default_decrypted, default_encrypted};
@@ -37,12 +37,27 @@ pub(super) fn cancelled() -> Failure {
 
 impl Ui<'_> {
     /// DE: Kindprozess ohne Passphrase. EN: Child without passphrase.
-    pub(super) fn plain(&self, args: &[&str], targets: &[PathBuf]) -> CliResult<Outcome> {
+    /// DE: Fortschrittstexte; `step` = Schritte je Datei. EN: Progress texts; `step` = steps per file.
+    fn watch(&self, step: bool) -> Watch<'_> {
+        Watch {
+            working: self.d.working,
+            step: step.then_some(self.d.step),
+        }
+    }
+
+    /// DE: Kindprozess ohne Passphrase; `step` = Fortschritt je Datei (`--progress`).
+    /// EN: Child without passphrase; `step` = progress per file (`--progress`).
+    pub(super) fn plain(
+        &self,
+        args: &[&str],
+        targets: &[PathBuf],
+        step: bool,
+    ) -> CliResult<Outcome> {
         let tag = new_tag(self.lang)?;
         let child = spawn(self.lang, &with_tag(args, &tag), Stdio::null())?;
         finish(
             &self.dlg,
-            self.d.working,
+            &self.watch(step),
             self.lang,
             child,
             targets,
@@ -61,6 +76,7 @@ impl Ui<'_> {
         cmd: &[&str],
         paths: &[&str],
         targets: &[PathBuf],
+        step: bool,
     ) -> CliResult<Outcome> {
         let confirm = new.then_some((self.d.first, self.d.second));
         let no_tool = || Failure::new(code::ERROR, self.d.no_tool);
@@ -82,7 +98,7 @@ impl Ui<'_> {
         }
         finish(
             &self.dlg,
-            self.d.working,
+            &self.watch(step),
             self.lang,
             child,
             targets,
@@ -137,7 +153,7 @@ impl Ui<'_> {
         let public = self.pick(d.pick_pub, near, "*.pub.json", d.filter_pub)?;
         let info = finish(
             &self.dlg,
-            d.working,
+            &self.watch(false),
             self.lang,
             spawn(self.lang, &["inspect", "--", &public], Stdio::null())?,
             &[],
@@ -172,12 +188,12 @@ impl Ui<'_> {
             let cmd = ["encrypt", "--out", &out];
             let new_pass = self.d.new_pass;
             return self.repeat(&out, || {
-                self.with_pass(new_pass, true, &cmd, &[path], &targets)
+                self.with_pass(new_pass, true, &cmd, &[path], &targets, false)
             });
         }
         let public = self.recipient(Path::new(path))?;
         let cmd = ["encrypt", "--to", &public, "--out", &out, "--", path];
-        self.repeat(&out, || self.plain(&cmd, &targets))
+        self.repeat(&out, || self.plain(&cmd, &targets, false))
     }
 
     fn decrypt(&self, source: &Path, path: &str) -> CliResult {
@@ -192,12 +208,12 @@ impl Ui<'_> {
             let key = self.pick(d.pick_key, source, "*.json", d.filter_key)?;
             let cmd = ["decrypt", "--key", &key, "--out", &out];
             return self.repeat(&out, || {
-                self.with_pass(d.key_pass, false, &cmd, &[path], &targets)
+                self.with_pass(d.key_pass, false, &cmd, &[path], &targets, false)
             });
         }
         let cmd = ["decrypt", "--out", &out];
         self.repeat(&out, || {
-            self.with_pass(d.pass, false, &cmd, &[path], &targets)
+            self.with_pass(d.pass, false, &cmd, &[path], &targets, false)
         })
     }
 }
@@ -221,7 +237,9 @@ pub fn run(lang: Lang, action: &str, sources: &[PathBuf]) -> CliResult {
         lang,
     };
     let action = super::context_many::resolve_action(action, sources);
-    let result = super::context_many::checked(sources, lang).and_then(|paths| {
+    let checked = super::context_many::limit(sources, lang)
+        .and_then(|()| super::context_many::checked(sources, lang));
+    let result = checked.and_then(|paths| {
         if paths.len() > 1 {
             super::context_dialog_many::run(&ui, action, sources, &paths)
         } else if action == "decrypt" {

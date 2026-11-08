@@ -22,6 +22,7 @@ pub struct ManyTexts {
     pub ctx_bad_name: &'static str,
     pub ctx_cancelled: &'static str,
     pub ctx_done: &'static str,
+    pub too_many: &'static str,
 }
 
 static DE: ManyTexts = ManyTexts {
@@ -41,6 +42,7 @@ static DE: ManyTexts = ManyTexts {
     ctx_bad_name: "Ungültiger Name – bitte nur einen Dateinamen ohne / oder \\ angeben.",
     ctx_cancelled: "Abgebrochen. Bereits fertige Dateien bleiben erhalten, angefangene wurden entfernt.",
     ctx_done: "Fertig.",
+    too_many: "Zu viele Einträge ausgewählt (höchstens {max}). Bitte weniger auswählen oder den übergeordneten Ordner wählen.",
 };
 
 static EN: ManyTexts = ManyTexts {
@@ -60,6 +62,7 @@ static EN: ManyTexts = ManyTexts {
     ctx_bad_name: "Invalid name – please give only a file name without / or \\.",
     ctx_cancelled: "Cancelled. Finished files are kept, unfinished ones were removed.",
     ctx_done: "Done.",
+    too_many: "Too many entries selected (at most {max}). Please select fewer or choose the parent folder.",
 };
 
 /// DE: Texte für `lang`. EN: Texts for `lang`.

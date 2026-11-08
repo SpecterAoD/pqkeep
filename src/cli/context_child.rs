@@ -9,10 +9,11 @@
 //! writes into every temporary name (`.<target>.tmp-<tag><16 hex>`, also for free names
 //! `target (n)`); finished targets stay.
 
-use std::io::Read;
+use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
-use std::thread;
+use std::sync::mpsc::{self, Sender};
+use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use pqkeep::security::Lang;
@@ -24,12 +25,22 @@ use super::io::{CliResult, Failure, code};
 pub(super) enum Outcome {
     /// DE: Erfolg mit Ausgabe und Warnungen (z. B. übersprungene Einträge).
     /// EN: Success with output and warnings (e.g. skipped entries).
-    Done { out: String, warn: String },
+    /// `done`: DE: fertige Ziele (Dateinamen, nur mit `--progress`). EN: finished targets.
+    Done {
+        out: String,
+        warn: String,
+        done: Vec<String>,
+    },
     /// DE: Abgebrochen; `started` = Arbeit lief schon (Fortschrittsfenster).
     /// EN: Cancelled; `started` = work was already running (progress window).
     Cancelled { started: bool },
     /// DE: Fehler mit Exit-Code und Meldung. EN: Failure with exit code and message.
-    Failed { code: u8, msg: String, out: String },
+    Failed {
+        code: u8,
+        msg: String,
+        out: String,
+        done: Vec<String>,
+    },
 }
 
 /// DE: Neue Kennung (16 Hex) für die Temporärnamen eines Kindprozesses.
@@ -75,9 +86,36 @@ fn drain(pipe: Option<impl Read + Send + 'static>) -> thread::JoinHandle<String>
     })
 }
 
-fn outcome(status: ExitStatus, out: String, warn: String) -> Outcome {
+/// DE: Normale Ausgabe und fertige Ziele. EN: Normal output and finished targets.
+type Lines = (String, Vec<String>);
+
+/// DE: Liest stdout zeilenweise: `@@progress i n` → Kanal, `@@done name` → Liste, Rest → Text.
+/// EN: Reads stdout line by line: `@@progress i n` → channel, `@@done name` → list, rest → text.
+fn lines(pipe: Option<impl Read + Send + 'static>, tx: Sender<(u32, u32)>) -> JoinHandle<Lines> {
+    thread::spawn(move || {
+        let (mut text, mut done) = (Vec::new(), Vec::new());
+        let Some(pipe) = pipe else {
+            return (String::new(), done);
+        };
+        for line in BufReader::new(pipe).lines().map_while(Result::ok) {
+            if let Some(rest) = line.strip_prefix("@@progress ") {
+                let mut nums = rest.split(' ').filter_map(|x| x.parse().ok());
+                if let (Some(i), Some(n)) = (nums.next(), nums.next()) {
+                    let _ = tx.send((i, n));
+                }
+            } else if let Some(name) = line.strip_prefix("@@done ") {
+                done.push(name.to_owned());
+            } else {
+                text.push(line);
+            }
+        }
+        (text.join("\n").trim().to_owned(), done)
+    })
+}
+
+fn outcome(status: ExitStatus, (out, done): Lines, warn: String) -> Outcome {
     if status.success() {
-        Outcome::Done { out, warn }
+        Outcome::Done { out, warn, done }
     } else {
         let code = status
             .code()
@@ -87,23 +125,32 @@ fn outcome(status: ExitStatus, out: String, warn: String) -> Outcome {
             code,
             msg: warn,
             out,
+            done,
         }
     }
+}
+
+/// DE: Text des Fortschritts: `working`, mit `step` (z. B. „Datei {i} von {n}“) als Balken.
+/// EN: Progress texts: `working`, with `step` (e.g. "File {i} of {n}") as a bar.
+pub(super) struct Watch<'a> {
+    pub working: &'a str,
+    pub step: Option<&'a str>,
 }
 
 /// DE: Wartet mit abbrechbarem Fortschrittsfenster. EN: Waits with a cancelable progress window.
 pub(super) fn finish(
     dlg: &Dialog,
-    working: &str,
+    watch: &Watch<'_>,
     lang: Lang,
     mut child: Child,
     targets: &[PathBuf],
     tag: Option<&str>,
 ) -> CliResult<Outcome> {
     let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
-    let out = drain(child.stdout.take());
+    let (tx, rx) = mpsc::channel();
+    let out = lines(child.stdout.take(), tx);
     let err = drain(child.stderr.take());
-    let mut progress = dlg.progress(working, true);
+    let mut progress = dlg.progress(watch.working, true, watch.step.is_some());
     let status = loop {
         if let Some(status) = child.try_wait().map_err(fail)? {
             break status;
@@ -117,14 +164,20 @@ pub(super) fn finish(
             }
             return Ok(Outcome::Cancelled { started: true });
         }
+        while let Ok((i, n)) = rx.try_recv() {
+            if let Some(step) = watch.step {
+                let text = step
+                    .replace("{i}", &i.to_string())
+                    .replace("{n}", &n.to_string());
+                let percent = (u64::from(i.saturating_sub(1)) * 100 / u64::from(n.max(1))).min(99);
+                progress.step(u8::try_from(percent).unwrap_or(99), &text);
+            }
+        }
         thread::sleep(Duration::from_millis(100));
     };
     drop(progress);
-    let (out, warn) = (
-        out.join().unwrap_or_default(),
-        err.join().unwrap_or_default(),
-    );
-    Ok(outcome(status, out, warn))
+    let warn = err.join().unwrap_or_default();
+    Ok(outcome(status, out.join().unwrap_or_default(), warn))
 }
 
 /// DE: Ist `name` eine Temporärausgabe mit Kennung `tag` für `base` oder einen freien Namen davon?

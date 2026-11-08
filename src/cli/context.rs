@@ -32,7 +32,7 @@ pub fn command(base: Command, lang: Lang) -> Command {
         Arg::new("path")
             .help(s.ctx_arg_path)
             .required(true)
-            .num_args(1..=super::args::MAX_SOURCES)
+            .num_args(1..)
             .value_parser(value_parser!(PathBuf)),
     )
     .arg(
@@ -152,6 +152,7 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));
     }
+    super::context_many::limit(&sources, lang)?;
     let action = super::context_many::resolve_action(action, &sources);
     let result = super::context_many::checked(&sources, lang).and_then(|paths| {
         if paths.len() > 1 {

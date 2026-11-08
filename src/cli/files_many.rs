@@ -30,15 +30,42 @@ struct Tally<'a> {
     ok: usize,
     total: usize,
     first_error: Option<u8>,
+    /// DE: Anzahl Quellen; `Some` = Fortschrittszeilen fürs Kontextmenü (`--progress`).
+    /// EN: Number of sources; `Some` = progress lines for the context menu (`--progress`).
+    progress: Option<usize>,
 }
 
-impl Tally<'_> {
+impl<'a> Tally<'a> {
+    fn new(s: &'a ManyTexts, m: &ArgMatches, count: usize) -> Self {
+        Self {
+            s,
+            ok: 0,
+            total: 0,
+            first_error: None,
+            progress: m.get_flag("progress").then_some(count),
+        }
+    }
+
+    /// DE: Vor jeder Datei: `@@progress <nr> <anzahl>` (ohne Pfade). EN: Before each file.
+    fn begin(&self) {
+        use std::io::Write;
+        if let Some(n) = self.progress {
+            println!("@@progress {} {n}", self.total + 1);
+            let _ = std::io::stdout().flush();
+        }
+    }
+
     fn record(&mut self, t: &Texts, lang: Lang, src: &Path, out: &Path, r: Step) {
         self.total += 1;
         match r {
             Ok((verb, report)) => {
                 self.ok += 1;
                 print_report(t, lang, verb, out, &report);
+                if self.progress.is_some()
+                    && let Some(name) = out.file_name()
+                {
+                    println!("@@done {}", name.to_string_lossy());
+                }
             }
             Err(e) => {
                 let f = Failure::from_error(&e, lang);
@@ -76,13 +103,9 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
         return Ok(());
     }
     let protection = read_protection(t, lang, m)?;
-    let mut tally = Tally {
-        s,
-        ok: 0,
-        total: 0,
-        first_error: None,
-    };
+    let mut tally = Tally::new(s, m, sources.len());
     for src in sources {
+        tally.begin();
         let Some(out) = default_for(m, default_encrypted(src)) else {
             tally.missing_target(src);
             continue;
@@ -112,14 +135,10 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
         }
     }
     let stdin = m.get_flag("passphrase-stdin");
-    let mut tally = Tally {
-        s,
-        ok: 0,
-        total: 0,
-        first_error: None,
-    };
+    let mut tally = Tally::new(s, m, sources.len());
     let mut run = |unlock: &Unlock<'_>| {
         for src in sources {
+            tally.begin();
             let Some(out) = default_for(m, default_decrypted(src)) else {
                 tally.missing_target(src);
                 continue;

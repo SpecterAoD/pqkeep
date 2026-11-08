@@ -120,7 +120,11 @@ fn body(req: &Request<'_>) -> String {
             quote(text),
             quote(default)
         ),
-        Request::Progress { text, cancel } => progress(text, cancel),
+        Request::Progress {
+            text,
+            cancel,
+            steps,
+        } => progress(text, cancel, steps),
     }
 }
 
@@ -148,7 +152,19 @@ fn choose(text: &str, items: &[&str]) -> String {
     )
 }
 
-fn progress(text: &str, cancel: bool) -> String {
+/// DE: Schritte: Zeilen `prozent|text` auf stdin, per Timer gelesen (das Fenster bleibt bedienbar).
+/// EN: Steps: lines `percent|text` on stdin, read by a timer (the window stays responsive).
+const STEPS: &str = "$p.Style = 'Continuous'; $p.Maximum = 100\n\
+     $script:task = [Console]::In.ReadLineAsync()\n\
+     $timer = New-Object System.Windows.Forms.Timer; $timer.Interval = 150\n\
+     $timer.Add_Tick({ while ($script:task.IsCompleted) {\n\
+     $line = $script:task.Result; if ($null -eq $line) { $timer.Stop(); return }\n\
+     $parts = $line.Split('|', 2)\n\
+     if ($parts.Count -eq 2) { $p.Value = [Math]::Min(100, [int]$parts[0]); $l.Text = $parts[1] }\n\
+     $script:task = [Console]::In.ReadLineAsync() } })\n\
+     $timer.Start()\n";
+
+fn progress(text: &str, cancel: bool, steps: bool) -> String {
     // DE: Mit Abbrechen-Knopf: Klick → Exit 1. EN: With cancel button: click → exit 1.
     let ending = if cancel {
         "$c = New-Object System.Windows.Forms.Button; $c.Text = $cancel; $c.DialogResult = 'Cancel'\n\
@@ -164,8 +180,9 @@ fn progress(text: &str, cancel: bool) -> String {
          $f.ClientSize = New-Object System.Drawing.Size(360, 80)\n\
          $l = New-Object System.Windows.Forms.Label; $l.Text = {}; $l.SetBounds(12, 12, 336, 20)\n\
          $p = New-Object System.Windows.Forms.ProgressBar; $p.Style = 'Marquee'\n\
-         $p.SetBounds(12, 44, 336, 18); $f.Controls.AddRange(@($l, $p))\n{ending}",
-        quote(text)
+         $p.SetBounds(12, 44, 336, 18); $f.Controls.AddRange(@($l, $p))\n{}{ending}",
+        quote(text),
+        if steps { STEPS } else { "" }
     )
 }
 
