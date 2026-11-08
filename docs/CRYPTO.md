@@ -1,7 +1,7 @@
 # Kryptografie / Cryptography
 
-> DE: Optionaler Faktorschutz (v2) ist ein **nicht implementierter Entwurf**: [U0-1](U0-1.md).
-> EN: Optional factor protection (v2) is an **unimplemented proposal**: [U0-1](U0-1.md).
+> DE: Format v2 (Faktordatei, mehrere Empfänger) ist ein **nicht implementierter Entwurf**: [V2_DRAFT.md](V2_DRAFT.md).
+> EN: Format v2 (factor file, several recipients) is an **unimplemented draft**: [V2_DRAFT.md](V2_DRAFT.md).
 
 **DE** | [EN](#english)
 
