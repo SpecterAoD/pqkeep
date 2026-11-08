@@ -15,7 +15,7 @@ SALT = bytes(range(32, 64))
 
 
 def pslot(factor=1):
-    return ref.passphrase_slot(factor, 65536, 3, 1, SALT, NONCE)
+    return ref.kdf_slot(factor, 65536, 3, 1, SALT, NONCE)
 
 
 def rslot(first_byte, kem=3):
@@ -33,7 +33,7 @@ class V2SpecTests(unittest.TestCase):
                 self.assertEqual(len(rslot(1, kem)), 1 + 1 + 32 + size + 12)
         for bad in (2, True, -1):
             with self.subTest(factor=bad), self.assertRaises(ValueError):
-                ref.passphrase_slot(bad, 65536, 3, 1, SALT, NONCE)
+                ref.kdf_slot(bad, 65536, 3, 1, SALT, NONCE)
         for kem in (0, 4, True):
             with self.subTest(kem=kem), self.assertRaises(ValueError):
                 ref.recipient_slot(kem, bytes(32), bytes(1568), NONCE)

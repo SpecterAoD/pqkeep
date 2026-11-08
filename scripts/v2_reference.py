@@ -18,7 +18,7 @@ VERSION = 2
 CHUNK = 65536
 HEADER_LIMIT = 262144
 MAX_RECIPIENTS = 64
-SLOT_PASSPHRASE, SLOT_RECIPIENT = 1, 2
+SLOT_KDF, SLOT_RECIPIENT = 1, 2
 # DE: Reserviert (TPM/FIDO2, Recherche-Issue) – in v2 nicht unterstützt.
 # EN: Reserved (TPM/FIDO2, research issue) – unsupported in v2.
 RESERVED_SLOTS = (3, 4)
@@ -48,8 +48,9 @@ def exact(value, size):
     return value
 
 
-def passphrase_slot(factor, memory, iterations, parallelism, salt, nonce):
-    """DE: Passphrase-Zugang, optional mit Faktordatei. EN: Passphrase slot, optional factor file."""
+def kdf_slot(factor, memory, iterations, parallelism, salt, nonce):
+    """DE: Passphrase-Zugang (nur Salt/Parameter/Nonce, keine Geheimnisse), optional mit Faktor.
+    EN: Passphrase slot (salt/parameters/nonce only, no secrets), optional factor."""
     if factor not in (FACTOR_NONE, FACTOR_FILE) or type(factor) is not int:
         raise ValueError("factor")
     for value, low, high in ((memory, 65536, 1048576), (iterations, 3, 10), (parallelism, 1, 16)):
@@ -57,7 +58,7 @@ def passphrase_slot(factor, memory, iterations, parallelism, salt, nonce):
             raise ValueError("kdf")
     if not isinstance(salt, bytes) or not 16 <= len(salt) <= 64:
         raise ValueError("salt")
-    return (uint(SLOT_PASSPHRASE, 8) + uint(factor, 8) + uint(memory, 32) + uint(iterations, 32)
+    return (uint(SLOT_KDF, 8) + uint(factor, 8) + uint(memory, 32) + uint(iterations, 32)
             + uint(parallelism, 32) + uint(len(salt), 8) + salt + exact(nonce, 12))
 
 
@@ -81,7 +82,7 @@ def check_slots(slots):
         kind = slot[0]
         if kind in RESERVED_SLOTS:
             raise ValueError("unsupported slot")
-        if kind == SLOT_PASSPHRASE:
+        if kind == SLOT_KDF:
             if index != 0:
                 raise ValueError("passphrase position")
         elif kind == SLOT_RECIPIENT:
