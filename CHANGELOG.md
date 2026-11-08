@@ -23,7 +23,9 @@ German release notes: see `docs/releases/`.
 - Explorer context menu on Windows (`HKCU\Software\Classes`, no administrator rights, fully reversible,
   single selection; console window) – see `docs/INTEGRATION.md`.
 - Detached file signatures in the library (`pqkeep::sign`): `.pqsig` format v1 with ML-DSA-87 over the
-  streamed SHA3-512 of the file – see `docs/SIGNATURE_FORMAT.md`. CLI commands follow.
+  streamed SHA3-512 of the file – see `docs/SIGNATURE_FORMAT.md`.
+- `pqkeep sign` / `pqkeep verify`: detached signatures from the command line; verification prints
+  `[VERIFIED]` or `[INVALID]` with the signer's fingerprint, exit code 7 for an invalid signature.
 
 ## [0.1.0-beta.1] – 2026-11-07
 
