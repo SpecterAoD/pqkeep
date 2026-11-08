@@ -12,6 +12,8 @@ pub enum Kind {
     Zenity,
     /// KDE/Qt (`kdialog`)
     Kdialog,
+    /// Windows: PowerShell + Windows Forms (`powershell.rs`)
+    PowerShell,
 }
 
 /// DE: Eine Anfrage an das Werkzeug. EN: One request to the tool.
@@ -69,6 +71,8 @@ pub fn args(kind: Kind, title: &str, req: &Request<'_>) -> Option<Vec<String>> {
     match kind {
         Kind::Zenity => Some(zenity(title, req)),
         Kind::Kdialog => kdialog(title, req),
+        // DE: Skript statt Argumentliste, siehe `powershell.rs`. EN: Script instead, see `powershell.rs`.
+        Kind::PowerShell => None,
     }
 }
 

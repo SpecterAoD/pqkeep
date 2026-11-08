@@ -15,6 +15,8 @@ mod linux;
 mod manifest;
 mod platform;
 #[cfg(windows)]
+mod registry;
+#[cfg(windows)]
 mod windows;
 #[cfg(any(windows, test))]
 mod winplan;
