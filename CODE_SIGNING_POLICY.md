@@ -4,8 +4,9 @@
 
 ## English
 
-**Status:** an application to the [SignPath Foundation](https://signpath.org) is planned after the
-first release. Until it is approved, release binaries are published **unsigned** and protected by
+**Status (2026-11-08):** the first application to the [SignPath Foundation](https://signpath.org) was
+declined for now because the project does not yet have enough visibility; we will apply again later.
+Until an application is approved, release binaries are published **unsigned** and protected by
 GitHub build attestation, a Sigstore signature and checksums. Once approved, Windows releases will
 carry the following attribution:
 
@@ -45,8 +46,9 @@ PQKeep is licensed under the [Apache License 2.0](LICENSE) and contains no propr
 
 ## Deutsch
 
-**Stand:** Eine Bewerbung bei der [SignPath Foundation](https://signpath.org) ist nach dem ersten
-Release geplant. Bis zur Zusage werden Release-Binaries **unsigniert** veröffentlicht und über
+**Stand (08.11.2026):** Die erste Bewerbung bei der [SignPath Foundation](https://signpath.org) wurde
+vorerst abgelehnt, weil das Projekt noch zu wenig Sichtbarkeit hat; eine erneute Bewerbung folgt
+später. Bis zu einer Zusage werden Release-Binaries **unsigniert** veröffentlicht und über
 GitHub-Build-Attestation, Sigstore-Signatur und Prüfsummen abgesichert. Nach der Zusage tragen
 Windows-Releases den oben genannten Hinweis (englischer Wortlaut von SignPath).
 
