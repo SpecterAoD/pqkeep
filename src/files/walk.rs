@@ -71,12 +71,65 @@ pub(crate) fn collect_file(path: &Path) -> Result<SourceEntry> {
 /// DE: Ordner rekursiv; der Ordner selbst ist nicht Teil des Archivs.
 /// EN: Directory recursively; the directory itself is not part of the archive.
 pub(crate) fn collect_dir(root: &Path) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
+    let (mut entries, mut skipped) = (Vec::new(), Vec::new());
+    collect_tree(root, "", &mut entries, &mut skipped)?;
+    entries.sort_by(|a, b| a.rel.cmp(&b.rel));
+    Ok((entries, skipped))
+}
+
+/// DE: Mehrere Quellen als ein Archiv (Mehrfachauswahl): Jede Quelle wird ein oberster Eintrag,
+/// Ordner samt Inhalt. Gleiche Namen (ohne Groß-/Kleinschreibung) → Abbruch; eine ausgewählte
+/// Verknüpfung wird übersprungen und gemeldet.
+/// EN: Several sources as one archive (multi-selection): each source becomes a top-level entry,
+/// directories with their content. Equal names (ignoring case) → abort; a selected symlink is
+/// skipped and reported.
+pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
+    if sources.is_empty() || sources.len() as u64 > MAX_ENTRIES {
+        return Err(Error::InvalidInput { field: "source" });
+    }
+    let (mut entries, mut skipped) = (Vec::new(), Vec::new());
+    let mut names = std::collections::BTreeSet::new();
+    for src in sources {
+        let name = src
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or(Error::InvalidInput { field: "path" })?;
+        paths::validate(name)?;
+        if !names.insert(name.to_lowercase()) {
+            return Err(Error::InvalidInput { field: "duplicate" });
+        }
+        let kind = fs::symlink_metadata(src)?.file_type();
+        if kind.is_symlink() {
+            skipped.push(Skipped {
+                path: name.to_owned(),
+                reason: SkipReason::Symlink,
+            });
+        } else if kind.is_dir() {
+            entries.push(SourceEntry {
+                rel: name.to_owned(),
+                abs: src.to_path_buf(),
+                kind: SourceKind::Dir,
+            });
+            collect_tree(src, &format!("{name}/"), &mut entries, &mut skipped)?;
+        } else {
+            entries.push(collect_file(src)?);
+        }
+    }
+    entries.sort_by(|a, b| a.rel.cmp(&b.rel));
+    Ok((entries, skipped))
+}
+
+/// DE: Inhalt von `root` mit Präfix `base` anhängen. EN: Append the content of `root` with prefix `base`.
+fn collect_tree(
+    root: &Path,
+    base: &str,
+    entries: &mut Vec<SourceEntry>,
+    skipped: &mut Vec<Skipped>,
+) -> Result<()> {
     if !fs::symlink_metadata(root)?.file_type().is_dir() {
         return Err(Error::InvalidInput { field: "source" });
     }
-    let mut entries = Vec::new();
-    let mut skipped = Vec::new();
-    let mut stack = vec![(root.to_path_buf(), String::new())];
+    let mut stack = vec![(root.to_path_buf(), base.to_owned())];
     while let Some((dir, prefix)) = stack.pop() {
         let mut children: Vec<_> = fs::read_dir(&dir)?.collect::<std::io::Result<_>>()?;
         children.sort_by_key(fs::DirEntry::file_name);
@@ -84,15 +137,14 @@ pub(crate) fn collect_dir(root: &Path) -> Result<(Vec<SourceEntry>, Vec<Skipped>
         // EN: Pushed in reverse so that the order stays alphabetical.
         let mut subdirs = Vec::new();
         for child in children {
-            visit(&child, &prefix, &mut entries, &mut skipped, &mut subdirs)?;
+            visit(&child, &prefix, entries, skipped, &mut subdirs)?;
             if entries.len() as u64 > MAX_ENTRIES {
                 return Err(Error::InvalidInput { field: "entries" });
             }
         }
         stack.extend(subdirs.into_iter().rev());
     }
-    entries.sort_by(|a, b| a.rel.cmp(&b.rel));
-    Ok((entries, skipped))
+    Ok(())
 }
 
 fn visit(

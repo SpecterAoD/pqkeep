@@ -132,11 +132,17 @@ fn generate(lang: Lang) -> Command {
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
 }
 
+/// DE: Höchstzahl an Quellen je Aufruf. EN: Maximum number of sources per call.
+pub const MAX_SOURCES: usize = 1000;
+
 fn file_commands(lang: Lang) -> [Command; 2] {
     let t = texts(lang);
+    let m = super::many_text::many_texts(lang);
     [
         base("encrypt", t.enc_about, t.enc_after, lang)
-            .arg(path("source", t.arg_source))
+            .arg(path("source", m.arg_sources).num_args(1..=MAX_SOURCES))
+            .arg(flag("each", m.arg_each).conflicts_with("out"))
+            .arg(flag("rename", m.arg_rename))
             .arg(opt("to", t.arg_to).value_parser(value_parser!(PathBuf)))
             .arg(profile(lang))
             .arg(out_optional(lang))
@@ -149,7 +155,8 @@ fn file_commands(lang: Lang) -> [Command; 2] {
                     .requires("passphrase-stdin"),
             ),
         base("decrypt", t.dec_about, t.dec_after, lang)
-            .arg(path("source", t.arg_encrypted))
+            .arg(path("source", m.arg_encrypted).num_args(1..=MAX_SOURCES))
+            .arg(flag("rename", m.arg_rename))
             .arg(
                 opt("key", t.arg_key)
                     .short('k')

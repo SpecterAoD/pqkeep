@@ -12,11 +12,13 @@ mod context_dialog;
 mod dialog;
 mod dialog_text;
 mod files_cmd;
+mod files_many;
 mod help;
 mod integrate;
 mod integrate_text;
 mod io;
 mod keys;
+mod many_text;
 mod menu;
 mod sandbox;
 #[cfg(feature = "api")]

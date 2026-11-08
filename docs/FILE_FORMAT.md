@@ -60,6 +60,19 @@ Alle Zahlen Little Endian; Pfade UTF-8, Trenner „/“.
 - Ändert sich eine Datei während des Lesens (Größe stimmt nicht), wird abgebrochen.
 - Die Ausgabe wird atomar geschrieben (Temporärdatei, `fsync`, Veröffentlichen ohne Überschreiben).
 
+## Mehrere Quellen (Mehrfachauswahl)
+
+- **Ein Container** (`pqkeep encrypt a b Ordner -o auswahl.pqkf`, `files::encrypt_many`): kein neues
+  Format – Inhalt „Ordner“, die obersten Einträge sind die gewählten Dateien und Ordner (diese samt
+  Inhalt). Entschlüsselt entsteht ein Ordner. Gleiche Namen (ohne Groß-/Kleinschreibung) brechen vorab
+  ab; eine gewählte Verknüpfung wird übersprungen und gemeldet. Alles oder nichts.
+- **Jede einzeln** (`--each`): je Quelle eine eigene `.pqkf` mit eigenem Dateischlüssel und – im
+  Passphrase-Modus – eigenem Salz und eigener Argon2id-Ableitung (ca. 1–2 s je Datei mit „standard“).
+  Die Passphrase wird nur einmal eingegeben; Fehler einer Datei halten die übrigen nicht auf.
+- `decrypt` mit mehreren Dateien: dieselbe Passphrase bzw. derselbe Schlüssel für alle; gemischte
+  Schutzarten brechen vorab ab. `--rename` wählt bei belegtem Ziel einen freien Namen. Höchstens 1000
+  Quellen pro Aufruf.
+
 ## Grenzen
 
 - Die ungefähre Gesamtgröße ist sichtbar (Größe der `.pqkf`-Datei).
@@ -99,6 +112,14 @@ needed because in recipient mode anyone with the public key can craft a correctl
 **Encryption:** recursive, sorted, symlinks never followed; symlinks, special files, non-UTF-8 and
 non-portable names are skipped and reported; a file changing while being read aborts the operation;
 output is written atomically.
+
+**Several sources:** one container (`encrypt a b folder -o selection.pqkf`, `files::encrypt_many`) uses
+no new format – content "directory" whose top-level entries are the selected files and folders;
+equal names (ignoring case) abort up front, a selected symlink is skipped; all or nothing. `--each`
+writes one `.pqkf` per source with its own file key and, in passphrase mode, its own salt and
+Argon2id derivation (about 1–2 s per file with "standard"); the passphrase is entered once and a
+failing file does not stop the others. `decrypt` with several files uses the same passphrase or key
+for all; mixed protection aborts up front. `--rename` picks a free name; at most 1000 sources.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a
