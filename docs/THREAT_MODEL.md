@@ -39,6 +39,9 @@
   ist das nicht.
 - Lokale Angreifer mit Schreibrechten im Quellordner während des Verschlüsselns (TOCTOU, siehe
   `FILE_FORMAT.md`).
+- **Kontextmenü-Einträge** (Linux `~/.local/share`, Windows `HKCU\Software\Classes`): Programme des
+  eigenen Benutzerkontos können sie verändern und so einen anderen Befehl unterschieben. Das entspricht
+  dem kompromittierten Rechner; `integrate status` meldet geänderte Einträge (`INTEGRATION.md`).
 - Sicheres Löschen von Originalen (auf SSDs unzuverlässig; Verschlüsselung statt Löschen).
 - Nicht FIPS-140-validiert, nicht extern auditiert.
 
@@ -66,5 +69,7 @@ best effort); supply chain (locked dependencies, cargo-deny, weekly audit, signe
 mode, KDF parameters or recipient ID, approximate total size.
 
 **Out of scope:** compromised host (malware, keyloggers), hardware side channels, local attackers with
-write access to the source directory during encryption (TOCTOU), secure deletion of originals, FIPS 140
+write access to the source directory during encryption (TOCTOU), programs of the same user account
+changing the context menu entries (Linux `~/.local/share`, Windows `HKCU\Software\Classes`; `integrate
+status` reports modified entries), secure deletion of originals, FIPS 140
 validation and external audit.
