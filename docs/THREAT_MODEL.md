@@ -22,7 +22,7 @@
 | Unbefugter API-Zugriff, Token-Raten | Standard nur 127.0.0.1, 256-Bit-Token nur als Hash gespeichert, Vergleich in konstanter Zeit, Sperre nach 5 Fehlversuchen; Netzwerkzugriff nur hinter Reverse Proxy mit TLS |
 | Rückschlüsse aus der Antwortzeit von `/v1/validate` | Jede Antwort wird auf eine feste Mindestdauer aufgefüllt |
 | Ausnutzen einer Lücke in pqkeep oder einer Bibliothek (Parser) | Sandbox unter Linux: Landlock (nur genannte Pfade, API gar keine) und Seccomp (kein `execve`/`fork`/`ptrace`, kein Netzwerk in der CLI, keine neuen Sockets in der API), Menü-Aktionen als eigene Prozesse (`SANDBOX.md`) |
-| Passphrase im Kontextmenü (Fenster-Modus) | Weg nur per Pipe vom Passwortfenster in den Kindprozess mit Sandbox, nie über Argumente/Umgebung; Grenze: zenity/kdialog halten sie kurz ungenullt im eigenen Speicher (`INTEGRATION.md`) |
+| Passphrase im Kontextmenü (Fenster-Modus) | Weg nur per Pipe vom Passwortfenster in den Kindprozess mit Sandbox, nie über Argumente/Umgebung; Grenze: zenity/kdialog bzw. PowerShell/.NET halten sie kurz ungenullt im eigenen Speicher (`INTEGRATION.md`) |
 | Geheimnisse in Swap/Core Dumps | Speichersperre, Core-Dump-Sperre (Linux), sofortiges Nullen (best effort, siehe `MEMORY_HARDENING.md`) |
 | Lieferkette | Gesperrte Abhängigkeiten, `cargo deny`, wöchentliches Audit, signierte Commits/Releases |
 
@@ -65,7 +65,7 @@ proxy); timing of `/v1/validate` (padded to a fixed minimum duration); exploitat
 API – and seccomp forbids `execve`/`fork`/`ptrace`, network in the CLI and new sockets in the API; menu
 actions run as separate processes, see `SANDBOX.md`); the context menu passphrase in window mode (only
 through a pipe from the password window into the sandboxed child, never via arguments/environment;
-limit: zenity/kdialog keep it briefly unzeroed in their own memory); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
+limit: zenity/kdialog or PowerShell/.NET keep it briefly unzeroed in their own memory); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
 best effort); supply chain (locked dependencies, cargo-deny, weekly audit, signed commits/releases).
 
 **Visible despite encryption:** key file metadata, public key, algorithm, creation time; `.pqkf`

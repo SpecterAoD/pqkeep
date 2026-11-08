@@ -46,7 +46,14 @@ pqkeep integrate uninstall
   Zeichen `"` `%`. Empfehlung: `%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`.
 - **Windows 11** zeigt klassische Einträge erst unter **„Weitere Optionen anzeigen“** (Umschalt+F10).
   Ins neue, verkürzte Menü kommen nur Programme mit signiertem MSIX-Paket – das ist nicht vorgesehen.
-- Beim Rechtsklick öffnet sich ein Konsolenfenster mit demselben Ablauf wie unter Linux (unten).
+- **Fenster statt Konsole:** Liegt `pqkeepw.exe` neben `pqkeep.exe` (im Release-Paket enthalten), zeigt
+  der Eintrag auf `"<pfad>\pqkeepw.exe" encrypt|decrypt -- "%1"`. Dieses kleine Startprogramm (ohne
+  Konsole, nur sichere Standard-API) startet `pqkeep.exe context --dialog …` ohne Konsolenfenster;
+  die Fenster kommen von PowerShell mit Windows Forms (Skript fest im Programm, als
+  `-EncodedCommand`, alle Texte als Literale, PowerShell aus `%SystemRoot%\System32`, nicht über `PATH`).
+  `install --terminal` richtet stattdessen den Konsolen-Weg ein; `status` zeigt den Modus.
+- Ist PowerShell eingeschränkt (Constrained Language Mode, AppLocker) oder fehlt Windows Forms, öffnet
+  sich automatisch ein Konsolenfenster mit dem gewohnten Ablauf (unten).
   Unter Windows gibt es **keine Sandbox** (`docs/SANDBOX.md`).
 - Getestet in der Windows-CI gegen die echte Registry (eigener Test-Zweig); eine Prüfung im echten
   Explorer durch den Maintainer steht noch aus.
@@ -71,7 +78,8 @@ Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
 - Bekannte Grenze: Dateinamen mit Steuerzeichen (z. B. Zeilenumbruch) oder `\ : < > " | ? *` lehnt
   die Verschlüsselung grundsätzlich ab (Archiv-Regeln, `FILE_FORMAT.md`); die Meldung erscheint im
   Fenster.
-- Windows: Fenster folgen mit U4-3b (vorerst Konsolenfenster).
+- Windows: siehe [Windows](#windows) (`pqkeepw.exe`, PowerShell); dort hält PowerShell/.NET die
+  Passphrase kurz ungenullt im eigenen Speicher.
 
 ## Ablauf beim Rechtsklick
 
@@ -125,8 +133,14 @@ encrypt|decrypt -- "%1"` (`REG_SZ`), single selection only (`MultiSelectModel=Si
 only unchanged own entries and then-empty parent keys are removed. Program path: absolute with drive
 letter, no network drive, not in the temp folder, no `"` `%`; recommended
 `%LOCALAPPDATA%\Programs\PQKeep\pqkeep.exe`. **Windows 11** shows classic entries under **"Show more
-options"** (Shift+F10); the new compact menu requires a signed MSIX package (not planned). A console
-window opens with the same flow as on Linux; there is **no sandbox** on Windows. Tested in Windows CI
+options"** (Shift+F10); the new compact menu requires a signed MSIX package (not planned). With
+`pqkeepw.exe` next to `pqkeep.exe` (included in the release package) the entry runs
+`"<path>\pqkeepw.exe" encrypt|decrypt -- "%1"`: this small launcher (no console, safe standard API only)
+starts `pqkeep.exe context --dialog …` without a console window, and the windows come from PowerShell
+with Windows Forms (script built into the program, passed as `-EncodedCommand`, all texts as literals,
+PowerShell from `%SystemRoot%\System32`). `install --terminal` sets up the console way instead. If
+PowerShell is restricted (Constrained Language Mode, AppLocker) a console window with the usual flow
+opens automatically. There is **no sandbox** on Windows. Tested in Windows CI
 against the real registry (separate test branch); a check in the real Explorer is still pending.
 
 **Windows instead of a terminal (Linux):** if **zenity** or **kdialog** is installed, `integrate
@@ -139,7 +153,7 @@ straight into the child's stdin (`--passphrase-stdin`, full sandbox), never as a
 environment variable; the child compares the two entries (zenity), kdialog compares in its own
 window. Limit: zenity/kdialog keep the passphrase briefly in their own memory, which PQKeep cannot
 zero. File names with control characters or `\ : < > " | ? *` are rejected by the archive rules.
-Windows windows follow with U4-3b.
+On Windows PowerShell/.NET keep the passphrase briefly unzeroed in their own memory.
 
 **On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase or recipient (the
 recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
