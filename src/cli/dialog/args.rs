@@ -49,8 +49,17 @@ pub enum Request<'a> {
         first: &'a str,
         second: &'a str,
     },
-    /// DE: Pulsierender Fortschritt (nur zenity). EN: Pulsating progress (zenity only).
-    Progress { text: &'a str },
+    /// DE: Texteingabe mit Vorgabe. EN: Text input with a default.
+    Entry { text: &'a str, default: &'a str },
+    /// DE: Fortschritt (zenity, PowerShell); `cancel` = mit Abbrechen-Knopf, `steps` = Balken mit
+    /// Prozent und Text über stdin (sonst pulsierend).
+    /// EN: Progress (zenity, PowerShell); `cancel` = with a cancel button, `steps` = bar with percent
+    /// and text via stdin (else pulsating).
+    Progress {
+        text: &'a str,
+        cancel: bool,
+        steps: bool,
+    },
 }
 
 impl Kind {
@@ -110,13 +119,22 @@ fn zenity(title: &str, req: &Request<'_>) -> Vec<String> {
             a.push(format!("--add-password={second}"));
             a.push("--separator=\n".to_owned());
         }
-        Request::Progress { text } => {
-            a.extend(owned(&[
-                "--progress",
-                "--pulsate",
-                "--auto-close",
-                "--no-cancel",
-            ]));
+        Request::Entry { text, default } => {
+            a.extend([q("--entry"), t(text), format!("--entry-text={default}")]);
+        }
+        Request::Progress {
+            text,
+            cancel,
+            steps,
+        } => {
+            a.push("--progress".to_owned());
+            if !steps {
+                a.push("--pulsate".to_owned());
+            }
+            a.push("--auto-close".to_owned());
+            if !cancel {
+                a.push("--no-cancel".to_owned());
+            }
             a.push(t(text));
         }
     }
@@ -179,6 +197,7 @@ fn kdialog(title: &str, req: &Request<'_>) -> Option<Vec<String>> {
         Request::Error { text } => a.extend(owned(&["--error", text])),
         Request::Password { text } => a.extend(owned(&["--password", text])),
         Request::NewPassword { text, .. } => a.extend(owned(&["--newpassword", text])),
+        Request::Entry { text, default } => a.extend(owned(&["--inputbox", text, default])),
         Request::Progress { .. } => return None,
     }
     Some(a)

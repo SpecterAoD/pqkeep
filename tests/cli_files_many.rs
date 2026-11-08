@@ -176,3 +176,64 @@ fn decrypt_many_rejects_out_and_mixed_modes_and_reports_wrong_passphrase() {
     assert_eq!(code, 2);
     assert!(err.contains("protected differently"), "{err}");
 }
+
+#[test]
+fn temp_tag_must_be_sixteen_lowercase_hex() {
+    let dir = tempfile::tempdir().unwrap();
+    write(dir.path(), &["a.txt"]);
+    let p = pass();
+    for bad in ["xyz", "00112233AABBCCDD", "00112233aabbccdd00"] {
+        let args = ["encrypt", "--temp-tag", bad, "--passphrase-stdin", "a.txt"];
+        assert_ne!(run(dir.path(), &args, &p).0, 0, "{bad}");
+    }
+    let args = [
+        "encrypt",
+        "--temp-tag",
+        "00112233aabbccdd",
+        "--passphrase-stdin",
+        "a.txt",
+    ];
+    assert_eq!(run(dir.path(), &args, &p).0, 0);
+    assert!(dir.path().join("a.txt.pqkf").is_file());
+}
+
+#[test]
+fn progress_lines_carry_no_paths_and_name_finished_targets() {
+    let dir = tempfile::tempdir().unwrap();
+    write(dir.path(), &["a.txt", "b.txt"]);
+    let args = [
+        "encrypt",
+        "--each",
+        "--progress",
+        "--passphrase-stdin",
+        "a.txt",
+        "b.txt",
+    ];
+    let (code, out, err) = run(dir.path(), &args, &pass());
+    assert_eq!(code, 0, "{err}");
+    let progress: Vec<&str> = out.lines().filter(|l| l.starts_with("@@")).collect();
+    assert_eq!(
+        progress,
+        [
+            "@@progress 1 2",
+            "@@done a.txt.pqkf",
+            "@@progress 2 2",
+            "@@done b.txt.pqkf"
+        ]
+    );
+    let (_, out, _) = run(
+        dir.path(),
+        &[
+            "encrypt",
+            "--each",
+            "--rename",
+            "--passphrase-stdin",
+            "a.txt",
+        ],
+        &pass(),
+    );
+    assert!(
+        !out.contains("@@"),
+        "ohne --progress keine Zeilen / no lines without --progress"
+    );
+}

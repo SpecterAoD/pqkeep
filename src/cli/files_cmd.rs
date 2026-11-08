@@ -142,7 +142,17 @@ pub(super) fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report
 }
 
 /// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
+/// DE: Verstecktes `--temp-tag` (vom Kontextmenü) an die Bibliothek geben.
+/// EN: Pass the hidden `--temp-tag` (from the context menu) to the library.
+fn apply_temp_tag(m: &ArgMatches, lang: Lang) -> CliResult {
+    match m.get_one::<String>("temp-tag") {
+        Some(tag) => files::set_temp_tag(tag).map_err(|e| Failure::from_error(&e, lang)),
+        None => Ok(()),
+    }
+}
+
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
+    apply_temp_tag(m, lang)?;
     let all = sources(m);
     if all.len() > 1 || m.get_flag("each") {
         return super::files_many::encrypt(t, lang, m, &all);
@@ -158,6 +168,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
 
 /// DE: `pqkeep decrypt`. EN: `pqkeep decrypt`.
 pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
+    apply_temp_tag(m, lang)?;
     let all = sources(m);
     if all.len() > 1 {
         return super::files_many::decrypt(t, lang, m, &all);

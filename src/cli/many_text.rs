@@ -15,6 +15,14 @@ pub struct ManyTexts {
     pub mixed: &'static str,
     pub failed: &'static str,
     pub summary: &'static str,
+    pub ctx_how: &'static str,
+    pub ctx_ways: &'static str,
+    pub ctx_name: &'static str,
+    pub ctx_selection: &'static str,
+    pub ctx_bad_name: &'static str,
+    pub ctx_cancelled: &'static str,
+    pub ctx_done: &'static str,
+    pub too_many: &'static str,
 }
 
 static DE: ManyTexts = ManyTexts {
@@ -27,6 +35,14 @@ static DE: ManyTexts = ManyTexts {
     mixed: "Die Dateien sind unterschiedlich geschützt (Passphrase/Empfänger). Bitte getrennt entschlüsseln.",
     failed: "Fehlgeschlagen",
     summary: "Erledigt",
+    ctx_how: "Mehrere Einträge ausgewählt – wie verschlüsseln?",
+    ctx_ways: "Jede Datei einzeln|Alles in einen Container",
+    ctx_name: "Name des Containers (wird neben der Auswahl gespeichert)",
+    ctx_selection: "Auswahl ({n} Einträge)",
+    ctx_bad_name: "Ungültiger Name – bitte nur einen Dateinamen ohne / oder \\ angeben.",
+    ctx_cancelled: "Abgebrochen. Bereits fertige Dateien bleiben erhalten, angefangene wurden entfernt.",
+    ctx_done: "Fertig.",
+    too_many: "Zu viele Einträge ausgewählt (höchstens {max}). Bitte weniger auswählen oder den übergeordneten Ordner wählen.",
 };
 
 static EN: ManyTexts = ManyTexts {
@@ -39,6 +55,14 @@ static EN: ManyTexts = ManyTexts {
     mixed: "The files are protected differently (passphrase/recipient). Please decrypt them separately.",
     failed: "Failed",
     summary: "Done",
+    ctx_how: "Several entries selected – how to encrypt?",
+    ctx_ways: "Each file separately|Everything in one container",
+    ctx_name: "Name of the container (saved next to the selection)",
+    ctx_selection: "Selection ({n} entries)",
+    ctx_bad_name: "Invalid name – please give only a file name without / or \\.",
+    ctx_cancelled: "Cancelled. Finished files are kept, unfinished ones were removed.",
+    ctx_done: "Done.",
+    too_many: "Too many entries selected (at most {max}). Please select fewer or choose the parent folder.",
 };
 
 /// DE: Texte für `lang`. EN: Texts for `lang`.

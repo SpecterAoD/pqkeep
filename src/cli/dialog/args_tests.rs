@@ -100,9 +100,23 @@ fn password_and_progress() {
     );
     let p = z(&Request::Progress {
         text: "Bitte warten",
+        cancel: false,
+        steps: false,
     });
+    assert!(p.contains(&"--no-cancel".to_owned()));
     assert!(p.contains(&"--pulsate".to_owned()) && p.contains(&"--auto-close".to_owned()));
-    assert!(args(Kind::Kdialog, "PQKeep", &Request::Progress { text: "x" }).is_none());
+    assert!(
+        args(
+            Kind::Kdialog,
+            "PQKeep",
+            &Request::Progress {
+                text: "x",
+                cancel: true,
+                steps: false,
+            }
+        )
+        .is_none()
+    );
 }
 
 #[test]
@@ -119,4 +133,32 @@ fn texts_starting_with_dash_stay_values() {
     assert!(a.contains(&"--text=--version".to_owned()));
     let a = k(&Request::Info { text: "--version" });
     assert_eq!(&a[2..], ["--msgbox", "--version"]);
+}
+
+#[test]
+fn entry_and_cancelable_progress() {
+    let req = Request::Entry {
+        text: "Name",
+        default: "Steuer 2026.pqkf",
+    };
+    let a = z(&req);
+    assert!(a.contains(&"--entry".to_owned()));
+    assert!(a.contains(&"--entry-text=Steuer 2026.pqkf".to_owned()));
+    assert_eq!(&k(&req)[2..], ["--inputbox", "Name", "Steuer 2026.pqkf"]);
+    let p = z(&Request::Progress {
+        text: "x",
+        cancel: true,
+        steps: false,
+    });
+    assert!(!p.contains(&"--no-cancel".to_owned()));
+}
+
+#[test]
+fn progress_with_steps_is_not_pulsating() {
+    let p = z(&Request::Progress {
+        text: "x",
+        cancel: true,
+        steps: true,
+    });
+    assert!(!p.contains(&"--pulsate".to_owned()) && p.contains(&"--progress".to_owned()));
 }

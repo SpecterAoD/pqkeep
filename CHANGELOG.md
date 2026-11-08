@@ -7,6 +7,9 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- Context menu with multi-selection: each separately or one container (suggested, freely editable name),
+  passphrase once, progress with cancel (unfinished output removed); Windows via "Send to → PQKeep" –
+  see `docs/INTEGRATION.md`.
 - Several sources at once: `pqkeep encrypt a b folder -o selection.pqkf` (one container, no new format),
   `--each` (each separately, passphrase entered once), `decrypt` of several files, `--rename` for free
   target names – see `docs/FILE_FORMAT.md`.

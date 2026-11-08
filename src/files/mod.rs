@@ -21,6 +21,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
+pub use crate::fsutil::set_temp_tag;
 pub use decrypt::decrypt;
 pub use encrypt::{encrypt, encrypt_many};
 pub use format::{Content, FileHeader, HeaderMode};
