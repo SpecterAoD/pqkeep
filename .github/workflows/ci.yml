@@ -49,6 +49,13 @@ jobs:
       # EN: The pure CLI without API/network code must stay buildable.
       - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
       - run: cargo test --locked
+      # DE: U0-1-Referenztests ohne Hardware oder zusätzliche Python-Pakete.
+      # EN: U0-1 reference tests without hardware or extra Python packages.
+      - name: Faktor-Formatentwurf / factor format proposal
+        shell: bash
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" -m unittest discover -s scripts -p 'test_factor_spec*.py' -v
 
   msrv:
     name: MSRV

@@ -1,5 +1,8 @@
 # Bedrohungsmodell / Threat model
 
+> DE: Optionaler Faktorschutz (v2) ist ein **nicht implementierter Entwurf**: [U0-1](U0-1.md).
+> EN: Optional factor protection (v2) is an **unimplemented proposal**: [U0-1](U0-1.md).
+
 **DE** | [EN](#english)
 
 ## Schutzziele

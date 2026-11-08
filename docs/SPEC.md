@@ -137,6 +137,8 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 
 - **Passphrase-Normalisierung:** Unicode **NFKC** vor der Ableitung, sonst kann dieselbe Passphrase unter Windows und Linux zu unterschiedlichen Schlüsseln führen.
 - **Optionaler zweiter Faktor:** Keyfile oder „Pepper“ (separate Datei) zusätzlich zur Passphrase in die Ableitung einbeziehen.
+  - DE: Konkreter Review-Entwurf für U0-1: [Faktordatei/TPM/FIDO2](U0-1.md); nicht implementiert, keine Änderung am aktuellen v1-Format.
+  - EN: Concrete U0-1 review proposal: [factor file/TPM/FIDO2](U0-1.md); unimplemented, current v1 unchanged.
 - **Downgrade-Schutz:** Container mit zu alter `format_version` oder zu schwachen KDF-Parametern werden abgelehnt oder nur mit expliziter Warnung/Bestätigung geöffnet.
 - **Dateirechte beim Laden prüfen:** Unter Linux Warnung bei `group/world`-lesbaren Containern. Unter Windows Ablage im Benutzerprofil mit eingeschränkter ACL.
 - **Kein Clipboard, keine Historie:** Passphrasen werden nie automatisch in die Zwischenablage kopiert, nie als Argument übergeben (Shell-History) und im Terminal nicht angezeigt (Ausnahme: Generator, nur auf ausdrücklichen Wunsch).

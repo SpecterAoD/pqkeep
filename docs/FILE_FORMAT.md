@@ -1,5 +1,8 @@
 # Format verschlüsselter Dateien (`.pqkf`) / Encrypted file format (`.pqkf`)
 
+> DE: Optionaler Faktorschutz (v2) ist ein **nicht implementierter Entwurf**: [U0-1](U0-1.md).
+> EN: Optional factor protection (v2) is an **unimplemented proposal**: [U0-1](U0-1.md).
+
 **DE** | [EN](#english)
 
 Eine `.pqkf`-Datei enthält immer ein kleines Archiv: **Einzeldatei** = Archiv mit genau einem
