@@ -1,11 +1,13 @@
 //! DE: Kindprozesse des Fenster-Ablaufs: starten (ohne Konsolenfenster), mit Fortschrittsfenster
 //! warten, Abbrechen ermöglichen. Ausgaben werden in eigenen Threads gelesen (keine volle Pipe).
-//! Nach einem Abbruch werden **nur eigene** Temporärdateien der bekannten Ziele entfernt
-//! (`.<ziel>.tmp-<16 Hex>`, auch für freie Namen `ziel (n)`); fertige Ziele bleiben.
+//! Nach einem Abbruch werden **nur eigene** Temporärdateien entfernt: Der Kindprozess bekommt eine
+//! zufällige Kennung (`--temp-tag`), die die Bibliothek in jeden Temporärnamen schreibt
+//! (`.<ziel>.tmp-<kennung><16 Hex>`, auch für freie Namen `ziel (n)`); fertige Ziele bleiben.
 //! EN: Child processes of the window flow: start (without console window), wait with a progress
 //! window, allow cancelling. Output is read in own threads (no full pipe). After cancelling, **only
-//! own** temporary files of the known targets are removed (`.<target>.tmp-<16 hex>`, also for free
-//! names `target (n)`); finished targets stay.
+//! own** temporary files are removed: the child gets a random tag (`--temp-tag`) that the library
+//! writes into every temporary name (`.<target>.tmp-<tag><16 hex>`, also for free names
+//! `target (n)`); finished targets stay.
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -28,6 +30,23 @@ pub(super) enum Outcome {
     Cancelled { started: bool },
     /// DE: Fehler mit Exit-Code und Meldung. EN: Failure with exit code and message.
     Failed { code: u8, msg: String, out: String },
+}
+
+/// DE: Neue Kennung (16 Hex) für die Temporärnamen eines Kindprozesses.
+/// EN: New tag (16 hex) for a child's temporary names.
+pub(super) fn new_tag(lang: Lang) -> CliResult<String> {
+    pqkeep::crypto::rng::array::<8>()
+        .map(|b| pqkeep::envelope::hex_encode(&b))
+        .map_err(|e| Failure::from_error(&e, lang))
+}
+
+/// DE: `args` mit `--temp-tag <tag>` direkt nach dem Befehl. EN: `args` with `--temp-tag <tag>` after the command.
+pub(super) fn with_tag<'a>(args: &[&'a str], tag: &'a str) -> Vec<&'a str> {
+    let mut out = Vec::with_capacity(args.len() + 2);
+    out.extend(args.first());
+    out.extend(["--temp-tag", tag]);
+    out.extend(args.iter().skip(1));
+    out
 }
 
 /// DE: Startet `pqkeep --lang <x> <args…>`. EN: Starts `pqkeep --lang <x> <args…>`.
@@ -79,6 +98,7 @@ pub(super) fn finish(
     lang: Lang,
     mut child: Child,
     targets: &[PathBuf],
+    tag: Option<&str>,
 ) -> CliResult<Outcome> {
     let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let out = drain(child.stdout.take());
@@ -92,7 +112,9 @@ pub(super) fn finish(
             let _ = child.kill();
             let _ = child.wait();
             let _ = (out.join(), err.join());
-            clean_temps(targets);
+            if let Some(tag) = tag {
+                clean_temps(targets, tag);
+            }
             return Ok(Outcome::Cancelled { started: true });
         }
         thread::sleep(Duration::from_millis(100));
@@ -105,19 +127,21 @@ pub(super) fn finish(
     Ok(outcome(status, out, warn))
 }
 
-/// DE: Ist `name` eine eigene Temporärausgabe für `base` oder einen freien Namen davon?
-/// EN: Is `name` an own temporary output for `base` or a free name of it?
-pub(super) fn own_temp(name: &str, base: &str) -> bool {
+/// DE: Ist `name` eine Temporärausgabe mit Kennung `tag` für `base` oder einen freien Namen davon?
+/// EN: Is `name` a temporary output with tag `tag` for `base` or a free name of it?
+pub(super) fn own_temp(name: &str, base: &str, tag: &str) -> bool {
     let Some(rest) = name.strip_prefix('.') else {
         return false;
     };
     let Some((middle, hex)) = rest.rsplit_once(".tmp-") else {
         return false;
     };
-    let hex_ok = hex.len() == 16
-        && hex
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b));
+    let random = hex.strip_prefix(tag).filter(|_| !tag.is_empty());
+    let hex_ok = random.is_some_and(|r| {
+        r.len() == 16
+            && r.bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    });
     if !hex_ok {
         return false;
     }
@@ -132,7 +156,7 @@ pub(super) fn own_temp(name: &str, base: &str) -> bool {
 }
 
 /// DE: Entfernt eigene Temporärausgaben neben den Zielen. EN: Removes own temporary output next to targets.
-pub(super) fn clean_temps(targets: &[PathBuf]) {
+pub(super) fn clean_temps(targets: &[PathBuf], tag: &str) {
     for target in targets {
         let (Some(dir), Some(base)) =
             (target.parent(), target.file_name().and_then(|n| n.to_str()))
@@ -144,7 +168,7 @@ pub(super) fn clean_temps(targets: &[PathBuf]) {
         };
         for entry in list.flatten() {
             let name = entry.file_name();
-            if name.to_str().is_some_and(|n| own_temp(n, base)) {
+            if name.to_str().is_some_and(|n| own_temp(n, base, tag)) {
                 remove(&entry.path());
             }
         }

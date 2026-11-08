@@ -14,7 +14,7 @@ use pqkeep::files::{self, HeaderMode};
 use pqkeep::security::Lang;
 
 use super::context::{out_arg, utf8};
-use super::context_child::{Outcome, finish, spawn};
+use super::context_child::{Outcome, finish, new_tag, spawn, with_tag};
 use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
 use super::files_cmd::{default_decrypted, default_encrypted};
@@ -38,8 +38,16 @@ pub(super) fn cancelled() -> Failure {
 impl Ui<'_> {
     /// DE: Kindprozess ohne Passphrase. EN: Child without passphrase.
     pub(super) fn plain(&self, args: &[&str], targets: &[PathBuf]) -> CliResult<Outcome> {
-        let child = spawn(self.lang, args, Stdio::null())?;
-        finish(&self.dlg, self.d.working, self.lang, child, targets)
+        let tag = new_tag(self.lang)?;
+        let child = spawn(self.lang, &with_tag(args, &tag), Stdio::null())?;
+        finish(
+            &self.dlg,
+            self.d.working,
+            self.lang,
+            child,
+            targets,
+            Some(&tag),
+        )
     }
 
     /// DE: Passwortfenster → Pipe → Kindprozess (`--passphrase-stdin`, ggf. `--confirm-stdin`);
@@ -58,7 +66,8 @@ impl Ui<'_> {
         let no_tool = || Failure::new(code::ERROR, self.d.no_tool);
         let (mut tool, two_lines) = self.dlg.password(prompt, confirm).ok_or_else(no_tool)?;
         let pipe = tool.stdout.take().ok_or_else(no_tool)?;
-        let mut args = cmd.to_vec();
+        let tag = new_tag(self.lang)?;
+        let mut args = with_tag(cmd, &tag);
         args.push("--passphrase-stdin");
         if two_lines {
             args.push("--confirm-stdin");
@@ -71,7 +80,14 @@ impl Ui<'_> {
             let _ = child.wait();
             return Ok(Outcome::Cancelled { started: false });
         }
-        finish(&self.dlg, self.d.working, self.lang, child, targets)
+        finish(
+            &self.dlg,
+            self.d.working,
+            self.lang,
+            child,
+            targets,
+            Some(&tag),
+        )
     }
 
     /// DE: Wiederholt `step` nach Fehlern auf Wunsch. EN: Repeats `step` after errors on request.
@@ -125,6 +141,7 @@ impl Ui<'_> {
             self.lang,
             spawn(self.lang, &["inspect", "--", &public], Stdio::null())?,
             &[],
+            None,
         )?;
         let shown = match info {
             Outcome::Done { out, .. } => out,

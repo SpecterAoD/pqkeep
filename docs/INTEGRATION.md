@@ -112,7 +112,9 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   (`encrypt --each --rename`, `encrypt --out`, `decrypt --rename`). Am Ende eine Zusammenfassung
   (`Erledigt: 3 / 3`), Fehler einzelner Dateien werden aufgelistet.
 - **Abbrechen** im Fortschrittsfenster (zenity, PowerShell; kdialog hat keins) beendet die Arbeit:
-  fertige Dateien bleiben, angefangene werden entfernt (nur eigene Temporärdateien `.<ziel>.tmp-…`).
+  fertige Dateien bleiben, angefangene werden entfernt. Entfernt wird nur, was dieser Vorgang angelegt
+  hat: Der Kindprozess bekommt eine zufällige Kennung (`--temp-tag`), die in jedem Temporärnamen steht
+  (`.<ziel>.tmp-<kennung>…`) – parallele Vorgänge mit gleichem Ziel bleiben unberührt.
 - „Erneut versuchen“ nur, solange noch nichts geschrieben wurde (zu schwache oder ungleiche Passphrase).
 - Höchstens 1000 Einträge pro Aufruf.
 
@@ -188,8 +190,9 @@ created via PowerShell, checksum in the manifest); action `auto` decrypts if all
 encrypts. When encrypting PQKeep asks: **each file separately** or **everything in one container**
 (name suggested as `<folder name>.pqkf` or `Selection (N entries).pqkf` and **freely editable**). The
 passphrase or recipient is asked once, one sandboxed child does the work, a summary is shown at the
-end. **Cancel** in the progress window keeps finished files and removes unfinished ones (only own
-temporary files). Retry only while nothing has been written yet. At most 1000 entries.
+end. **Cancel** in the progress window keeps finished files and removes unfinished ones – only those
+of this operation: the child gets a random tag (`--temp-tag`) that is part of every temporary name, so
+parallel operations with the same target stay untouched. Retry only while nothing has been written yet. At most 1000 entries.
 
 **Security:** file names are passed after `--` as one argument each, never through a shell (tested
 with hostile names). The helper process handles no

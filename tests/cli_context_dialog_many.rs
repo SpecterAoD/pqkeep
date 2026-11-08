@@ -109,11 +109,22 @@ fn cancel_midway_leaves_no_temporary_files() {
     let e = Env::new("zenity");
     let list: Vec<String> = (0..6).map(|i| format!("f{i}.txt")).collect();
     let src = files(&e, &list.iter().map(String::as_str).collect::<Vec<_>>());
+    // DE: Temporärdatei eines anderen Vorgangs mit gleichem Ziel – darf nicht verschwinden.
+    // EN: Temporary file of another operation with the same target – must not disappear.
+    let foreign = e
+        .work()
+        .join(".f0.txt.pqkf.tmp-ffffffffffffffff0123456789abcdef");
+    fs::write(&foreign, b"anderer Vorgang").unwrap();
     let p = pass();
     e.cancel_after("0.5");
     e.answer(&[(0, "0\n"), (0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
     assert_eq!(e.context_many("encrypt", &refs(&src)), 2);
     assert!(last_call(&e).contains("Cancelled"), "{:?}", e.calls());
+    assert!(
+        foreign.is_file(),
+        "fremde Temporärdatei gelöscht / foreign temp removed"
+    );
+    fs::remove_file(&foreign).unwrap();
     let left = names(e.work());
     assert!(left.iter().all(|n| !n.contains(".tmp-")), "{left:?}");
     let done = left
