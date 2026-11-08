@@ -109,14 +109,22 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   Container-Name ist vorgeschlagen (`<Ordnername>.pqkf`, sonst `Auswahl (N Einträge).pqkf`) und **frei
   änderbar**; er wird neben der Auswahl gespeichert (freier Name, nie überschrieben).
 - Passphrase bzw. Empfänger nur **einmal**; die Arbeit macht **ein** Kindprozess mit voller Sandbox
-  (`encrypt --each --rename`, `encrypt --out`, `decrypt --rename`). Am Ende eine Zusammenfassung
-  (`Erledigt: 3 / 3`), Fehler einzelner Dateien werden aufgelistet.
+  (`encrypt --each --rename`, `encrypt --out`, `decrypt --rename`).
+- **Fortschritt je Datei** („Datei 3 von 10“ mit Balken) beim einzelnen Verschlüsseln und beim
+  Entschlüsseln mehrerer Dateien; der Kindprozess meldet dazu über ein verstecktes Flag nur
+  Nummer/Anzahl und den Namen fertiger Ziele, nie Geheimnisse. Ein Container ist ein Vorgang
+  (pulsierender Balken). kdialog (KDE) hat kein Fortschrittsfenster und damit auch kein Abbrechen.
+- **Ergebnis:** Zusammenfassung (`Erledigt: 3 / 3`); bei bis zu 20 Dateien jede einzeln („OK: …“),
+  fehlgeschlagene Dateien immer mit Grund.
 - **Abbrechen** im Fortschrittsfenster (zenity, PowerShell; kdialog hat keins) beendet die Arbeit:
   fertige Dateien bleiben, angefangene werden entfernt. Entfernt wird nur, was dieser Vorgang angelegt
   hat: Der Kindprozess bekommt eine zufällige Kennung (`--temp-tag`), die in jedem Temporärnamen steht
   (`.<ziel>.tmp-<kennung>…`) – parallele Vorgänge mit gleichem Ziel bleiben unberührt.
 - „Erneut versuchen“ nur, solange noch nichts geschrieben wurde (zu schwache oder ungleiche Passphrase).
-- Höchstens 1000 Einträge pro Aufruf.
+- Höchstens 1000 Einträge pro Aufruf; mehr ergibt eine Meldung im Fenster (kein stiller Abbruch).
+- **Windows „Senden an“:** Die Befehlszeile ist auf ca. 32.000 Zeichen begrenzt – je nach Pfadlänge
+  sind das einige Hundert Dateien. Darüber startet der Explorer PQKeep nicht (keine Meldung von
+  PQKeep möglich). Dann besser den übergeordneten Ordner wählen.
 
 ## Sicherheit
 
@@ -189,8 +197,13 @@ so `install` also sets up **"Send to → PQKeep"** (`%APPDATA%\Microsoft\Windows
 created via PowerShell, checksum in the manifest); action `auto` decrypts if all are `.pqkf`, else
 encrypts. When encrypting PQKeep asks: **each file separately** or **everything in one container**
 (name suggested as `<folder name>.pqkf` or `Selection (N entries).pqkf` and **freely editable**). The
-passphrase or recipient is asked once, one sandboxed child does the work, a summary is shown at the
-end. **Cancel** in the progress window keeps finished files and removes unfinished ones – only those
+passphrase or recipient is asked once, one sandboxed child does the work. **Progress per file**
+("File 3 of 10" with a bar) when encrypting separately and decrypting several files (the child reports
+only number/count and names of finished targets via a hidden flag); a container is one operation;
+kdialog has no progress window and thus no cancel. **Result:** summary, each file listed ("OK: …") for
+up to 20 files, failures always with reason. More than 1000 entries give a message in a window.
+**Windows "Send to"** is limited by the ~32,000-character command line (a few hundred files depending
+on path length); beyond that Explorer does not start PQKeep – select the parent folder instead. **Cancel** in the progress window keeps finished files and removes unfinished ones – only those
 of this operation: the child gets a random tag (`--temp-tag`) that is part of every temporary name, so
 parallel operations with the same target stay untouched. Retry only while nothing has been written yet. At most 1000 entries.
 
