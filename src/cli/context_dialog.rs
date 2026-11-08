@@ -45,8 +45,9 @@ fn spawn(lang: Lang, args: &[&str], stdin: Stdio) -> CliResult<Child> {
     let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let exe = std::env::current_exe().map_err(fail)?;
     let code = if lang == Lang::De { "de" } else { "en" };
-    Command::new(exe)
-        .args(["--lang", code])
+    let mut cmd = Command::new(exe);
+    super::dialog::no_console_window(&mut cmd);
+    cmd.args(["--lang", code])
         .args(args)
         .stdin(stdin)
         .stdout(Stdio::piped())
@@ -186,41 +187,15 @@ impl Ui<'_> {
     }
 }
 
-/// DE: Ohne Fenster: Linux meldet einen Fehler; Windows öffnet ein sichtbares Konsolenfenster mit
-/// dem gewohnten Ablauf (z. B. bei eingeschränktem PowerShell).
-/// EN: Without windows: Linux reports an error; Windows opens a visible console window with the
-/// usual flow (e.g. with restricted PowerShell).
-#[cfg(not(windows))]
-fn no_windows(_lang: Lang, _action: &str, _source: &Path, d: &DialogTexts) -> CliResult {
-    Err(Failure::new(code::ERROR, d.no_tool))
-}
-
-#[cfg(windows)]
-fn no_windows(lang: Lang, action: &str, source: &Path, _d: &DialogTexts) -> CliResult {
-    use std::os::windows::process::CommandExt;
-    /// DE/EN: `CREATE_NEW_CONSOLE` (Win32).
-    const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
-    let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
-    let exe = std::env::current_exe().map_err(fail)?;
-    let code = if lang == Lang::De { "de" } else { "en" };
-    let status = Command::new(exe)
-        .args(["--lang", code, "context", action, "--"])
-        .arg(source)
-        .creation_flags(CREATE_NEW_CONSOLE)
-        .status()
-        .map_err(fail)?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(Failure::new(code::ERROR, ""))
-    }
-}
-
 /// DE: Einstieg für `context --dialog`. EN: Entry point for `context --dialog`.
 pub fn run(lang: Lang, action: &str, source: &Path) -> CliResult {
     let d = dialog_texts(lang);
+    // DE: Ohne Fenster eigener Exit-Code; unter Windows öffnet `pqkeepw.exe` dann eine Konsole.
+    //     Es hat selbst keine Standardkanäle, die neue Konsole bekommt daher eigene.
+    // EN: Without windows a dedicated exit code; on Windows `pqkeepw.exe` then opens a console.
+    //     It has no standard handles itself, so the new console gets its own.
     let Some(dlg) = Dialog::detect(d.title, d.cancel) else {
-        return no_windows(lang, action, source, d);
+        return Err(Failure::new(code::NO_WINDOWS, d.no_tool));
     };
     let ui = Ui {
         dlg,

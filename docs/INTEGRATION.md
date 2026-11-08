@@ -52,8 +52,9 @@ pqkeep integrate uninstall
   die Fenster kommen von PowerShell mit Windows Forms (Skript fest im Programm, als
   `-EncodedCommand`, alle Texte als Literale, PowerShell aus `%SystemRoot%\System32`, nicht über `PATH`).
   `install --terminal` richtet stattdessen den Konsolen-Weg ein; `status` zeigt den Modus.
-- Ist PowerShell eingeschränkt (Constrained Language Mode, AppLocker) oder fehlt Windows Forms, öffnet
-  sich automatisch ein Konsolenfenster mit dem gewohnten Ablauf (unten).
+- Ist PowerShell eingeschränkt (Constrained Language Mode, AppLocker) oder fehlt Windows Forms, meldet
+  `context --dialog` Exit-Code 6 und `pqkeepw.exe` öffnet ein Konsolenfenster mit dem gewohnten Ablauf
+  (unten). Alle Unterprozesse laufen ohne eigenes Konsolenfenster (`CREATE_NO_WINDOW`).
   Unter Windows gibt es **keine Sandbox** (`docs/SANDBOX.md`).
 - Getestet in der Windows-CI gegen die echte Registry (eigener Test-Zweig); eine Prüfung im echten
   Explorer durch den Maintainer steht noch aus.

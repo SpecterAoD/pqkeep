@@ -23,6 +23,20 @@ pub struct Dialog {
     cancel: String,
 }
 
+/// DE: Windows: Unterprozess ohne eigenes Konsolenfenster (`CREATE_NO_WINDOW`); sonst nichts.
+/// EN: Windows: subprocess without its own console window (`CREATE_NO_WINDOW`); otherwise nothing.
+pub fn no_console_window(cmd: &mut Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        /// DE/EN: `CREATE_NO_WINDOW` (Win32).
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    let _ = cmd;
+}
+
 /// DE: Ausführbare Datei in einem absoluten `PATH`-Eintrag. EN: Executable in an absolute `PATH` entry.
 #[cfg(unix)]
 fn find(name: &str) -> Option<PathBuf> {
@@ -70,7 +84,9 @@ pub fn available() -> Option<(Kind, PathBuf)> {
 pub fn available() -> Option<(Kind, PathBuf)> {
     let root = PathBuf::from(std::env::var_os("SystemRoot")?);
     let path = root.join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
-    let ok = Command::new(&path)
+    let mut probe = Command::new(&path);
+    no_console_window(&mut probe);
+    let ok = probe
         .args(powershell::args(&powershell::probe()))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -102,6 +118,7 @@ impl Dialog {
             args::args(self.kind, &self.title, req)?
         };
         let mut cmd = Command::new(&self.path);
+        no_console_window(&mut cmd);
         cmd.args(list).stdin(Stdio::null()).stderr(Stdio::null());
         Some(cmd)
     }
