@@ -113,7 +113,14 @@ fn body(req: &Request<'_>) -> String {
             quote(first),
             quote(second)
         ),
-        Request::Progress { text } => progress(text),
+        Request::Entry { text, default } => format!(
+            "$f = New-Form {} 120\n$e = New-Object System.Windows.Forms.TextBox\n\
+             $e.Text = {}; $e.SetBounds(12, 50, 396, 24); $f.Controls.Add($e)\n\
+             if ($f.ShowDialog() -eq 'OK') {{ {OUT}.WriteLine($e.Text); exit 0 }}; exit 1",
+            quote(text),
+            quote(default)
+        ),
+        Request::Progress { text, cancel } => progress(text, cancel),
     }
 }
 
@@ -141,15 +148,23 @@ fn choose(text: &str, items: &[&str]) -> String {
     )
 }
 
-fn progress(text: &str) -> String {
+fn progress(text: &str, cancel: bool) -> String {
+    // DE: Mit Abbrechen-Knopf: Klick → Exit 1. EN: With cancel button: click → exit 1.
+    let ending = if cancel {
+        "$c = New-Object System.Windows.Forms.Button; $c.Text = $cancel; $c.DialogResult = 'Cancel'\n\
+         $c.SetBounds(263, 70, 85, 26); $f.Controls.Add($c); $f.CancelButton = $c\n\
+         $f.ClientSize = New-Object System.Drawing.Size(360, 106)\n\
+         if ($f.ShowDialog() -eq 'Cancel') { exit 1 }; exit 0"
+    } else {
+        "[void]$f.ShowDialog(); exit 0"
+    };
     format!(
         "$f = New-Object System.Windows.Forms.Form\n$f.Text = $t; $f.ControlBox = $false\n\
          $f.StartPosition = 'CenterScreen'; $f.FormBorderStyle = 'FixedDialog'\n\
          $f.ClientSize = New-Object System.Drawing.Size(360, 80)\n\
          $l = New-Object System.Windows.Forms.Label; $l.Text = {}; $l.SetBounds(12, 12, 336, 20)\n\
          $p = New-Object System.Windows.Forms.ProgressBar; $p.Style = 'Marquee'\n\
-         $p.SetBounds(12, 44, 336, 18); $f.Controls.AddRange(@($l, $p))\n\
-         [void]$f.ShowDialog(); exit 0",
+         $p.SetBounds(12, 44, 336, 18); $f.Controls.AddRange(@($l, $p))\n{ending}",
         quote(text)
     )
 }

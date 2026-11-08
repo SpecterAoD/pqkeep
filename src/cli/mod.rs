@@ -8,7 +8,10 @@
 mod access;
 mod args;
 mod context;
+mod context_child;
 mod context_dialog;
+mod context_dialog_many;
+mod context_many;
 mod dialog;
 mod dialog_text;
 mod files_cmd;

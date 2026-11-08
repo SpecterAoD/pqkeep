@@ -29,6 +29,15 @@ fn all_requests() -> Vec<Request<'static>> {
         },
         Request::Progress {
             text: "Bitte warten …",
+            cancel: false,
+        },
+        Request::Progress {
+            text: "Bitte warten …",
+            cancel: true,
+        },
+        Request::Entry {
+            text: "Name des Containers",
+            default: "Steuer 2026.pqkf",
         },
     ]
 }
@@ -82,6 +91,8 @@ fn passwords_go_only_to_stdout() {
 #[test]
 fn file_filter_uses_windows_pattern() {
     let s = script("t", "c", &all_requests()[4]);
+    assert!(script("t", "c", &all_requests()[10]).contains("$e.Text = 'Steuer 2026.pqkf'"));
+    assert!(script("t", "c", &all_requests()[9]).contains("-eq 'Cancel') { exit 1 }"));
     assert!(s.contains("$d.Filter = 'Öffentliche Schlüssel (*.pub.json)|*.pub.json|*.*|*.*'"));
     assert!(s.contains(r"$d.InitialDirectory = 'C:\Users\anna\Documents'"));
 }

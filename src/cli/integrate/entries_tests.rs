@@ -36,7 +36,7 @@ fn nemo_entry_puts_path_after_double_dash() {
     );
     assert!(e.contains("Exec=\"/opt/PQ Keep/pqkeep\" context encrypt -- %F\n"));
     assert!(
-        e.contains("Selection=s\n")
+        e.contains("Selection=notnone\n")
             && e.contains("Extensions=any;\n")
             && e.contains("Terminal=true\n")
     );
@@ -52,9 +52,9 @@ fn nautilus_script_passes_exactly_one_argument() {
         Launch::Terminal(&term()),
     );
     assert!(s.starts_with("#!/bin/sh\n"));
-    assert!(s.contains("[ \"$#\" -eq 1 ] || exit 0\n"));
+    assert!(s.contains("[ \"$#\" -ge 1 ] || exit 0\n"));
     assert!(s.contains(
-        "exec '/usr/bin/gnome-terminal' -- '/opt/PQ Keep/pqkeep' context decrypt -- \"$1\"\n"
+        "exec '/usr/bin/gnome-terminal' -- '/opt/PQ Keep/pqkeep' context decrypt -- \"$@\"\n"
     ));
 }
 
@@ -68,9 +68,9 @@ fn dolphin_entry_uses_single_file_code() {
     );
     assert!(e.contains("MimeType=all/allfiles;inode/directory;\n"));
     assert!(
-        e.contains("Exec=\"/usr/bin/gnome-terminal\" -- \"/x/pqkeep\" context encrypt -- %f\n")
+        e.contains("Exec=\"/usr/bin/gnome-terminal\" -- \"/x/pqkeep\" context encrypt -- %F\n")
     );
-    assert!(!e.contains("%F"));
+    assert!(!e.contains("%f"));
 }
 
 #[test]
@@ -79,9 +79,9 @@ fn dialog_mode_runs_without_terminal() {
     assert!(e.contains("Exec=\"/x/pqkeep\" context --dialog encrypt -- %F\n"));
     assert!(e.contains("Terminal=false\n") && !e.contains("Terminal=true"));
     let n = nautilus(Action::Decrypt, "/opt/PQ Keep/pqkeep", Launch::Dialog);
-    assert!(n.contains("[ \"$#\" -eq 1 ] || exit 0\n"));
-    assert!(n.contains("exec '/opt/PQ Keep/pqkeep' context --dialog decrypt -- \"$1\"\n"));
+    assert!(n.contains("[ \"$#\" -ge 1 ] || exit 0\n"));
+    assert!(n.contains("exec '/opt/PQ Keep/pqkeep' context --dialog decrypt -- \"$@\"\n"));
     assert!(!n.contains("terminal"));
     let d = dolphin(Action::Encrypt, "Encrypt", "/x/pqkeep", Launch::Dialog);
-    assert!(d.contains("Exec=\"/x/pqkeep\" context --dialog encrypt -- %f\n"));
+    assert!(d.contains("Exec=\"/x/pqkeep\" context --dialog encrypt -- %F\n"));
 }

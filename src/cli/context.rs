@@ -26,12 +26,13 @@ pub fn command(base: Command, lang: Lang) -> Command {
             .help(s.ctx_arg_action)
             .required(true)
             .hide_possible_values(true)
-            .value_parser(["encrypt", "decrypt"]),
+            .value_parser(["encrypt", "decrypt", "auto"]),
     )
     .arg(
         Arg::new("path")
             .help(s.ctx_arg_path)
             .required(true)
+            .num_args(1..=super::args::MAX_SOURCES)
             .value_parser(value_parser!(PathBuf)),
     )
     .arg(
@@ -47,7 +48,7 @@ fn lang_code(lang: Lang) -> &'static str {
 }
 
 /// DE: Startet `pqkeep --lang <x> <args…>` als Kindprozess. EN: Runs pqkeep as a child process.
-fn child(lang: Lang, extra: &[&str]) -> CliResult {
+pub(super) fn child(lang: Lang, extra: &[&str]) -> CliResult {
     let mut argv = vec![
         "pqkeep".to_owned(),
         "--lang".to_owned(),
@@ -65,7 +66,7 @@ pub(super) fn absolute(path: &Path) -> PathBuf {
 
 /// DE: Pfad abfragen; Anführungszeichen vom Hineinziehen ins Terminal werden entfernt.
 /// EN: Ask for a path; quotes from drag and drop into the terminal are removed.
-fn ask_path(prompt: &str) -> CliResult<String> {
+pub(super) fn ask_path(prompt: &str) -> CliResult<String> {
     let raw: String = Input::new()
         .with_prompt(prompt)
         .interact_text()
@@ -138,25 +139,27 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
 /// DE: `pqkeep context`. EN: `pqkeep context`.
 pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let s = integrate_texts(lang);
+    let sources: Vec<PathBuf> = m
+        .get_many::<PathBuf>("path")
+        .map(|v| v.map(|p| absolute(p)).collect())
+        .unwrap_or_default();
+    let action = m
+        .get_one::<String>("action")
+        .map_or("encrypt", String::as_str);
     if m.get_flag("dialog") {
-        let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
-        let action = m
-            .get_one::<String>("action")
-            .map_or("encrypt", String::as_str);
-        return super::context_dialog::run(lang, action, &source);
+        return super::context_dialog::run(lang, action, &sources);
     }
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));
     }
-    let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
-    let result = utf8(&source, lang).and_then(|path| {
-        if !source.exists() {
-            let e = pqkeep::Error::Io(std::io::ErrorKind::NotFound);
-            return Err(Failure::from_error(&e, lang));
-        }
-        match m.get_one::<String>("action").map(String::as_str) {
-            Some("decrypt") => decrypt(s, lang, &source, &path),
-            _ => encrypt(s, lang, &path),
+    let action = super::context_many::resolve_action(action, &sources);
+    let result = super::context_many::checked(&sources, lang).and_then(|paths| {
+        if paths.len() > 1 {
+            super::context_many::terminal(s, lang, action, &sources, &paths)
+        } else if action == "decrypt" {
+            decrypt(s, lang, &sources[0], &paths[0])
+        } else {
+            encrypt(s, lang, &paths[0])
         }
     });
     match &result {

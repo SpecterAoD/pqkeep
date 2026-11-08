@@ -78,6 +78,27 @@ impl Env {
         key.get_string("").unwrap()
     }
 
+    fn shortcut(&self) -> PathBuf {
+        self.appdata
+            .path()
+            .join(r"Microsoft\Windows\SendTo\PQKeep.lnk")
+    }
+
+    /// DE: Ziel und Argumente der Verknüpfung (über PowerShell gelesen).
+    /// EN: Target and arguments of the shortcut (read via PowerShell).
+    fn shortcut_target(&self) -> String {
+        let script = format!(
+            "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('{}'); \
+             [Console]::Out.Write($s.TargetPath + '|' + $s.Arguments)",
+            self.shortcut().display()
+        );
+        let out = Command::new("powershell.exe")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    }
+
     fn manifest(&self) -> PathBuf {
         self.appdata.path().join(r"PQKeep\integration.json")
     }
@@ -110,7 +131,7 @@ fn install_writes_all_verbs_and_is_idempotent() {
     assert_eq!(out.matches("Unchanged").count(), 3, "{out}");
     let (code, out, _) = e.run(&["status"]);
     assert_eq!(code, 0);
-    assert_eq!(out.matches("Set up").count(), 3, "{out}");
+    assert_eq!(out.matches("Set up").count(), 4, "{out}");
 }
 
 #[test]
@@ -123,7 +144,7 @@ fn terminal_option_uses_the_console_program() {
     assert_eq!(cmd, format!("\"{BIN}\" context encrypt -- \"%1\""));
     // DE: Wechsel zurück ersetzt die eigenen Einträge. EN: Switching back replaces own entries.
     let (_, out, _) = e.run(&["install"]);
-    assert_eq!(out.matches("Set up").count(), 3, "{out}");
+    assert_eq!(out.matches("Set up").count(), 4, "{out}");
     assert!(e.command(VERBS[0]).starts_with(&format!("\"{LAUNCHER}\" ")));
 }
 
@@ -133,7 +154,7 @@ fn uninstall_removes_everything_it_created() {
     assert_eq!(e.run(&["install"]).0, 0);
     let (code, out, err) = e.run(&["uninstall"]);
     assert_eq!(code, 0, "{out}{err}");
-    assert_eq!(out.matches("Removed").count(), 3, "{out}");
+    assert_eq!(out.matches("Removed").count(), 4, "{out}");
     for rel in ["*", "Directory", "SystemFileAssociations"] {
         assert!(!e.exists(rel), "{rel} bleibt / remains");
     }
@@ -176,7 +197,7 @@ fn modified_entry_survives_uninstall() {
     assert!(out.contains("Not touched"), "{out}");
     let (code, out, err) = e.run(&["uninstall"]);
     assert_eq!(code, 0);
-    assert_eq!(out.matches("Removed").count(), 2, "{out}");
+    assert_eq!(out.matches("Removed").count(), 3, "{out}");
     assert!(err.contains("Not touched"));
     assert_eq!(e.command(VERBS[1]), "notepad.exe \"%1\"");
     assert!(!e.exists(VERBS[0]));
@@ -207,4 +228,31 @@ fn program_in_temp_folder_is_rejected() {
     assert_ne!(code, 0);
     assert!(err.contains("Unsuitable program path"), "{err}");
     assert!(!e.exists("*"));
+}
+
+#[test]
+fn send_to_shortcut_follows_the_mode_and_is_removed() {
+    let e = Env::new();
+    assert_eq!(e.run(&["install"]).0, 0);
+    assert!(e.shortcut().is_file());
+    assert_eq!(e.shortcut_target(), format!("{LAUNCHER}|auto --"));
+    let (_, out, _) = e.run(&["status"]);
+    assert!(out.contains("PQKeep.lnk"), "{out}");
+    assert_eq!(e.run(&["install", "--terminal"]).0, 0);
+    assert_eq!(e.shortcut_target(), format!("{BIN}|context auto --"));
+    let (_, out, _) = e.run(&["uninstall"]);
+    assert!(out.contains("PQKeep.lnk"), "{out}");
+    assert!(!e.shortcut().exists());
+}
+
+#[test]
+fn foreign_send_to_shortcut_is_left_alone() {
+    let e = Env::new();
+    std::fs::create_dir_all(e.shortcut().parent().unwrap()).unwrap();
+    std::fs::write(e.shortcut(), b"fremd").unwrap();
+    let (code, _, err) = e.run(&["install"]);
+    assert_eq!(code, 0);
+    assert!(err.contains("Not touched"), "{err}");
+    assert_eq!(e.run(&["uninstall"]).0, 0);
+    assert_eq!(std::fs::read(e.shortcut()).unwrap(), b"fremd");
 }

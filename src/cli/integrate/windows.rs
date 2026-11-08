@@ -18,6 +18,7 @@ use windows_registry::CURRENT_USER;
 use super::Options;
 use super::manifest::{FileState, Manifest, digest};
 use super::registry::{RegResult, prune_empty, root, state, write};
+use super::sendto;
 use super::winplan::{Verb, plan, safe_windows_path};
 use crate::cli::integrate_text::{IntegrateTexts, integrate_texts};
 use crate::cli::io::{CliResult, Failure, code};
@@ -142,6 +143,7 @@ fn install(s: &IntegrateTexts, root: &str, mpath: &Path, opts: &Options, lang: L
         let full = format!(r"{root}\{}", verb.path);
         apply(s, &full, &verb, &mut manifest, opts.dry_run, lang)?;
     }
+    sendto::install(s, &mut manifest, &bin, launcher.as_deref(), opts.dry_run);
     if opts.dry_run {
         println!("{}", s.msg_dry);
         return Ok(());
@@ -176,6 +178,7 @@ fn uninstall(
             FileState::Missing => {}
         }
     }
+    sendto::uninstall(s, &manifest, opts.dry_run);
     if opts.dry_run {
         println!("{}", s.msg_dry);
     } else if mpath.exists() {
@@ -189,7 +192,11 @@ fn status(s: &IntegrateTexts, mpath: &Path, lang: Lang) -> CliResult {
     if !manifest.files.is_empty() {
         println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
     }
-    for e in &manifest.files {
+    for e in manifest
+        .files
+        .iter()
+        .filter(|e| !sendto::is_shortcut(&e.path))
+    {
         let full = e.path.to_string_lossy();
         let label = match reg_fail(lang, state(&manifest, &full))?.0 {
             FileState::Ours => s.msg_written,
@@ -198,6 +205,7 @@ fn status(s: &IntegrateTexts, mpath: &Path, lang: Lang) -> CliResult {
         };
         println!(r"{label}: HKCU\{full}");
     }
+    sendto::status(s, &manifest);
     let current = binary(s).ok();
     if !manifest.files.is_empty() && current.as_deref() != Some(manifest.binary.as_str()) {
         eprintln!("{}: {}", s.msg_binary_moved, manifest.binary);
