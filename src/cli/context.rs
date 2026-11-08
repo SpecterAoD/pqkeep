@@ -51,6 +51,12 @@ fn child(lang: Lang, extra: &[&str]) -> CliResult {
     super::run_child(&argv, lang)
 }
 
+/// DE: Absoluter Pfad, damit kein weitergegebener Wert mit `-` beginnt und als Option gilt.
+/// EN: Absolute path so that no passed value starts with `-` and counts as an option.
+fn absolute(path: &Path) -> PathBuf {
+    std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
 /// DE: Pfad abfragen; Anführungszeichen vom Hineinziehen ins Terminal werden entfernt.
 /// EN: Ask for a path; quotes from drag and drop into the terminal are removed.
 fn ask_path(prompt: &str) -> CliResult<String> {
@@ -64,7 +70,7 @@ fn ask_path(prompt: &str) -> CliResult<String> {
         .and_then(|t| t.strip_suffix('\''))
         .or_else(|| trimmed.strip_prefix('"').and_then(|t| t.strip_suffix('"')))
         .unwrap_or(trimmed);
-    Ok(unquoted.to_owned())
+    Ok(absolute(Path::new(unquoted)).to_string_lossy().into_owned())
 }
 
 /// DE: Freier Zielname neben der Quelle: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
@@ -150,7 +156,7 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));
     }
-    let source = m.get_one::<PathBuf>("path").cloned().unwrap_or_default();
+    let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
     let result = utf8(&source, lang).and_then(|path| {
         if !source.exists() {
             let e = pqkeep::Error::Io(std::io::ErrorKind::NotFound);
@@ -176,3 +182,7 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     // EN: Message already printed; only pass on the exit code.
     result.map_err(|f| Failure::new(f.code, ""))
 }
+
+#[cfg(test)]
+#[path = "context_tests.rs"]
+mod context_tests;

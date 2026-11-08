@@ -4,7 +4,10 @@
 use pqkeep::security::Lang;
 
 /// DE: Texte einer Sprache. EN: Texts of one language.
+// DE: Außerhalb von Linux nutzt nur `context` einen Teil der Texte (Windows folgt mit U4-2).
+// EN: Outside Linux only `context` uses some of the texts (Windows follows with U4-2).
 #[allow(missing_docs)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub struct IntegrateTexts {
     pub about: &'static str,
     pub after: &'static str,
