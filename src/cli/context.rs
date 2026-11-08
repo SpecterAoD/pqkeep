@@ -8,7 +8,7 @@
 use std::io::{BufRead, IsTerminal};
 use std::path::{Path, PathBuf};
 
-use clap::{Arg, ArgMatches, Command, value_parser};
+use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 use dialoguer::{Confirm, Input, Select};
 use pqkeep::files::{self, HeaderMode};
 use pqkeep::security::Lang;
@@ -34,6 +34,12 @@ pub fn command(base: Command, lang: Lang) -> Command {
             .required(true)
             .value_parser(value_parser!(PathBuf)),
     )
+    .arg(
+        Arg::new("dialog")
+            .long("dialog")
+            .help(super::dialog_text::dialog_texts(lang).arg_dialog)
+            .action(ArgAction::SetTrue),
+    )
 }
 
 fn lang_code(lang: Lang) -> &'static str {
@@ -53,7 +59,7 @@ fn child(lang: Lang, extra: &[&str]) -> CliResult {
 
 /// DE: Absoluter Pfad, damit kein weitergegebener Wert mit `-` beginnt und als Option gilt.
 /// EN: Absolute path so that no passed value starts with `-` and counts as an option.
-fn absolute(path: &Path) -> PathBuf {
+pub(super) fn absolute(path: &Path) -> PathBuf {
     std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
@@ -95,7 +101,7 @@ fn free_target(target: &Path) -> Option<PathBuf> {
 }
 
 /// DE: `--out` mit freiem Namen. EN: `--out` with a free name.
-fn out_arg(target: Option<&Path>, lang: Lang) -> CliResult<String> {
+pub(super) fn out_arg(target: Option<&Path>, lang: Lang) -> CliResult<String> {
     let free = target.and_then(free_target);
     let path = free.ok_or_else(|| {
         Failure::from_error(&pqkeep::Error::Io(std::io::ErrorKind::AlreadyExists), lang)
@@ -103,7 +109,7 @@ fn out_arg(target: Option<&Path>, lang: Lang) -> CliResult<String> {
     utf8(&path, lang)
 }
 
-fn utf8(path: &Path, lang: Lang) -> CliResult<String> {
+pub(super) fn utf8(path: &Path, lang: Lang) -> CliResult<String> {
     path.to_str()
         .map(str::to_owned)
         .ok_or_else(|| Failure::from_error(&pqkeep::Error::InvalidInput { field: "path" }, lang))
@@ -153,6 +159,13 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
 /// DE: `pqkeep context`. EN: `pqkeep context`.
 pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let s = integrate_texts(lang);
+    if m.get_flag("dialog") {
+        let source = absolute(&m.get_one::<PathBuf>("path").cloned().unwrap_or_default());
+        let action = m
+            .get_one::<String>("action")
+            .map_or("encrypt", String::as_str);
+        return super::context_dialog::run(lang, action, &source);
+    }
     if !std::io::stdin().is_terminal() {
         return Err(Failure::new(code::USAGE, t.msg_no_tty));
     }

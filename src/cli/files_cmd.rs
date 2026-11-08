@@ -10,7 +10,9 @@ use pqkeep::envelope;
 use pqkeep::files::{self, HeaderMode, Protection, Report, SkipReason, Unlock};
 use pqkeep::security::{Lang, StrongPassphrase};
 
-use super::io::{CliResult, Failure, code, read_passphrase, read_passphrase_as};
+use super::io::{
+    CliResult, Failure, code, read_confirmed_stdin, read_passphrase, read_passphrase_as,
+};
 use super::text::Texts;
 use super::validate::print_rejection;
 
@@ -75,7 +77,11 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
         } else {
             KdfProfile::Standard
         };
-        let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?;
+        let pass = if m.get_flag("confirm-stdin") {
+            read_confirmed_stdin(t, lang)?
+        } else {
+            read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?
+        };
         let strong = StrongPassphrase::try_from(pass).map_err(|rejection| {
             print_rejection(t, lang, &rejection);
             Failure::new(code::WEAK, "")

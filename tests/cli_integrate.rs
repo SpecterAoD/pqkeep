@@ -223,3 +223,23 @@ fn install_runs_sandboxed() {
         "{err}"
     );
 }
+
+#[test]
+fn window_mode_is_used_when_zenity_exists_unless_terminal_is_forced() {
+    let e = env(&["nemo", "nautilus", "zenity"]);
+    let (code, out, err) = run(&e, &["integrate", "install"]);
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains("Mode: Windows"), "{out}");
+    let action = e.data.join("nemo/actions/pqkeep-encrypt.nemo_action");
+    let text = fs::read_to_string(&action).unwrap();
+    assert!(text.contains(" context --dialog encrypt -- %F") && text.contains("Terminal=false"));
+    let script = fs::read_to_string(e.data.join("nautilus/scripts/Encrypt with PQKeep")).unwrap();
+    assert!(script.contains("context --dialog encrypt") && !script.contains("gnome-terminal"));
+    let (_, out, _) = run(&e, &["integrate", "status"]);
+    assert!(out.contains("Mode: Windows"), "{out}");
+    let (code, out, _) = run(&e, &["integrate", "install", "--terminal"]);
+    assert_eq!(code, 0);
+    assert!(out.contains("Mode: Terminal"), "{out}");
+    let text = fs::read_to_string(&action).unwrap();
+    assert!(text.contains("Terminal=true") && !text.contains("--dialog"));
+}

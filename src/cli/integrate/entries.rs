@@ -42,6 +42,16 @@ pub struct Terminal {
     pub exec_flag: &'static str,
 }
 
+/// DE: Start über ein Terminal oder direkt mit Fenstern (`context --dialog`).
+/// EN: Start via a terminal or directly with windows (`context --dialog`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Launch<'a> {
+    /// DE/EN: Terminal / terminal.
+    Terminal(&'a Terminal),
+    /// DE/EN: Fenster (zenity/kdialog) / windows (zenity/kdialog).
+    Dialog,
+}
+
 /// DE: `true`, wenn der Pfad ohne Sonderzeichen sicher eingebettet werden kann.
 /// EN: `true` if the path can be embedded safely without special characters.
 pub fn safe_path(path: &str) -> bool {
@@ -51,25 +61,34 @@ pub fn safe_path(path: &str) -> bool {
             .any(|c| c.is_control() || FORBIDDEN.contains(&c))
 }
 
-/// DE: Nemo-Aktion (`Terminal=true`: Nemo öffnet das eingestellte Terminal).
-/// EN: Nemo action (`Terminal=true`: Nemo opens the configured terminal).
-pub fn nemo(action: Action, name: &str, comment: &str, bin: &str) -> String {
+/// DE: Nemo-Aktion (`Terminal=true`: Nemo öffnet das eingestellte Terminal; mit Fenstern `false`).
+/// EN: Nemo action (`Terminal=true`: Nemo opens the configured terminal; with windows `false`).
+pub fn nemo(action: Action, name: &str, comment: &str, bin: &str, dialog: bool) -> String {
     let extensions = match action {
         Action::Encrypt => "any;",
         Action::Decrypt => "pqkf;",
     };
     format!(
         "[Nemo Action]\n# pqkeep integrate – {remove}\nActive=true\nName={name}\nComment={comment}\n\
-         Exec=\"{bin}\" context {arg} -- %F\nIcon-Name=dialog-password\nSelection=s\n\
-         Extensions={extensions}\nTerminal=true\n",
+         Exec=\"{bin}\" context {flag}{arg} -- %F\nIcon-Name=dialog-password\nSelection=s\n\
+         Extensions={extensions}\nTerminal={terminal}\n",
         remove = "pqkeep integrate uninstall",
         arg = action.arg(),
+        flag = if dialog { "--dialog " } else { "" },
+        terminal = !dialog,
     )
 }
 
 /// DE: Nautilus-Skript (Dateiname = Menüeintrag); bricht bei Mehrfachauswahl ab.
 /// EN: Nautilus script (file name = menu entry); stops on multiple selection.
-pub fn nautilus(action: Action, bin: &str, term: &Terminal) -> String {
+pub fn nautilus(action: Action, bin: &str, launch: Launch<'_>) -> String {
+    let Launch::Terminal(term) = launch else {
+        return format!(
+            "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -eq 1 ] || exit 0\n\
+             exec '{bin}' context --dialog {arg} -- \"$1\"\n",
+            arg = action.arg(),
+        );
+    };
     format!(
         "#!/bin/sh\n# pqkeep integrate – pqkeep integrate uninstall\n[ \"$#\" -eq 1 ] || exit 0\n\
          exec '{tp}' {flag} '{bin}' context {arg} -- \"$1\"\n",
@@ -80,18 +99,24 @@ pub fn nautilus(action: Action, bin: &str, term: &Terminal) -> String {
 }
 
 /// DE: Dolphin-Service-Menü (KF5/KF6). EN: Dolphin service menu (KF5/KF6).
-pub fn dolphin(action: Action, name: &str, bin: &str, term: &Terminal) -> String {
+pub fn dolphin(action: Action, name: &str, bin: &str, launch: Launch<'_>) -> String {
     let mime = match action {
         Action::Encrypt => "all/allfiles;inode/directory;",
         Action::Decrypt => "all/allfiles;",
     };
+    let exec = match launch {
+        Launch::Terminal(term) => format!(
+            "\"{tp}\" {flag} \"{bin}\" context {arg} -- %f",
+            tp = term.path,
+            flag = term.exec_flag,
+            arg = action.arg()
+        ),
+        Launch::Dialog => format!("\"{bin}\" context --dialog {} -- %f", action.arg()),
+    };
     format!(
         "[Desktop Entry]\n# pqkeep integrate – pqkeep integrate uninstall\nType=Service\n\
          X-KDE-ServiceTypes=KonqPopupMenu/Plugin\nMimeType={mime}\nActions=pqkeep_{arg};\n\n\
-         [Desktop Action pqkeep_{arg}]\nName={name}\nIcon=dialog-password\n\
-         Exec=\"{tp}\" {flag} \"{bin}\" context {arg} -- %f\n",
-        tp = term.path,
-        flag = term.exec_flag,
+         [Desktop Action pqkeep_{arg}]\nName={name}\nIcon=dialog-password\nExec={exec}\n",
         arg = action.arg(),
     )
 }

@@ -131,6 +131,33 @@ pub fn read_passphrase_as(
     Passphrase::from_string(text).map_err(|e| Failure::from_error(&e, lang))
 }
 
+/// DE: Liest eine neue Passphrase zweimal von stdin (je eine Zeile) und vergleicht im eigenen
+/// (sandboxed) Prozess – für das Passwortfenster des Kontextmenüs.
+/// EN: Reads a new passphrase twice from stdin (one line each) and compares in this own
+/// (sandboxed) process – for the context menu's password window.
+pub fn read_confirmed_stdin(t: &Texts, lang: Lang) -> CliResult<Passphrase> {
+    let read = || -> CliResult<String> {
+        let mut line = String::new();
+        std::io::stdin()
+            .lock()
+            .read_line(&mut line)
+            .map_err(|e| Failure::from_error(&Error::from(e), lang))?;
+        let len = line.trim_end_matches(['\n', '\r']).len();
+        line.truncate(len);
+        Ok(line)
+    };
+    let first = read()?;
+    let mut second = read()?;
+    let same = first == second;
+    second.zeroize();
+    if !same {
+        let mut first = first;
+        first.zeroize();
+        return Err(Failure::new(code::USAGE, t.prompt_mismatch));
+    }
+    Passphrase::from_string(first).map_err(|e| Failure::from_error(&e, lang))
+}
+
 /// DE: Klärt, ob ein vorhandenes Ziel ersetzt werden darf. EN: Decides whether an existing target may be replaced.
 pub fn allow_overwrite(t: &Texts, path: &Path, force: bool, yes: bool) -> CliResult<bool> {
     if !path.exists() || !force {

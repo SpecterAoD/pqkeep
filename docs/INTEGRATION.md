@@ -51,9 +51,31 @@ pqkeep integrate uninstall
 - Getestet in der Windows-CI gegen die echte Registry (eigener Test-Zweig); eine Prüfung im echten
   Explorer durch den Maintainer steht noch aus.
 
+## Fenster statt Terminal (Linux)
+
+Ist **zenity** (GNOME/Cinnamon) oder **kdialog** (KDE) installiert, richtet `integrate install` die
+Einträge im **Fenster-Modus** ein (`pqkeep context --dialog …`, kein Terminal); `status` zeigt den
+Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
+
+- Kleine Systemfenster: Modus wählen, Schlüsseldatei auswählen, Fingerabdruck bestätigen,
+  Passphrase eingeben (neue Passphrase zweimal), Ergebnis bzw. Fehler; bei Fehlern (z. B. zu schwache
+  oder ungleiche Passphrase) „Erneut versuchen?“. Abbrechen startet nichts. Wurden Einträge übersprungen
+  (z. B. Symlinks), erscheint statt „Fertig“ ein **Warnfenster** mit der Liste.
+- **Die Passphrase durchläuft `pqkeep context` nie:** Das Passwortfenster schreibt per Pipe direkt
+  in stdin des Kindprozesses (`--passphrase-stdin`, volle Sandbox), nie als Argument oder
+  Umgebungsvariable. Die doppelte Eingabe vergleicht der Kindprozess selbst (bei zenity), kdialog
+  vergleicht in seinem eigenen Fenster.
+- Grenze: zenity (GTK) bzw. kdialog (Qt) halten die Passphrase kurz in ihrem eigenen Speicher; dort
+  kann PQKeep sie nicht nullen. Ohne grafische Sitzung oder ohne Werkzeug meldet `context --dialog`
+  einen Fehler – dann `integrate install --terminal` verwenden.
+- Bekannte Grenze: Dateinamen mit Steuerzeichen (z. B. Zeilenumbruch) oder `\ : < > " | ? *` lehnt
+  die Verschlüsselung grundsätzlich ab (Archiv-Regeln, `FILE_FORMAT.md`); die Meldung erscheint im
+  Fenster.
+- Windows: Fenster folgen mit U4-3b (vorerst Konsolenfenster).
+
 ## Ablauf beim Rechtsklick
 
-Es öffnet sich ein Terminal- bzw. Konsolenfenster mit `pqkeep context`:
+Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) mit `pqkeep context`:
 
 - **Verschlüsseln:** Auswahl „Mit Passphrase“ oder „Für einen Empfänger“. Beim Empfänger wird nach
   dessen öffentlicher Schlüsseldatei gefragt (Pfad eintippen oder ins Fenster ziehen) und der
@@ -63,7 +85,7 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster mit `pqkeep context`:
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
   (`bericht (2).txt`); überschrieben wird nie.
 - Die Passphrase wird verdeckt im Terminal eingegeben – in einem eigenen Prozess mit voller Sandbox,
-  wie im Menü. Ein schlankes Eingabefenster statt Terminal ist geplant (Issue #53).
+  wie im Menü. Unter Linux gibt es dafür auch kleine Fenster (siehe oben).
 - Vorerst nur **eine** Datei bzw. ein Ordner pro Aufruf (mehrere: Issue #72).
 
 ## Sicherheit
@@ -107,12 +129,23 @@ options"** (Shift+F10); the new compact menu requires a signed MSIX package (not
 window opens with the same flow as on Linux; there is **no sandbox** on Windows. Tested in Windows CI
 against the real registry (separate test branch); a check in the real Explorer is still pending.
 
+**Windows instead of a terminal (Linux):** if **zenity** or **kdialog** is installed, `integrate
+install` sets up the entries in **window mode** (`pqkeep context --dialog …`); `status` shows the mode,
+`--terminal` forces the terminal. Small system windows ask for mode, key file, fingerprint
+confirmation and passphrase (new passphrase twice) and show the result or error with "Try again?";
+skipped entries (e.g. symlinks) are shown in a **warning window** instead of a plain "Done".
+**The passphrase never passes through `pqkeep context`:** the password window writes through a pipe
+straight into the child's stdin (`--passphrase-stdin`, full sandbox), never as an argument or
+environment variable; the child compares the two entries (zenity), kdialog compares in its own
+window. Limit: zenity/kdialog keep the passphrase briefly in their own memory, which PQKeep cannot
+zero. File names with control characters or `\ : < > " | ? *` are rejected by the archive rules.
+Windows windows follow with U4-3b.
+
 **On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase or recipient (the
 recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
 for your key file in recipient mode. The result is placed next to the source under a free name
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
-sandboxed process. A small input window instead of the terminal is planned (issue #53); multiple
-files: issue #72.
+sandboxed process (on Linux also via small windows, see above); multiple files: issue #72.
 
 **Security:** the file name is passed after `--` as exactly one argument, never through a shell, and
 `pqkeep context` accepts exactly one path (tested with hostile names). The helper process handles no
