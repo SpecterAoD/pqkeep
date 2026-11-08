@@ -70,7 +70,8 @@ pub fn run(action: &str, opts: &Options, lang: Lang) -> CliResult {
 
 fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: Lang) -> CliResult {
     let bin = binary(s)?;
-    let targets = plan(s, data, &bin, opts.all);
+    let dialog = !opts.terminal && crate::cli::dialog::available().is_some();
+    let targets = plan(s, data, &bin, opts.all, dialog);
     if targets.is_empty() {
         return Err(Failure::new(code::ERROR, s.msg_no_manager));
     }
@@ -88,6 +89,8 @@ fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: 
     let mut manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
     manifest.version = 1;
     manifest.binary.clone_from(&bin);
+    (if dialog { "dialog" } else { "terminal" }).clone_into(&mut manifest.mode);
+    println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
     for t in &targets {
         apply(s, t, &mut manifest, opts.dry_run, lang)?;
     }
@@ -160,6 +163,14 @@ fn uninstall(s: &IntegrateTexts, mpath: &Path, opts: &Options, lang: Lang) -> Cl
     Ok(())
 }
 
+fn mode_label<'a>(s: &'a IntegrateTexts, mode: &str) -> &'a str {
+    match mode {
+        "dialog" => s.mode_dialog,
+        "terminal" => s.mode_terminal,
+        _ => "-",
+    }
+}
+
 fn status(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: Lang) -> CliResult {
     let found: Vec<&str> = ["nemo", "nautilus", "dolphin"]
         .into_iter()
@@ -183,6 +194,9 @@ fn status(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: L
         }
     );
     let manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
+    if !manifest.files.is_empty() {
+        println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
+    }
     for e in &manifest.files {
         let st = state(&manifest, &e.path).map_err(io_fail(lang))?;
         let label = match st {

@@ -42,6 +42,12 @@ pub fn command(base: Command, lang: Lang) -> Command {
             .action(ArgAction::SetTrue),
     )
     .arg(
+        Arg::new("terminal")
+            .long("terminal")
+            .help(s.arg_terminal)
+            .action(ArgAction::SetTrue),
+    )
+    .arg(
         Arg::new("dry-run")
             .long("dry-run")
             .help(s.arg_dry_run)
@@ -50,14 +56,15 @@ pub fn command(base: Command, lang: Lang) -> Command {
 }
 
 /// DE: Optionen eines Aufrufs. EN: Options of one call.
-// DE: Vier unabhängige Schalter aus der Kommandozeile; eine Zustandsmaschine wäre hier künstlich.
-// EN: Four independent command line switches; a state machine would be artificial here.
+// DE: Unabhängige Schalter aus der Kommandozeile; eine Zustandsmaschine wäre hier künstlich.
+// EN: Independent command line switches; a state machine would be artificial here.
 #[allow(clippy::struct_excessive_bools)]
 // DE: Unter Windows gibt es keine Sandbox; `sandboxed`/`verbose` bleiben dort ungenutzt.
 // EN: There is no sandbox on Windows; `sandboxed`/`verbose` stay unused there.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub struct Options {
     pub all: bool,
+    pub terminal: bool,
     pub dry_run: bool,
     pub sandboxed: bool,
     pub verbose: bool,
@@ -67,6 +74,7 @@ pub struct Options {
 pub fn run(lang: Lang, m: &ArgMatches, sandboxed: bool, verbose: bool) -> CliResult {
     let opts = Options {
         all: m.get_flag("all"),
+        terminal: m.get_flag("terminal"),
         dry_run: m.get_flag("dry-run"),
         sandboxed,
         verbose,

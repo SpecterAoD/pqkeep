@@ -8,6 +8,9 @@
 mod access;
 mod args;
 mod context;
+mod context_dialog;
+mod dialog;
+mod dialog_text;
 mod files_cmd;
 mod help;
 mod integrate;

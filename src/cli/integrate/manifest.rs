@@ -31,6 +31,10 @@ pub struct Manifest {
     pub binary: String,
     /// DE/EN: Geschriebene Dateien / written files.
     pub files: Vec<Entry>,
+    /// DE: Start-Modus der Einträge (`dialog`/`terminal`; leer bei alten Listen).
+    /// EN: Launch mode of the entries (`dialog`/`terminal`; empty for old lists).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub mode: String,
 }
 
 /// DE/EN: SHA3-256 als Hex / SHA3-256 as hex.

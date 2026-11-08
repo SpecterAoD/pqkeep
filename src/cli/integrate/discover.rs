@@ -7,7 +7,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use super::entries::{self, Action, Terminal};
+use super::entries::{self, Action, Launch, Terminal};
 use crate::cli::integrate_text::IntegrateTexts;
 use crate::cli::io::{CliResult, Failure, code};
 
@@ -83,8 +83,15 @@ pub(super) fn binary(s: &IntegrateTexts) -> CliResult<String> {
     Ok(text.to_owned())
 }
 
-/// DE: Plant alle Einträge für die gewählten Dateimanager. EN: Plans all entries.
-pub(super) fn plan(s: &IntegrateTexts, data: &Path, bin: &str, all: bool) -> Vec<Target> {
+/// DE: Plant alle Einträge für die gewählten Dateimanager; `dialog` = Fenster statt Terminal.
+/// EN: Plans all entries for the chosen file managers; `dialog` = windows instead of a terminal.
+pub(super) fn plan(
+    s: &IntegrateTexts,
+    data: &Path,
+    bin: &str,
+    all: bool,
+    dialog: bool,
+) -> Vec<Target> {
     let mut out = Vec::new();
     let actions = [
         (Action::Encrypt, s.name_encrypt, s.comment_encrypt),
@@ -96,7 +103,7 @@ pub(super) fn plan(s: &IntegrateTexts, data: &Path, bin: &str, all: bool) -> Vec
             let path = data.join(format!("nemo/actions/pqkeep-{}.nemo_action", a.arg()));
             out.push(Target {
                 path,
-                content: entries::nemo(a, name, comment, bin),
+                content: entries::nemo(a, name, comment, bin, dialog),
                 mode: 0o644,
             });
         }
@@ -105,19 +112,24 @@ pub(super) fn plan(s: &IntegrateTexts, data: &Path, bin: &str, all: bool) -> Vec
         if !has(fm) {
             continue;
         }
-        let Some(term) = terminal(konsole) else {
-            eprintln!("{} ({fm})", s.msg_no_terminal);
-            continue;
+        let term = if dialog { None } else { terminal(konsole) };
+        let launch = match &term {
+            Some(t) => Launch::Terminal(t),
+            None if dialog => Launch::Dialog,
+            None => {
+                eprintln!("{} ({fm})", s.msg_no_terminal);
+                continue;
+            }
         };
         for (a, name, _) in actions {
             let (path, content) = if fm == "nautilus" {
                 (
                     data.join("nautilus/scripts").join(name),
-                    entries::nautilus(a, bin, &term),
+                    entries::nautilus(a, bin, launch),
                 )
             } else {
                 let file = format!("kio/servicemenus/pqkeep-{}.desktop", a.arg());
-                (data.join(file), entries::dolphin(a, name, bin, &term))
+                (data.join(file), entries::dolphin(a, name, bin, launch))
             };
             out.push(Target {
                 path,
