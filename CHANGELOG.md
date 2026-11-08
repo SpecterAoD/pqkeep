@@ -7,6 +7,9 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- Several sources at once: `pqkeep encrypt a b folder -o selection.pqkf` (one container, no new format),
+  `--each` (each separately, passphrase entered once), `decrypt` of several files, `--rename` for free
+  target names – see `docs/FILE_FORMAT.md`.
 - File manager context menu on Linux (Nemo, Nautilus, Dolphin): `pqkeep integrate install|uninstall|status`
   (current user only, fully reversible) and the terminal helper `pqkeep context` – see `docs/INTEGRATION.md`.
 - Context menu on Linux in window mode: small zenity/kdialog windows instead of a terminal
