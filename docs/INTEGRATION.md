@@ -38,7 +38,9 @@ pqkeep integrate uninstall
   `*\shell\PQKeep.Encrypt` (alle Dateien), `Directory\shell\PQKeep.Encrypt` (Ordner) und
   `SystemFileAssociations\.pqkf\shell\PQKeep.Decrypt`. Befehl jeweils
   `"<pfad>\pqkeep.exe" context encrypt|decrypt -- "%1"` als `REG_SZ` (keine Variablen-Erweiterung).
-- Nur **Einzelauswahl** (`MultiSelectModel=Single`); mehrere Dateien: Issue #72.
+- Rechtsklick-Einträge nur für **eine** Datei (`MultiSelectModel=Single`): Der Explorer würde klassische
+  Einträge bei Mehrfachauswahl je Datei einzeln starten. Für **mehrere Dateien** richtet `install`
+  zusätzlich **„Senden an → PQKeep“** ein (siehe [Mehrere Dateien](#mehrere-dateien)).
 - **Vollständig rückgängig:** Die Liste `%APPDATA%\PQKeep\integration.json` merkt sich jeden Eintrag
   mit Prüfsumme über alle Werte und Unterschlüssel. `uninstall` entfernt nur unveränderte eigene
   Einträge und danach leer gewordene Elternschlüssel; fremde oder geänderte bleiben stehen.
@@ -95,12 +97,29 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   (`bericht (2).txt`); überschrieben wird nie.
 - Die Passphrase wird verdeckt im Terminal eingegeben – in einem eigenen Prozess mit voller Sandbox,
   wie im Menü. Unter Linux gibt es dafür auch kleine Fenster (siehe oben).
-- Vorerst nur **eine** Datei bzw. ein Ordner pro Aufruf (mehrere: Issue #72).
+
+## Mehrere Dateien
+
+- **Linux:** Nemo (`Selection=notnone`), Nautilus und Dolphin (`%F`) übergeben alle markierten Einträge
+  – jeder Pfad ein eigenes Argument nach `--`.
+- **Windows:** **„Senden an → PQKeep“** (Verknüpfung `%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`, über
+  PowerShell angelegt, mit Prüfsumme im Manifest, `uninstall` entfernt sie nur unverändert). Aktion
+  `auto`: sind alle Dateien `.pqkf`, wird entschlüsselt, sonst verschlüsselt.
+- Beim Verschlüsseln fragt PQKeep: **jede Datei einzeln** oder **alles in einen Container**. Der
+  Container-Name ist vorgeschlagen (`<Ordnername>.pqkf`, sonst `Auswahl (N Einträge).pqkf`) und **frei
+  änderbar**; er wird neben der Auswahl gespeichert (freier Name, nie überschrieben).
+- Passphrase bzw. Empfänger nur **einmal**; die Arbeit macht **ein** Kindprozess mit voller Sandbox
+  (`encrypt --each --rename`, `encrypt --out`, `decrypt --rename`). Am Ende eine Zusammenfassung
+  (`Erledigt: 3 / 3`), Fehler einzelner Dateien werden aufgelistet.
+- **Abbrechen** im Fortschrittsfenster (zenity, PowerShell; kdialog hat keins) beendet die Arbeit:
+  fertige Dateien bleiben, angefangene werden entfernt (nur eigene Temporärdateien `.<ziel>.tmp-…`).
+- „Erneut versuchen“ nur, solange noch nichts geschrieben wurde (zu schwache oder ungleiche Passphrase).
+- Höchstens 1000 Einträge pro Aufruf.
 
 ## Sicherheit
 
-- Der Dateiname aus dem Dateimanager wird nie über eine Shell zusammengesetzt, sondern nach `--` als
-  genau ein Argument übergeben; `pqkeep context` akzeptiert genau einen Pfad. Getestet mit Namen
+- Dateinamen aus dem Dateimanager werden nie über eine Shell zusammengesetzt, sondern nach `--` als je
+  ein Argument übergeben. Getestet mit Namen
   voller Sonderzeichen (`'`, `"`, `;`, `$()`, Backticks, Zeilenumbruch, führendes `--`).
 - Der Hilfsprozess `pqkeep context` verarbeitet keine Geheimnisse; Verschlüsseln und Entschlüsseln
   laufen als Kindprozess mit voller Sandbox (`docs/SANDBOX.md`).
@@ -160,9 +179,19 @@ On Windows PowerShell/.NET keep the passphrase briefly unzeroed in their own mem
 recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
 for your key file in recipient mode. The result is placed next to the source under a free name
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
-sandboxed process (on Linux also via small windows, see above); multiple files: issue #72.
+sandboxed process (on Linux also via small windows, see above).
 
-**Security:** the file name is passed after `--` as exactly one argument, never through a shell, and
-`pqkeep context` accepts exactly one path (tested with hostile names). The helper process handles no
+**Several files:** Linux: Nemo (`Selection=notnone`), Nautilus and Dolphin (`%F`) pass all selected
+entries, one argument each after `--`. Windows: classic entries would start one process per file,
+so `install` also sets up **"Send to → PQKeep"** (`%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`,
+created via PowerShell, checksum in the manifest); action `auto` decrypts if all are `.pqkf`, else
+encrypts. When encrypting PQKeep asks: **each file separately** or **everything in one container**
+(name suggested as `<folder name>.pqkf` or `Selection (N entries).pqkf` and **freely editable**). The
+passphrase or recipient is asked once, one sandboxed child does the work, a summary is shown at the
+end. **Cancel** in the progress window keeps finished files and removes unfinished ones (only own
+temporary files). Retry only while nothing has been written yet. At most 1000 entries.
+
+**Security:** file names are passed after `--` as one argument each, never through a shell (tested
+with hostile names). The helper process handles no
 secrets. Nautilus and Dolphin are covered by tests of the generated files, not in the running file
 manager.
