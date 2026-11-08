@@ -9,6 +9,9 @@ German release notes: see `docs/releases/`.
 ### Added
 - File manager context menu on Linux (Nemo, Nautilus, Dolphin): `pqkeep integrate install|uninstall|status`
   (current user only, fully reversible) and the terminal helper `pqkeep context` – see `docs/INTEGRATION.md`.
+- Context menu on Linux in window mode: small zenity/kdialog windows instead of a terminal
+  (`pqkeep context --dialog`, `integrate install --terminal` to opt out); the passphrase goes through a
+  pipe straight into the sandboxed child process – see `docs/INTEGRATION.md`.
 - Explorer context menu on Windows (`HKCU\Software\Classes`, no administrator rights, fully reversible,
   single selection; console window) – see `docs/INTEGRATION.md`.
 - Detached file signatures in the library (`pqkeep::sign`): `.pqsig` format v1 with ML-DSA-87 over the
