@@ -7,8 +7,11 @@
 
 mod access;
 mod args;
+mod context;
 mod files_cmd;
 mod help;
+mod integrate;
+mod integrate_text;
 mod io;
 mod keys;
 mod menu;
@@ -126,6 +129,8 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
             Ok(())
         }
         Some(("man", _)) => help::man(lang),
+        Some(("integrate", m)) => integrate::run(lang, m, sandboxed, verbose),
+        Some(("context", m)) => context::run(t, lang, m),
         #[cfg(feature = "api")]
         Some(("serve", m)) => serve::serve(lang, m, sandboxed),
         _ => Err(Failure::new(code::USAGE, "")),

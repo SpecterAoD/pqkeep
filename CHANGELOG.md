@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 versioning: [Semantic Versioning](https://semver.org/) (pre-1.0: formats and options may still change).
 German release notes: see `docs/releases/`.
 
+## [Unreleased]
+
+### Added
+- File manager context menu on Linux (Nemo, Nautilus, Dolphin): `pqkeep integrate install|uninstall|status`
+  (current user only, fully reversible) and the terminal helper `pqkeep context` – see `docs/INTEGRATION.md`.
+
 ## [0.1.0-beta.1] – 2026-11-07
 
 First public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
