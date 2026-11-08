@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.6: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.7: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -6,6 +6,7 @@
 > Änderung v2.4 (07.11.2026, freigegeben von SpecterAoD): Wortlisten für die Passphrase-Prüfung (Schritt 2b), Ausnahme von 5c für die EFF-Wortlisten (CC BY 4.0).
 > Änderung v2.5 (07.11.2026, freigegeben von SpecterAoD): Umbenennung von „PQC KeyForge“ in **PQKeep** (Crate, Bibliothek und Binary `pqkeep`, Repository `SpecterAoD/pqkeep`) wegen Namenskonflikt mit dem Kartenspiel „KeyForge“. Formatkennungen `PQKEEP-KEY`/`PQKEEP-PUB`, Domänentrennung `PQKeep/…`, Token-Präfix `pqk1_`; Endung `.pqkf` und `PQKFENC` bleiben. Vor dem ersten Release, daher ohne Kompatibilität zu Dateien des alten Namens.
 > Änderung v2.6 (07.11.2026, freigegeben von SpecterAoD): Schritt 6 an die Umsetzung angeglichen – `main` per Ruleset ohne Pflicht-Review (ein Maintainer; Prüfung über Pflicht-Checks), offizieller SignPath-Wortlaut, Linux-Release-Build auf Ubuntu 22.04, Release zunächst als Entwurf, SignPath-Action erst nach Zusage, gitleaks als geprüftes Binary statt Action.
+> Änderung v2.7 (08.11.2026, freigegeben von SpecterAoD): U1-1 präzisiert – Signaturformat `.pqsig` v1 (`docs/SIGNATURE_FORMAT.md`): nur ML-DSA-87, SHA3-512 und Dateigröße, Kontext-String `PQKeep/sig/v1`, signiert wird eine feste Binärkodierung statt JSON, Dateiname nicht signiert, Zeitstempel ist Angabe des Signierers.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -233,7 +234,7 @@ Jeder Schritt wird erst nach grünem `cargo test` und Freigabe abgeschlossen. Pr
 Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of Done. Reihenfolge nach Abhängigkeiten.
 
 ### U1: Digitale Signaturen (ML-DSA-87)
-- Datei signieren mit dem eigenen privaten ML-DSA-Schlüssel; abgesetzte Signaturdatei (`<datei>.pqsig`) mit Format-Version, Algorithmus, Schlüssel-ID des Signierers, SHA3-512 der Datei, Zeitstempel, Kontext-String und Signatur. Große Dateien werden gestreamt gehasht (kein Laden in den Speicher).
+- Datei signieren mit dem eigenen privaten ML-DSA-Schlüssel; abgesetzte Signaturdatei (`<datei>.pqsig`) mit Format-Version, Algorithmus, Schlüssel-ID des Signierers, SHA3-512 der Datei, Zeitstempel, Kontext-String und Signatur. Große Dateien werden gestreamt gehasht (kein Laden in den Speicher). Format: `docs/SIGNATURE_FORMAT.md` (v1, nur ML-DSA-87; Dateiname nicht signiert; Zeitstempel ist eine Angabe des Signierers).
 - Prüfen mit dem öffentlichen Schlüssel: Ausgabe eindeutig `[VERIFIED]` oder `[INVALID]` (Exit-Code 0 bzw. ≠ 0); Anzeige der Schlüssel-ID/des Fingerabdrucks des Signierers.
 - **Ehrliche Einordnung:** Die Signatur beweist, dass die Datei unverändert ist und vom Inhaber des privaten Schlüssels signiert wurde. Wer dieser Inhaber ist, muss über den Fingerabdruck auf einem zweiten Weg bestätigt werden. Sie ist **keine** qualifizierte elektronische Signatur nach eIDAS (dafür wären ein qualifiziertes Zertifikat und ein Vertrauensdiensteanbieter nötig); „rechtssicher“ im juristischen Sinn ist sie damit nicht.
 - Erweiterung für `.pqkf`: optionale Absender-Signatur im Container (ersetzt den bisherigen Eintrag „optionale ML-DSA-Signatur des Absenders“).
