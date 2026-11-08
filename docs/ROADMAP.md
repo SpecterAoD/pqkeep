@@ -2,7 +2,7 @@
 
 Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
 
-**Stand / status (07.11.2026):** Schritte 0–7 abgeschlossen, erste Beta [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) veröffentlicht; als Nächstes SignPath-Bewerbung und die Updates unten. / Steps 0–7 done, first beta published; next: SignPath application and the updates below.
+**Stand / status (08.11.2026):** Schritte 0–7 abgeschlossen, erste Beta [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) veröffentlicht; SignPath vorerst abgelehnt (erneute Bewerbung später); als Nächstes die Updates unten. / Steps 0–7 done, first beta published; SignPath declined for now (will reapply later); next: the updates below.
 
 | Schritt | Inhalt | Ergebnis |
 |---|---|---|
@@ -37,7 +37,8 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 ## Offene Punkte außerhalb des Codes
 
 - [x] Repository öffentlich schalten (Voraussetzung für SignPath) – 07.11.2026
-- [ ] Bei der SignPath Foundation bewerben (Voraussetzung „already released“ seit `v0.1.0-beta.1` erfüllt)
+- [x] Bei der SignPath Foundation beworben – 08.11.2026 vorerst abgelehnt (zu wenig Sichtbarkeit)
+- [ ] Später erneut bei SignPath bewerben; bis dahin bleibt das Windows-Programm unsigniert
 - [x] MFA bei GitHub aktiv (SignPath bei der Bewerbung)
 - [x] Ruleset auf `main` (PR, Pflicht-Checks, signierte Commits) und Schutz der Release-Tags
 - [x] Secret Scanning und Push Protection aktiv
