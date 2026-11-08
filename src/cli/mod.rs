@@ -28,6 +28,8 @@ mod sandbox;
 mod serve;
 #[cfg(feature = "api")]
 mod serve_text;
+mod sign_cmd;
+mod sign_text;
 mod text;
 mod text_de;
 mod text_en;
@@ -131,6 +133,8 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
         Some(("passphrase", m)) => validate::passphrase(t, lang, m),
         Some(("encrypt", m)) => files_cmd::encrypt(t, lang, m),
         Some(("decrypt", m)) => files_cmd::decrypt(t, lang, m),
+        Some(("sign", m)) => sign_cmd::sign(t, lang, m),
+        Some(("verify", m)) => sign_cmd::verify(lang, m),
         Some(("help", m)) => help::help(t, lang, m),
         Some(("completions", m)) => {
             help::completions(lang, m);

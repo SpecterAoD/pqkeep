@@ -43,14 +43,14 @@ fn after(lang: Lang, text: &str) -> String {
     format!("{text}\n\n{}", exit_codes(lang))
 }
 
-fn flag(name: &'static str, help: &'static str) -> Arg {
+pub(super) fn flag(name: &'static str, help: &'static str) -> Arg {
     Arg::new(name)
         .long(name)
         .help(help)
         .action(ArgAction::SetTrue)
 }
 
-fn opt(name: &'static str, help: &'static str) -> Arg {
+pub(super) fn opt(name: &'static str, help: &'static str) -> Arg {
     Arg::new(name)
         .long(name)
         .help(help)
@@ -58,7 +58,7 @@ fn opt(name: &'static str, help: &'static str) -> Arg {
         .hide_possible_values(true)
 }
 
-fn path(name: &'static str, help: &'static str) -> Arg {
+pub(super) fn path(name: &'static str, help: &'static str) -> Arg {
     Arg::new(name)
         .help(help)
         .required(true)
@@ -67,7 +67,12 @@ fn path(name: &'static str, help: &'static str) -> Arg {
 
 /// DE: Gemeinsame Grundlage jedes Befehls: Sprache der Überschriften, eigene Hilfeoption.
 /// EN: Common base of every command: heading language, own help flag.
-fn base(name: &'static str, about: &'static str, after_text: &str, lang: Lang) -> Command {
+pub(super) fn base(
+    name: &'static str,
+    about: &'static str,
+    after_text: &str,
+    lang: Lang,
+) -> Command {
     let t = texts(lang);
     Command::new(name)
         .about(about)
@@ -238,6 +243,7 @@ pub fn build(lang: Lang) -> Command {
                 .args(out_args(lang, true)),
         )
         .subcommands(file_commands(lang))
+        .subcommands(super::sign_cmd::commands(lang))
         .subcommands(help_commands(lang));
     with_integration(with_serve(cmd, lang), lang)
 }
