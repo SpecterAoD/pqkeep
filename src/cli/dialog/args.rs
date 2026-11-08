@@ -7,11 +7,17 @@
 
 /// DE: Unterstütztes Werkzeug. EN: Supported tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// DE: Je System wird nur ein Teil der Werkzeuge erzeugt. EN: Each system creates only some tools.
 pub enum Kind {
     /// GNOME/GTK (`zenity`)
+    #[cfg_attr(windows, allow(dead_code))]
     Zenity,
     /// KDE/Qt (`kdialog`)
+    #[cfg_attr(windows, allow(dead_code))]
     Kdialog,
+    /// Windows: PowerShell + Windows Forms (`powershell.rs`)
+    #[cfg_attr(not(windows), allow(dead_code))]
+    PowerShell,
 }
 
 /// DE: Eine Anfrage an das Werkzeug. EN: One request to the tool.
@@ -69,6 +75,8 @@ pub fn args(kind: Kind, title: &str, req: &Request<'_>) -> Option<Vec<String>> {
     match kind {
         Kind::Zenity => Some(zenity(title, req)),
         Kind::Kdialog => kdialog(title, req),
+        // DE: Skript statt Argumentliste, siehe `powershell.rs`. EN: Script instead, see `powershell.rs`.
+        Kind::PowerShell => None,
     }
 }
 

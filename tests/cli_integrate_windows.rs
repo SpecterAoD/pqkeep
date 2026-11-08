@@ -16,6 +16,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use windows_registry::CURRENT_USER;
 
 const BIN: &str = env!("CARGO_BIN_EXE_pqkeep");
+const LAUNCHER: &str = env!("CARGO_BIN_EXE_pqkeepw");
 const VERBS: [&str; 3] = [
     r"*\shell\PQKeep.Encrypt",
     r"Directory\shell\PQKeep.Encrypt",
@@ -93,14 +94,15 @@ fn install_writes_all_verbs_and_is_idempotent() {
     let e = Env::new();
     let (code, out, err) = e.run(&["install"]);
     assert_eq!(code, 0, "{out}{err}");
+    assert!(out.contains("Mode: Windows (pqkeepw.exe"), "{out}");
     for verb in VERBS {
         let cmd = e.command(verb);
-        assert!(cmd.starts_with(&format!("\"{BIN}\" context ")), "{cmd}");
+        assert!(cmd.starts_with(&format!("\"{LAUNCHER}\" ")), "{cmd}");
         assert!(cmd.ends_with(r#" -- "%1""#), "{cmd}");
         let key = CURRENT_USER.open(e.key(verb)).unwrap();
         assert_eq!(key.get_string("MultiSelectModel").unwrap(), "Single");
     }
-    assert!(e.command(VERBS[2]).contains(" context decrypt -- "));
+    assert!(e.command(VERBS[2]).contains("\" decrypt -- "));
     assert!(e.manifest().is_file());
     assert!(out.contains("Show more options"));
     let (code, out, _) = e.run(&["install"]);
@@ -109,6 +111,20 @@ fn install_writes_all_verbs_and_is_idempotent() {
     let (code, out, _) = e.run(&["status"]);
     assert_eq!(code, 0);
     assert_eq!(out.matches("Set up").count(), 3, "{out}");
+}
+
+#[test]
+fn terminal_option_uses_the_console_program() {
+    let e = Env::new();
+    let (code, out, err) = e.run(&["install", "--terminal"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out.contains("Mode: Terminal"), "{out}");
+    let cmd = e.command(VERBS[0]);
+    assert_eq!(cmd, format!("\"{BIN}\" context encrypt -- \"%1\""));
+    // DE: Wechsel zurück ersetzt die eigenen Einträge. EN: Switching back replaces own entries.
+    let (_, out, _) = e.run(&["install"]);
+    assert_eq!(out.matches("Set up").count(), 3, "{out}");
+    assert!(e.command(VERBS[0]).starts_with(&format!("\"{LAUNCHER}\" ")));
 }
 
 #[test]

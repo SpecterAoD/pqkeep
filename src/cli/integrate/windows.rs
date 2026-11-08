@@ -13,39 +13,14 @@ use std::path::{Path, PathBuf};
 
 use pqkeep::Error;
 use pqkeep::security::Lang;
-use windows_registry::{CURRENT_USER, Key, Type};
+use windows_registry::CURRENT_USER;
 
 use super::Options;
 use super::manifest::{FileState, Manifest, digest};
-use super::winplan::{COMMAND_KEY, SZ, Snapshot, Verb, plan, safe_windows_path};
+use super::registry::{RegResult, prune_empty, root, state, write};
+use super::winplan::{Verb, plan, safe_windows_path};
 use crate::cli::integrate_text::{IntegrateTexts, integrate_texts};
 use crate::cli::io::{CliResult, Failure, code};
-
-/// DE: Klassen-Wurzel unter HKCU. EN: Classes root below HKCU.
-const CLASSES: &str = r"Software\Classes";
-/// DE: Win32-Fehler 2 (nicht gefunden) als HRESULT. EN: Win32 error 2 (not found) as HRESULT.
-const NOT_FOUND: u32 = 0x8007_0002;
-
-type RegResult<T> = windows_registry::Result<T>;
-
-/// DE: Test-Wurzel `Software\PQKeepTest…`, nur in Debug-Builds per Umgebungsvariable.
-/// EN: Test root `Software\PQKeepTest…`, only in debug builds via environment variable.
-#[cfg(debug_assertions)]
-fn test_root() -> Option<String> {
-    std::env::var("PQKEEP_TEST_REG_ROOT")
-        .ok()
-        .filter(|r| r.starts_with(r"Software\PQKeepTest"))
-}
-
-#[cfg(not(debug_assertions))]
-fn test_root() -> Option<String> {
-    None
-}
-
-/// DE: Klassen-Wurzel (oder Test-Wurzel). EN: Classes root (or test root).
-fn root() -> String {
-    test_root().unwrap_or_else(|| CLASSES.to_owned())
-}
 
 /// DE: Registry-Fehler ohne Details (keine Pfade in Meldungen). EN: Registry error without details.
 fn reg_fail<T>(lang: Lang, r: RegResult<T>) -> CliResult<T> {
@@ -54,90 +29,6 @@ fn reg_fail<T>(lang: Lang, r: RegResult<T>) -> CliResult<T> {
 
 fn io_fail(lang: Lang) -> impl Fn(std::io::Error) -> Failure {
     move |e| Failure::from_error(&Error::from(e), lang)
-}
-
-/// DE: Öffnet lesend; `None`, wenn der Schlüssel fehlt. EN: Opens for reading; `None` if missing.
-fn open(path: &str) -> RegResult<Option<Key>> {
-    match CURRENT_USER.open(path) {
-        Ok(k) => Ok(Some(k)),
-        Err(e) if e.code().0.cast_unsigned() == NOT_FOUND => Ok(None),
-        Err(e) => Err(e),
-    }
-}
-
-/// DE: Alle Werte; Nicht-Text-Werte nur mit Typ (weichen ohnehin vom Plan ab).
-/// EN: All values; non-text values only with their type (they differ from the plan anyway).
-fn values(key: &Key) -> RegResult<Vec<(String, String, String)>> {
-    let mut out = Vec::new();
-    for (name, value) in key.values()? {
-        let entry = match value.ty() {
-            Type::String => (name, SZ.to_owned(), String::try_from(value)?),
-            other => (name, format!("{other:?}"), String::new()),
-        };
-        out.push(entry);
-    }
-    Ok(out)
-}
-
-/// DE: Liest den Zustand eines Eintrags (Verb + `command`). EN: Reads the state of an entry.
-fn snapshot(full: &str) -> RegResult<Option<Snapshot>> {
-    let Some(key) = open(full)? else {
-        return Ok(None);
-    };
-    let mut snap = Snapshot {
-        values: values(&key)?,
-        subkeys: key.keys()?.collect(),
-        ..Snapshot::default()
-    };
-    let has_command = snap
-        .subkeys
-        .iter()
-        .any(|k| k.eq_ignore_ascii_case(COMMAND_KEY));
-    let cmd = if has_command {
-        open(&format!(r"{full}\{COMMAND_KEY}"))?
-    } else {
-        None
-    };
-    if let Some(cmd) = cmd {
-        snap.command_values = values(&cmd)?;
-        snap.command_subkeys = cmd.keys()?.collect();
-    }
-    Ok(Some(snap))
-}
-
-fn state(manifest: &Manifest, full: &str) -> RegResult<(FileState, Option<String>)> {
-    let current = snapshot(full)?.map(|s| digest(s.canonical().as_bytes()));
-    let st = match &current {
-        None => FileState::Missing,
-        Some(d) if manifest.recorded(Path::new(full)) == Some(d.as_str()) => FileState::Ours,
-        Some(_) => FileState::Foreign,
-    };
-    Ok((st, current))
-}
-
-fn write(full: &str, verb: &Verb) -> RegResult<()> {
-    let key = CURRENT_USER.create(full)?;
-    for (name, data) in &verb.values {
-        key.set_string(name, data)?;
-    }
-    key.create(COMMAND_KEY)?.set_string("", &verb.command)
-}
-
-/// DE: Entfernt leere Elternschlüssel bis unterhalb der Wurzel. EN: Removes empty parents below the root.
-fn prune_empty(root: &str, full: &str) {
-    let mut path = full;
-    while let Some((parent, _)) = path.rsplit_once('\\') {
-        if parent.len() <= root.len() {
-            break;
-        }
-        let empty = matches!(open(parent), Ok(Some(k))
-            if k.keys().is_ok_and(|mut i| i.next().is_none())
-                && k.values().is_ok_and(|mut i| i.next().is_none()));
-        if !empty || CURRENT_USER.remove_tree(parent).is_err() {
-            break;
-        }
-        path = parent;
-    }
 }
 
 fn manifest_path(s: &IntegrateTexts) -> CliResult<PathBuf> {
@@ -183,32 +74,73 @@ fn save_manifest(path: &Path, manifest: &Manifest, lang: Lang) -> CliResult {
     fs::rename(&temp, path).map_err(io_fail(lang))
 }
 
+/// DE: `pqkeepw.exe` neben dem Programm (Fenster ohne Konsole), außer bei `--terminal`.
+/// EN: `pqkeepw.exe` next to the program (windows without a console), unless `--terminal`.
+fn launcher(bin: &str, opts: &Options) -> Option<String> {
+    if opts.terminal {
+        return None;
+    }
+    let w = Path::new(bin).with_file_name("pqkeepw.exe");
+    let text = w.to_str()?.to_owned();
+    (w.is_file() && safe_windows_path(&text, &[])).then_some(text)
+}
+
+fn mode_label<'a>(s: &'a IntegrateTexts, mode: &str) -> &'a str {
+    if mode == "dialog" {
+        s.mode_dialog_win
+    } else {
+        s.mode_terminal
+    }
+}
+
+/// DE: Schreibt einen Eintrag, sofern er fehlt oder ein unveränderter eigener ist.
+/// EN: Writes an entry if it is missing or an unchanged own one.
+fn apply(
+    s: &IntegrateTexts,
+    full: &str,
+    verb: &Verb,
+    m: &mut Manifest,
+    dry: bool,
+    lang: Lang,
+) -> CliResult {
+    let wanted = digest(verb.snapshot().canonical().as_bytes());
+    let (st, current) = reg_fail(lang, state(m, full))?;
+    let shown = format!(r"HKCU\{full}");
+    if current.as_deref() == Some(wanted.as_str()) {
+        m.record(Path::new(full), wanted);
+        println!("{}: {shown}", s.msg_unchanged);
+    } else if st == FileState::Foreign {
+        eprintln!("{}: {shown}", s.msg_foreign);
+    } else {
+        if !dry {
+            // DE: Eigenen alten Stand vollständig ersetzen. EN: Fully replace our own old state.
+            if st == FileState::Ours {
+                reg_fail(lang, CURRENT_USER.remove_tree(full))?;
+            }
+            reg_fail(lang, write(full, verb))?;
+        }
+        m.record(Path::new(full), wanted);
+        println!("{}: {shown}", s.msg_written);
+    }
+    Ok(())
+}
+
 fn install(s: &IntegrateTexts, root: &str, mpath: &Path, opts: &Options, lang: Lang) -> CliResult {
     let bin = binary(s)?;
+    let launcher = launcher(&bin, opts);
     let mut manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
     manifest.version = 1;
     manifest.binary.clone_from(&bin);
-    for verb in plan(s, &bin) {
+    (if launcher.is_some() {
+        "dialog"
+    } else {
+        "terminal"
+    })
+    .clone_into(&mut manifest.mode);
+    println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
+    for verb in plan(s, &bin, launcher.as_deref()) {
         let full = format!(r"{root}\{}", verb.path);
-        let wanted = digest(verb.snapshot().canonical().as_bytes());
-        let (st, current) = reg_fail(lang, state(&manifest, &full))?;
-        let shown = format!(r"HKCU\{full}");
-        if current.as_deref() == Some(wanted.as_str()) {
-            manifest.record(Path::new(&full), wanted);
-            println!("{}: {shown}", s.msg_unchanged);
-        } else if st == FileState::Foreign {
-            eprintln!("{}: {shown}", s.msg_foreign);
-        } else {
-            if !opts.dry_run {
-                // DE: Eigenen alten Stand vollständig ersetzen. EN: Fully replace our own old state.
-                if st == FileState::Ours {
-                    reg_fail(lang, CURRENT_USER.remove_tree(&full))?;
-                }
-                reg_fail(lang, write(&full, &verb))?;
-            }
-            manifest.record(Path::new(&full), wanted);
-            println!("{}: {shown}", s.msg_written);
-        }
+        apply(s, &full, &verb, &mut manifest, opts.dry_run, lang)?;
     }
     if opts.dry_run {
         println!("{}", s.msg_dry);
@@ -254,6 +186,9 @@ fn uninstall(
 
 fn status(s: &IntegrateTexts, mpath: &Path, lang: Lang) -> CliResult {
     let manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
+    if !manifest.files.is_empty() {
+        println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
+    }
     for e in &manifest.files {
         let full = e.path.to_string_lossy();
         let label = match reg_fail(lang, state(&manifest, &full))?.0 {

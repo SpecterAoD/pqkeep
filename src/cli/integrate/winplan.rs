@@ -82,7 +82,13 @@ impl Snapshot {
 /// EN: Plans all entries: encrypt files and folders, decrypt `.pqkf`. Single selection only
 /// (`MultiSelectModel=Single`), multi-selection follows with U4-4. The path from Explorer is
 /// exactly one argument after `--`.
-pub fn plan(s: &IntegrateTexts, bin: &str) -> Vec<Verb> {
+pub fn plan(s: &IntegrateTexts, bin: &str, launcher: Option<&str>) -> Vec<Verb> {
+    // DE: Mit Startprogramm (`pqkeepw.exe`): Fenster ohne Konsole; es ergänzt `context --dialog`.
+    // EN: With launcher (`pqkeepw.exe`): windows without a console; it adds `context --dialog`.
+    let command = |action: &str| match launcher {
+        Some(w) => format!("\"{w}\" {action} -- \"%1\""),
+        None => format!("\"{bin}\" context {action} -- \"%1\""),
+    };
     let verb = |path: &str, action: &str, name: &str| Verb {
         path: path.to_owned(),
         values: vec![
@@ -90,7 +96,7 @@ pub fn plan(s: &IntegrateTexts, bin: &str) -> Vec<Verb> {
             ("Icon".to_owned(), format!("{bin},0")),
             ("MultiSelectModel".to_owned(), "Single".to_owned()),
         ],
-        command: format!("\"{bin}\" context {action} -- \"%1\""),
+        command: command(action),
     };
     vec![
         verb(r"*\shell\PQKeep.Encrypt", "encrypt", s.name_encrypt),

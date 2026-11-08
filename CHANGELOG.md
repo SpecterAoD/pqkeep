@@ -12,6 +12,8 @@ German release notes: see `docs/releases/`.
 - Context menu on Linux in window mode: small zenity/kdialog windows instead of a terminal
   (`pqkeep context --dialog`, `integrate install --terminal` to opt out); the passphrase goes through a
   pipe straight into the sandboxed child process – see `docs/INTEGRATION.md`.
+- Windows context menu in window mode: launcher `pqkeepw.exe` (no console window, part of the Windows
+  package) and PowerShell/Windows Forms windows; console fallback if PowerShell is restricted.
 - Explorer context menu on Windows (`HKCU\Software\Classes`, no administrator rights, fully reversible,
   single selection; console window) – see `docs/INTEGRATION.md`.
 - Detached file signatures in the library (`pqkeep::sign`): `.pqsig` format v1 with ML-DSA-87 over the
