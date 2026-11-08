@@ -135,7 +135,9 @@ def argon2_ad(kind):
     return DOMAINS[kind] + b"argon2\0"
 
 
-def passphrase_info(kind, factor):
+def kdf_slot_info(kind, factor):
+    """DE: HKDF-Info des Passphrase-Zugangs; Eingabe ist das Argon2id-Ergebnis B, nie die Passphrase.
+    EN: HKDF info of the passphrase slot; input is the Argon2id result B, never the passphrase."""
     return DOMAINS[kind] + b"wrap/passphrase\0" + uint(factor, 8)
 
 

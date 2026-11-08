@@ -102,7 +102,7 @@ class V2SpecTests(unittest.TestCase):
         for kind in ("file", "key"):
             self.assertLessEqual(len(ref.argon2_ad(kind)), 32)
             self.assertNotIn(b"v1", ref.DOMAINS[kind])
-        infos = {ref.passphrase_info(k, f) for k in ("file", "key") for f in (0, 1)}
+        infos = {ref.kdf_slot_info(k, f) for k in ("file", "key") for f in (0, 1)}
         infos.add(ref.recipient_info(bytes(32)))
         self.assertEqual(len(infos), 5)
 
