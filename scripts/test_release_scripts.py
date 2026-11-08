@@ -41,6 +41,10 @@ def test_reproducible_and_content() -> None:
             binary = os.path.join(tmp, exe)
             with open(binary, "wb") as f:
                 f.write(b"\x7fELF fake binary")
+            extra = ["pqkeepw.exe"] if "windows" in target else []
+            for name in extra:
+                with open(os.path.join(tmp, name), "wb") as f:
+                    f.write(b"MZ fake launcher")
             a = pack(binary, target, os.path.join(tmp, "a"))
             b = pack(binary, target, os.path.join(tmp, "b"))
             assert digest(a) == digest(b), f"nicht reproduzierbar / not reproducible: {target}"
@@ -51,7 +55,8 @@ def test_reproducible_and_content() -> None:
                 with tarfile.open(a) as t:
                     names = t.getnames()
                     assert all(m.uid == 0 and m.mtime == 1700000000 for m in t.getmembers())
-            assert sorted(names) == sorted(prefix + n for n in [exe, "LICENSE", "NOTICE", "README.md", "LICENSES-wordlists.md"]), names
+            expected = [exe, *extra, "LICENSE", "NOTICE", "README.md", "LICENSES-wordlists.md"]
+            assert sorted(names) == sorted(prefix + n for n in expected), names
 
 
 def test_sbom_completion() -> None:
@@ -72,6 +77,15 @@ def test_sbom_completion() -> None:
             raise AssertionError("SPDX hätte abgelehnt werden müssen / should be rejected")
         except ValueError:
             pass
+
+
+def test_windows_package_requires_launcher() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        binary = os.path.join(tmp, "pqkeep.exe")
+        with open(binary, "wb") as f:
+            f.write(b"MZ fake")
+        assert rp.main([binary, "1.0.0", "x86_64-pc-windows-msvc", os.path.join(tmp, "out")]) == 2
+        assert not os.path.exists(os.path.join(tmp, "out"))
 
 
 def test_smoke_dry_run() -> None:

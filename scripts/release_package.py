@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Verpackt ein Release-Binary reproduzierbar / packages a release binary reproducibly.
 
-DE: Erzeugt `pqkeep-<version>-<ziel>.tar.gz` (Linux) bzw. `.zip` (Windows) mit Binary, LICENSE,
+DE: Erzeugt `pqkeep-<version>-<ziel>.tar.gz` (Linux) bzw. `.zip` (Windows; zusätzlich das
+    Startprogramm `pqkeepw.exe` aus demselben Ordner, Pflicht) mit Binary, LICENSE,
     NOTICE, README.md und den Lizenztexten der eingebetteten Wortlisten (LICENSES-wordlists.md). Feste Reihenfolge, feste Zeitstempel (SOURCE_DATE_EPOCH), keine
     Benutzer-/Gruppennamen – gleiche Eingaben ergeben ein bitgleiches Archiv.
-EN: Creates `pqkeep-<version>-<target>.tar.gz` (Linux) or `.zip` (Windows) with binary, LICENSE,
+EN: Creates `pqkeep-<version>-<target>.tar.gz` (Linux) or `.zip` (Windows; additionally the
+    launcher `pqkeepw.exe` from the same folder, required) with binary, LICENSE,
     NOTICE, README.md and the licence texts of the embedded word lists (LICENSES-wordlists.md). Fixed order, fixed timestamps (SOURCE_DATE_EPOCH), no user/group
     names – equal inputs give a bit-identical archive.
 
@@ -43,10 +45,20 @@ def archive_name(version: str, target: str) -> str:
     return f"pqkeep-{version}-{target}.{ext}"
 
 
-def members(binary: str, root: str) -> list:
+def binaries(binary: str, target: str) -> list:
+    """DE/EN: Programme des Pakets; Windows mit `pqkeepw.exe` / package programs; Windows adds it."""
+    found = [binary]
+    if "windows" in target:
+        launcher = os.path.join(os.path.dirname(binary), "pqkeepw.exe")
+        if not os.path.isfile(launcher):
+            raise FileNotFoundError(f"pqkeepw.exe fehlt / missing: {launcher}")
+        found.append(launcher)
+    return found
+
+
+def members(binary: str, root: str, target: str = "") -> list:
     """DE/EN: (Name im Archiv, Pfad, Modus) in fester Reihenfolge / in fixed order."""
-    name = os.path.basename(binary)
-    items = [(name, binary, 0o755)]
+    items = [(os.path.basename(b), b, 0o755) for b in binaries(binary, target)]
     items += [(name, os.path.join(root, src), 0o644) for name, src in EXTRA_FILES]
     return sorted(items)
 
@@ -90,7 +102,11 @@ def main(argv: list) -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     name = archive_name(version, target)
     prefix = name.rsplit(".zip", 1)[0].rsplit(".tar.gz", 1)[0]
-    items = members(binary, root)
+    try:
+        items = members(binary, root, target)
+    except FileNotFoundError as err:
+        print(err)
+        return 2
     print(f"{name}: " + ", ".join(i[0] for i in items))
     if dry:
         return 0
