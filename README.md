@@ -58,7 +58,8 @@ pqkeep integrate install                 # right-click menu in Nemo/Nautilus/Dol
 ```
 
 Language: `--lang en|de` (default: system language). Passphrases are never command-line
-arguments – only a hidden prompt or `--passphrase-stdin`.
+arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` (servers: see
+[`docs/SERVER.md`](docs/SERVER.md)).
 
 ### Security at a glance
 
@@ -124,6 +125,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Memory hardening | [`docs/MEMORY_HARDENING.md`](docs/MEMORY_HARDENING.md) |
 | Passphrase rules | [`docs/SECURITY_PASSPHRASE.md`](docs/SECURITY_PASSPHRASE.md) |
 | File manager context menu (Linux, Windows) | [`docs/INTEGRATION.md`](docs/INTEGRATION.md) |
+| Servers (cron/systemd, unattended) | [`docs/SERVER.md`](docs/SERVER.md) |
 | Key management (backup, rotation) | [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md) |
 | Security self-review | [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) |
 | Release process | [`docs/RELEASE.md`](docs/RELEASE.md) |
