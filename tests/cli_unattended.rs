@@ -152,3 +152,35 @@ fn batch_never_prompts() {
     assert_eq!(code, 2, "{err}");
     assert!(err.contains("--batch"), "{err}");
 }
+
+#[test]
+fn sign_uses_the_global_passphrase_file() {
+    let root = tempfile::tempdir().unwrap();
+    let pf = pass_file(root.path(), 0o600);
+    let pf = pf.to_str().unwrap();
+    let gen_args = [
+        "generate",
+        "-a",
+        "ml-dsa-87",
+        "--name",
+        "S",
+        "--out",
+        "s.key.json",
+        "--passphrase-file",
+        pf,
+    ];
+    assert_eq!(run(root.path(), &gen_args).0, 0);
+    fs::write(root.path().join("a.txt"), b"x").unwrap();
+    let sign = [
+        "--batch",
+        "sign",
+        "--key",
+        "s.key.json",
+        "--passphrase-file",
+        pf,
+        "a.txt",
+    ];
+    let (code, _, err) = run(root.path(), &sign);
+    assert_eq!(code, 0, "{err}");
+    assert!(root.path().join("a.txt.pqsig").is_file());
+}

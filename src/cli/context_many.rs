@@ -37,7 +37,7 @@ pub(super) fn resolve_action<'a>(action: &'a str, sources: &[PathBuf]) -> &'a st
 /// DE: Höchstens `MAX_SOURCES` Einträge – sonst klare Meldung (statt stillem Abbruch beim Parsen).
 /// EN: At most `MAX_SOURCES` entries – otherwise a clear message (instead of a silent parse error).
 pub(super) fn limit(sources: &[PathBuf], lang: Lang) -> CliResult {
-    let max = super::args::MAX_SOURCES;
+    let max = super::args_files::MAX_SOURCES;
     if sources.len() > max {
         let text = many_texts(lang).too_many.replace("{max}", &max.to_string());
         return Err(Failure::new(code::USAGE, text));

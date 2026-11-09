@@ -7,6 +7,7 @@
 
 mod access;
 mod args;
+mod args_files;
 mod context;
 mod context_child;
 mod context_dialog;

@@ -94,7 +94,7 @@ pub(super) fn base(
 
 /// DE: Optionales Ziel ohne Überschreiben (Dateiverschlüsselung überschreibt nie).
 /// EN: Optional target without overwriting (file encryption never overwrites).
-fn out_optional(lang: Lang) -> Arg {
+pub(super) fn out_optional(lang: Lang) -> Arg {
     opt("out", texts(lang).arg_out_optional)
         .short('o')
         .value_parser(value_parser!(PathBuf))
@@ -112,7 +112,7 @@ fn out_args(lang: Lang, required: bool) -> [Arg; 3] {
     ]
 }
 
-fn profile(lang: Lang) -> Arg {
+pub(super) fn profile(lang: Lang) -> Arg {
     opt("profile", texts(lang).arg_profile)
         .default_value("standard")
         .value_parser(["standard", "hardened"])
@@ -135,45 +135,6 @@ fn generate(lang: Lang) -> Command {
         .arg(profile(lang))
         .args(out_args(lang, true))
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
-}
-
-/// DE: Höchstzahl an Quellen je Aufruf. EN: Maximum number of sources per call.
-pub const MAX_SOURCES: usize = 1000;
-
-fn file_commands(lang: Lang) -> [Command; 2] {
-    let t = texts(lang);
-    let m = super::many_text::many_texts(lang);
-    [
-        base("encrypt", t.enc_about, t.enc_after, lang)
-            .arg(path("source", m.arg_sources).num_args(1..=MAX_SOURCES))
-            .arg(flag("each", m.arg_each).conflicts_with("out"))
-            .arg(flag("rename", m.arg_rename))
-            .arg(opt("temp-tag", "").hide(true))
-            .arg(flag("progress", "").hide(true))
-            .arg(opt("to", t.arg_to).value_parser(value_parser!(PathBuf)))
-            .arg(profile(lang))
-            .arg(out_optional(lang))
-            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
-            // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
-            // EN: Internal for the context menu: read and compare two lines.
-            .arg(
-                flag("confirm-stdin", "")
-                    .hide(true)
-                    .requires("passphrase-stdin"),
-            ),
-        base("decrypt", t.dec_about, t.dec_after, lang)
-            .arg(path("source", m.arg_encrypted).num_args(1..=MAX_SOURCES))
-            .arg(flag("rename", m.arg_rename))
-            .arg(opt("temp-tag", "").hide(true))
-            .arg(flag("progress", "").hide(true))
-            .arg(
-                opt("key", t.arg_key)
-                    .short('k')
-                    .value_parser(value_parser!(PathBuf)),
-            )
-            .arg(out_optional(lang))
-            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin)),
-    ]
 }
 
 fn help_commands(lang: Lang) -> [Command; 3] {
@@ -241,7 +202,7 @@ pub fn build(lang: Lang) -> Command {
                 .arg(path("file", t.arg_keyfile))
                 .args(out_args(lang, true)),
         )
-        .subcommands(file_commands(lang))
+        .subcommands(super::args_files::file_commands(lang))
         .subcommands(super::sign_cmd::commands(lang))
         .subcommands(help_commands(lang));
     with_integration(with_serve(cmd, lang), lang)
