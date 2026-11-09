@@ -184,3 +184,17 @@ fn sign_uses_the_global_passphrase_file() {
     assert_eq!(code, 0, "{err}");
     assert!(root.path().join("a.txt.pqsig").is_file());
 }
+
+#[test]
+fn context_menu_refuses_batch_mode() {
+    let root = tempfile::tempdir().unwrap();
+    fs::write(root.path().join("a.txt"), b"x").unwrap();
+    for args in [
+        &["--batch", "context", "encrypt", "--", "a.txt"][..],
+        &["--batch", "context", "--dialog", "encrypt", "--", "a.txt"],
+    ] {
+        let (code, _, err) = run(root.path(), args);
+        assert_eq!(code, 2, "{args:?}");
+        assert!(err.contains("--batch"), "{err}");
+    }
+}

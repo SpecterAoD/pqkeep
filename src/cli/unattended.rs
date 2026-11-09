@@ -82,7 +82,9 @@ fn open(path: &Path) -> std::io::Result<File> {
     #[cfg(target_os = "linux")]
     {
         use std::os::unix::fs::OpenOptionsExt;
-        options.custom_flags(libc::O_NOFOLLOW);
+        // DE: O_NONBLOCK: eine FIFO ohne Schreiber blockiert das Öffnen nicht (reguläre Dateien
+        //     lesen trotzdem normal). EN: O_NONBLOCK: a FIFO without writer does not block opening.
+        options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
     }
     options.open(path)
 }
@@ -117,10 +119,12 @@ fn read_checked(path: &Path, lang: Lang) -> CliResult<Passphrase> {
     let s = texts(lang);
     let invalid = || Failure::new(code::USAGE, s.invalid);
     let io = |e: std::io::Error| Failure::from_error(&e.into(), lang);
-    if fs::symlink_metadata(path)
+    // DE: Vor dem Öffnen: nur reguläre Dateien (keine Verknüpfung, FIFO, Gerät, Socket).
+    // EN: Before opening: regular files only (no link, FIFO, device, socket).
+    if !fs::symlink_metadata(path)
         .map_err(io)?
         .file_type()
-        .is_symlink()
+        .is_file()
     {
         return Err(invalid());
     }

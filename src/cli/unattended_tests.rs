@@ -83,3 +83,25 @@ fn open_permissions_are_rejected() {
     let p = write(dir.path(), "ok400", b"geheim\n", 0o400);
     assert!(read_checked(&p, Lang::En).is_ok(), "0400");
 }
+
+/// DE: Eine FIFO ohne Schreiber darf nicht blockieren. EN: A FIFO without writer must not block.
+#[cfg(unix)]
+#[test]
+fn fifo_is_rejected_without_blocking() {
+    let dir = tempfile::tempdir().unwrap();
+    let fifo = dir.path().join("fifo");
+    let ok = std::process::Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .unwrap();
+    assert!(ok.success());
+    let (tx, rx) = std::sync::mpsc::channel();
+    let path = fifo.clone();
+    std::thread::spawn(move || {
+        let _ = tx.send(read_checked(&path, Lang::En).err().map(|f| f.message));
+    });
+    let msg = rx
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .expect("blockiert / blocked");
+    assert!(msg.unwrap().contains("invalid"));
+}
