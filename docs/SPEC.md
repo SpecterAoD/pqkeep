@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.8: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.9: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -8,6 +8,7 @@
 > Änderung v2.6 (07.11.2026, freigegeben von SpecterAoD): Schritt 6 an die Umsetzung angeglichen – `main` per Ruleset ohne Pflicht-Review (ein Maintainer; Prüfung über Pflicht-Checks), offizieller SignPath-Wortlaut, Linux-Release-Build auf Ubuntu 22.04, Release zunächst als Entwurf, SignPath-Action erst nach Zusage, gitleaks als geprüftes Binary statt Action.
 > Änderung v2.7 (08.11.2026, freigegeben von SpecterAoD): U1-1 präzisiert – Signaturformat `.pqsig` v1 (`docs/SIGNATURE_FORMAT.md`): nur ML-DSA-87, SHA3-512 und Dateigröße, Kontext-String `PQKeep/sig/v1`, signiert wird eine feste Binärkodierung statt JSON, Dateiname nicht signiert, Zeitstempel ist Angabe des Signierers.
 > Änderung v2.8 (08.11.2026, freigegeben von SpecterAoD mit dem Merge von PR #79): Formatentwurf v2 für U0 und U2 gemeinsam (`docs/V2_DRAFT.md`, nicht implementiert): zweiter Faktor als Faktordatei mit genau 32 Zufallsbytes (Argon2id-Secret), mehrere Empfänger als Zugangsliste (höchstens ein Passphrase-Zugang + bis zu 64 ML-KEM-Empfänger), v2 nur wenn nötig; Entscheidungen D1–D4 (Empfänger-IDs sichtbar, Passphrase und Empfänger kombinierbar, v2 nur wenn nötig, Faktordatei mit zu offenen Rechten abgelehnt) am 09.11.2026 bestätigt; TPM/FIDO2 ausgelagert (#89), Nummern reserviert.
+> Änderung v2.9 (09.11.2026, freigegeben von SpecterAoD): Mindeststärke neuer Passphrasen von 80 auf **128 Bit** angehoben (auch unter idealisiertem Grover-Angriff ohne Argon2-Schutz rechnerisch ≥ 64 Bit), wählbar bis 256 Bit (`--min-bits`); Generator standardmäßig 32 Zeichen, mindestens 24; Kurzform `pqkeep passphrase <länge>`. Bestehende Dateien bleiben lesbar (Prüfung nur beim Erstellen).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -65,8 +66,8 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 
 ### 3.3 Passphrase-Sicherheit
 - **Pflicht:** min. 16 Zeichen (Unicode-Zeichen zählen, nicht Bytes), Groß-/Kleinbuchstaben, Zahlen, Sonderzeichen.
-- **Zusätzlich:** Ablehnung von Wiederholungen/Sequenzen (`aaaa…`, `1234…`), kleiner eingebauter Blocklist-Check häufiger Muster, geschätzte Entropie mit Mindestwert (z. B. ≥ 80 Bit) und Rückmeldung, **warum** abgelehnt wurde.
-- **Generator:** Kryptografisch sicher, **ohne Modulo-Bias** (Rejection Sampling), garantiert alle Zeichenklassen, Standard ≥ 24 Zeichen bzw. ≥ 128 Bit Entropie. Optional: Wortlisten-Variante (Diceware, ≥ 6 Wörter). Entropie wird als `log2(Alphabetgröße) * Länge` berechnet und angezeigt.
+- **Zusätzlich:** Ablehnung von Wiederholungen/Sequenzen (`aaaa…`, `1234…`), kleiner eingebauter Blocklist-Check häufiger Muster, geschätzte Entropie mit Mindestwert **≥ 128 Bit** (seit v2.9; wählbar bis 256 Bit über `--min-bits`) und Rückmeldung, **warum** abgelehnt wurde.
+- **Generator:** Kryptografisch sicher, **ohne Modulo-Bias** (Rejection Sampling), garantiert alle Zeichenklassen, Standard 32 Zeichen (≈ 210 Bit), mindestens 24 Zeichen (≥ 128 Bit auch ohne verwechselbare Zeichen). Optional: Wortlisten-Variante (Diceware, ≥ 6 Wörter). Entropie wird als `log2(Alphabetgröße) * Länge` berechnet und angezeigt.
 - Eingabe nie über Kommandozeilenargumente oder Umgebungsvariablen, sondern nur über verdeckte Prompts, Stdin oder (API) Request-Body.
 
 ## 4. Container-Format (Basis für Schritt 3)
