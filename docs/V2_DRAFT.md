@@ -2,7 +2,7 @@
 
 **DE** | [EN](#english)
 
-> **Review-Entwurf, nicht implementiert** (Stand 08.11.2026). Das produktive Format bleibt v1
+> **Freigegebener Entwurf, nicht implementiert** (Stand 09.11.2026). Das produktive Format bleibt v1
 > ([FORMAT.md](FORMAT.md), [FILE_FORMAT.md](FILE_FORMAT.md)). Ein Entwurf für U0 (#39, zweiter Faktor) und
 > U2 (#45, mehrere Empfänger) zusammen, damit es **einen** Formatwechsel gibt statt zwei.
 > TPM/FIDO2 sind ausgelagert (Recherche-Issue #89); ihre Nummern bleiben reserviert.
@@ -15,9 +15,9 @@
   eigenen privaten Schlüssel, kein geteiltes Passwort.
 - Beides kombinierbar: ein Passphrase-Zugang (optional mit Faktor) plus Empfänger.
 
-## Entscheidungen zum Review (D1–D4)
+## Entscheidungen (D1–D4) – vom Maintainer am 09.11.2026 wie vorgeschlagen bestätigt
 
-| Nr. | Frage | Vorschlag | Alternative |
+| Nr. | Frage | Entscheidung | Verworfene Alternative |
 |---|---|---|---|
 | D1 | Empfänger-IDs im Header | **sichtbar** (wie v1): eigener Zugang wird sofort gefunden | verborgen: Probe-Entschlüsselung aller Zugänge (mehr Privatsphäre, bis zu 64 KEM-Operationen) |
 | D2 | Passphrase und Empfänger in einer Datei | **erlaubt** (z. B. eigener Zugang + Admin-Schlüssel) | getrennt: entweder Passphrase oder Empfänger |
@@ -93,14 +93,14 @@ HKDF-SHA3-256(S, B, `PQKeep/key/v2\0wrap/key\0` || U8(faktor)). Ein v1-Leser leh
 
 ## Folgeschritte
 
-Nach Freigabe dieses Entwurfs: #40 (U0-2 Core), #41 (U0-3 CLI/Sandbox), #46 (U2-2 Core), #47 (U2-3
+Umsetzung: #40 (U0-2 Core), #41 (U0-3 CLI/Sandbox), #46 (U2-2 Core), #47 (U2-3
 CLI `--to` mehrfach) mit eigenen Plänen; Testkatalog: [V2_TESTS.md](V2_TESTS.md).
 
 ---
 
 ## English
 
-> **Review draft, not implemented** (2026-11-08). Production stays v1. One draft for U0 (#39, second
+> **Approved draft, not implemented** (2026-11-09). Production stays v1. One draft for U0 (#39, second
 > factor) and U2 (#45, several recipients) so there is **one** format change instead of two. TPM/FIDO2 (#89)
 > moved to a research issue; their numbers stay reserved.
 
@@ -109,7 +109,7 @@ file alone allows no offline guessing); several recipients – one `.pqkf` for u
 opens with their own private key; both combinable (one passphrase slot, optionally with factor, plus
 recipients).
 
-**Review decisions D1–D4 (proposal first):** D1 recipient IDs **visible** (as v1) vs. hidden with trial
+**Decisions D1–D4 (confirmed by the maintainer on 2026-11-09 as proposed):** D1 recipient IDs **visible** (as v1) vs. hidden with trial
 decryption; D2 passphrase and recipients in one file **allowed**; D3 write v2 **only when needed** (factor or
 several slots), else v1 so older versions can read; D4 factor file with too open permissions (Linux)
 **rejected** (like SSH) vs. warning only.
@@ -135,4 +135,4 @@ message if your key is not a recipient; not offered via the REST API).
 it loses the data. With several slots the **weakest** slot defines security; removing a recipient means
 re-encrypting. Visible IDs reveal and link recipients.
 
-**Next:** after approval #40, #41, #46, #47 with their own plans; test catalogue: [V2_TESTS.md](V2_TESTS.md).
+**Next:** implementation in #40, #41, #46, #47 with their own plans; test catalogue: [V2_TESTS.md](V2_TESTS.md).
