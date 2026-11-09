@@ -11,8 +11,15 @@ use super::{Lang, entropy, patterns};
 pub const MIN_CHARS: usize = 16;
 /// DE: Höchstlänge in Unicode-Zeichen. EN: Maximum length in Unicode characters.
 pub const MAX_CHARS: usize = 1024;
-/// DE: Mindestwert der geschätzten Entropie. EN: Minimum estimated entropy.
-pub const MIN_ENTROPY_BITS: f64 = 80.0;
+/// DE: Mindestwert der geschätzten Entropie (128 Bit: auch unter idealisiertem Grover-Angriff
+/// ohne Argon2-Schutz rechnerisch ≥ 64 Bit; Entscheidung Maintainer 09.11.2026).
+/// EN: Minimum estimated entropy (128 bits: even under an idealised Grover attack without
+/// Argon2 protection ≥ 64 bits; maintainer decision 2026-11-09).
+pub const MIN_ENTROPY_BITS: f64 = 128.0;
+/// DE: Mindestwert als ganze Bit-Zahl (für `--min-bits`). EN: Minimum as whole bits.
+pub const MIN_BITS: u32 = 128;
+/// DE: Höchster wählbarer Mindestwert (`--min-bits`). EN: Highest selectable minimum (`--min-bits`).
+pub const MAX_MIN_BITS: u32 = 256;
 
 /// DE: Grund für die Ablehnung einer Passphrase. EN: Reason for rejecting a passphrase.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,6 +60,8 @@ pub enum Reason {
     LowEntropy {
         /// DE: Geschätzte Bits (abgerundet). EN: Estimated bits (rounded down).
         bits: u32,
+        /// DE: Verlangter Mindestwert in Bit. EN: Required minimum in bits.
+        min: u32,
     },
 }
 
@@ -95,12 +104,12 @@ impl Reason {
                 "contains a commonly used password or word",
             ),
             Self::DictionaryWords => s(
-                "besteht überwiegend aus Wörtern – mehr Wörter (etwa 6) oder zufällige Zeichen verwenden",
-                "consists mostly of words – use more words (about 6) or random characters",
+                "besteht überwiegend aus Wörtern – mehr Wörter (etwa 10) oder zufällige Zeichen verwenden",
+                "consists mostly of words – use more words (about 10) or random characters",
             ),
-            Self::LowEntropy { bits } => (
-                format!("geschätzte Stärke {bits} Bit, mindestens {MIN_ENTROPY_BITS} Bit"),
-                format!("estimated strength {bits} bits, at least {MIN_ENTROPY_BITS} bits"),
+            Self::LowEntropy { bits, min } => (
+                format!("geschätzte Stärke {bits} Bit, mindestens {min} Bit"),
+                format!("estimated strength {bits} bits, at least {min} bits"),
             ),
         };
         match lang {
@@ -145,9 +154,17 @@ impl std::error::Error for Rejection {}
 /// DE: Prädikat für eine Zeichenklasse. EN: Predicate for a character class.
 pub(super) type CharPred = fn(char) -> bool;
 
-/// DE: Prüft alle Regeln und liefert Gründe sowie geschätzte Entropie.
-/// EN: Checks all rules and returns reasons and estimated entropy.
+/// DE: Prüft alle Regeln mit dem Standard-Mindestwert. EN: Checks all rules with the default minimum.
 pub(super) fn assess(text: &str) -> (Vec<Reason>, f64) {
+    assess_with(text, MIN_ENTROPY_BITS)
+}
+
+/// DE: Prüft alle Regeln mit Mindestwert `min_bits` (nie unter [`MIN_ENTROPY_BITS`]) und liefert
+/// Gründe sowie geschätzte Entropie.
+/// EN: Checks all rules with minimum `min_bits` (never below [`MIN_ENTROPY_BITS`]) and returns
+/// reasons and estimated entropy.
+pub(super) fn assess_with(text: &str, min_bits: f64) -> (Vec<Reason>, f64) {
+    let min_bits = min_bits.max(MIN_ENTROPY_BITS);
     // DE: Zeichenkopie der Passphrase – wird beim Verlassen genullt.
     // EN: Character copy of the passphrase – zeroed when leaving scope.
     let chars: Zeroizing<Vec<char>> = Zeroizing::new(text.chars().collect());
@@ -179,15 +196,16 @@ pub(super) fn assess(text: &str) -> (Vec<Reason>, f64) {
         Zeroizing::new(chars.iter().map(|&c| patterns::lower(c)).collect());
     let estimate = entropy::estimate(&chars, &low, &found.marked);
     let bits = estimate.bits;
-    if bits < MIN_ENTROPY_BITS && estimate.word_model {
+    if bits < min_bits && estimate.word_model {
         reasons.push(Reason::DictionaryWords);
     }
-    if bits < MIN_ENTROPY_BITS {
+    if bits < min_bits {
         // DE: Abrunden für die Anzeige; Werte sind klein und nicht negativ.
         // EN: Round down for display; values are small and non-negative.
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         reasons.push(Reason::LowEntropy {
             bits: bits.floor() as u32,
+            min: min_bits.ceil() as u32,
         });
     }
     (reasons, bits)

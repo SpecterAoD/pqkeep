@@ -19,10 +19,11 @@ use crate::{Error, Result};
 #[path = "generator_tests.rs"]
 mod generator_tests;
 
-/// DE: Standardlänge (≈ 157 Bit). EN: Default length (≈ 157 bits).
-pub const DEFAULT_LEN: usize = 24;
-/// DE: Kleinste Länge. EN: Minimum length.
-pub const MIN_LEN: usize = 16;
+/// DE: Standardlänge (≈ 210 Bit). EN: Default length (≈ 210 bits).
+pub const DEFAULT_LEN: usize = 32;
+/// DE: Kleinste Länge: auch ohne verwechselbare Zeichen (85 Zeichen) ≈ 154 Bit ≥ 128 Bit.
+/// EN: Minimum length: even without ambiguous characters (85 characters) ≈ 154 bits ≥ 128 bits.
+pub const MIN_LEN: usize = 24;
 /// DE: Größte Länge. EN: Maximum length.
 pub const MAX_LEN: usize = 256;
 /// DE: Verwechselbare Zeichen. EN: Ambiguous characters.
@@ -34,7 +35,7 @@ const MAX_ATTEMPTS: usize = 1000;
 /// DE: Optionen des Generators. EN: Generator options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Options {
-    /// DE: Länge in Zeichen (16–256). EN: Length in characters (16–256).
+    /// DE: Länge in Zeichen (24–256). EN: Length in characters (24–256).
     pub length: usize,
     /// DE: Verwechselbare Zeichen auslassen. EN: Omit ambiguous characters.
     pub exclude_ambiguous: bool,

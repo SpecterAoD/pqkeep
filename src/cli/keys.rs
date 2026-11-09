@@ -8,7 +8,7 @@ use pqkeep::crypto::kdf::KdfProfile;
 use pqkeep::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
 use pqkeep::envelope::{self, KeyFile, Metadata, Overwrite, PUBLIC_MAGIC};
 use pqkeep::files::{self, Content, HeaderMode};
-use pqkeep::security::{Lang, StrongPassphrase};
+use pqkeep::security::Lang;
 
 use super::io::{CliResult, Failure, allow_overwrite, code, fingerprint, read_passphrase};
 use super::text::Texts;
@@ -62,7 +62,7 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     meta.normalized().map_err(fail)?;
     let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?;
-    let strong = match StrongPassphrase::try_from(pass) {
+    let strong = match super::validate::strong(m, pass) {
         Ok(p) => p,
         Err(rejection) => {
             print_rejection(t, lang, &rejection);

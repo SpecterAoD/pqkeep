@@ -10,9 +10,9 @@ Rules for new passphrases:\n\
   - lowercase and uppercase letter, digit, special character (space/punctuation count)\n\
   - no repetitions (aaaa), sequences (1234, abcd) or keyboard rows (qwerty)\n\
   - common passwords/words may make up at most one third\n\
-  - estimated strength at least 80 bits\n\n\
+  - estimated strength at least 128 bits (fit for post-quantum use; up to 256 with --min-bits)\n\n\
 Input only hidden in the terminal or via --passphrase-stdin, never as an argument.\n\
-Safest: pqkeep passphrase (24 characters, about 157 bits).\n\n\
+Safest: pqkeep passphrase (32 characters, about 210 bits; length selectable: pqkeep passphrase 40).\n\n\
 Example:\n  pqkeep passphrase --length 32 --no-ambiguous",
     ),
     (

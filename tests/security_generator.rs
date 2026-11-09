@@ -24,14 +24,14 @@ fn many_runs_valid_distinct_and_complete() {
     for _ in 0..RUNS {
         let p = generator::generate(&options).unwrap();
         let s = p.as_ref().expose_str().to_owned();
-        assert_eq!(s.chars().count(), 24);
+        assert_eq!(s.chars().count(), generator::DEFAULT_LEN);
         assert!(s.chars().any(|c| c.is_ascii_lowercase()));
         assert!(s.chars().any(|c| c.is_ascii_uppercase()));
         assert!(s.chars().any(|c| c.is_ascii_digit()));
         assert!(s.chars().any(|c| c.is_ascii_punctuation()));
         assert!(s.chars().all(|c| c.is_ascii_graphic()));
         assert!(p.as_ref().assess().is_strong());
-        assert!(p.entropy_bits() >= 80.0);
+        assert!(p.entropy_bits() >= 128.0);
         assert!(seen.insert(s), "doppelt / duplicate");
     }
 }
@@ -88,6 +88,8 @@ fn characters_roughly_uniform() {
     }
     assert_eq!(counts.len(), 94);
     for (c, n) in counts {
-        assert!((350..=680).contains(&n), "{c}: {n}");
+        // DE: 2000 × 32 Zeichen / 94 ≈ 681 je Zeichen, Grenzen > 7 Standardabweichungen.
+        // EN: 2000 × 32 characters / 94 ≈ 681 per character, bounds > 7 standard deviations.
+        assert!((480..=880).contains(&n), "{c}: {n}");
     }
 }

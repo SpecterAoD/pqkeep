@@ -14,7 +14,9 @@ mod patterns;
 mod policy;
 
 pub use entropy::{GENERIC_WORD_BITS, LIST_WORD_BITS, formula_bits};
-pub use policy::{MAX_CHARS, MIN_CHARS, MIN_ENTROPY_BITS, Reason, Rejection};
+pub use policy::{
+    MAX_CHARS, MAX_MIN_BITS, MIN_BITS, MIN_CHARS, MIN_ENTROPY_BITS, Reason, Rejection,
+};
 
 use unicode_normalization::UnicodeNormalization;
 use zeroize::Zeroize;
@@ -128,6 +130,19 @@ impl Passphrase {
             entropy_bits,
         }
     }
+
+    /// DE: Wie [`Passphrase::assess`], mit höherem Mindestwert (128–256 Bit; kleinere Werte
+    /// gelten als 128). EN: Like [`Passphrase::assess`] with a higher minimum (128–256 bits;
+    /// smaller values count as 128).
+    #[must_use]
+    pub fn assess_with(&self, min_bits: u32) -> Assessment {
+        let min = f64::from(min_bits.min(MAX_MIN_BITS));
+        let (reasons, entropy_bits) = policy::assess_with(self.expose_str(), min);
+        Assessment {
+            reasons,
+            entropy_bits,
+        }
+    }
 }
 
 /// DE: Ergebnis der Bewertung (enthält keine Geheimnisse).
@@ -182,11 +197,23 @@ impl From<Rejection> for Error {
     }
 }
 
-impl TryFrom<Passphrase> for StrongPassphrase {
-    type Error = Rejection;
+impl StrongPassphrase {
+    /// DE: Prüft mit höherem Mindestwert (z. B. `--min-bits`). EN: Checks with a higher minimum.
+    ///
+    /// # Errors
+    /// DE/EN: [`Rejection`] mit allen Gründen / with all reasons.
+    pub fn with_min_bits(
+        passphrase: Passphrase,
+        min_bits: u32,
+    ) -> std::result::Result<Self, Rejection> {
+        let assessment = passphrase.assess_with(min_bits);
+        Self::from_assessment(passphrase, assessment)
+    }
 
-    fn try_from(passphrase: Passphrase) -> std::result::Result<Self, Rejection> {
-        let assessment = passphrase.assess();
+    fn from_assessment(
+        passphrase: Passphrase,
+        assessment: Assessment,
+    ) -> std::result::Result<Self, Rejection> {
         if assessment.is_strong() {
             Ok(Self {
                 inner: passphrase,
@@ -198,5 +225,14 @@ impl TryFrom<Passphrase> for StrongPassphrase {
                 entropy_bits: assessment.entropy_bits,
             })
         }
+    }
+}
+
+impl TryFrom<Passphrase> for StrongPassphrase {
+    type Error = Rejection;
+
+    fn try_from(passphrase: Passphrase) -> std::result::Result<Self, Rejection> {
+        let assessment = passphrase.assess();
+        Self::from_assessment(passphrase, assessment)
     }
 }

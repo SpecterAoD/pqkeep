@@ -99,9 +99,9 @@ fn compound_words_are_weak() {
 #[test]
 fn long_sentences_and_random_strings_are_strong() {
     for strong in [
-        "Kaffee Tasse Wolke Garten Fenster Brot 7!",
-        "Grüne Wiese, 7 Kühe & 3 Pferde!",
-        "zH8%rN2^eQ6*uJ4(wT",
+        "Kaffee Tasse Wolke Garten Fenster Brot Lampe Regen Stuhl Insel 7!",
+        "Grüne Wiese, 7 Kühe & 3 Pferde am Bach unter der alten Linde!",
+        "zH8%rN2^eQ6*uJ4(wTb5)mX7@",
     ] {
         let a = common::passphrase(strong).assess();
         assert!(
@@ -123,20 +123,23 @@ fn low_entropy_reported_with_bits() {
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let floor = expected.floor() as u32;
     assert!(
-        reasons.contains(&Reason::LowEntropy { bits: floor }),
+        reasons.contains(&Reason::LowEntropy {
+            bits: floor,
+            min: 128
+        }),
         "{reasons:?}"
     );
 }
 
 #[test]
 fn minimum_is_80_bits() {
-    assert!(close(MIN_ENTROPY_BITS, 80.0));
+    assert!(close(MIN_ENTROPY_BITS, 128.0));
 }
 
 #[test]
 fn generator_entropy_values() {
     let default = Options::default();
-    assert!(close(default.entropy_bits(), 94f64.log2() * 24.0));
+    assert!(close(default.entropy_bits(), 94f64.log2() * 32.0));
     assert!(default.entropy_bits() >= 128.0);
     let no_ambiguous = Options {
         exclude_ambiguous: true,

@@ -40,18 +40,26 @@ fn characters_not_bytes_are_counted() {
 }
 
 #[test]
-fn sixteen_unicode_characters_are_enough() {
-    let text = "Ä7#qL!xÖ2pV$kÜ9d";
-    let p = common::passphrase(text);
-    assert_eq!(p.char_count(), 16);
-    assert!(p.expose().len() > 16);
-    let a = p.assess();
+fn unicode_characters_count_as_characters_not_bytes() {
+    // DE: 16 Zeichen (mehr Bytes) gelten nicht als „zu kurz“, erreichen aber keine 128 Bit;
+    //     24 Zeichen reichen. EN: 16 characters (more bytes) are not "too short" but stay below
+    //     128 bits; 24 characters suffice.
+    let short = common::passphrase("Ä7#qL!xÖ2pV$kÜ9d");
+    assert_eq!(short.char_count(), 16);
+    assert!(short.expose().len() > 16);
+    let a = short.assess();
     assert!(
         !a.reasons
             .iter()
             .any(|r| matches!(r, Reason::TooShort { .. }))
     );
-    assert!(a.is_strong(), "{:?}", a.reasons);
+    assert!(
+        a.reasons
+            .iter()
+            .any(|r| matches!(r, Reason::LowEntropy { .. }))
+    );
+    let long = common::passphrase("Ä7#qL!xÖ2pV$kÜ9dŻ4ńW&ß8");
+    assert!(long.assess().is_strong(), "{:?}", long.assess().reasons);
 }
 
 #[test]
