@@ -7,6 +7,7 @@
 
 mod access;
 mod args;
+mod args_files;
 mod context;
 mod context_child;
 mod context_dialog;
@@ -35,6 +36,7 @@ mod text_de;
 mod text_en;
 mod topics_de;
 mod topics_en;
+mod unattended;
 mod validate;
 
 use std::io::IsTerminal;
@@ -110,6 +112,7 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
             return Ok(());
         }
     };
+    unattended::configure(&matches);
     let sandboxed = !matches.get_flag("no-sandbox");
     if !sandboxed {
         sandbox::confirm_disabled(lang)?;

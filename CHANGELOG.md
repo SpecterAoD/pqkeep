@@ -7,6 +7,8 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- Unattended operation: global `--passphrase-file <path>` (one line, Linux owner-only permissions,
+  works with systemd `LoadCredential=`) and `--batch` (never prompts) – see `docs/SERVER.md`.
 - Context menu with multi-selection: each separately or one container (suggested, freely editable name),
   passphrase once, progress with cancel (unfinished output removed); Windows via "Send to → PQKeep" –
   see `docs/INTEGRATION.md`.

@@ -139,6 +139,11 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
 /// DE: `pqkeep context`. EN: `pqkeep context`.
 pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let s = integrate_texts(lang);
+    // DE: Das Kontextmenü ist immer interaktiv – mit --batch sofort abbrechen.
+    // EN: The context menu is always interactive – abort right away with --batch.
+    if super::unattended::batch() {
+        return Err(super::unattended::batch_failure(lang));
+    }
     let sources: Vec<PathBuf> = m
         .get_many::<PathBuf>("path")
         .map(|v| v.map(|p| absolute(p)).collect())

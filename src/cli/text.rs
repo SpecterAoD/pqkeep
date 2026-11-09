@@ -23,6 +23,8 @@ pub struct Texts {
     pub arg_profile: &'static str,
     pub arg_out: &'static str,
     pub arg_passphrase_stdin: &'static str,
+    pub arg_passphrase_file: &'static str,
+    pub arg_batch: &'static str,
     pub arg_force: &'static str,
     pub arg_yes: &'static str,
     pub validate_about: &'static str,
