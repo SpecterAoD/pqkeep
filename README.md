@@ -25,6 +25,8 @@ telemetry and opens no outgoing network connections.
   integrity-protected; public key export with fingerprint.
 - **File and directory encryption** (`.pqkf`): passphrase mode or recipient mode (ML-KEM-768),
   streaming AEAD, safe extraction rules, no partial output.
+- **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
+  not an eIDAS signature).
 - **Passphrases:** strength check with reasons (Unicode NFKC, patterns, word lists), generator.
 - **Interfaces:** CLI with interactive menu and bilingual help (English/German); local REST API
   (`/v1/generate`, `/v1/validate`, `/v1/health`) bound to 127.0.0.1 by default.
@@ -51,6 +53,8 @@ pqkeep export jane.key.json --out jane.pub.json   # share your public key
 pqkeep encrypt report.pdf                # with a passphrase
 pqkeep encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
 pqkeep decrypt folder.pqkf --key anna.key.json
+pqkeep sign --key anna.key.json contract.pdf      # → contract.pdf.pqsig (ML-DSA-87 key)
+pqkeep verify --pub anna.pub.json contract.pdf    # [VERIFIED] / [INVALID]
 pqkeep help security                     # topics: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # show API token once, store hash only
 pqkeep serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token)
@@ -168,6 +172,8 @@ pqkeep export max.key.json --out max.pub.json   # öffentlichen Schlüssel weite
 pqkeep encrypt bericht.pdf               # mit Passphrase
 pqkeep encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
 pqkeep decrypt Ordner.pqkf --key anna.key.json
+pqkeep sign --key anna.key.json vertrag.pdf       # → vertrag.pdf.pqsig (ML-DSA-87-Schlüssel)
+pqkeep verify --pub anna.pub.json vertrag.pdf     # [VERIFIED] / [INVALID]
 pqkeep help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
 pqkeep serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token)

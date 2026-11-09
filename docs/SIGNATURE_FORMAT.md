@@ -4,7 +4,8 @@
 
 Abgesetzte Signatur einer beliebigen Datei mit **ML-DSA-87** (FIPS 204) über den **SHA3-512**
 (FIPS 202) ihres Inhalts (SPEC Abschnitt 9, U1). Ablage üblicherweise als `<datei>.pqsig` neben der
-Datei. Stand: Bibliothek (`pqkeep::sign`); die Befehle `sign`/`verify` folgen mit U1-2 (#43).
+Datei. Befehle: `pqkeep sign --key k.key.json <datei>` und `pqkeep verify --pub k.pub.json <datei>`
+(Ausgabe `[VERIFIED]`/`[INVALID]`, Exit-Code 0 bzw. 7); Bibliothek: `pqkeep::sign`.
 
 ## Was die Signatur beweist – und was nicht
 
@@ -74,7 +75,8 @@ signierten Nachricht).
 
 Detached signature of any file with **ML-DSA-87** (FIPS 204) over the **SHA3-512** (FIPS 202) of its
 content (SPEC section 9, U1), usually stored as `<file>.pqsig`. Library only (`pqkeep::sign`);
-the `sign`/`verify` commands follow with U1-2 (#43).
+commands `pqkeep sign --key k.key.json <file>` and `pqkeep verify --pub k.pub.json <file>`
+(`[VERIFIED]`/`[INVALID]`, exit code 0 or 7); library: `pqkeep::sign`.
 
 **What it proves:** the file is unchanged and was signed by the holder of the private key with the given
 key ID. **It does not prove who that is** – confirm the signer's fingerprint (key ID) through a second
