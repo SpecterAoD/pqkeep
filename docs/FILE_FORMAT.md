@@ -1,5 +1,8 @@
 # Format verschlüsselter Dateien (`.pqkf`) / Encrypted file format (`.pqkf`)
 
+> DE: Format v2 (Faktordatei, mehrere Empfänger) ist ein **nicht implementierter Entwurf**: [V2_DRAFT.md](V2_DRAFT.md).
+> EN: Format v2 (factor file, several recipients) is an **unimplemented draft**: [V2_DRAFT.md](V2_DRAFT.md).
+
 **DE** | [EN](#english)
 
 Eine `.pqkf`-Datei enthält immer ein kleines Archiv: **Einzeldatei** = Archiv mit genau einem

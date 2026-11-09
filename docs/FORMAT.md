@@ -1,5 +1,8 @@
 # Container-Format (Schlüsseldatei) / Container format (key file)
 
+> DE: Format v2 (Faktordatei, mehrere Empfänger) ist ein **nicht implementierter Entwurf**: [V2_DRAFT.md](V2_DRAFT.md).
+> EN: Format v2 (factor file, several recipients) is an **unimplemented draft**: [V2_DRAFT.md](V2_DRAFT.md).
+
 **DE** | [EN](#english)
 
 > **Wichtig:** Die Metadaten (Name, Organisation, Firma, Abteilung, Account-Typ) und der öffentliche

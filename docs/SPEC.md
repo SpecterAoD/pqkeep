@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.7: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.8: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -7,6 +7,7 @@
 > Änderung v2.5 (07.11.2026, freigegeben von SpecterAoD): Umbenennung von „PQC KeyForge“ in **PQKeep** (Crate, Bibliothek und Binary `pqkeep`, Repository `SpecterAoD/pqkeep`) wegen Namenskonflikt mit dem Kartenspiel „KeyForge“. Formatkennungen `PQKEEP-KEY`/`PQKEEP-PUB`, Domänentrennung `PQKeep/…`, Token-Präfix `pqk1_`; Endung `.pqkf` und `PQKFENC` bleiben. Vor dem ersten Release, daher ohne Kompatibilität zu Dateien des alten Namens.
 > Änderung v2.6 (07.11.2026, freigegeben von SpecterAoD): Schritt 6 an die Umsetzung angeglichen – `main` per Ruleset ohne Pflicht-Review (ein Maintainer; Prüfung über Pflicht-Checks), offizieller SignPath-Wortlaut, Linux-Release-Build auf Ubuntu 22.04, Release zunächst als Entwurf, SignPath-Action erst nach Zusage, gitleaks als geprüftes Binary statt Action.
 > Änderung v2.7 (08.11.2026, freigegeben von SpecterAoD): U1-1 präzisiert – Signaturformat `.pqsig` v1 (`docs/SIGNATURE_FORMAT.md`): nur ML-DSA-87, SHA3-512 und Dateigröße, Kontext-String `PQKeep/sig/v1`, signiert wird eine feste Binärkodierung statt JSON, Dateiname nicht signiert, Zeitstempel ist Angabe des Signierers.
+> Änderung v2.8 (08.11.2026, freigegeben von SpecterAoD mit dem Merge von PR #79): Formatentwurf v2 für U0 und U2 gemeinsam (`docs/V2_DRAFT.md`, nicht implementiert): zweiter Faktor als Faktordatei mit genau 32 Zufallsbytes (Argon2id-Secret), mehrere Empfänger als Zugangsliste (höchstens ein Passphrase-Zugang + bis zu 64 ML-KEM-Empfänger), v2 nur wenn nötig; Entscheidungen D1–D4 (Empfänger-IDs sichtbar, Passphrase und Empfänger kombinierbar, v2 nur wenn nötig, Faktordatei mit zu offenen Rechten abgelehnt) am 09.11.2026 bestätigt; TPM/FIDO2 ausgelagert (#89), Nummern reserviert.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -137,6 +138,8 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 
 - **Passphrase-Normalisierung:** Unicode **NFKC** vor der Ableitung, sonst kann dieselbe Passphrase unter Windows und Linux zu unterschiedlichen Schlüsseln führen.
 - **Optionaler zweiter Faktor:** Keyfile oder „Pepper“ (separate Datei) zusätzlich zur Passphrase in die Ableitung einbeziehen.
+  - DE: Entwurf: Faktordatei (32 Zufallsbytes) als Argon2id-Secret, siehe [V2_DRAFT.md](V2_DRAFT.md); nicht implementiert, v1 unverändert.
+  - EN: Draft: factor file (32 random bytes) as Argon2id secret, see [V2_DRAFT.md](V2_DRAFT.md); unimplemented, v1 unchanged.
 - **Downgrade-Schutz:** Container mit zu alter `format_version` oder zu schwachen KDF-Parametern werden abgelehnt oder nur mit expliziter Warnung/Bestätigung geöffnet.
 - **Dateirechte beim Laden prüfen:** Unter Linux Warnung bei `group/world`-lesbaren Containern. Unter Windows Ablage im Benutzerprofil mit eingeschränkter ACL.
 - **Kein Clipboard, keine Historie:** Passphrasen werden nie automatisch in die Zwischenablage kopiert, nie als Argument übergeben (Shell-History) und im Terminal nicht angezeigt (Ausnahme: Generator, nur auf ausdrücklichen Wunsch).
@@ -242,7 +245,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 ### U2: Mehrere Empfänger (Multi-Recipient-Container)
 - Ein zufälliger AES-256-GCM-Dateischlüssel (wie bisher); im Header pro Empfänger ein eigener Eintrag (ML-KEM-Kapselung, Standard ML-KEM-1024, Empfänger-ID, eingepackter Schlüssel). Jeder Empfänger öffnet mit seinem eigenen privaten Schlüssel; kein geteiltes Passwort.
 - Grenzen: Höchstzahl Empfänger (z. B. 64), neue `format_version` mit Downgrade-Schutz, Tests für jeden Empfänger, falsche/fehlende Empfänger, manipulierte Einträge.
-- Entscheidung im Plan: Empfänger-IDs sichtbar (schnelles Finden des eigenen Eintrags) oder verborgen (Probe-Entschlüsselung, mehr Privatsphäre).
+- Entscheidung im Plan: Empfänger-IDs sichtbar (schnelles Finden des eigenen Eintrags) oder verborgen (Probe-Entschlüsselung, mehr Privatsphäre). Entwurf zusammen mit U0: [V2_DRAFT.md](V2_DRAFT.md) (Vorschlag: sichtbar).
 
 ### U3: Einrichtungs-Assistent (Konsole)
 - Beim ersten Start ein farbiger, interaktiver Konsolen-Assistent (Terminal-UI-Crates, Auswahl im Plan): 1. sichere Master-Passphrase (Regeln aus 3.3, Argon2id), 2. eigenes Schlüsselpaar ML-KEM-1024 (Verschlüsselung) und ML-DSA-87 (Signaturen), 3. optional Registrierung des Kontextmenüs (U4), 4. Einweisung und Notfall-Backup (Kopie der Schlüsseldateien an einen gewählten Ort, Hinweise zur sicheren Aufbewahrung, Prüf-Wiederherstellung).

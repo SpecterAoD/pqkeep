@@ -49,6 +49,13 @@ jobs:
       # EN: The pure CLI without API/network code must stay buildable.
       - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
       - run: cargo test --locked
+      # DE: Referenztests zum v2-Formatentwurf (nur Standardbibliothek).
+      # EN: Reference tests for the v2 format draft (standard library only).
+      - name: v2-Formatentwurf / v2 format draft
+        shell: bash
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" -m unittest discover -s scripts -p 'test_v2_*.py' -v
 
   msrv:
     name: MSRV
