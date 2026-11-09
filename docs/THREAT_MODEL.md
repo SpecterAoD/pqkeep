@@ -16,7 +16,7 @@
 
 | Bedrohung | Maßnahme |
 |---|---|
-| Brute-Force auf die Passphrase | Argon2id mit hohen Mindestparametern, Passphrase-Regeln (≥ 80 Bit geschätzt), Generator |
+| Brute-Force auf die Passphrase | Argon2id mit hohen Mindestparametern, Passphrase-Regeln (≥ 128 Bit geschätzt, wählbar bis 256), Generator |
 | Manipulierte Schlüsseldateien | AEAD mit vollständigem Header als AAD, strenger Parser, Downgrade-Schutz, Ableitung des öffentlichen Schlüssels beim Entsperren |
 | Manipulierte `.pqkf`-Dateien | STREAM-Konstruktion (Kippen, Vertauschen, Abschneiden, Anhängen), Header-Hash als AAD, Prüfsummen |
 | **Bösartige, korrekt verschlüsselte Archive** (Empfänger-Modus: jeder mit dem öffentlichen Schlüssel kann sie bauen) | Strenge Pfadregeln, keine Symlinks/Geräte, Grenzen, Ausgabe nur über Temporärordner, keine Teilausgabe, kein Überschreiben |

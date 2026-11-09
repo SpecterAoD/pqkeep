@@ -135,6 +135,12 @@ fn generate(lang: Lang) -> Command {
         .arg(profile(lang))
         .args(out_args(lang, true))
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
+        .arg(min_bits(lang))
+}
+
+/// DE: `--min-bits` (128–256) für neue Passphrasen. EN: `--min-bits` (128–256) for new passphrases.
+pub(super) fn min_bits(lang: Lang) -> Arg {
+    opt("min-bits", texts(lang).arg_min_bits).value_parser(value_parser!(u32).range(128..=256))
 }
 
 fn help_commands(lang: Lang) -> [Command; 3] {
@@ -180,20 +186,7 @@ pub fn build(lang: Lang) -> Command {
         )
         .args(global_args(lang))
         .subcommand(generate(lang))
-        .subcommand(
-            base("validate", t.validate_about, t.validate_after, lang)
-                .arg(flag("passphrase-stdin", t.arg_passphrase_stdin)),
-        )
-        .subcommand(
-            base("passphrase", t.pass_about, t.pass_after, lang)
-                .arg(
-                    opt("length", t.arg_length)
-                        .short('l')
-                        .default_value("24")
-                        .value_parser(value_parser!(usize)),
-                )
-                .arg(flag("no-ambiguous", t.arg_no_ambiguous)),
-        )
+        .subcommands(pass_commands(lang))
         .subcommand(
             base("inspect", t.inspect_about, t.inspect_after, lang).arg(path("file", t.arg_file)),
         )
@@ -206,6 +199,29 @@ pub fn build(lang: Lang) -> Command {
         .subcommands(super::sign_cmd::commands(lang))
         .subcommands(help_commands(lang));
     with_integration(with_serve(cmd, lang), lang)
+}
+
+/// DE: Passphrase-Befehle `validate` und `passphrase`. EN: Passphrase commands.
+fn pass_commands(lang: Lang) -> [Command; 2] {
+    let t = texts(lang);
+    [
+        base("validate", t.validate_about, t.validate_after, lang)
+            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
+            .arg(min_bits(lang)),
+        base("passphrase", t.pass_about, t.pass_after, lang)
+            .arg(
+                Arg::new("count")
+                    .help(t.arg_count)
+                    .value_parser(value_parser!(usize))
+                    .conflicts_with("length"),
+            )
+            .arg(
+                opt("length", t.arg_length)
+                    .short('l')
+                    .value_parser(value_parser!(usize)),
+            )
+            .arg(flag("no-ambiguous", t.arg_no_ambiguous)),
+    ]
 }
 
 /// DE: Globale Schalter (gelten für alle Befehle). EN: Global switches (apply to all commands).

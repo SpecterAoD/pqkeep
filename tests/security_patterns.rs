@@ -10,7 +10,7 @@ mod common;
 use pqkeep::security::Reason;
 
 /// DE: Starke, musterfreie Basis. EN: Strong, pattern-free base.
-const BASE: &str = "Bm7#qLx2!Vp9$Kd4";
+const BASE: &str = "Bm7#qLx2!Vp9$Kd4Rw8&Zt3?Hy6";
 
 fn reasons(text: &str) -> Vec<Reason> {
     common::passphrase(text).assess().reasons
@@ -70,7 +70,7 @@ fn blocklisted_words_dominating() {
 fn short_common_word_in_long_sentence_is_tolerated() {
     // DE: „Test“ macht weniger als ein Drittel aus: keine Ablehnung, nur Abzug.
     // EN: "Test" is less than a third: no rejection, only a deduction.
-    let text = "Mein Test: 7 Kühe, 3 Pferde & Hund!";
+    let text = "Mein Test: 7 Kühe, 3 Pferde & Hund laufen über die weite Wiese am See!";
     let a = common::passphrase(text).assess();
     assert!(!a.reasons.contains(&Reason::Blocklisted), "{:?}", a.reasons);
     assert!(a.is_strong(), "{:?}", a.reasons);

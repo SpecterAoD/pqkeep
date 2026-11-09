@@ -24,6 +24,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(opt("to", t.arg_to).value_parser(value_parser!(PathBuf)))
             .arg(profile(lang))
             .arg(out_optional(lang))
+            .arg(super::args::min_bits(lang))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
             // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
             // EN: Internal for the context menu: read and compare two lines.

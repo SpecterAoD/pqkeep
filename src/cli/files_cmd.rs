@@ -91,7 +91,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
     } else {
         read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?
     };
-    let strong = StrongPassphrase::try_from(pass).map_err(|rejection| {
+    let strong = super::validate::strong(m, pass).map_err(|rejection| {
         print_rejection(t, lang, &rejection);
         Failure::new(code::WEAK, "")
     })?;

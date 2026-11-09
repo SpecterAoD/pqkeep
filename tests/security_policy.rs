@@ -14,9 +14,9 @@ use pqkeep::security::{Lang, MAX_CHARS, Passphrase, Reason, StrongPassphrase};
 
 /// DE: Musterfreie Beispielwerte mit allen Klassen. EN: Pattern-free examples with all classes.
 const STRONG: [&str; 3] = [
-    "Bm7#qLx2!Vp9$Kd4",
-    "Grüne Wiese, 7 Kühe & 3 Pferde!",
-    "zH8%rN2^eQ6*uJ4(wT",
+    "Bm7#qLx2!Vp9$Kd4Rw8&Zt3?Hy6",
+    "Grüne Wiese, 7 Kühe & 3 Pferde am Bach unter der alten Linde!",
+    "zH8%rN2^eQ6*uJ4(wTb5)mX7@",
 ];
 
 fn reasons(text: &str) -> Vec<Reason> {
@@ -129,7 +129,7 @@ fn messages_bilingual_and_distinct() {
         Reason::KeyboardPattern,
         Reason::Blocklisted,
         Reason::DictionaryWords,
-        Reason::LowEntropy { bits: 42 },
+        Reason::LowEntropy { bits: 42, min: 128 },
     ];
     for r in all {
         let (de, en) = (r.message(Lang::De), r.message(Lang::En));
