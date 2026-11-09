@@ -24,7 +24,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | Update | Inhalt | Issues |
 |---|---|---|
 | U0 | Optionaler zweiter Faktor (Pepper/Schlüsseldatei) zusätzlich zur Passphrase | #39–#41 |
-| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur; U1-1 Format `.pqsig` + Core umgesetzt ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)) | #42–#44 |
+| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur; U1-1 Format `.pqsig` + Core und U1-2 `sign`/`verify` umgesetzt ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)) | #42–#44 |
 | U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) | #45–#47 |
 | U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |
 | U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog; U4-1 Linux, U4-2 Windows und U4-3 Fenster unter Linux und Windows sowie U4-4 Mehrfachauswahl umgesetzt ([INTEGRATION.md](INTEGRATION.md)) | #51–#53, #72 |

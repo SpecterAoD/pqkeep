@@ -40,6 +40,36 @@ fn path_arg(m: &ArgMatches, id: &str) -> Option<PathBuf> {
     m.get_one::<PathBuf>(id).cloned()
 }
 
+/// DE: Ver-/Entschlüsseln: alle Quellen und der Schlüssel lesbar; Ziel `--out` oder je Quelle
+/// daneben. EN: Encrypt/decrypt: all sources and the key readable; target `--out` or next to each.
+fn file_access(
+    name: &str,
+    m: &ArgMatches,
+    lang: Lang,
+    access: &mut CliAccess,
+) -> CliResult<Option<PathBuf>> {
+    let sources = super::files_cmd::sources(m);
+    let key = path_arg(m, if name == "encrypt" { "to" } else { "key" });
+    for p in sources.iter().cloned().chain(key) {
+        access.read.push(existing(p, lang)?);
+    }
+    if let Some(out) = path_arg(m, "out") {
+        return Ok(Some(out));
+    }
+    // DE: Ziele entstehen jeweils neben der Quelle. EN: Targets are created next to each source.
+    for source in &sources {
+        let target = if name == "encrypt" {
+            default_encrypted(source)
+        } else {
+            default_decrypted(source)
+        };
+        if let Some(t) = target {
+            access.write_dirs.push(existing(parent(&t), lang)?);
+        }
+    }
+    Ok(None)
+}
+
 /// DE: Freigaben für einen Befehl; `None` = Befehl richtet die Sandbox selbst ein
 /// (`serve` ohne `--init-token`).
 /// EN: Permissions for a command; `None` = the command sets up the sandbox itself
@@ -66,28 +96,17 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             read(path_arg(m, "file"))?;
             path_arg(m, "out")
         }
-        "encrypt" | "decrypt" => {
-            let sources = super::files_cmd::sources(m);
-            for source in &sources {
-                read(Some(source.clone()))?;
-            }
-            read(path_arg(m, if name == "encrypt" { "to" } else { "key" }))?;
-            if let Some(out) = path_arg(m, "out") {
-                Some(out)
-            } else {
-                // DE: Ziele entstehen jeweils neben der Quelle. EN: Targets are created next to each source.
-                for source in &sources {
-                    let target = if name == "encrypt" {
-                        default_encrypted(source)
-                    } else {
-                        default_decrypted(source)
-                    };
-                    if let Some(t) = target {
-                        access.write_dirs.push(existing(parent(&t), lang)?);
-                    }
-                }
-                None
-            }
+        "encrypt" | "decrypt" => file_access(name, m, lang, &mut access)?,
+        "sign" => {
+            read(path_arg(m, "file"))?;
+            read(path_arg(m, "key"))?;
+            super::sign_cmd::sig_path(m, "out")
+        }
+        "verify" => {
+            read(path_arg(m, "file"))?;
+            read(path_arg(m, "pub"))?;
+            read(super::sign_cmd::sig_path(m, "sig"))?;
+            None
         }
         "serve" if m.get_flag("init-token") => path_arg(m, "token-file"),
         // DE: Diese Befehle richten ihre Sandbox selbst ein (`serve`, `integrate`: Ziele erst später

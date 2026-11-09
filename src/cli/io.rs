@@ -31,6 +31,8 @@ pub mod code {
     /// DE: Keine Fenster möglich (`context --dialog`; `pqkeepw.exe` öffnet dann eine Konsole).
     /// EN: No windows possible (`context --dialog`; `pqkeepw.exe` then opens a console).
     pub const NO_WINDOWS: u8 = 6;
+    /// DE/EN: Signatur ungültig / signature invalid (`verify`).
+    pub const INVALID: u8 = 7;
 }
 
 /// DE: Fehler der CLI mit Exit-Code. EN: CLI error with exit code.
@@ -54,6 +56,7 @@ impl Failure {
         let code = match err {
             Error::Decrypt => code::DECRYPT,
             Error::WeakPassphrase => code::WEAK,
+            Error::InvalidSignature => code::INVALID,
             Error::Io(ErrorKind::AlreadyExists) => code::EXISTS,
             _ => code::ERROR,
         };
