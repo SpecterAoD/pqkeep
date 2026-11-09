@@ -22,6 +22,8 @@ pub struct SignTexts {
     pub note: &'static str,
     pub invalid: &'static str,
     pub other_key: &'static str,
+    pub need_sign_args: &'static str,
+    pub need_verify_args: &'static str,
 }
 
 static DE: SignTexts = SignTexts {
@@ -42,6 +44,8 @@ static DE: SignTexts = SignTexts {
     note: "Hinweis: Identität des Signierers nur über den Fingerabdruck bestätigen; keine eIDAS-Signatur.",
     invalid: "Datei verändert, falscher Schlüssel oder manipulierte Signatur.",
     other_key: "Die Signatur stammt von einem anderen Schlüssel",
+    need_sign_args: "Bitte Datei und --key angeben – oder „pqkeep sign“ ohne Angaben im Terminal aufrufen (geführter Ablauf).",
+    need_verify_args: "Bitte Datei und --pub angeben – oder „pqkeep verify“ ohne Angaben im Terminal aufrufen (geführter Ablauf).",
 };
 
 static EN: SignTexts = SignTexts {
@@ -62,6 +66,8 @@ static EN: SignTexts = SignTexts {
     note: "Note: confirm the signer's identity via the fingerprint only; not an eIDAS signature.",
     invalid: "File changed, wrong key or tampered signature.",
     other_key: "The signature was made with a different key",
+    need_sign_args: "Please pass the file and --key – or run \"pqkeep sign\" without them in a terminal (guided flow).",
+    need_verify_args: "Please pass the file and --pub – or run \"pqkeep verify\" without them in a terminal (guided flow).",
 };
 
 /// DE: Texte für `lang`. EN: Texts for `lang`.

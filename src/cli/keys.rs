@@ -45,6 +45,11 @@ fn target(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(PathBuf, Overwrit
 
 /// DE: `pqkeep generate`. EN: `pqkeep generate`.
 pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
+    // DE: Ohne Terminal kein geführter Ablauf – dann sind --name und --out Pflicht.
+    // EN: Without a terminal there is no guided flow – then --name and --out are required.
+    if s(m, "name").is_none() || m.get_one::<PathBuf>("out").is_none() {
+        return Err(Failure::new(code::USAGE, t.msg_need_name_out));
+    }
     let alg = algorithm(&s(m, "algorithm").unwrap_or_default());
     let meta = Metadata {
         name: s(m, "name").unwrap_or_default(),

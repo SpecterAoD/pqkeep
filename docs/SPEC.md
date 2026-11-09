@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.9: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.10: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -9,6 +9,7 @@
 > Änderung v2.7 (08.11.2026, freigegeben von SpecterAoD): U1-1 präzisiert – Signaturformat `.pqsig` v1 (`docs/SIGNATURE_FORMAT.md`): nur ML-DSA-87, SHA3-512 und Dateigröße, Kontext-String `PQKeep/sig/v1`, signiert wird eine feste Binärkodierung statt JSON, Dateiname nicht signiert, Zeitstempel ist Angabe des Signierers.
 > Änderung v2.8 (08.11.2026, freigegeben von SpecterAoD mit dem Merge von PR #79): Formatentwurf v2 für U0 und U2 gemeinsam (`docs/V2_DRAFT.md`, nicht implementiert): zweiter Faktor als Faktordatei mit genau 32 Zufallsbytes (Argon2id-Secret), mehrere Empfänger als Zugangsliste (höchstens ein Passphrase-Zugang + bis zu 64 ML-KEM-Empfänger), v2 nur wenn nötig; Entscheidungen D1–D4 (Empfänger-IDs sichtbar, Passphrase und Empfänger kombinierbar, v2 nur wenn nötig, Faktordatei mit zu offenen Rechten abgelehnt) am 09.11.2026 bestätigt; TPM/FIDO2 ausgelagert (#89), Nummern reserviert.
 > Änderung v2.9 (09.11.2026, freigegeben von SpecterAoD): Mindeststärke neuer Passphrasen von 80 auf **128 Bit** angehoben (auch unter idealisiertem Grover-Angriff ohne Argon2-Schutz rechnerisch ≥ 64 Bit), wählbar bis 256 Bit (`--min-bits`); Generator standardmäßig 32 Zeichen, mindestens 24; Kurzform `pqkeep passphrase <länge>`. Bestehende Dateien bleiben lesbar (Prüfung nur beim Erstellen).
+> Änderung v2.10 (09.11.2026, freigegeben von SpecterAoD): geführte Abläufe in der CLI (Schlüssel erstellen, Signieren, Prüfen) – im Menü oder wenn `generate`/`sign`/`verify` im Terminal ohne Pflichtangaben aufgerufen werden; nie ohne Terminal oder mit `--batch`. Sie fragen nur ab, zeigen die entsprechenden Befehle und starten diese als eigene Prozesse mit voller Sandbox (keine zweite Logik, keine Geheimnisse im Ablauf-Prozess).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 

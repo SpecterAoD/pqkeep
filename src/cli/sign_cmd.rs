@@ -25,13 +25,13 @@ pub fn commands(lang: Lang) -> [Command; 2] {
     let file = |o: &'static str, h: &'static str| opt(o, h).value_parser(value_parser!(PathBuf));
     [
         base("sign", s.sign_about, s.sign_after, lang)
-            .arg(path("file", s.arg_file))
-            .arg(file("key", s.arg_key).short('k').required(true))
+            .arg(path("file", s.arg_file).required(false))
+            .arg(file("key", s.arg_key).short('k'))
             .arg(file("out", s.arg_out).short('o'))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin)),
         base("verify", s.verify_about, s.verify_after, lang)
-            .arg(path("file", s.arg_file))
-            .arg(file("pub", s.arg_pub).short('p').required(true))
+            .arg(path("file", s.arg_file).required(false))
+            .arg(file("pub", s.arg_pub).short('p'))
             .arg(file("sig", s.arg_sig).short('s')),
     ]
 }
@@ -56,6 +56,9 @@ pub fn sig_path(m: &ArgMatches, id: &str) -> Option<PathBuf> {
 /// DE: `pqkeep sign`. EN: `pqkeep sign`.
 pub fn sign(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let s = sign_texts(lang);
+    if arg_path(m, "file").is_none() || arg_path(m, "key").is_none() {
+        return Err(Failure::new(code::USAGE, s.need_sign_args));
+    }
     let fail = |e: Error| Failure::from_error(&e, lang);
     let file = arg_path(m, "file").unwrap_or_default();
     let out = sig_path(m, "out").ok_or_else(|| fail(Error::InvalidInput { field: "path" }))?;
@@ -87,6 +90,9 @@ pub fn sign(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
 /// DE: `pqkeep verify`. EN: `pqkeep verify`.
 pub fn verify(lang: Lang, m: &ArgMatches) -> CliResult {
     let s = sign_texts(lang);
+    if arg_path(m, "file").is_none() || arg_path(m, "pub").is_none() {
+        return Err(Failure::new(code::USAGE, s.need_verify_args));
+    }
     let fail = |e: Error| Failure::from_error(&e, lang);
     let file = arg_path(m, "file").unwrap_or_default();
     let public = envelope::load_public(&arg_path(m, "pub").unwrap_or_default()).map_err(fail)?;

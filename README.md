@@ -47,6 +47,7 @@ cargo build --release --locked        # binary: target/release/pqkeep
 
 ```
 pqkeep                                   # interactive menu (in a terminal)
+pqkeep generate                          # guided: purpose, strength, details, passphrase
 pqkeep passphrase                        # generate a secure passphrase
 pqkeep generate --name "Jane Doe" --out jane.key.json
 pqkeep export jane.key.json --out jane.pub.json   # share your public key
@@ -168,6 +169,7 @@ Programm unter `target/release/pqkeep`.
 
 ```
 pqkeep                                   # interaktives Menü (im Terminal)
+pqkeep generate                          # geführt: Zweck, Stärke, Angaben, Passphrase
 pqkeep passphrase                        # sichere Passphrase erzeugen
 pqkeep generate --name "Max Muster" --out max.key.json
 pqkeep export max.key.json --out max.pub.json   # öffentlichen Schlüssel weitergeben
