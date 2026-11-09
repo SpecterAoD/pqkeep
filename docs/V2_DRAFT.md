@@ -68,7 +68,8 @@ ein Zugang kann weder entfernt noch vertauscht werden, ohne dass das Öffnen sch
 
 Nur mit Faktordatei (D3). Felder wie v1, `format_version: 2`, zusätzlich `kdf.factor: "file-32"`.
 Header-Kodierung wie v1 mit Version 2 und angehängtem Faktorbyte; Schlüssel des AES-256-GCM =
-HKDF-SHA3-256(S, B, `PQKeep/key/v2\0wrap/key\0` || U8(faktor)). Ein v1-Leser lehnt v2 ab
+Wpass mit `D = "PQKeep/key/v2\0"`, also HKDF-SHA3-256(S, B, `PQKeep/key/v2\0wrap/passphrase\0` || U8(faktor))
+– dieselbe Ableitung wie beim Passphrase-Zugang, getrennt nur über die Domäne (Referenz und Testwerte V07). Ein v1-Leser lehnt v2 ab
 („nicht unterstützt“), ein v2-Leser liest v1 unverändert.
 
 ## Kompatibilität und Fehler
@@ -125,7 +126,8 @@ ascending IDs), types 3/4 reserved (TPM/FIDO2, unsupported in v2), header ≤ 25
 whole M and its index; the stream binds the header with **all** wraps – slots cannot be removed or swapped.
 
 **Key file v2:** only with a factor file; v1 fields, `format_version: 2`, `kdf.factor: "file-32"`, header
-encoding as v1 with version 2 plus factor byte. v1 readers reject v2, v2 readers read v1 unchanged.
+encoding as v1 with version 2 plus factor byte; AES-256-GCM key = Wpass with `D = "PQKeep/key/v2\0"`
+(same derivation as the passphrase slot, separated by the domain only; reference and vectors V07). v1 readers reject v2, v2 readers read v1 unchanged.
 
 **Compatibility:** see the table above (v1 unchanged; factor never silently ignored; missing factor fails
 before Argon2id; uniform "decryption failed"; reserved/unknown types unsupported before derivation; clear
