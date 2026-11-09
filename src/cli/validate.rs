@@ -77,7 +77,16 @@ pub fn passphrase(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
             .unwrap_or(generator::DEFAULT_LEN),
         exclude_ambiguous: m.get_flag("no-ambiguous"),
     };
-    let generated = generator::generate(&options).map_err(|e| Failure::from_error(&e, lang))?;
+    let bits = min_bits(m);
+    let needed = generator::min_len(bits);
+    if (generator::MIN_LEN..needed).contains(&options.length) {
+        return Err(Failure::new(
+            code::USAGE,
+            format!("{} {needed}", t.msg_pass_too_short),
+        ));
+    }
+    let generated =
+        generator::generate_with(&options, bits).map_err(|e| Failure::from_error(&e, lang))?;
     println!("{}", generated.as_ref().expose_str());
     let bits = options.entropy_bits();
     eprintln!("{}: {} – {}", t.msg_entropy, bits.floor(), rating(t, bits));

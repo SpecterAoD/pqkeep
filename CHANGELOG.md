@@ -17,6 +17,8 @@ German release notes: see `docs/releases/`.
   or when `generate`, `sign` or `verify` are called in a terminal without the required input – never
   without a terminal or with `--batch`. Each flow ends by showing the equivalent commands; all commands
   keep working unchanged.
+- `pqkeep passphrase --min-bits <128–256>`: the generated passphrase is guaranteed to pass the check
+  with the same value (needs 36 characters for 192 bits, 48 for 256).
 - Unattended operation: global `--passphrase-file <path>` (one line, Linux owner-only permissions,
   works with systemd `LoadCredential=`) and `--batch` (never prompts) – see `docs/SERVER.md`.
 - Context menu with multi-selection: each separately or one container (suggested, freely editable name),

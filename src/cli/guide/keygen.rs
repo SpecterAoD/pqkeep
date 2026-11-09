@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-use pqkeep::security::{Lang, MIN_BITS};
+use pqkeep::security::{Lang, MIN_BITS, generator};
 
 use super::levels::{Level, Purpose, for_purpose};
 use super::text::{GuideTexts, guide_texts};
@@ -29,8 +29,11 @@ pub struct KeyPlan {
 impl KeyPlan {
     /// DE: Argumente für `pqkeep passphrase`. EN: Arguments for `pqkeep passphrase`.
     pub fn passphrase_args(&self) -> Option<Vec<String>> {
-        self.pass_len
-            .map(|n| vec!["passphrase".to_owned(), n.to_string()])
+        let mut a = vec!["passphrase".to_owned(), self.pass_len?.to_string()];
+        if self.min_bits > MIN_BITS {
+            a.extend(["--min-bits".to_owned(), self.min_bits.to_string()]);
+        }
+        Some(a)
     }
 
     /// DE: Argumente für `pqkeep generate`. EN: Arguments for `pqkeep generate`.
@@ -176,8 +179,14 @@ fn ask(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
     let min_bits = [128, 192, 256][select(g.min_bits, &strengths, 0)?];
     let modes: Vec<&str> = g.pass_items.split('|').collect();
     let pass_len = if select(g.pass, &modes, 0)? == 0 {
-        let len = input(g.pass_len, Some("32"), false)?;
-        Some(len.trim().parse::<usize>().unwrap_or(32).clamp(24, 256))
+        // DE: Länge passend zur Mindeststärke (128 → 24–256, Vorgabe 32; 192 → ab 36; 256 → ab 48).
+        // EN: Length matching the minimum strength (128 → 24–256, default 32; 192 → from 36; …).
+        let least = generator::min_len(min_bits);
+        let default = (least + 4).max(generator::DEFAULT_LEN);
+        let prompt = format!("{} ({least}–{})", g.pass_len, generator::MAX_LEN);
+        let len = input(&prompt, Some(&default.to_string()), false)?;
+        let len = len.trim().parse::<usize>().unwrap_or(default);
+        Some(len.clamp(least, generator::MAX_LEN))
     } else {
         None
     };
@@ -229,6 +238,15 @@ fn show(g: &GuideTexts, plan: &KeyPlan) {
     eprintln!();
 }
 
+/// DE: Exit-Code eines Kindprozesses als Ergebnis (der Kindprozess hat den Fehler schon gemeldet).
+/// EN: A child's exit code as a result (the child has already reported the error).
+fn succeed(exit: i32) -> CliResult {
+    match exit {
+        0 => Ok(()),
+        c => Err(Failure::new(u8::try_from(c).unwrap_or(code::ERROR), "")),
+    }
+}
+
 /// DE: Geführtes Erstellen; liefert den ausgeführten Plan. EN: Guided creation; returns the plan.
 pub fn run(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
     let g = guide_texts(lang);
@@ -238,18 +256,18 @@ pub fn run(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
         return Err(super::cancelled());
     }
     if let Some(args) = plan.passphrase_args() {
-        child(lang, &args)?;
+        succeed(child(lang, &args)?)?;
         eprintln!("{}", g.pass_save);
     }
     loop {
         match child(lang, &plan.generate_args())? {
             0 => break,
             c if c == i32::from(code::WEAK) && confirm(g.retry, true)? => {}
-            c => return Err(Failure::new(u8::try_from(c).unwrap_or(code::ERROR), "")),
+            c => return succeed(c).map(|()| plan),
         }
     }
     if let Some(args) = plan.export_args() {
-        child(lang, &args)?;
+        succeed(child(lang, &args)?)?;
     }
     eprintln!("{}", g.done);
     Ok(plan)

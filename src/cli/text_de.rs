@@ -120,5 +120,6 @@ pub static DE: Texts = Texts {
     menu_recipient: "Öffentliche Schlüsseldatei des Empfängers (leer = Passphrase)",
     menu_keyfile: "Eigene Schlüsseldatei (leer, falls Passphrase-Datei)",
     menu_hint_passphrase: "Hinweis: mindestens 128 Bit Stärke – z. B. 24 zufällige Zeichen mit Groß-/Kleinbuchstaben, Ziffer und Sonderzeichen; keine Wiederholungen/Folgen. Tipp: „Passphrase erzeugen“.",
+    msg_pass_too_short: "Zu kurz für die gewählte Mindeststärke (--min-bits); nötige Zeichen mindestens:",
     menu_pass_len: "Länge in Zeichen (24–256)",
 };

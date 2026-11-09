@@ -23,7 +23,10 @@ fn plan() -> KeyPlan {
 #[test]
 fn commands_match_the_answers() {
     let p = plan();
-    assert_eq!(p.passphrase_args().unwrap(), ["passphrase", "40"]);
+    assert_eq!(
+        p.passphrase_args().unwrap(),
+        ["passphrase", "40", "--min-bits", "192"]
+    );
     assert_eq!(
         p.generate_args(),
         [

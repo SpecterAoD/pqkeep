@@ -125,6 +125,7 @@ pub struct Texts {
     pub menu_keyfile: &'static str,
     pub menu_hint_passphrase: &'static str,
     pub menu_pass_len: &'static str,
+    pub msg_pass_too_short: &'static str,
 }
 
 /// DE: Texte der gewählten Sprache. EN: Texts of the chosen language.

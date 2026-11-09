@@ -220,7 +220,8 @@ fn pass_commands(lang: Lang) -> [Command; 2] {
                     .short('l')
                     .value_parser(value_parser!(usize)),
             )
-            .arg(flag("no-ambiguous", t.arg_no_ambiguous)),
+            .arg(flag("no-ambiguous", t.arg_no_ambiguous))
+            .arg(min_bits(lang)),
     ]
 }
 

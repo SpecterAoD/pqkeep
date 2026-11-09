@@ -120,5 +120,6 @@ pub static EN: Texts = Texts {
     menu_recipient: "Recipient's public key file (empty = passphrase)",
     menu_keyfile: "Own key file (empty if passphrase file)",
     menu_hint_passphrase: "Note: at least 128 bits of strength – e.g. 24 random characters with upper/lower case, digit and special character; no repetitions/sequences. Tip: \"Generate passphrase\".",
+    msg_pass_too_short: "Too short for the chosen minimum strength (--min-bits); characters needed at least:",
     menu_pass_len: "Length in characters (24–256)",
 };
