@@ -1,0 +1,52 @@
+name: OpenCode Issue Agent (Qwen 2.5 Coder Free)
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  opencode-run:
+    # Führt den Workflow nur aus, wenn ein Kommentar in einem Issue mit /opencode oder /oc beginnt
+    if: |
+      github.event.issue.pull_request == null &&
+      (startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node.js Umgebung einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: OpenCode CLI installieren
+        run: npm install -g opencode-ai
+
+      - name: OpenCode ausführen
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Prompt aus dem Issue-Kommentar extrahieren
+          PROMPT=$(echo "${{ github.event.comment.body }}" | sed -E 's/^\/(opencode|oc)\s*//')
+          
+          # Falls kein Text nach dem Befehl stand, das Issue-Body als Kontext nehmen
+          if [ -z "$PROMPT" ]; then
+            PROMPT="Behebe das in diesem Issue beschriebene Problem: ${{ github.event.issue.title }} - ${{ github.event.issue.body }}"
+          fi
+
+          # OpenCode mit dem angegebenen Qwen-Modell starten
+          opencode run \
+            --model "openrouter/qwen/qwen-2.5-coder-32b-instruct:free" \
+            --format json \
+            -p "$PROMPT"
