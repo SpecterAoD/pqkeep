@@ -46,12 +46,12 @@ fn choice_args(t: &Texts, choice: usize) -> CliResult<Option<Vec<String>>> {
     let mut argv: Vec<String> = Vec::new();
     match choice {
         1 => {
-            eprintln!("{}", t.menu_hint_passphrase);
+            eprintln!("Passphrase hint: follow the passphrase rules.");
             let len = ask_default(t.menu_pass_len, "32")?;
             argv.extend(["passphrase".to_owned(), len.trim().to_owned()]);
         }
         2 => {
-            eprintln!("{}", t.menu_hint_passphrase);
+            eprintln!("Passphrase hint: follow the passphrase rules.");
             argv.push("validate".to_owned());
         }
         3 | 4 => {
