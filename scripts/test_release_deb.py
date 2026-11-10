@@ -16,6 +16,7 @@ from unittest.mock import patch
 import release_deb as deb
 import release_deb_check as check
 from release_deb_licenses import apache_reference, crate_notice, license_files
+from release_deb_smoke import include_options
 
 
 def fixture_tar(files: dict) -> bytes:
@@ -43,6 +44,13 @@ def fixture_data(binary: bytes) -> dict:
 
 
 class DebianTests(unittest.TestCase):
+    def test_container_includes_filtered_parent_directories(self):
+        options = include_options({"usr/share/man/de/man1/pqkeep.1.gz": b"manual"})
+        self.assertEqual(options[::2], ["-o"] * 6)
+        self.assertEqual(options[1::2], ["Dpkg::Options::=--path-include=/" + path for path in
+                         ("usr", "usr/share", "usr/share/man", "usr/share/man/de",
+                          "usr/share/man/de/man1", "usr/share/man/de/man1/pqkeep.1.gz")])
+
     def test_apache_reference_preserves_exceptions_and_rejects_changes(self):
         license_text = (Path(__file__).resolve().parents[1] / "LICENSE").read_text()
         result = apache_reference(license_text + "\nAdditional exception retained.\n")

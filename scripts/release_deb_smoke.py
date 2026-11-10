@@ -43,6 +43,13 @@ def user_command(home: Path, *args: str, stdin: str = "") -> None:
                    input=stdin, text=True, stdout=subprocess.DEVNULL, check=True, cwd=home)
 
 
+def include_options(data: dict[str, bytes]) -> list[str]:
+    """Paketdateien samt Eltern einschließen: Slim-Images filtern auch Manpage-Verzeichnisse."""
+    paths = set(data) | {str(p) for name in data for p in Path(name).parents if str(p) != "."}
+    return [option for name in sorted(paths)
+            for option in ("-o", f"Dpkg::Options::=--path-include=/{name}")]
+
+
 def exercise(package: Path, arch: str, work: Path) -> None:
     """Schlüssel vor Installation anlegen, danach alle Nutzerdateien unverändert verlangen."""
     data = check_package(package, arch)
@@ -63,9 +70,7 @@ def exercise(package: Path, arch: str, work: Path) -> None:
     user_command(home, str(source), "export", str(home / "key.json"), "--out", str(home / "key.pub.json"))
     before = snapshot(home)
     # Minimale Container filtern Dokumentation aus; jede PQKeep-Datei mitprüfen.
-    includes = [option for name in sorted(data)
-                for option in ("-o", f"Dpkg::Options::=--path-include=/{name}")]
-    command("apt-get", "install", "--yes", "--no-install-recommends", *includes, str(package))
+    command("apt-get", "install", "--yes", "--no-install-recommends", *include_options(data), str(package))
     command("dpkg-query", "-W", "-f=${Package} ${Version} ${Architecture} ${Status}\n", "pqkeep")
     verification = subprocess.check_output(["dpkg", "--verify", "pqkeep"], text=True)
     if verification.strip():
