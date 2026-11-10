@@ -27,6 +27,8 @@ on:
       - "scripts/test_release_*.py"
       - "scripts/check_binary.py"
       - "tests/hardening_memlock.rs"
+      - "packaging/debian/**"
+      - "docs/INSTALL.md"
 
 permissions:
   contents: read
@@ -58,6 +60,7 @@ jobs:
         run: |
           python3 scripts/test_release_scripts.py
           python3 -m unittest discover -s scripts -p 'test_release_elf.py' -v
+          python3 -m unittest discover -s scripts -p 'test_release_deb*.py' -v
       - name: Version, Zeitstempel, Tag-Signatur / version, timestamp, tag signature
         id: meta
         shell: bash
@@ -186,12 +189,71 @@ jobs:
         run: |
           python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" \
             --archive "dist/pqkeep-$VERSION-${{ matrix.target }}.tar.gz"
+      - name: Debian-AMD64-Kandidat und reproduzierbares Verpacken
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          dpkg-deb --version
+          dpkg-shlibdeps --version
+          python3 scripts/release_deb.py target/x86_64-unknown-linux-gnu/release/pqkeep \
+            x86_64-unknown-linux-gnu deb-dist --ci-sha "$GITHUB_SHA"
+          python3 scripts/release_deb.py target/x86_64-unknown-linux-gnu/release/pqkeep \
+            x86_64-unknown-linux-gnu deb-repeat --ci-sha "$GITHUB_SHA"
+          cmp deb-dist/*.deb deb-repeat/*.deb
+          dpkg-deb --info deb-dist/*.deb
+          dpkg-deb --contents deb-dist/*.deb
+          sha256sum deb-dist/*.deb
+      - name: Debian-Kandidat getrennt bereitstellen
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: candidate-debian-amd64
+          path: deb-dist/*.deb
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.artifact }}
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  debian:
+    name: Debian-Installation AMD64 (${{ matrix.name }})
+    needs: build
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Offizielle Image-Digests am 10.11.2026 geprüft; keine beweglichen Tags allein.
+          - name: Debian 12
+            image: debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+          - name: Ubuntu 22.04
+            image: ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
+    # Kurzlebige native Testcontainer; keine privilegierten Optionen oder gelockerten Filter.
+    container:
+      image: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate-debian-amd64
+          path: candidate
+      - name: Werkzeuge ausschließlich im Testcontainer
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends python3 lintian
+          cat /etc/os-release
+          dpkg-deb --version
+          lintian --version
+      - name: Lintian ohne Overrides
+        run: lintian --allow-root --fail-on error candidate/*.deb
+      - name: Native Installation, Nutzung und Entfernung
+        run: python3 scripts/release_deb_smoke.py candidate/*.deb --arch amd64
 
   publish:
     name: Signieren und bereitstellen / sign and stage

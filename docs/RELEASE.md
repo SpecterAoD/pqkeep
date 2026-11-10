@@ -50,6 +50,16 @@ signierten `release-bundle`: Signaturen, Attestationen und Veröffentlichung der
 Artefakte folgen erst nach gesonderter Freigabe in Phase 6. Debian-Pakete sind in Phase 2
 nicht enthalten. Details und Abnahme: [Phase-2-Bericht](issue-93-phase2.md).
 
+## Debian AMD64 als CI-Kandidat (Issue #93, Phase 3)
+
+Der bestehende AMD64-Build erzeugt zusätzlich `candidate-debian-amd64`, getrennt von
+`dist-*` und dem signierten Release-Bundle. Der Paketierer verwendet genau das geprüfte
+Release-Binary und prüft dessen unveränderte Identität im `.deb`. Zwei Paketläufe müssen
+bytegleich sein. Die CI führt Lintian und echte Installation/Smoke/Entfernung auf
+Debian 12 und Ubuntu 22.04 in nativen AMD64-Containern aus; vorhandene Testschlüssel und
+Nutzerdateien müssen dabei unverändert bleiben. Details: [Installation DE/EN](INSTALL.md)
+und [Phase-3-Bericht](issue-93-phase3.md). Kein neues Artefakt wird in Phase 3 veröffentlicht.
+
 ## Windows-Signatur (SignPath)
 
 Erst nach Zusage der SignPath Foundation: Signierschritt vor dem Verpacken einbauen, Zugangsdaten
@@ -89,3 +99,11 @@ The Actions artifact `candidate-aarch64-unknown-linux-gnu` contains the `.tar.gz
 target-specific CycloneDX SBOM, retained for 14 days. It is not yet part of the signed
 `release-bundle`; signing, attestations and publishing require separate phase 6 approval.
 Debian packages are outside phase 2. See the [phase 2 report](issue-93-phase2.md) (German).
+
+**Debian AMD64 CI candidate (issue #93, phase 3):** the existing AMD64 build also produces
+`candidate-debian-amd64`, separate from `dist-*` and the signed release bundle. Packaging
+uses the exact tested executable and checks its identity inside the `.deb`. Repeated
+packaging must be byte-identical. CI runs Lintian and real installation/smoke/removal
+checks in native AMD64 Debian 12 and Ubuntu 22.04 containers, preserving existing test
+keys and user files. See [installation instructions](INSTALL.md) and the
+[phase 3 report](issue-93-phase3.md) (German). No new artifact is published in phase 3.

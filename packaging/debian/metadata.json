@@ -1,0 +1,6 @@
+{
+  "maintainer": "SpecterAoD <77644070+SpecterAoD@users.noreply.github.com>",
+  "revision": "1",
+  "homepage": "https://github.com/SpecterAoD/pqkeep",
+  "description": "post-quantum key and file encryption command-line tool\n Generate and manage ML-KEM, ML-DSA and AES-256 keys, and encrypt files.\n Includes German and English manuals and shell completions.\n No background service is installed or started."
+}
