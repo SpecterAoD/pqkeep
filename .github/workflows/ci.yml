@@ -34,7 +34,7 @@ jobs:
         #     Sandbox und Seccomp-Liste ebenfalls funktionieren.
         # EN: ubuntu-22.04 (glibc 2.35) is the base of Linux release builds; the sandbox and
         #     seccomp list must work there as well.
-        os: [ubuntu-latest, ubuntu-22.04, windows-latest]
+        os: [ubuntu-latest, ubuntu-22.04, windows-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,6 +43,15 @@ jobs:
       # DE: Toolchain laut rust-toolchain.toml über das vorinstallierte rustup.
       # EN: Toolchain per rust-toolchain.toml via the preinstalled rustup.
       - run: rustup show active-toolchain || rustup toolchain install
+      - name: Native ARM64-Umgebung
+        if: matrix.os == 'ubuntu-22.04-arm'
+        shell: bash
+        run: |
+          test "$(uname -m)" = aarch64
+          uname -a
+          getconf PAGESIZE
+          getconf GNU_LIBC_VERSION
+          rustc -vV
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       # DE: Reine CLI ohne API/Netzwerkcode muss baubar bleiben.
@@ -77,6 +86,7 @@ jobs:
       - run: bash scripts/check_limits.sh
       - run: bash scripts/test_check_limits.sh
       - run: python3 scripts/test_check_binary.py
+      - run: python3 -m unittest discover -s scripts -p 'test_release_elf.py' -v
 
   binary:
     name: Binär-Härtung / binary hardening (${{ matrix.os }})

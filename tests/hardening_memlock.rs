@@ -29,14 +29,14 @@ fn secrets_are_locked_and_released() {
     let kib_before = vm_lck_kib();
 
     // DE: 3 Seiten großes Geheimnis. EN: Secret spanning 3 pages.
-    let size = 3 * 4096;
+    let size = 3 * region::page::size();
     let secret = SecretBytes::new(vec![0x5A; size]);
     let during = memlock::stats();
     assert!(secret.is_locked(), "{during:?}");
     assert!(during.locked_pages >= before.locked_pages + 3);
     assert_eq!(during.failed_attempts, before.failed_attempts);
     #[cfg(target_os = "linux")]
-    assert!(vm_lck_kib() >= kib_before + 12, "VmLck");
+    assert!(vm_lck_kib() >= kib_before + size as u64 / 1024, "VmLck");
 
     drop(secret);
     let after = memlock::stats();

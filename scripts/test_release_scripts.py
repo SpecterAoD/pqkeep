@@ -31,13 +31,16 @@ def pack(binary: str, target: str, out: str) -> str:
 
 def test_names() -> None:
     assert rp.archive_name("0.1.0", "x86_64-unknown-linux-gnu") == "pqkeep-0.1.0-x86_64-unknown-linux-gnu.tar.gz"
+    assert rp.archive_name("0.1.0", "aarch64-unknown-linux-gnu") == "pqkeep-0.1.0-aarch64-unknown-linux-gnu.tar.gz"
     assert rp.archive_name("0.1.0", "x86_64-pc-windows-msvc") == "pqkeep-0.1.0-x86_64-pc-windows-msvc.zip"
 
 
 def test_reproducible_and_content() -> None:
     os.environ["SOURCE_DATE_EPOCH"] = "1700000000"
     with tempfile.TemporaryDirectory() as tmp:
-        for target, exe in [("x86_64-unknown-linux-gnu", "pqkeep"), ("x86_64-pc-windows-msvc", "pqkeep.exe")]:
+        for target, exe in [("x86_64-unknown-linux-gnu", "pqkeep"),
+                            ("aarch64-unknown-linux-gnu", "pqkeep"),
+                            ("x86_64-pc-windows-msvc", "pqkeep.exe")]:
             binary = os.path.join(tmp, exe)
             with open(binary, "wb") as f:
                 f.write(b"\x7fELF fake binary")
@@ -55,6 +58,7 @@ def test_reproducible_and_content() -> None:
                 with tarfile.open(a) as t:
                     names = t.getnames()
                     assert all(m.uid == 0 and m.mtime == 1700000000 for m in t.getmembers())
+                    assert t.extractfile(prefix + exe).read() == open(binary, "rb").read()
             expected = [exe, *extra, "LICENSE", "NOTICE", "README.md", "LICENSES-wordlists.md"]
             assert sorted(names) == sorted(prefix + n for n in expected), names
 
@@ -71,6 +75,8 @@ def test_sbom_completion() -> None:
             assert d["serialNumber"].startswith("urn:uuid:") and d["metadata"]["timestamp"] == "2023-11-14T22:13:20Z"
         assert rb.serial("1.0.0", "t", "abc123") == d["serialNumber"]
         assert rb.serial("1.0.0", "t", "abc124") != d["serialNumber"]
+        assert rb.serial("1.0.0", "aarch64-unknown-linux-gnu", "abc123") != rb.serial(
+            "1.0.0", "x86_64-unknown-linux-gnu", "abc123")
         json.dump({"spdxVersion": "SPDX-2.3"}, open(path, "w"))
         try:
             rb.main([path, "1.0.0", "t", "abc123"])
