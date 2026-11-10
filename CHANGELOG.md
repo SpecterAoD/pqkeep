@@ -6,6 +6,12 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Added
+- Context menu for **Thunar** (Xfce): `pqkeep integrate install` adds two custom actions to
+  `~/.config/Thunar/uca.xml` (multi-selection, window or terminal mode) without touching foreign
+  actions; strict layout check, backup before writing, checksums per entry (integration list version 2),
+  fully reversible – see `docs/INTEGRATION.md`.
+
 ### Changed
 - `pqkeep passphrase` now shows the same conservative strength estimate as `pqkeep validate`
   (previously the higher formula value), so both commands agree.

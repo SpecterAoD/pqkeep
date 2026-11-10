@@ -59,7 +59,7 @@ pqkeep verify --pub anna.pub.json contract.pdf    # [VERIFIED] / [INVALID]
 pqkeep help security                     # topics: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # show API token once, store hash only
 pqkeep serve --token-file api.token      # REST API on 127.0.0.1:8787 (bearer token)
-pqkeep integrate install                 # right-click menu in Nemo/Nautilus/Dolphin (Linux)
+pqkeep integrate install                 # right-click menu in Nemo/Nautilus/Dolphin/Thunar (Linux)
 ```
 
 Language: `--lang en|de` (default: system language). Passphrases are never command-line
@@ -181,7 +181,7 @@ pqkeep verify --pub anna.pub.json vertrag.pdf     # [VERIFIED] / [INVALID]
 pqkeep help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify
 pqkeep serve --init-token --token-file api.token   # API-Token einmal anzeigen, nur Hash speichern
 pqkeep serve --token-file api.token      # REST-API auf 127.0.0.1:8787 (Bearer-Token)
-pqkeep integrate install                 # Rechtsklick-Menü in Nemo/Nautilus/Dolphin (Linux)
+pqkeep integrate install                 # Rechtsklick-Menü in Nemo/Nautilus/Dolphin/Thunar (Linux)
 ```
 
 Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen nie als Argument, nur verdeckt oder

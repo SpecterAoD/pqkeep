@@ -4,7 +4,8 @@
 
 Rechtsklick auf eine Datei oder einen Ordner → **„Mit PQKeep verschlüsseln“**, Rechtsklick auf eine
 `.pqkf`-Datei → **„Mit PQKeep entschlüsseln“**. Unterstützt unter Linux: **Nemo** (Cinnamon/Linux
-Mint), **Nautilus** (GNOME) und **Dolphin** (KDE); unter Windows der **Explorer** (siehe [Windows](#windows)).
+Mint), **Nautilus** (GNOME), **Dolphin** (KDE) und **Thunar** (Xfce, siehe [Thunar](#thunar-xfce));
+unter Windows der **Explorer** (siehe [Windows](#windows)).
 
 ## Einrichten und entfernen
 
@@ -23,8 +24,35 @@ pqkeep integrate uninstall    # alles wieder entfernen
 - Eingetragen wird der **absolute Pfad** dieses Programms. Nach dem Verschieben `install` erneut
   ausführen (`status` meldet ein verschobenes Programm). Abgelehnt werden temporäre Orte, für andere
   beschreibbare Pfade und Pfade mit `" ' \` $ \ %`. Empfehlung: `~/.local/bin/pqkeep`.
-- Fehlt der Eintrag danach, den Dateimanager neu starten (z. B. `nemo -q`).
+- Fehlt der Eintrag danach, den Dateimanager neu starten (z. B. `nemo -q` oder `thunar -q`).
 - `integrate` läuft in der Sandbox und darf nur in die genannten Ordner schreiben.
+
+## Thunar (Xfce)
+
+Thunar kennt keine Aktionsdateien, sondern **eine** Datei für alle „Benutzerdefinierten Aktionen“:
+`~/.config/Thunar/uca.xml` (bzw. `$XDG_CONFIG_HOME/Thunar/uca.xml`). Darin stehen auch Ihre eigenen
+Aktionen. `integrate` geht deshalb besonders vorsichtig vor:
+
+- Eingetragen werden zwei Aktionen mit festen Kennungen `pqkeep-encrypt` (Dateien und Ordner) und
+  `pqkeep-decrypt` (nur `*.pqkf`), jeweils für Mehrfachauswahl (`%F`), im Fenster- oder Terminal-Modus
+  (bevorzugt `xfce4-terminal -x`). Name, Befehl und Beschreibung werden XML-maskiert.
+- **Fremde Aktionen bleiben Byte für Byte erhalten.** Geändert werden nur die beiden eigenen Blöcke;
+  die Liste `pqkeep/integration.json` (Version 2) merkt sich je Block eine Prüfsumme. Haben Sie einen
+  eigenen Block in Thunar bearbeitet oder trägt eine fremde Aktion dieselbe Kennung, bleibt er stehen
+  („Nicht angefasst“).
+- **Strenge Prüfung statt Raten:** Akzeptiert wird nur der Aufbau, den Thunar selbst schreibt (ein
+  `<actions>`-Rahmen, nicht verschachtelte `<action>`-Blöcke, keine Kommentare, DOCTYPE oder CDATA,
+  höchstens 1 MiB, UTF-8). Sonst ändert `integrate` nichts und meldet das. Abhilfe: in Thunar unter
+  *Bearbeiten → Benutzerdefinierte Aktionen* einmal etwas ändern und speichern – Thunar schreibt die
+  Datei dann im erwarteten Aufbau.
+- **Sicherung:** Vor jedem Schreiben in eine vorhandene Datei entsteht daneben
+  `uca.xml.pqkeep-bak_JJJJ-MM-TT_HHMM` (UTC, bei mehreren in derselben Minute mit `-2`, `-3` …). Rechte der Datei bleiben erhalten.
+- Fehlt die Datei, dient wie bei Thunar die Vorgabe des Systems (`/etc/xdg/Thunar/uca.xml`, z. B.
+  „Terminal hier öffnen“) als Ausgangspunkt – sonst gingen diese Einträge verloren.
+- `uninstall` entfernt nur die beiden unveränderten eigenen Blöcke; die Datei selbst bleibt.
+- **Thunar neu starten** (`thunar -q`), damit die Einträge erscheinen. Wichtig: Wer im laufenden,
+  alten Thunar Aktionen bearbeitet, überschreibt `uca.xml` mit dessen Stand; dann fehlen die
+  PQKeep-Einträge (fremde gehen nicht verloren) – einfach `install` erneut ausführen.
 
 ## Windows
 
@@ -100,7 +128,7 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
 
 ## Mehrere Dateien
 
-- **Linux:** Nemo (`Selection=notnone`), Nautilus und Dolphin (`%F`) übergeben alle markierten Einträge
+- **Linux:** Nemo (`Selection=notnone`), Nautilus, Dolphin und Thunar (`%F`) übergeben alle markierten Einträge
   – jeder Pfad ein eigenes Argument nach `--`.
 - **Windows:** **„Senden an → PQKeep“** (Verknüpfung `%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`, über
   PowerShell angelegt, mit Prüfsumme im Manifest, `uninstall` entfernt sie nur unverändert). Aktion
@@ -134,7 +162,7 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
 - Der Hilfsprozess `pqkeep context` verarbeitet keine Geheimnisse; Verschlüsseln und Entschlüsseln
   laufen als Kindprozess mit voller Sandbox (`docs/SANDBOX.md`).
 - Grenzen: Nautilus und Dolphin sind über Tests der erzeugten Dateien abgedeckt, nicht im laufenden
-  Dateimanager; für Nemo ist zusätzlich eine Prüfung im echten Dateimanager durch den Maintainer vorgesehen. Wer das Programm
+  Dateimanager; Thunar zusätzlich über das Zusammenführen mit fremden Aktionen und einen Handtest; für Nemo ist zusätzlich eine Prüfung im echten Dateimanager durch den Maintainer vorgesehen. Wer das Programm
   ersetzen kann (Schreibrecht auf Datei oder Ordner), kann auch das Kontextmenü übernehmen – daher die
   Prüfung des Programmpfads.
 
@@ -143,7 +171,8 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
 ## English
 
 Right-click a file or folder → **"Encrypt with PQKeep"**, right-click a `.pqkf` file → **"Decrypt with
-PQKeep"**. Supported on Linux: **Nemo** (Cinnamon/Linux Mint), **Nautilus** (GNOME), **Dolphin** (KDE).
+PQKeep"**. Supported on Linux: **Nemo** (Cinnamon/Linux Mint), **Nautilus** (GNOME), **Dolphin** (KDE),
+**Thunar** (Xfce).
 On Windows: **Explorer**.
 
 **Set up / remove:** `pqkeep integrate install` (found file managers, `--all` for all),
@@ -153,7 +182,23 @@ writes only below `~/.local/share` (or `$XDG_DATA_HOME`). A list with checksums
 foreign or user-modified files are never overwritten or deleted. The absolute path of this program is
 registered; run `install` again after moving it. Temporary, world-writable or special-character paths
 are rejected; recommended: `~/.local/bin/pqkeep`. Restart the file manager if the entry is missing
-(e.g. `nemo -q`). `integrate` runs in the sandbox.
+(e.g. `nemo -q` or `thunar -q`). `integrate` runs in the sandbox.
+
+**Thunar (Xfce):** Thunar keeps all "custom actions" in **one** file, `~/.config/Thunar/uca.xml` (or
+`$XDG_CONFIG_HOME/Thunar/uca.xml`), which also holds your own actions. `integrate` adds two actions with
+fixed ids `pqkeep-encrypt` (files and folders) and `pqkeep-decrypt` (`*.pqkf` only), multi-selection
+(`%F`), window or terminal mode (preferably `xfce4-terminal -x`); name, command and description are
+XML-escaped. **Foreign actions are kept byte for byte**; only the two own blocks change, each with a
+checksum in `pqkeep/integration.json` (version 2). A block you edited in Thunar, or a foreign action
+with the same id, stays ("Not touched"). Only the layout Thunar itself writes is accepted (one
+`<actions>` frame, non-nested `<action>` blocks, no comments, DOCTYPE or CDATA, at most 1 MiB, UTF-8);
+otherwise nothing is changed – edit and save the custom actions in Thunar once, then try again.
+Before writing to an existing file a backup `uca.xml.pqkeep-bak_YYYY-MM-DD_HHMM` (UTC; `-2`, `-3` … within the same minute) is created next
+to it; the file mode is kept. If the file is missing, the system default (`/etc/xdg/Thunar/uca.xml`)
+is the starting point, as in Thunar. `uninstall` removes only the two unchanged own blocks; the file
+stays. **Restart Thunar** (`thunar -q`); editing actions in an old running Thunar overwrites
+`uca.xml` with its state (the PQKeep entries are then missing, foreign ones are kept – run `install`
+again).
 
 **Windows:** `pqkeep integrate install|status|uninstall` writes only below `HKCU\Software\Classes`
 (no administrator rights): `*\shell\PQKeep.Encrypt`, `Directory\shell\PQKeep.Encrypt` and
@@ -191,7 +236,7 @@ for your key file in recipient mode. The result is placed next to the source und
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
 sandboxed process (on Linux also via small windows, see above).
 
-**Several files:** Linux: Nemo (`Selection=notnone`), Nautilus and Dolphin (`%F`) pass all selected
+**Several files:** Linux: Nemo (`Selection=notnone`), Nautilus, Dolphin and Thunar (`%F`) pass all selected
 entries, one argument each after `--`. Windows: classic entries would start one process per file,
 so `install` also sets up **"Send to → PQKeep"** (`%APPDATA%\Microsoft\Windows\SendTo\PQKeep.lnk`,
 created via PowerShell, checksum in the manifest); action `auto` decrypts if all are `.pqkf`, else

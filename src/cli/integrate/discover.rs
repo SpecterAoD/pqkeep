@@ -31,9 +31,9 @@ pub(super) fn find_in_path(name: &str) -> Option<PathBuf> {
         .find(|p| fs::metadata(p).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0))
 }
 
-/// DE: Erstes vorhandenes Terminal; Dolphin bevorzugt konsole.
-/// EN: First available terminal; Dolphin prefers konsole.
-fn terminal(prefer_konsole: bool) -> Option<Terminal> {
+/// DE: Erstes vorhandenes Terminal; `prefer` zuerst (Dolphin: konsole, Thunar: xfce4-terminal).
+/// EN: First available terminal; `prefer` first (Dolphin: konsole, Thunar: xfce4-terminal).
+pub(super) fn terminal(prefer: Option<&str>) -> Option<Terminal> {
     let mut list = vec![
         ("gnome-terminal", "--"),
         ("konsole", "-e"),
@@ -42,9 +42,7 @@ fn terminal(prefer_konsole: bool) -> Option<Terminal> {
         ("x-terminal-emulator", "-e"),
         ("xterm", "-e"),
     ];
-    if prefer_konsole {
-        list.swap(0, 1);
-    }
+    list.sort_by_key(|(name, _)| Some(*name) != prefer);
     list.into_iter().find_map(|(name, flag)| {
         let path = find_in_path(name)?.to_str()?.to_owned();
         entries::safe_path(&path).then_some(Terminal {
@@ -108,11 +106,11 @@ pub(super) fn plan(
             });
         }
     }
-    for (fm, konsole) in [("nautilus", false), ("dolphin", true)] {
+    for (fm, prefer) in [("nautilus", None), ("dolphin", Some("konsole"))] {
         if !has(fm) {
             continue;
         }
-        let term = if dialog { None } else { terminal(konsole) };
+        let term = if dialog { None } else { terminal(prefer) };
         let launch = match &term {
             Some(t) => Launch::Terminal(t),
             None if dialog => Launch::Dialog,

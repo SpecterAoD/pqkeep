@@ -1,7 +1,9 @@
 //! DE: Linux-Umsetzung: Programmpfad prüfen, Dateimanager und Terminal finden, Einträge planen,
 //! schreiben oder entfernen. Schreiben atomar (Temporärdatei + Umbenennen), Rechte 0644 bzw. 0755.
+//! Thunar teilt sich eine Datei mit fremden Aktionen und liegt daher in `thunar.rs`.
 //! EN: Linux implementation: check the program path, find file managers and terminals, plan,
 //! write or remove entries. Atomic writes (temporary file + rename), mode 0644 or 0755.
+//! Thunar shares one file with foreign actions and therefore lives in `thunar.rs`.
 
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
@@ -14,17 +16,18 @@ use pqkeep::security::Lang;
 use super::Options;
 use super::discover::{Target, binary, data_home, find_in_path, plan};
 use super::manifest::{FileState, Manifest, digest, state};
+use super::thunar;
 use crate::cli::integrate_text::{IntegrateTexts, integrate_texts};
 use crate::cli::io::{CliResult, Failure, code};
 use crate::cli::sandbox;
 
-fn io_fail(lang: Lang) -> impl Fn(std::io::Error) -> Failure {
+pub(super) fn io_fail(lang: Lang) -> impl Fn(std::io::Error) -> Failure {
     move |e| Failure::from_error(&Error::from(e), lang)
 }
 
 /// DE: Temporärdatei schreiben, Rechte am Handle setzen (`fchmod`, kein `chmod`), umbenennen.
 /// EN: Write a temporary file, set the mode on the handle (`fchmod`, no `chmod`), rename.
-fn write_atomic(path: &Path, content: &str, mode: u32) -> std::io::Result<()> {
+pub(super) fn write_atomic(path: &Path, content: &str, mode: u32) -> std::io::Result<()> {
     use std::io::Write;
     let name = path
         .file_name()
@@ -72,7 +75,8 @@ fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: 
     let bin = binary(s)?;
     let dialog = !opts.terminal && crate::cli::dialog::available().is_some();
     let targets = plan(s, data, &bin, opts.all, dialog);
-    if targets.is_empty() {
+    let uca = thunar::plan(s, &bin, opts.all, dialog);
+    if targets.is_empty() && uca.is_none() {
         return Err(Failure::new(code::ERROR, s.msg_no_manager));
     }
     let mut dirs: Vec<PathBuf> = targets
@@ -80,6 +84,10 @@ fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: 
         .filter_map(|t| t.path.parent().map(Path::to_path_buf))
         .collect();
     dirs.extend(mpath.parent().map(Path::to_path_buf));
+    dirs.extend(
+        uca.iter()
+            .filter_map(|u| u.path.parent().map(Path::to_path_buf)),
+    );
     if !opts.dry_run {
         for d in &dirs {
             fs::create_dir_all(d).map_err(io_fail(lang))?;
@@ -87,13 +95,16 @@ fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: 
     }
     enter_sandbox(&dirs, opts, lang)?;
     let mut manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
-    manifest.version = 1;
     manifest.binary.clone_from(&bin);
     (if dialog { "dialog" } else { "terminal" }).clone_into(&mut manifest.mode);
     println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
     for t in &targets {
         apply(s, t, &mut manifest, opts.dry_run, lang)?;
     }
+    if let Some(u) = &uca {
+        thunar::install(s, u, &mut manifest, opts.dry_run, lang)?;
+    }
+    manifest.version = manifest.current_version();
     if opts.dry_run {
         println!("{}", s.msg_dry);
         return Ok(());
@@ -142,6 +153,12 @@ fn uninstall(s: &IntegrateTexts, mpath: &Path, opts: &Options, lang: Lang) -> Cl
             .iter()
             .filter_map(|e| e.path.parent().map(Path::to_path_buf)),
     );
+    let shared = thunar::files(&manifest);
+    dirs.extend(
+        shared
+            .iter()
+            .filter_map(|p| p.parent().map(Path::to_path_buf)),
+    );
     enter_sandbox(&dirs, opts, lang)?;
     for e in &manifest.files {
         match state(&manifest, &e.path).map_err(io_fail(lang))? {
@@ -155,6 +172,7 @@ fn uninstall(s: &IntegrateTexts, mpath: &Path, opts: &Options, lang: Lang) -> Cl
             FileState::Missing => {}
         }
     }
+    thunar::uninstall(s, &manifest, opts.dry_run, lang)?;
     if opts.dry_run {
         println!("{}", s.msg_dry);
     } else if mpath.exists() {
@@ -172,17 +190,18 @@ fn mode_label<'a>(s: &'a IntegrateTexts, mode: &str) -> &'a str {
 }
 
 fn status(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: Lang) -> CliResult {
-    let found: Vec<&str> = ["nemo", "nautilus", "dolphin"]
+    let found: Vec<&str> = ["nemo", "nautilus", "dolphin", "thunar"]
         .into_iter()
         .filter(|n| find_in_path(n).is_some())
         .collect();
     let current = binary(s).ok();
-    let dirs = vec![
+    let mut dirs = vec![
         data.join("pqkeep"),
         data.join("nemo/actions"),
         data.join("nautilus/scripts"),
         data.join("kio/servicemenus"),
     ];
+    dirs.extend(thunar::uca_path().and_then(|p| p.parent().map(Path::to_path_buf)));
     enter_sandbox(&dirs, opts, lang)?;
     println!(
         "{}: {}",
@@ -194,7 +213,7 @@ fn status(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: L
         }
     );
     let manifest = Manifest::load(mpath).map_err(io_fail(lang))?;
-    if !manifest.files.is_empty() {
+    if !manifest.files.is_empty() || !manifest.entries.is_empty() {
         println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
     }
     for e in &manifest.files {
@@ -206,7 +225,9 @@ fn status(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: L
         };
         println!("{label}: {}", e.path.display());
     }
-    if !manifest.files.is_empty() && current.as_deref() != Some(manifest.binary.as_str()) {
+    thunar::status(s, &manifest);
+    let any = !manifest.files.is_empty() || !manifest.entries.is_empty();
+    if any && current.as_deref() != Some(manifest.binary.as_str()) {
         eprintln!("{}: {}", s.msg_binary_moved, manifest.binary);
     }
     Ok(())
