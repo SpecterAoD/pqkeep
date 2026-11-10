@@ -71,7 +71,10 @@ fn passphrase_short_form_default_and_limits() {
     let (code, out, err) = run(&["passphrase"], "");
     assert_eq!(code, 0);
     assert_eq!(out.trim_end().chars().count(), 32);
-    assert!(err.contains("very strong"), "{err}");
+    assert!(
+        err.contains("≥ 128 bits") || err.contains("very strong"),
+        "{err}"
+    );
     let (code, out, _) = run(&["passphrase", "40"], "");
     assert_eq!(code, 0);
     assert_eq!(out.trim_end().chars().count(), 40);
@@ -132,4 +135,18 @@ fn generator_honours_min_bits() {
         let args = ["validate", "--passphrase-stdin", "--min-bits", bits];
         assert_eq!(run(&args, &out).0, 0, "{len}/{bits}");
     }
+}
+
+#[test]
+fn generator_and_validate_show_the_same_strength() {
+    let bits = |text: &str| {
+        let line = text.lines().find(|l| l.contains("(bits)")).unwrap();
+        let digits: String = line.chars().filter(char::is_ascii_digit).take(3).collect();
+        digits
+    };
+    let (code, pass, shown) = run(&["passphrase"], "");
+    assert_eq!(code, 0, "{shown}");
+    let (code, checked, err) = run(&["validate", "--passphrase-stdin"], &pass);
+    assert_eq!(code, 0, "{err}");
+    assert_eq!(bits(&shown), bits(&checked), "{shown} / {checked}");
 }

@@ -7,6 +7,8 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Changed
+- `pqkeep passphrase` now shows the same conservative strength estimate as `pqkeep validate`
+  (previously the higher formula value), so both commands agree.
 - **New passphrases need at least 128 bits** (was 80) – fit for post-quantum use even without counting
   Argon2id; `--min-bits` (128–256) raises it further. Existing files stay readable. The generator
   now defaults to 32 characters (≈ 210 bits, minimum 24); short form `pqkeep passphrase 40`.

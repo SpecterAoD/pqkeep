@@ -27,7 +27,7 @@ pub static EN: Texts = Texts {
     validate_after: "Examples:\n  pqkeep validate\n  pqkeep validate --passphrase-stdin < file",
     pass_about: "Generate and show a secure passphrase",
     pass_after: "Examples:\n  pqkeep passphrase\n  pqkeep passphrase --length 32 --no-ambiguous\n\nThe passphrase is the only thing on standard output; notes go to standard error.",
-    arg_length: "Length in characters (24–256, default 32 ≈ 210 bits)",
+    arg_length: "Length in characters (24–256, default 32)",
     arg_count: "Short form of --length, e.g. \"pqkeep passphrase 40\"",
     arg_min_bits: "Minimum strength of the new passphrase in bits (128–256, default 128)",
     rate_weak: "too weak (below 128 bits)",
