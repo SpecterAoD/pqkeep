@@ -145,7 +145,10 @@ jobs:
           getconf PAGESIZE
           getconf GNU_LIBC_VERSION
           rustc -vV
+          cargo --version
           cc --version
+          ld --version
+          sha256sum Cargo.lock
           printf 'Runner image: %s\n' "$ImageVersion"
           python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" --native
       - name: Härtung prüfen / check hardening

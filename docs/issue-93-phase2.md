@@ -3,7 +3,11 @@
 Stand: 10.11.2026. Phase 2 ausdrücklich vom Nutzer freigegeben.
 Basis: `569c233afadb2b2b20553e0832c555023d35f055`.
 Plan: [Architektur und sechs Phasen](issue-93-implementierungsplan.md).
-Status: Implementierung vorbereitet; native CI-Abnahme wird vor Abschluss ergänzt.
+Umsetzung: [PR #158](https://github.com/SpecterAoD/pqkeep/pull/158), eigener Phase-2-PR.
+Die folgenden Laufzeitnachweise gehören zum Implementierungscommit
+`80c3c83b5e0bab3565f0af3e337a6e6e02263526` und seinem GitHub-PR-Mergecommit
+`86eb574` (Buildversion `0.1.0-beta.1-dev.86eb574`). Nachfolgende Ergänzungen betreffen
+Umgebungsprotokollierung und diesen Bericht; der aktuelle Checkstatus steht im PR.
 
 ## Änderungen und Grenzen
 
@@ -43,12 +47,85 @@ python3 scripts/test_release_scripts.py
 python3 scripts/test_check_binary.py
 bash scripts/check_limits.sh
 cargo fmt --all --check
+cargo clippy --offline --all-targets --locked -- -D warnings
+cargo clippy --offline --all-targets --no-default-features --locked -- -D warnings
+cargo test --offline --locked --test hardening_memlock
 ```
 
 Der ELF-Prüfer hat acht Tests; der Paket-/SBOM-/Smoke-Skripttest fünf Testgruppen.
 Der dortige Smoke-Dry-Run ist nur ein Skripttest und kein Nachweis einer Binary-Ausführung.
 Negative Tests müssen erwartungsgemäß Fehler zurückgeben; diese werden von den Tests geprüft.
-Weitere lokale Rust-Prüfungen und native GitHub-Läufe werden nach ihrem Abschluss ergänzt.
+Der Memlock-Test bestand mit einem ausgeführten Test, ohne übersprungene Tests.
+
+### Native GitHub-Läufe
+
+[Release-Lauf 42778820928](https://github.com/SpecterAoD/pqkeep/actions/runs/42778820928):
+alle drei Buildjobs erfolgreich; Signieren/Veröffentlichen und Release-Verifikation beim
+PR bestimmungsgemäß übersprungen. Kein Release oder Tag erstellt.
+
+| Ziel | Tatsächliche Prüfung | Ergebnis |
+|---|---|---|
+| ARM64, Ubuntu 22.04.5 | Release-Build, ELF/ABI, PIE/Full RELRO/NX, echter Smoke, Archividentität, SBOM, Lockfilekontrolle | bestanden |
+| AMD64, Ubuntu 22.04.5 | dieselben Linux-Prüfungen | bestanden |
+| Windows x64, Server 2025 | Release-Build, ASLR/DEP/CFG für `pqkeep.exe` und `pqkeepw.exe`, echter Smoke, ZIP, SBOM, Lockfilekontrolle | bestanden |
+
+Native ARM64-Umgebung: `ubuntu-22.04-arm`, Image `20261101.179.1`, Kernel
+`6.8.0-1070-azure`, ISA `aarch64`, Seitengröße **4096 Byte**, glibc 2.35,
+Rust 1.99.1, LLVM 23.1.1. Höchste benötigte glibc-Symbolversion beider Linux-Binaries:
+`GLIBC_2.34`. Die Buildbasis bleibt trotzdem Ubuntu 22.04/glibc 2.35.
+
+Tatsächlich ausgeführte Befehle im ARM64-Releasejob (Pfadverkürzungen nur hier im Text):
+
+```sh
+cargo build --release --locked --target aarch64-unknown-linux-gnu
+python3 scripts/release_elf.py target/aarch64-unknown-linux-gnu/release/pqkeep aarch64-unknown-linux-gnu --native
+python3 scripts/check_binary.py target/aarch64-unknown-linux-gnu/release/pqkeep
+python3 scripts/release_smoke.py target/aarch64-unknown-linux-gnu/release/pqkeep
+python3 scripts/release_package.py target/aarch64-unknown-linux-gnu/release/pqkeep "$VERSION" aarch64-unknown-linux-gnu dist
+cargo install --locked cargo-cyclonedx --version 0.5.9
+cargo cyclonedx --format json --spec-version 1.5 --target aarch64-unknown-linux-gnu --override-filename "pqkeep-$VERSION-aarch64-unknown-linux-gnu.cdx"
+python3 scripts/release_sbom.py "dist/pqkeep-$VERSION-aarch64-unknown-linux-gnu.cdx.json" "$VERSION" aarch64-unknown-linux-gnu "$GITHUB_SHA"
+sha256sum -c "$RUNNER_TEMP/pqkeep-lock.sha256"
+python3 scripts/release_elf.py target/aarch64-unknown-linux-gnu/release/pqkeep aarch64-unknown-linux-gnu --archive "dist/pqkeep-$VERSION-aarch64-unknown-linux-gnu.tar.gz"
+```
+
+[CI-Lauf 42778821214](https://github.com/SpecterAoD/pqkeep/actions/runs/42778821214):
+alle zehn Jobs erfolgreich, einschließlich aller vier Plattformen, MSRV, beider
+bestehenden Härtungsjobs, Limits, cargo-deny und Gitleaks.
+ARM64 führt `cargo fmt --all --check`, beide Clippy-Varianten, `cargo test --locked`
+und die v2-Python-Referenztests erfolgreich aus. **402 Rust-Tests inklusive drei
+Doc-Tests, null Fehler, null ignorierte Tests**, zusätzlich zehn v2-Referenztests.
+Damit sind auch die vorhandenen Crypto-, Memlock- und Sandbox-Tests nativ ausgeführt.
+Einzelne Tests prüfen vorhandene Kernelmöglichkeiten; aus einer grünen Suite folgt keine
+pauschale Garantie aller Landlock-Funktionen auf jedem Linux-System.
+
+[CodeQL-Lauf 42778820817](https://github.com/SpecterAoD/pqkeep/actions/runs/42778820817):
+Rust, Python und Actions erfolgreich.
+
+### Artefaktnachweis
+
+ARM64-Artefakt-ID `13745561341` im obigen Release-Lauf; Aufbewahrung bis 24.11.2026.
+Enthalten: `.tar.gz` und `.cdx.json` mit passender Ziel-/Versionsbezeichnung.
+CycloneDX 1.5, 126 Komponenten; zielbezogene Seriennummer
+`urn:uuid:d24a7011-bd82-529e-a083-af6afce2f472`.
+
+- Actions-ZIP-SHA-256: `2345a2d292b9d65bdf3a7663e2e9db533a20f57cde5d415f9b67411c24f95b52`.
+- ARM64-Binary vor/nach Verpackung: `9ccc81b6bc8f2057d3aff41d3f30df5fa8e36f23bea22fe88017ba9722cfaf0e`.
+- AMD64-Binary vor/nach Verpackung: `9d24166d17f8760470e19c7dd4269e991b68e4244342fde5a543674e9bd8c0fb`.
+
+Das ARM64-Artefakt wurde zusätzlich lokal heruntergeladen. Python-Standardbibliothek prüfte
+ZIP-Digest gegen die GitHub-Metadaten, SBOM-Format, Archivinhalt, ELF-Machine 183,
+`root:root`/0755 des Programms und den Binaryhash gegen den nativen Buildlog. Anschließend:
+
+```sh
+python3 scripts/release_elf.py /home/codex-agent/projects/pqkeep/analysis/issue-93-phase2/arm-binary aarch64-unknown-linux-gnu
+python3 scripts/check_binary.py /home/codex-agent/projects/pqkeep/analysis/issue-93-phase2/arm-binary
+```
+
+Beide Prüfungen bestanden. Diese lokalen Prüfungen auf x86_64 sind **statisch**; die echte
+Ausführung erfolgte ausschließlich auf den passenden nativen GitHub-Runnern. Keine Emulation.
+Lokale Protokolle und heruntergeladenes Artefakt: `analysis/issue-93-phase2/` im Projektordner,
+außerhalb des Git-Arbeitsbaums. Hashes sind Integritätsnachweise, noch keine Release-Signaturen.
 
 `cargo deny -L info check` hat nach Freigabe der Cache-Schreibrechte am 10.11.2026
 die RustSec-Datenbank online geladen und erfolgreich geprüft: Advisories null Fehler,
@@ -88,6 +165,10 @@ freigeben lassen. Keine Tags, Releases oder Nutzerschlüssel löschen. Für eine
 produktiven Einsatz ist eine eigenständige Freigabe erforderlich.
 
 ## Freigabestatus
+
+Phase-2-Abnahme auf den angegebenen nativen Runnern bestanden. Empfehlung: den eigenen
+Phase-2-PR prüfen; nach Übernahme und ausdrücklicher Freigabe mit Phase 3 beginnen.
+Die separate 64-KiB-Kernelprüfung bleibt für die Installationsmatrix offen.
 
 Phase 3 bleibt gesperrt, bis der Nutzer sie ausdrücklich freigibt. Issue #93 bleibt bis
 zur vollständigen Abnahme aller sechs Phasen offen; ein Phase-2-PR verwendet deshalb
