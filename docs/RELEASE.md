@@ -36,6 +36,20 @@ bricht das Verpacken ab. Mit SignPath wären beide zu signieren.
 5. Fehlgeschlagen: Entwurf löschen, Ursache beheben, Tag löschen (`git push --delete origin <tag>`,
    `git tag -d <tag>`) und neu erstellen – nur solange nichts veröffentlicht wurde.
 
+## Linux ARM64 als CI-Kandidat (Issue #93, Phase 2)
+
+`aarch64-unknown-linux-gnu` wird auf `ubuntu-22.04-arm` nativ gebaut und getestet.
+Wie bei AMD64 gilt glibc 2.35 als Obergrenze der benötigten glibc-Symbolversionen.
+ELF-Architektur, Loader, PIE, Full RELRO und NX werden geprüft; der vorhandene Rauchtest
+führt das Release-Binary einschließlich Sandbox und Verschlüsselungsrundlauf aus.
+Die Archivprüfung vergleicht das verpackte Programm bytegenau mit diesem Binary.
+
+Das Actions-Artefakt `candidate-aarch64-unknown-linux-gnu` enthält das `.tar.gz` und
+die zielbezogene CycloneDX-SBOM. Es ist 14 Tage verfügbar und gehört noch nicht zum
+signierten `release-bundle`: Signaturen, Attestationen und Veröffentlichung der neuen
+Artefakte folgen erst nach gesonderter Freigabe in Phase 6. Debian-Pakete sind in Phase 2
+nicht enthalten. Details und Abnahme: [Phase-2-Bericht](issue-93-phase2.md).
+
 ## Windows-Signatur (SignPath)
 
 Erst nach Zusage der SignPath Foundation: Signierschritt vor dem Verpacken einbauen, Zugangsdaten
@@ -65,3 +79,13 @@ without a console window). Both Windows programs pass the hardening check; packa
 
 **Windows signing (SignPath):** only after approval by the SignPath Foundation – add the signing
 step before packaging, credentials only as secrets of the `release` environment.
+
+**Linux ARM64 CI candidate (issue #93, phase 2):** `aarch64-unknown-linux-gnu` builds and
+tests natively on `ubuntu-22.04-arm`, with required glibc symbol versions capped at 2.35.
+Checks cover ELF architecture, loader, PIE, full RELRO and NX. The existing smoke test
+executes the release binary, including sandboxing and an encryption round trip. The
+archive check verifies that the packaged executable is identical to the tested binary.
+The Actions artifact `candidate-aarch64-unknown-linux-gnu` contains the `.tar.gz` and
+target-specific CycloneDX SBOM, retained for 14 days. It is not yet part of the signed
+`release-bundle`; signing, attestations and publishing require separate phase 6 approval.
+Debian packages are outside phase 2. See the [phase 2 report](issue-93-phase2.md) (German).

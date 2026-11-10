@@ -24,7 +24,9 @@ on:
     paths:
       - ".github/workflows/release.yml"
       - "scripts/release_*.py"
-      - "scripts/test_release_scripts.py"
+      - "scripts/test_release_*.py"
+      - "scripts/check_binary.py"
+      - "tests/hardening_memlock.rs"
 
 permissions:
   contents: read
@@ -53,7 +55,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Skript-Tests / script tests
-        run: python3 scripts/test_release_scripts.py
+        run: |
+          python3 scripts/test_release_scripts.py
+          python3 -m unittest discover -s scripts -p 'test_release_elf.py' -v
       - name: Version, Zeitstempel, Tag-Signatur / version, timestamp, tag signature
         id: meta
         shell: bash
@@ -97,6 +101,7 @@ jobs:
           # DE: Ubuntu 22.04 (glibc 2.35) für breite Kompatibilität. EN: for wide compatibility.
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
+            artifact: dist-x86_64-unknown-linux-gnu
             exe: pqkeep
             extra: ""
             flags: ""
@@ -104,10 +109,18 @@ jobs:
           # EN: RUSTFLAGS overrides .cargo/config.toml – hence CFG explicitly here.
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            artifact: dist-x86_64-pc-windows-msvc
             exe: pqkeep.exe
             # DE: Startprogramm ohne Konsolenfenster (Kontextmenü). EN: Launcher without console window.
             extra: pqkeepw.exe
             flags: "-C control-flow-guard"
+          # Bis Phase 6 nur CI-Kandidat: publish lädt ausschließlich dist-*.
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact: candidate-aarch64-unknown-linux-gnu
+            exe: pqkeep
+            extra: ""
+            flags: ""
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -125,6 +138,16 @@ jobs:
           if command -v cygpath >/dev/null; then ws=$(cygpath -w "$PWD"); ch=$(cygpath -w "$HOME/.cargo"); else ws="$PWD"; ch="$HOME/.cargo"; fi
           echo "RUSTFLAGS=--remap-path-prefix=$ws=/build --remap-path-prefix=$ch=/cargo ${{ matrix.flags }}" >> "$GITHUB_ENV"
       - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Native ELF-Architektur und glibc-Basis
+        if: runner.os == 'Linux'
+        run: |
+          uname -a
+          getconf PAGESIZE
+          getconf GNU_LIBC_VERSION
+          rustc -vV
+          cc --version
+          printf 'Runner image: %s\n' "$ImageVersion"
+          python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" --native
       - name: Härtung prüfen / check hardening
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
@@ -143,6 +166,7 @@ jobs:
           "$py" scripts/release_package.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "$VERSION" "${{ matrix.target }}" dist
       - name: SBOM (CycloneDX)
         run: |
+          sha256sum Cargo.lock > "$RUNNER_TEMP/pqkeep-lock.sha256"
           cargo install --locked cargo-cyclonedx --version "$CYCLONEDX_VERSION"
           cargo cyclonedx --format json --spec-version 1.5 --target "${{ matrix.target }}" \
             --override-filename "pqkeep-$VERSION-${{ matrix.target }}.cdx"
@@ -152,10 +176,16 @@ jobs:
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
           "$py" scripts/release_sbom.py "dist/pqkeep-$VERSION-${{ matrix.target }}.cdx.json" \
             "$VERSION" "${{ matrix.target }}" "$GITHUB_SHA"
+          sha256sum -c "$RUNNER_TEMP/pqkeep-lock.sha256"
           ls -l dist
+      - name: Identität des verpackten Linux-Binaries
+        if: runner.os == 'Linux'
+        run: |
+          python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" \
+            --archive "dist/pqkeep-$VERSION-${{ matrix.target }}.tar.gz"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: dist-${{ matrix.target }}
+          name: ${{ matrix.artifact }}
           path: dist/
           if-no-files-found: error
           retention-days: 14
