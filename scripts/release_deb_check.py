@@ -11,6 +11,7 @@ import tarfile
 from release_elf import check_header
 
 
+TARGETS = {"x86_64-unknown-linux-gnu": "amd64"}
 DOC = "usr/share/doc/pqkeep/"
 REQUIRED = {
     "usr/bin/pqkeep", "usr/share/man/man1/pqkeep.1.gz", "usr/share/man/de/man1/pqkeep.1.gz",
@@ -95,7 +96,7 @@ def check_package(package: Path, arch: str, binary_sha256: str | None = None) ->
     expected = [hashlib.md5(data[n], usedforsecurity=False).hexdigest() + "  " + n for n in sorted(data)]
     if sums != expected:
         raise ValueError("Dateiprüfsummen fehlen oder weichen ab")
-    target = {"amd64": "x86_64-unknown-linux-gnu"}[arch]
+    target = next(target for target, deb_arch in TARGETS.items() if deb_arch == arch)
     check_header(data["usr/bin/pqkeep"][:64], target)
     check_licenses(data, target)
     digest = hashlib.sha256(data["usr/bin/pqkeep"]).hexdigest()

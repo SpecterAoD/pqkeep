@@ -15,7 +15,7 @@ import stat
 import subprocess
 import tempfile
 
-from release_deb_check import check_package
+from release_deb_check import TARGETS, check_package
 
 
 def command(*args: str) -> None:
@@ -62,11 +62,14 @@ def exercise(package: Path, arch: str, work: Path) -> None:
                  "--out", str(home / "key.json"), "--passphrase-stdin", stdin=phrase)
     user_command(home, str(source), "export", str(home / "key.json"), "--out", str(home / "key.pub.json"))
     before = snapshot(home)
-    command("apt-get", "install", "--yes", "--no-install-recommends", str(package))
+    # Minimale Container filtern Dokumentation aus; jede PQKeep-Datei mitprüfen.
+    includes = [option for name in sorted(data)
+                for option in ("-o", f"Dpkg::Options::=--path-include=/{name}")]
+    command("apt-get", "install", "--yes", "--no-install-recommends", *includes, str(package))
     command("dpkg-query", "-W", "-f=${Package} ${Version} ${Architecture} ${Status}\n", "pqkeep")
     verification = subprocess.check_output(["dpkg", "--verify", "pqkeep"], text=True)
     if verification.strip():
-        raise ValueError("dpkg meldet abweichende installierte Dateien")
+        raise ValueError("dpkg meldet abweichende installierte Dateien:\n" + verification)
     for name, content in data.items():
         path = Path("/") / name
         s = path.stat()
@@ -89,7 +92,7 @@ def exercise(package: Path, arch: str, work: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("package", type=Path)
-    parser.add_argument("--arch", choices=["amd64"], required=True)
+    parser.add_argument("--arch", choices=TARGETS.values(), required=True)
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") != "true" or not Path("/.dockerenv").is_file() or os.geteuid() != 0:
         raise SystemExit("Nur im ausdrücklich vorgesehenen GitHub-Testcontainer ausführen")

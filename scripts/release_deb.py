@@ -19,11 +19,11 @@ import tempfile
 
 import check_binary
 import release_elf
+from release_deb_check import TARGETS, check_package
 from release_deb_licenses import write_licenses
 from release_package import EXTRA_FILES, epoch
 
 
-TARGETS = {"x86_64-unknown-linux-gnu": "amd64"}
 DOC = "usr/share/doc/pqkeep"
 
 
@@ -174,7 +174,6 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path) -> Path:
         package = work / "candidate.deb"
         subprocess.run(["dpkg-deb", "--root-owner-group", "-Zxz", "-z9",
                         "--uniform-compression", "--build", str(stage), str(package)], check=True)
-        from release_deb_check import check_package
         check_package(package, arch, hashlib.sha256(binary.read_bytes()).hexdigest())
         os.link(package, destination)
     print(destination)
