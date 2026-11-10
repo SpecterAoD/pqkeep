@@ -50,6 +50,7 @@ pub struct Texts {
     pub prompt_mismatch: &'static str,
     pub prompt_overwrite: &'static str,
     pub msg_no_tty: &'static str,
+    pub msg_need_name_out: &'static str,
     pub msg_aborted: &'static str,
     pub msg_created: &'static str,
     pub msg_exported: &'static str,
@@ -120,11 +121,11 @@ pub struct Texts {
     pub menu_items: &'static str,
     pub menu_path: &'static str,
     pub menu_out: &'static str,
-    pub menu_name: &'static str,
-    pub menu_algorithm: &'static str,
     pub menu_recipient: &'static str,
     pub menu_keyfile: &'static str,
     pub menu_hint_passphrase: &'static str,
+    pub menu_pass_len: &'static str,
+    pub msg_pass_too_short: &'static str,
 }
 
 /// DE: Texte der gewählten Sprache. EN: Texts of the chosen language.

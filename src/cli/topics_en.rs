@@ -24,7 +24,8 @@ Example:\n  pqkeep passphrase --length 32 --no-ambiguous",
   Argon2id             key derivation from the passphrase (256 MiB or 1 GiB)\n\n\
 Private keys are stored as a compact seed. The libraries are not FIPS 140 validated\n\
 and not externally audited.\n\n\
-Example:\n  pqkeep generate --algorithm ml-kem-1024 --name \"Jane Doe\" --out jane.key.json",
+Example:\n  pqkeep generate --algorithm ml-kem-1024 --name \"Jane Doe\" --out jane.key.json\n\
+Guided (terminal): pqkeep generate – asks for purpose, strength (NIST category) and details.",
     ),
     (
         "container",

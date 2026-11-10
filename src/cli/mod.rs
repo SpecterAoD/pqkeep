@@ -17,6 +17,7 @@ mod dialog;
 mod dialog_text;
 mod files_cmd;
 mod files_many;
+mod guide;
 mod help;
 mod integrate;
 mod integrate_text;
@@ -40,6 +41,8 @@ mod unattended;
 mod validate;
 
 use std::io::IsTerminal;
+
+use clap::ArgMatches;
 use std::process::ExitCode;
 
 use pqkeep::hardening::sandbox::Profile;
@@ -97,37 +100,14 @@ fn print_hardening(t: &Texts, report: HardeningReport) {
     );
 }
 
-/// DE: Parst und führt einen Befehl aus. EN: Parses and runs a command.
-fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
-    let t = texts(lang);
-    let matches = match args::build(lang).try_get_matches_from(argv) {
-        Ok(m) => m,
-        Err(e) => {
-            if e.use_stderr() {
-                eprintln!("{}", t.msg_usage_error);
-                let _ = e.print();
-                return Err(Failure::new(code::USAGE, ""));
-            }
-            let _ = e.print();
-            return Ok(());
-        }
-    };
-    unattended::configure(&matches);
-    let sandboxed = !matches.get_flag("no-sandbox");
-    if !sandboxed {
-        sandbox::confirm_disabled(lang)?;
-    }
-    let verbose = matches.get_flag("verbose");
-    if verbose {
-        print_hardening(t, report);
-    }
-    // DE: Sandbox nach dem Parsen, vor jeder Eingabe und jedem Dateizugriff.
-    // EN: Sandbox after parsing, before any input and any file access.
-    if let Some((name, m)) = matches.subcommand()
-        && let Some(access) = access::for_command(name, m, lang)?
-    {
-        sandbox::enable(&Profile::Cli(access), sandboxed, verbose, lang)?;
-    }
+/// DE: Führt den geparsten Befehl aus. EN: Runs the parsed command.
+fn dispatch(
+    t: &Texts,
+    lang: Lang,
+    matches: &ArgMatches,
+    sandboxed: bool,
+    verbose: bool,
+) -> CliResult {
     match matches.subcommand() {
         Some(("generate", m)) => keys::generate(t, lang, m),
         Some(("export", m)) => keys::export(t, lang, m),
@@ -150,6 +130,47 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
         Some(("serve", m)) => serve::serve(lang, m, sandboxed),
         _ => Err(Failure::new(code::USAGE, "")),
     }
+}
+
+/// DE: Parst und führt einen Befehl aus. EN: Parses and runs a command.
+fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
+    let t = texts(lang);
+    let matches = match args::build(lang).try_get_matches_from(argv) {
+        Ok(m) => m,
+        Err(e) => {
+            if e.use_stderr() {
+                eprintln!("{}", t.msg_usage_error);
+                let _ = e.print();
+                return Err(Failure::new(code::USAGE, ""));
+            }
+            let _ = e.print();
+            return Ok(());
+        }
+    };
+    unattended::configure(&matches);
+    // DE: Geführter Ablauf (Terminal, fehlende Angaben) vor der Sandbox: er startet Kindprozesse.
+    // EN: Guided flow (terminal, missing input) before the sandbox: it starts child processes.
+    if let Some((name, m)) = matches.subcommand()
+        && guide::wanted(name, m)
+    {
+        return guide::run(name, lang);
+    }
+    let sandboxed = !matches.get_flag("no-sandbox");
+    if !sandboxed {
+        sandbox::confirm_disabled(lang)?;
+    }
+    let verbose = matches.get_flag("verbose");
+    if verbose {
+        print_hardening(t, report);
+    }
+    // DE: Sandbox nach dem Parsen, vor jeder Eingabe und jedem Dateizugriff.
+    // EN: Sandbox after parsing, before any input and any file access.
+    if let Some((name, m)) = matches.subcommand()
+        && let Some(access) = access::for_command(name, m, lang)?
+    {
+        sandbox::enable(&Profile::Cli(access), sandboxed, verbose, lang)?;
+    }
+    dispatch(t, lang, &matches, sandboxed, verbose)
 }
 
 #[cfg(target_os = "linux")]

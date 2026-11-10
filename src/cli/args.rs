@@ -127,13 +127,13 @@ fn generate(lang: Lang) -> Command {
                 .default_value("ml-kem-768")
                 .value_parser(ALGORITHMS),
         )
-        .arg(opt("name", t.arg_name).short('n').required(true))
+        .arg(opt("name", t.arg_name).short('n'))
         .arg(opt("organization", t.arg_org))
         .arg(opt("company", t.arg_company))
         .arg(opt("department", t.arg_department))
         .arg(opt("account-type", t.arg_account_type))
         .arg(profile(lang))
-        .args(out_args(lang, true))
+        .args(out_args(lang, false))
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
         .arg(min_bits(lang))
 }
@@ -220,7 +220,8 @@ fn pass_commands(lang: Lang) -> [Command; 2] {
                     .short('l')
                     .value_parser(value_parser!(usize)),
             )
-            .arg(flag("no-ambiguous", t.arg_no_ambiguous)),
+            .arg(flag("no-ambiguous", t.arg_no_ambiguous))
+            .arg(min_bits(lang)),
     ]
 }
 

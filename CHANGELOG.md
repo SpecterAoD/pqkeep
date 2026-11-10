@@ -12,6 +12,13 @@ German release notes: see `docs/releases/`.
   now defaults to 32 characters (≈ 210 bits, minimum 24); short form `pqkeep passphrase 40`.
 
 ### Added
+- Guided flows for beginners: creating a key (purpose, strength with NIST category, name and further
+  details, protection profile, passphrase, file names), signing and verifying. They start from the menu
+  or when `generate`, `sign` or `verify` are called in a terminal without the required input – never
+  without a terminal or with `--batch`. Each flow ends by showing the equivalent commands; all commands
+  keep working unchanged.
+- `pqkeep passphrase --min-bits <128–256>`: the generated passphrase is guaranteed to pass the check
+  with the same value (needs 36 characters for 192 bits, 48 for 256).
 - Unattended operation: global `--passphrase-file <path>` (one line, Linux owner-only permissions,
   works with systemd `LoadCredential=`) and `--batch` (never prompts) – see `docs/SERVER.md`.
 - Context menu with multi-selection: each separately or one container (suggested, freely editable name),

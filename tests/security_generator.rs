@@ -93,3 +93,35 @@ fn characters_roughly_uniform() {
         assert!((480..=880).contains(&n), "{c}: {n}");
     }
 }
+
+#[test]
+fn generated_passphrase_meets_a_raised_minimum() {
+    assert_eq!(
+        [128, 192, 256].map(generator::min_len),
+        [MIN_LEN, 36, 48],
+        "min_len"
+    );
+    for (bits, length) in [(192, 36), (256, 48)] {
+        let options = Options {
+            length,
+            exclude_ambiguous: false,
+        };
+        for _ in 0..20 {
+            let strong = generator::generate_with(&options, bits).unwrap();
+            let estimate = strong.as_ref().assess_with(bits);
+            assert!(
+                estimate.reasons.is_empty(),
+                "{bits}: {:?}",
+                estimate.reasons
+            );
+        }
+        let short = Options {
+            length: length - 1,
+            exclude_ambiguous: false,
+        };
+        assert!(matches!(
+            generator::generate_with(&short, bits),
+            Err(Error::InvalidInput { field: "length" })
+        ));
+    }
+}

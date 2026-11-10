@@ -11,7 +11,7 @@
 use zeroize::Zeroizing;
 
 use super::entropy::formula_bits;
-use super::{Passphrase, StrongPassphrase};
+use super::{MIN_BITS, Passphrase, StrongPassphrase};
 use crate::crypto::rng;
 use crate::{Error, Result};
 
@@ -78,21 +78,46 @@ pub(crate) fn uniform_index(byte: u8, n: usize) -> Option<usize> {
     (b < limit).then_some(b % n)
 }
 
-/// DE: Erzeugt eine starke Passphrase.
-/// EN: Generates a strong passphrase.
+/// DE: Kleinste Länge, mit der die Prüfung `min_bits` verlässlich erreicht (128 → 24, 192 → 36,
+/// 256 → 48). Die Prüfung schätzt vorsichtiger als die Formel (zufällige Buchstabenfolgen zählen
+/// als Wörter), daher 16 Bit je 3 Zeichen.
+/// EN: Smallest length that reliably reaches `min_bits` in the check (128 → 24, 192 → 36,
+/// 256 → 48). The check estimates more conservatively than the formula (random letter runs count
+/// as words), hence 16 bits per 3 characters.
+#[must_use]
+pub fn min_len(min_bits: u32) -> usize {
+    let needed = usize::try_from(min_bits)
+        .unwrap_or(usize::MAX)
+        .saturating_mul(3)
+        / 16;
+    needed.max(MIN_LEN)
+}
+
+/// DE: Erzeugt eine starke Passphrase (mindestens 128 Bit).
+/// EN: Generates a strong passphrase (at least 128 bits).
 ///
 /// # Errors
-/// DE/EN: [`Error::InvalidInput`] (Länge / length), [`Error::Rng`], [`Error::Crypto`]
-/// (keine gültige Passphrase nach vielen Versuchen / none valid after many attempts).
+/// DE/EN: wie / as [`generate_with`].
 pub fn generate(options: &Options) -> Result<StrongPassphrase> {
-    if !(MIN_LEN..=MAX_LEN).contains(&options.length) {
+    generate_with(options, MIN_BITS)
+}
+
+/// DE: Erzeugt eine Passphrase, die die Prüfung mit `min_bits` besteht.
+/// EN: Generates a passphrase that passes the check with `min_bits`.
+///
+/// # Errors
+/// DE/EN: [`Error::InvalidInput`] (Länge außerhalb [`min_len`]..=256 / length outside),
+/// [`Error::Rng`], [`Error::Crypto`] (keine gültige Passphrase nach vielen Versuchen / none valid
+/// after many attempts).
+pub fn generate_with(options: &Options, min_bits: u32) -> Result<StrongPassphrase> {
+    if !(min_len(min_bits)..=MAX_LEN).contains(&options.length) {
         return Err(Error::InvalidInput { field: "length" });
     }
     let alphabet = options.alphabet();
     for _ in 0..MAX_ATTEMPTS {
         let candidate = draw(&alphabet, options.length)?;
         let passphrase = Passphrase::new(&candidate)?;
-        if let Ok(strong) = StrongPassphrase::try_from(passphrase) {
+        if let Ok(strong) = StrongPassphrase::with_min_bits(passphrase, min_bits) {
             return Ok(strong);
         }
     }

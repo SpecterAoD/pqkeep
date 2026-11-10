@@ -118,3 +118,18 @@ fn encrypt_and_generate_respect_min_bits() {
     ];
     assert_eq!(common::pqkeep(&gen_args, &input, dir.path()).0, 4);
 }
+
+#[test]
+fn generator_honours_min_bits() {
+    // DE: Zu kurz für 192 Bit: Aufruffehler mit nötiger Länge. EN: Too short for 192 bits.
+    let (code, out, err) = run(&["passphrase", "32", "--min-bits", "192"], "");
+    assert_eq!(code, 2, "{err}");
+    assert!(out.is_empty() && err.contains("36"), "{err}");
+    // DE: Erzeugte Passphrase besteht die Prüfung mit demselben Wert. EN: Passes the same check.
+    for (len, bits) in [("36", "192"), ("48", "256")] {
+        let (code, out, err) = run(&["passphrase", len, "--min-bits", bits], "");
+        assert_eq!(code, 0, "{err}");
+        let args = ["validate", "--passphrase-stdin", "--min-bits", bits];
+        assert_eq!(run(&args, &out).0, 0, "{len}/{bits}");
+    }
+}
