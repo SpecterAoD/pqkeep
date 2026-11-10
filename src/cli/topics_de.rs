@@ -12,7 +12,7 @@ Regeln für neue Passphrasen:\n\
   - häufige Passwörter/Wörter dürfen höchstens ein Drittel ausmachen\n\
   - geschätzte Stärke mindestens 128 Bit (post-quanten-tauglich; mit --min-bits bis 256)\n\n\
 Eingabe nur verdeckt im Terminal oder über --passphrase-stdin, nie als Argument.\n\
-Am sichersten: pqkeep passphrase (32 Zeichen, ca. 210 Bit; Länge wählbar: pqkeep passphrase 40).\n\n\
+Am sichersten: pqkeep passphrase (32 Zeichen; Länge wählbar: pqkeep passphrase 40).\n\n\
 Beispiel:\n  pqkeep passphrase --length 32 --no-ambiguous",
     ),
     (

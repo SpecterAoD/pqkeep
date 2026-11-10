@@ -73,8 +73,11 @@ Geburtstage) kann sie nicht erkennen. Die sicherste Wahl ist der eingebaute Gene
 - Standard 32 Zeichen ≈ 210 Bit (ohne verwechselbare ≈ 205 Bit), Länge 24–256 (`pqkeep passphrase 40`
   oder `--length 40`). Einstufung in der Ausgabe: gut ≥ 128 Bit, sehr stark ≥ 192 Bit.
 - Erfüllt ein Kandidat nicht alle Regeln, wird er vollständig verworfen und neu gezogen
-  (gleichmäßige Verteilung über alle gültigen Passphrasen). Die angezeigte Entropie nach Formel
+  (gleichmäßige Verteilung über alle gültigen Passphrasen). Der Formelwert
   `log2(Alphabet) × Länge` ist dadurch minimal zu hoch (Größenordnung unter 1 Bit).
+- **Anzeige:** `pqkeep passphrase` zeigt dieselbe vorsichtige Schätzung wie `pqkeep validate` (bei 32
+  Zeichen etwa 140–195 Bit), nicht den Formelwert – die Prüfung kann nicht wissen, dass die Zeichen
+  zufällig sind, und wertet z. B. Buchstabenfolgen als Wörter.
 - Wortlisten-Variante (Diceware): späteres Update mit eigener bzw. gemeinfreier Liste.
 
 ## Schutz im Code
@@ -109,7 +112,7 @@ Albers (German, MIT). "FIPS-140-validiert" ≈ 53 bits and "Hund-Katze-Maus-2024
 are not recognised; the built-in generator is the safest choice.
 
 **Generator:** OS randomness, rejection sampling without modulo bias, 94 printable ASCII characters
-(85 without ambiguous ones), default 32 characters ≈ 210 bits, length 24–256 (`pqkeep passphrase 40`); rating good ≥ 128, very strong ≥ 192 bits. Candidates failing any
+(85 without ambiguous ones), default 32 characters ≈ 210 bits, length 24–256 (`pqkeep passphrase 40`); rating good ≥ 128, very strong ≥ 192 bits. `pqkeep passphrase` displays the same conservative estimate as `pqkeep validate` (roughly 140–195 bits for 32 characters), not the formula value. Candidates failing any
 rule are discarded entirely; the displayed formula value is therefore marginally too high (well below
 1 bit). Diceware with a self-made or public-domain word list is planned as a later update.
 

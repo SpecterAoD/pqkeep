@@ -88,7 +88,9 @@ pub fn passphrase(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let generated =
         generator::generate_with(&options, bits).map_err(|e| Failure::from_error(&e, lang))?;
     println!("{}", generated.as_ref().expose_str());
-    let bits = options.entropy_bits();
+    // DE: Anzeige wie bei `validate` (vorsichtige Schätzung der Prüfung, nicht der Formelwert).
+    // EN: Shown as `validate` does (the check's conservative estimate, not the formula value).
+    let bits = generated.entropy_bits();
     eprintln!("{}: {} – {}", t.msg_entropy, bits.floor(), rating(t, bits));
     eprintln!("{}", t.msg_generated_hint);
     Ok(())
