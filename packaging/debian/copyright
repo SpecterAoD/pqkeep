@@ -1,0 +1,25 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: PQKeep
+Upstream-Contact: SpecterAoD <77644070+SpecterAoD@users.noreply.github.com>
+Source: https://github.com/SpecterAoD/pqkeep
+Comment: Binary distribution built from locked Cargo sources with default features.
+ The generated stanzas below preserve the upstream notices of normal and build
+ dependencies, including a conservative superset of code eliminated by linking.
+ license-inventory.json records versions, features and license-file checksums.
+ Rust standard-library notices are in rust-licenses/COPYRIGHT-library.html and
+ rust-licenses/licenses/. This does not add dependencies to the application.
+
+Files: *
+Copyright: 2026 PQKeep contributors
+License: Apache-2.0
+ On Debian systems the full license is available in
+ /usr/share/common-licenses/Apache-2.0. A copy is also included in LICENSE.
+
+Files: data/wordlists/*
+Copyright: Electronic Frontier Foundation
+           Marek Palatinus, Pavol Rusnak, Aaron Voisine, Sean Bowe
+           2022 dys2p
+           2023 Björn Albers
+License: CC-BY-4.0 and MIT and BSD-3-Clause
+ See LICENSES-wordlists.md for the individual word-list mappings, modifications
+ and full MIT/BSD notices. The full Creative Commons text is in CC-BY-4.0.

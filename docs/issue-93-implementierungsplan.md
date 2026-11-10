@@ -3,7 +3,9 @@
 **Stand der Analyse:** 10.11.2026. Phase 1 ist abgeschlossen; der Nutzer hat Phase 2
 am 10.11.2026 ausdrücklich freigegeben. Umsetzung und Nachweise stehen im
 [Phase-2-Bericht](issue-93-phase2.md). Die folgende Bestandsaufnahme beschreibt weiterhin
-die unveränderte Ausgangsbasis; Phasen 3–6 benötigen jeweils eine neue Freigabe.
+die unveränderte Ausgangsbasis. Phase 2 wurde über PR #158 übernommen; Phase 3 ist
+ausdrücklich freigegeben und wird im [Phase-3-Bericht](issue-93-phase3.md) dokumentiert.
+Phasen 4–6 benötigen jeweils eine neue Freigabe.
 Auftrag: [#93](https://github.com/SpecterAoD/pqkeep/issues/93).
 Analysierte Basis: `569c233afadb2b2b20553e0832c555023d35f055` auf `main`.
 Alle Aussagen zum Repository beziehen sich auf diesen Commit, nicht auf ältere lokale Branches.
