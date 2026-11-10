@@ -7,6 +7,35 @@ from pathlib import Path
 import re
 import subprocess
 
+from release_package import write_tar_gz
+
+
+APACHE = re.compile(r"Apache License\s+Version 2\.0, January 2004\s+"
+                    r"https?://www\.apache\.org/licenses/?\s+TERMS AND CONDITIONS"
+                    r".*?END OF TERMS AND CONDITIONS", re.S)
+
+
+def apache_reference(text: str) -> str:
+    """Nur den geprüften Standardtext ersetzen; Hinweise und Ausnahmen bleiben erhalten."""
+    canonical = APACHE.search((Path(__file__).resolve().parents[1] / "LICENSE").read_text())[0]
+
+    def normalized(value: str) -> str:
+        # enumflags2 lässt lediglich die Absatzmarker (a)–(d) weg.
+        value = re.sub(r"(?m)^\s*\([a-d]\)\s+", "", value)
+        return " ".join(value.replace("https://", "http://").split())
+
+    def replace(match: re.Match) -> str:
+        if normalized(match[0]) != normalized(canonical):
+            raise ValueError("Abweichender Apache-Text benötigt ein ausdrückliches Lizenzreview")
+        return ("Apache-2.0: see /usr/share/common-licenses/Apache-2.0.\n"
+                "The unchanged upstream file is also preserved in licenses.tar.gz.")
+
+    return APACHE.sub(replace, text)
+
+
+def indented(text: str) -> str:
+    """Mehrzeiliges Debian-Feld, leere Absätze nach DEP-5 darstellen."""
+    return "\n".join(" " + (line if line.strip() else ".") for line in text.splitlines())
 
 def cargo(root: Path, *args: str) -> str:
     """Cargo nur offline und mit unverändertem Lockfile abfragen."""
@@ -39,14 +68,13 @@ def crate_notice(package: dict) -> tuple[str, dict]:
         name = path.relative_to(directory).as_posix()
         text = data.decode("utf-8")
         hashes[name] = hashlib.sha256(data).hexdigest()
-        texts.append(f"--- {name} ---\n{text}")
+        texts.append(f"--- {name} ---\n{apache_reference(text)}")
         notices.update(line.strip() for line in text.splitlines()
-                       if re.match(r"(?i)^\s*(copyright|©|\(c\))", line))
+                       if re.match(r"(?i)^\s*(copyright\s*(?:\(c\)|©|\d{4})|©|\(c\)\s*\d{4})", line))
     owner = "\n ".join(sorted(notices)) or "See the verbatim upstream notices below."
     license_name = expression.replace("/", " or ").replace(" OR ", " or ")
     license_name = license_name.replace(" AND ", " and ").replace(" WITH ", " with ")
-    body = "\n".join(" " + (line if line.strip() else ".")
-                     for line in "\n".join(texts).splitlines())
+    body = indented("\n".join(texts))
     stanza = (f"\nFiles: cargo/{package['name']}-{package['version']}/*\n"
               f"Copyright: {owner}\nLicense: {license_name}\n{body}\n")
     record = {key: package[key] for key in ("name", "version", "license", "source")}
@@ -68,12 +96,18 @@ def write_licenses(root: Path, target: str, doc: Path) -> None:
     if len(packages) + 1 != len(selected):
         raise ValueError("Abhängigkeitsbaum und Cargo-Metadaten stimmen nicht überein")
     text = (root / "packaging/debian/copyright").read_text(encoding="utf-8")
-    records = []
+    text += indented((root / "data/wordlists/LICENSES.md").read_text(encoding="utf-8") + "\n"
+                     + (root / "packaging/debian/CC-BY-4.0").read_text(encoding="utf-8")) + "\n"
+    records, originals = [], []
     for package in sorted(packages, key=lambda p: (p["name"], p["version"])):
         stanza, record = crate_notice(package)
         record["metadata_features"] = features[package["id"]]
         text += stanza
         records.append(record)
+        originals += [(f"{package['name']}-{package['version']}/{name}",
+                       str(Path(package["manifest_path"]).parent / name), 0o644)
+                      for name in record["license_files"]]
+    write_tar_gz(str(doc / "licenses.tar.gz"), "cargo-licenses", sorted(originals), 0)
     sysroot = Path(subprocess.check_output(["rustc", "--print", "sysroot"], text=True).strip())
     rustdoc = sysroot / "share/doc/rust"
     sources = [rustdoc / "COPYRIGHT-library.html", *sorted((rustdoc / "licenses").glob("*.txt"))]

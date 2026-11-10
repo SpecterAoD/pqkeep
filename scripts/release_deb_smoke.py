@@ -53,6 +53,10 @@ def exercise(package: Path, arch: str, work: Path) -> None:
     home.mkdir(mode=0o700)
     nobody = pwd.getpwnam("nobody")
     os.chown(home, nobody.pw_uid, nobody.pw_gid)
+    note = home / "existing-notes.txt"
+    note.write_bytes(os.urandom(128))
+    note.chmod(0o600)
+    os.chown(note, nobody.pw_uid, nobody.pw_gid)
     phrase = secrets.token_urlsafe(48) + "\n"
     user_command(home, str(source), "generate", "--name", "Debian install test",
                  "--out", str(home / "key.json"), "--passphrase-stdin", stdin=phrase)

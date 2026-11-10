@@ -6,6 +6,9 @@ Comment: Binary distribution built from locked Cargo sources with default featur
  The generated stanzas below preserve the upstream notices of normal and build
  dependencies, including a conservative superset of code eliminated by linking.
  license-inventory.json records versions, features and license-file checksums.
+ Unchanged original Cargo license files are additionally preserved in licenses.tar.gz.
+ Apache-2.0 standard clauses refer to /usr/share/common-licenses/Apache-2.0;
+ crate-specific notices, exceptions and other license texts are reproduced below.
  Rust standard-library notices are in rust-licenses/COPYRIGHT-library.html and
  rust-licenses/licenses/. This does not add dependencies to the application.
 

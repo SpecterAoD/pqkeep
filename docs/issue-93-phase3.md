@@ -8,6 +8,7 @@ weil das Repository keine Merge-Commits erlaubt. Basis dieser Phase:
 Der Nutzer bestätigte den öffentlichen Maintainer-Kontakt:
 `SpecterAoD <77644070+SpecterAoD@users.noreply.github.com>`.
 Status: lokal umgesetzt; native Installation und Lintian werden im eigenen PR nachgewiesen.
+Eigener PR: [#159](https://github.com/SpecterAoD/pqkeep/pull/159).
 
 ## Änderungen
 
@@ -21,6 +22,10 @@ Status: lokal umgesetzt; native Installation und Lintian werden im eigenen PR na
   `cargo tree`/`cargo metadata --offline --locked`; vollständige Original-Lizenztexte und
   Copyright-Hinweise, einschließlich der tatsächlich benutzten Rust-Standardbibliothek.
   Die Featureangaben sind die Cargo-Metadaten-Vereinigung, keine Linker-Beweisliste.
+  Standard-Apache-Klauseln verweisen nach geprüftem Textvergleich auf die gemeinsame
+  Debian-Lizenzdatei; Ausnahmen und sonstige Texte bleiben in `copyright` erhalten.
+  `licenses.tar.gz` erhält zusätzlich alle unveränderten Cargo-Originaltexte, deren
+  Vollständigkeit und SHA-256 gegen das Inventar geprüft werden.
 - `scripts/test_release_deb.py`: positive/negative Tests für Versionen, Reihenfolge,
   fehlende Dateien, Architektur, Schreibrechte, Symlinks, Traversal, Paketsteuerdateien,
   Prüfsummen und fehlende Lizenztexte.
@@ -65,12 +70,21 @@ SOURCE_DATE_EPOCH=1794301920 python3 scripts/release_deb.py /home/codex-agent/pr
 SOURCE_DATE_EPOCH=1794301920 python3 scripts/release_deb.py /home/codex-agent/projects/pqkeep/analysis/issue-93-phase3/pqkeep x86_64-unknown-linux-gnu /home/codex-agent/projects/pqkeep/analysis/issue-93-phase3/package-c --ci-sha ea8efef0fa067758bdecb5a120ddcc67a5e4014d
 ```
 
-Neun Testfälle bestanden. Die zwei lokalen Pakete wurden byteweise verglichen;
+Anfangs neun, nach Ergänzung der Archiv- und Lizenz-Negativfälle elf Testfälle bestanden.
+Die zwei lokalen Pakete wurden byteweise verglichen;
 `dpkg-deb --info` und `--field ... Depends` wurden ausgeführt. Beide Paketläufe prüfen
 ELF/ABI/Härtung, erzeugen Manpages/Completions durch echte Binary-Ausführung und prüfen
 Paketinhalt/Prüfsummen. Eingabe war das nativ geprüfte AMD64-Artefakt aus Phase 2,
 nach Prüfung seines GitHub-ZIP-Digests und Binaryhashes. Keine ARM64- oder Debian-System-
 Installation lokal; native Debian-/Ubuntu-Containerprüfungen werden anschließend ergänzt.
+
+Erste CI-Prüfrunde (`bf94bb442208ee713e2fe95f199569da320bdd09`): alle drei nativen Builds
+einschließlich Debian-Paket und bytegleichem Wiederholungsbau erfolgreich. Lintian meldete
+auf beiden Distributionen `copyright-file-contains-full-apache-2-license`; Installation
+wurde deshalb nicht ausgeführt. Der Fehler wird durch Debian-konforme Verweise behoben,
+ohne Originaltexte wegzulassen oder eine Prüfung zu unterdrücken. Zusätzlich wird jetzt
+das vorhandene `CHANGELOG.md` als Upstream-Changelog verwendet. Neue lokale Paketläufe
+`package-d`/`package-e` verwenden denselben oben angegebenen festen Testzeitstempel.
 
 ## Sicherheit, Grenzen und Rückweg
 

@@ -62,7 +62,7 @@ def put(stage: Path, name: str, data: bytes, mode: int = 0o644) -> None:
     path.chmod(mode)
 
 
-def docs(stage: Path, root: Path, binary: Path, upstream: str, version: str,
+def docs(stage: Path, root: Path, binary: Path, version: str,
          metadata: dict, stamp: int) -> None:
     """Vorhandene Texte und CLI-Generatoren wiederverwenden, gzip ohne Zeitstempel."""
     for name, source in EXTRA_FILES:
@@ -72,7 +72,7 @@ def docs(stage: Path, root: Path, binary: Path, upstream: str, version: str,
         put(stage, f"{DOC}/{name}", data)
     for lang, directory in (("en", "man1"), ("de", "de/man1")):
         data = subprocess.check_output([str(binary), "--lang", lang, "man"])
-        if not data.startswith(b".\"") and b".TH" not in data:
+        if b".TH" not in data:
             raise ValueError("Manpage fehlt")
         put(stage, f"usr/share/man/{directory}/pqkeep.1.gz", gzip.compress(data, mtime=0))
     completions = {"bash": "bash-completion/completions/pqkeep",
@@ -83,7 +83,7 @@ def docs(stage: Path, root: Path, binary: Path, upstream: str, version: str,
         if b"pqkeep" not in data:
             raise ValueError("Completion fehlt")
         put(stage, "usr/share/" + path, data)
-    notes = regular(root / f"docs/releases/v{upstream}.md").read_bytes()
+    notes = regular(root / "CHANGELOG.md").read_bytes()
     put(stage, f"{DOC}/changelog.gz", gzip.compress(notes, mtime=0))
     date = format_datetime(datetime.fromtimestamp(stamp, timezone.utc))
     changes = (f"pqkeep ({version}) UNRELEASED; urgency=medium\n\n"
@@ -167,7 +167,7 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path) -> Path:
         stage = work / "debian/pqkeep"
         put(stage, "usr/bin/pqkeep", binary.read_bytes(), 0o755)
         staged = stage / "usr/bin/pqkeep"
-        docs(stage, root, staged, upstream, version, metadata, stamp)
+        docs(stage, root, staged, version, metadata, stamp)
         write_licenses(root, target, stage / DOC)
         control(stage, arch, version, dependencies(stage, work), metadata)
         normalize(stage, stamp)

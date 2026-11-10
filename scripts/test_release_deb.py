@@ -2,7 +2,9 @@
 """Negative Paket-/Versions-/Pfadtests; keine Systeminstallation."""
 
 import io
+import gzip
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 import struct
@@ -13,7 +15,7 @@ from unittest.mock import patch
 
 import release_deb as deb
 import release_deb_check as check
-from release_deb_licenses import crate_notice, license_files
+from release_deb_licenses import apache_reference, crate_notice, license_files
 
 
 def fixture_tar(files: dict) -> bytes:
@@ -27,14 +29,39 @@ def fixture_tar(files: dict) -> bytes:
     return data.getvalue()
 
 
+def fixture_data(binary: bytes) -> dict:
+    data = {name: b"documentation" for name in check.REQUIRED}
+    data["usr/bin/pqkeep"] = binary
+    license_text = b"MIT terms for a synthetic test fixture"
+    inventory = {"target": "x86_64-unknown-linux-gnu", "crates": [
+        {"name": "example", "version": "1.0.0", "license_files": {
+            "LICENSE": hashlib.sha256(license_text).hexdigest()}}],
+        "rust_license_files": {"COPYRIGHT-library.html": hashlib.sha256(b"documentation").hexdigest()}}
+    data[check.DOC + "license-inventory.json"] = json.dumps(inventory).encode()
+    data[check.DOC + "licenses.tar.gz"] = gzip.compress(fixture_tar({"cargo-licenses/example-1.0.0/LICENSE": license_text}), mtime=0)
+    return data
+
+
 class DebianTests(unittest.TestCase):
+    def test_apache_reference_preserves_exceptions_and_rejects_changes(self):
+        license_text = (Path(__file__).resolve().parents[1] / "LICENSE").read_text()
+        result = apache_reference(license_text + "\nAdditional exception retained.\n")
+        self.assertIn("/usr/share/common-licenses/Apache-2.0", result)
+        self.assertIn("Additional exception retained.", result)
+        self.assertNotIn("TERMS AND CONDITIONS FOR USE", result)
+        with self.assertRaises(ValueError):
+            apache_reference(license_text.replace("perpetual", "temporary", 1))
+
     def test_package_content_architecture_and_checksums(self):
         elf = bytearray(64)
         elf[:7] = b"\x7fELF\x02\x01\x01"
         struct.pack_into("<HH", elf, 16, 3, 62)
-        for case in ("valid", "missing", "extra", "script", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha"):
-            data = {name: b"documentation" for name in check.REQUIRED}
-            data["usr/bin/pqkeep"] = bytes(elf)
+        for case in ("valid", "missing", "extra", "script", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha", "license", "rust-license"):
+            data = fixture_data(bytes(elf))
+            if case == "license":
+                data[check.DOC + "licenses.tar.gz"] = gzip.compress(fixture_tar({}), mtime=0)
+            if case == "rust-license":
+                data[check.DOC + "rust-licenses/COPYRIGHT-library.html"] = b"changed"
             if case == "missing":
                 del data[check.DOC + "copyright"]
             if case == "extra":
@@ -127,6 +154,18 @@ class DebianTests(unittest.TestCase):
                 tar.addfile(tarfile.TarInfo("file"))
         with self.assertRaises(ValueError):
             check.read_tar(data.getvalue())
+
+    def test_tar_rejects_extra_directories_and_attributes(self):
+        for name, kind, attributes in [("home", tarfile.DIRTYPE, {}),
+                                       ("usr/bin/pqkeep", tarfile.REGTYPE,
+                                        {"SCHILY.xattr.security.capability": "unexpected"})]:
+            data = io.BytesIO()
+            with tarfile.open(fileobj=data, mode="w", format=tarfile.PAX_FORMAT) as tar:
+                member = tarfile.TarInfo(name)
+                member.mode, member.type, member.pax_headers = 0o755, kind, attributes
+                tar.addfile(member)
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                check.read_tar(data.getvalue())
 
     def test_missing_and_symlinked_license(self):
         with tempfile.TemporaryDirectory() as tmp:
