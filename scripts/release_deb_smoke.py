@@ -10,7 +10,6 @@ import hashlib
 import os
 from pathlib import Path
 import pwd
-import secrets
 import stat
 import subprocess
 import tempfile
@@ -36,11 +35,11 @@ def snapshot(home: Path) -> dict:
     return result
 
 
-def user_command(home: Path, *args: str, stdin: str = "") -> None:
-    """CLI mit normalem Testbenutzer ausführen; Ausgabe enthält keine Testpassphrase."""
-    subprocess.run(["runuser", "-u", "nobody", "--", "env", f"HOME={home}",
+def user_command(home: Path, *args: str, stdin: str = "") -> str:
+    """CLI als Testbenutzer; stdout nur im Speicher halten, niemals Passphrasen protokollieren."""
+    return subprocess.run(["runuser", "-u", "nobody", "--", "env", f"HOME={home}",
                     f"XDG_CONFIG_HOME={home / '.config'}", *args],
-                   input=stdin, text=True, stdout=subprocess.DEVNULL, check=True, cwd=home)
+                   input=stdin, text=True, stdout=subprocess.PIPE, check=True, cwd=home).stdout
 
 
 def include_options(data: dict[str, bytes]) -> list[str]:
@@ -64,7 +63,7 @@ def exercise(package: Path, arch: str, work: Path) -> None:
     note.write_bytes(os.urandom(128))
     note.chmod(0o600)
     os.chown(note, nobody.pw_uid, nobody.pw_gid)
-    phrase = secrets.token_urlsafe(48) + "\n"
+    phrase = user_command(home, str(source), "passphrase").strip() + "\n"
     user_command(home, str(source), "generate", "--name", "Debian install test",
                  "--out", str(home / "key.json"), "--passphrase-stdin", stdin=phrase)
     user_command(home, str(source), "export", str(home / "key.json"), "--out", str(home / "key.pub.json"))

@@ -97,6 +97,12 @@ bleibt strikt; weder fehlende Dokumentation noch falsche Prüfsummen werden tole
 Die zusätzlichen APT-Optionen gelten nur für diese Testinstallation; das Paket verändert
 keine dpkg-Konfiguration. Hintergrund: [dpkg-Pfadfilter](https://manpages.debian.org/bookworm/dpkg/dpkg.1.en.html).
 
+Ein weiterer Lauf nach dem Berichts-Commit deckte einen sporadischen Testdatenfehler auf:
+`secrets.token_urlsafe` garantiert keine Sonderzeichen, die vorhandene Passphrasenprüfung
+lehnte einen solchen Testwert korrekt ab. Der Installationshelfer verwendet nun wie der
+bestehende Release-Smoke-Test den CLI-Befehl `pqkeep passphrase`. Dessen Ausgabe bleibt
+ausschließlich im Speicher. Keine Änderung oder Umgehung der Passphrasenregeln.
+
 Prüfkommandos im nativen Release-Runner bzw. den kurzlebigen AMD64-Testcontainern:
 
 ```sh
