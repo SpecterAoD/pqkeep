@@ -46,6 +46,8 @@ fn run(e: &Env, args: &[&str]) -> (i32, String, String) {
         .args(args)
         .env("XDG_DATA_HOME", &e.data)
         .env("HOME", e.data.parent().unwrap())
+        .env("XDG_CONFIG_HOME", e.data.with_file_name("config"))
+        .env("XDG_CONFIG_DIRS", e.data.with_file_name("xdg"))
         .env("PATH", &e.fake)
         .stdin(Stdio::null())
         .output()

@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use super::{Action, Launch, Terminal, dolphin, nautilus, nemo, safe_path};
+use super::{Action, Launch, Terminal, dolphin, nautilus, nemo, safe_path, thunar, thunar_id};
 
 fn term() -> Terminal {
     Terminal {
@@ -84,4 +84,27 @@ fn dialog_mode_runs_without_terminal() {
     assert!(!n.contains("terminal"));
     let d = dolphin(Action::Encrypt, "Encrypt", "/x/pqkeep", Launch::Dialog);
     assert!(d.contains("Exec=\"/x/pqkeep\" context --dialog encrypt -- %F\n"));
+}
+
+#[test]
+fn thunar_block_is_escaped_and_limited_to_the_right_files() {
+    let t = term();
+    let e = thunar(
+        Action::Encrypt,
+        "Ver & ent <schlüsseln>",
+        "c",
+        "/opt/PQ Keep/pqkeep",
+        Launch::Terminal(&t),
+    );
+    assert!(e.starts_with("<action>\n") && e.ends_with("\n</action>"));
+    assert!(e.contains("\t<name>Ver &amp; ent &lt;schlüsseln&gt;</name>\n"));
+    assert!(e.contains(
+        "\t<command>&quot;/usr/bin/gnome-terminal&quot; -- &quot;/opt/PQ Keep/pqkeep&quot; context encrypt -- %F</command>\n"
+    ));
+    assert!(e.contains("\t<unique-id>pqkeep-encrypt</unique-id>\n"));
+    assert!(e.contains("\t<patterns>*</patterns>\n\t<directories/>\n"));
+    let d = thunar(Action::Decrypt, "D", "c", "/usr/bin/pqkeep", Launch::Dialog);
+    assert!(d.contains("&quot;/usr/bin/pqkeep&quot; context --dialog decrypt -- %F"));
+    assert!(d.contains("\t<patterns>*.pqkf</patterns>\n") && !d.contains("<directories/>"));
+    assert_eq!(thunar_id(Action::Decrypt), "pqkeep-decrypt");
 }

@@ -1,8 +1,8 @@
 //! DE: `pqkeep integrate install|uninstall|status`: Kontextmenü im Dateimanager (Linux: Nemo,
-//! Nautilus, Dolphin; Windows: Explorer über HKCU) nur für den aktuellen Benutzer. Fehlende Zielordner werden vorab angelegt,
+//! Nautilus, Dolphin, Thunar; Windows: Explorer über HKCU) nur für den aktuellen Benutzer. Fehlende Zielordner werden vorab angelegt,
 //! danach läuft der Befehl in der Sandbox und darf nur in diese Ordner schreiben.
 //! EN: `pqkeep integrate install|uninstall|status`: file manager context menu (Linux: Nemo,
-//! Nautilus, Dolphin; Windows: Explorer via HKCU) for the current user only. Missing target folders are created up front, then
+//! Nautilus, Dolphin, Thunar; Windows: Explorer via HKCU) for the current user only. Missing target folders are created up front, then
 //! the command runs in the sandbox and may only write to those folders.
 
 #[cfg(target_os = "linux")]
@@ -18,6 +18,10 @@ mod platform;
 mod registry;
 #[cfg(windows)]
 mod sendto;
+#[cfg(target_os = "linux")]
+mod thunar;
+#[cfg(target_os = "linux")]
+mod uca;
 #[cfg(windows)]
 mod windows;
 #[cfg(any(windows, test))]

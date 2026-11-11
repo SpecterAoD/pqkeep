@@ -1,6 +1,6 @@
-//! DE: Liste der von `pqkeep integrate` geschriebenen Dateien samt SHA3-256. Nur unveränderte
+//! DE: Liste der von `pqkeep integrate` geschriebenen Dateien und Einträge samt SHA3-256. Nur unveränderte
 //! eigene Dateien werden ersetzt oder entfernt; fremde oder vom Nutzer geänderte bleiben stehen.
-//! EN: List of files written by `pqkeep integrate` with SHA3-256. Only unchanged own files are
+//! EN: List of files and entries written by `pqkeep integrate` with SHA3-256. Only unchanged own files are
 //! replaced or removed; foreign or user-modified files stay.
 
 use std::fs;
@@ -21,6 +21,19 @@ pub struct Entry {
     pub sha3: String,
 }
 
+/// DE: Ein Eintrag in einer Datei, die auch fremde Einträge enthält (Thunar `uca.xml`).
+/// EN: One entry inside a file that also holds foreign entries (Thunar `uca.xml`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Shared {
+    /// DE/EN: Absoluter Pfad der Datei / absolute path of the file.
+    pub path: PathBuf,
+    /// DE/EN: Kennung des Eintrags (`unique-id`) / id of the entry (`unique-id`).
+    pub id: String,
+    /// DE/EN: SHA3-256 (hex) des Eintrags / of the entry.
+    pub sha3: String,
+}
+
 /// DE: Gesamte Liste. EN: Whole list.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -35,6 +48,10 @@ pub struct Manifest {
     /// EN: Launch mode of the entries (`dialog`/`terminal`; empty for old lists).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub mode: String,
+    /// DE: Einträge in gemeinsamen Dateien (ab Version 2; fehlt in älteren Listen).
+    /// EN: Entries inside shared files (since version 2; absent in older lists).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub entries: Vec<Shared>,
 }
 
 /// DE/EN: SHA3-256 als Hex / SHA3-256 as hex.
@@ -67,6 +84,31 @@ impl Manifest {
             path: path.to_path_buf(),
             sha3,
         });
+    }
+
+    /// DE/EN: Gespeicherte Prüfsumme eines Eintrags / stored checksum of an entry.
+    #[cfg(target_os = "linux")]
+    pub fn recorded_entry(&self, path: &Path, id: &str) -> Option<&str> {
+        let found = self.entries.iter().find(|e| e.path == path && e.id == id);
+        found.map(|e| e.sha3.as_str())
+    }
+
+    /// DE/EN: Eintrag in gemeinsamer Datei setzen oder ersetzen / set or replace a shared entry.
+    #[cfg(target_os = "linux")]
+    pub fn record_entry(&mut self, path: &Path, id: &str, sha3: String) {
+        self.entries.retain(|e| e.path != path || e.id != id);
+        self.entries.push(Shared {
+            path: path.to_path_buf(),
+            id: id.to_owned(),
+            sha3,
+        });
+    }
+
+    /// DE: Formatversion: 2, sobald Einträge in gemeinsamen Dateien vorkommen, sonst 1.
+    /// EN: Format version: 2 as soon as entries in shared files exist, otherwise 1.
+    #[cfg(target_os = "linux")]
+    pub fn current_version(&self) -> u32 {
+        if self.entries.is_empty() { 1 } else { 2 }
     }
 }
 

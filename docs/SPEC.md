@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.10: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.11: PQKeep (Core, CLI & API)
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -10,6 +10,7 @@
 > Änderung v2.8 (08.11.2026, freigegeben von SpecterAoD mit dem Merge von PR #79): Formatentwurf v2 für U0 und U2 gemeinsam (`docs/V2_DRAFT.md`, nicht implementiert): zweiter Faktor als Faktordatei mit genau 32 Zufallsbytes (Argon2id-Secret), mehrere Empfänger als Zugangsliste (höchstens ein Passphrase-Zugang + bis zu 64 ML-KEM-Empfänger), v2 nur wenn nötig; Entscheidungen D1–D4 (Empfänger-IDs sichtbar, Passphrase und Empfänger kombinierbar, v2 nur wenn nötig, Faktordatei mit zu offenen Rechten abgelehnt) am 09.11.2026 bestätigt; TPM/FIDO2 ausgelagert (#89), Nummern reserviert.
 > Änderung v2.9 (09.11.2026, freigegeben von SpecterAoD): Mindeststärke neuer Passphrasen von 80 auf **128 Bit** angehoben (auch unter idealisiertem Grover-Angriff ohne Argon2-Schutz rechnerisch ≥ 64 Bit), wählbar bis 256 Bit (`--min-bits`); Generator standardmäßig 32 Zeichen, mindestens 24; Kurzform `pqkeep passphrase <länge>`. Bestehende Dateien bleiben lesbar (Prüfung nur beim Erstellen).
 > Änderung v2.10 (09.11.2026, freigegeben von SpecterAoD): geführte Abläufe in der CLI (Schlüssel erstellen, Signieren, Prüfen) – im Menü oder wenn `generate`/`sign`/`verify` im Terminal ohne Pflichtangaben aufgerufen werden; nie ohne Terminal oder mit `--batch`. Sie fragen nur ab, zeigen die entsprechenden Befehle und starten diese als eigene Prozesse mit voller Sandbox (keine zweite Logik, keine Geheimnisse im Ablauf-Prozess).
+> Änderung v2.11 (10.11.2026, freigegeben von SpecterAoD mit dem Plan zu #92): Kontextmenü auch für Thunar (Xfce) über die gemeinsame Datei `~/.config/Thunar/uca.xml` – nur eigene Blöcke mit festen Kennungen, fremde Aktionen bleiben Byte für Byte erhalten, strenge Aufbauprüfung ohne XML-Crate, Sicherung vor dem Schreiben, Prüfsumme je Block (Manifest Version 2).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -254,7 +255,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 - Ablage im Benutzerprofil (Linux `~/.local/share/pqkeep`, Windows `%APPDATA%\PQKeep`), Rechte wie Abschnitt 4. Erneut aufrufbar (`pqkeep setup`), überschreibt nie ohne Bestätigung.
 
 ### U4: Kontextmenü (Rechtsklick) mit Passphrase-Dialog
-- Aktionen „Mit PQC sichern“ / „PQC entschlüsseln“ (später „Signieren“/„Prüfen“) im Dateimanager. Registrierung nur auf Benutzerebene, ohne Administratorrechte, vollständig rückgängig zu machen: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo-Actions (Cinnamon/Mint), Nautilus-Skripte, Dolphin-Service-Menüs.
+- Aktionen „Mit PQC sichern“ / „PQC entschlüsseln“ (später „Signieren“/„Prüfen“) im Dateimanager. Registrierung nur auf Benutzerebene, ohne Administratorrechte, vollständig rückgängig zu machen: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo-Actions (Cinnamon/Mint), Nautilus-Skripte, Dolphin-Service-Menüs, Thunar-Aktionen (`uca.xml`, Xfce).
 - Ohne Terminal öffnet sich ein schlankes Eingabefenster für die Passphrase. **Abweichung von Abschnitt 1 („GUI ist Non-Goal“):** nur dieser Dialog, keine Anwendungsoberfläche; Umsetzung im Plan zu entscheiden (z. B. vorhandene Systemwerkzeuge wie `zenity`/`kdialog` unter Linux bzw. ein minimaler nativer Dialog unter Windows). Übergabe der Passphrase nur über Pipe/Speicher, nie über Argumente oder Umgebungsvariablen.
 
 ### Weitere Updates
