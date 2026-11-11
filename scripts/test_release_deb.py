@@ -30,11 +30,11 @@ def fixture_tar(files: dict) -> bytes:
     return data.getvalue()
 
 
-def fixture_data(binary: bytes) -> dict:
+def fixture_data(binary: bytes, target: str) -> dict:
     data = {name: b"documentation" for name in check.REQUIRED}
     data["usr/bin/pqkeep"] = binary
     license_text = b"MIT terms for a synthetic test fixture"
-    inventory = {"target": "x86_64-unknown-linux-gnu", "crates": [
+    inventory = {"target": target, "crates": [
         {"name": "example", "version": "1.0.0", "license_files": {
             "LICENSE": hashlib.sha256(license_text).hexdigest()}}],
         "rust_license_files": {"COPYRIGHT-library.html": hashlib.sha256(b"documentation").hexdigest()}}
@@ -61,11 +61,19 @@ class DebianTests(unittest.TestCase):
             apache_reference(license_text.replace("perpetual", "temporary", 1))
 
     def test_package_content_architecture_and_checksums(self):
+        for target, arch, machine, other in (("x86_64-unknown-linux-gnu", "amd64", 62, 183),
+                                             ("aarch64-unknown-linux-gnu", "arm64", 183, 62)):
+            with self.subTest(target=target):
+                self.check_package_cases(target, arch, machine, other)
+
+    def check_package_cases(self, target, arch, machine, other):
         elf = bytearray(64)
         elf[:7] = b"\x7fELF\x02\x01\x01"
-        struct.pack_into("<HH", elf, 16, 3, 62)
-        for case in ("valid", "missing", "extra", "script", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha", "license", "rust-license"):
-            data = fixture_data(bytes(elf))
+        struct.pack_into("<HH", elf, 16, 3, machine)
+        for case in ("valid", "missing", "extra", "script", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha", "license", "rust-license", "wrong-inventory"):
+            data = fixture_data(bytes(elf), target)
+            if case == "wrong-inventory":
+                data = fixture_data(bytes(elf), "aarch64-unknown-linux-gnu" if arch == "amd64" else "x86_64-unknown-linux-gnu")
             if case == "license":
                 data[check.DOC + "licenses.tar.gz"] = gzip.compress(fixture_tar({}), mtime=0)
             if case == "rust-license":
@@ -76,23 +84,23 @@ class DebianTests(unittest.TestCase):
                 data["etc/cron.d/pqkeep"] = b"unexpected"
             if case == "wrong-elf":
                 wrong = bytearray(elf)
-                struct.pack_into("<H", wrong, 18, 183)
+                struct.pack_into("<H", wrong, 18, other)
                 data["usr/bin/pqkeep"] = bytes(wrong)
-            arch = "arm64" if case == "wrong-arch" else "amd64"
+            control_arch = ("arm64" if arch == "amd64" else "amd64") if case == "wrong-arch" else arch
             sums = "".join(hashlib.md5(data[n], usedforsecurity=False).hexdigest() + "  " + n + "\n"
                            for n in sorted(data))
-            controls = {"control": f"Package: pqkeep\nArchitecture: {arch}\n".encode(),
+            controls = {"control": f"Package: pqkeep\nArchitecture: {control_arch}\n".encode(),
                         "md5sums": b"broken" if case == "bad-md5" else sums.encode()}
             if case == "script":
                 controls["postinst"] = b"#!/bin/sh\nexit 0\n"
             expected_sha = "0" * 64 if case == "bad-sha" else hashlib.sha256(elf).hexdigest()
-            with self.subTest(case=case), patch.object(check.subprocess, "check_output",
+            with self.subTest(arch=arch, case=case), patch.object(check.subprocess, "check_output",
                                                        side_effect=[fixture_tar(controls), fixture_tar(data)]):
                 if case == "valid":
-                    self.assertEqual(check.check_package(Path("test.deb"), "amd64", expected_sha), data)
+                    self.assertEqual(check.check_package(Path("test.deb"), arch, expected_sha), data)
                 else:
                     with self.assertRaises(ValueError):
-                        check.check_package(Path("test.deb"), "amd64", expected_sha)
+                        check.check_package(Path("test.deb"), arch, expected_sha)
 
     def test_versions_and_order(self):
         candidate = deb.deb_version("0.1.0-beta.1", "1", 1700000000, "abcdef0")
