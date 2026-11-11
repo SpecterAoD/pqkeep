@@ -3,7 +3,8 @@
 Stand: 11.11.2026. Phase 4 ausdrücklich freigegeben. Basis: `main` nach den übernommenen
 Phasen 2 ([#158](https://github.com/SpecterAoD/pqkeep/pull/158)) und 3
 ([#159](https://github.com/SpecterAoD/pqkeep/pull/159)). Kein Release oder Tag erstellt.
-Status: umgesetzt; die native Abnahme erfolgt in der CI dieses PRs (siehe „Prüfungen“).
+PR: [#162](https://github.com/SpecterAoD/pqkeep/pull/162). Status: umgesetzt und in der CI
+nativ abgenommen (siehe „Prüfungen“).
 
 ## Änderungen
 
@@ -42,13 +43,18 @@ Lokal (AMD64-Arbeitsrechner, nichts installiert):
 - Ein lokaler ARM64-Paketbau ist auf AMD64 bewusst nicht möglich: Der Paketierer weist
   Cross-Paketierung ab. Maßgeblich ist deshalb die native CI.
 
-Native CI dieses PRs (Ergebnisse stehen im PR):
+Native CI (PR #162, Lauf
+[43079163272](https://github.com/SpecterAoD/pqkeep/actions/runs/43079163272), Commit `8b81184`):
+alle Prüfungen bestanden.
 
-- Build `aarch64-unknown-linux-gnu` auf `ubuntu-22.04-arm` mit ELF-/ABI-Prüfung, Härtung,
-  Rauchtest, zweifachem bytegleichem Paketbau.
-- Lintian ohne Overrides sowie Installation, Nutzung als unprivilegierter Benutzer,
-  Entfernung und Purge auf Debian 12 und Ubuntu 22.04, jeweils nativ für amd64 und arm64.
-  Vor der Installation angelegte Testschlüssel und Dateien müssen unverändert bleiben.
+- Build `aarch64-unknown-linux-gnu` auf `ubuntu-22.04-arm`: ELF-/ABI-Prüfung, Härtung und
+  Rauchtest bestanden. Das Paket wurde zweimal gebaut und war bytegleich (`cmp`), 29 Dateien.
+- Installationsjobs nativ für amd64 und arm64, jeweils Debian 12 und Ubuntu 22.04 (vier
+  Jobs): Lintian ohne Overrides, Installation, Nutzung als unprivilegierter Benutzer,
+  Entfernung und Purge bestanden. Die festgelegten Image-Digests liefen auf dem ARM-Runner.
+- Übrige CI (fmt/clippy/test auf vier Runnern, MSRV, cargo-deny, CodeQL, gitleaks,
+  Zeilenlimits, Binär-Härtung) bestanden. `publish`/`verify` wurden bei PRs wie vorgesehen
+  übersprungen.
 
 ## Sicherheit, Grenzen und Rückweg
 
