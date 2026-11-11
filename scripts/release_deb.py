@@ -2,7 +2,7 @@
 """Debian-CI-Kandidat aus einem nativ geprüften GNU-Release-Binary erzeugen.
 
 Keine Installation, Maintainerskripte oder Änderungen an Nutzerdateien.
-Phase 3 schaltet ausschließlich amd64 frei; die Paketlogik ist zielparametrisiert.
+Gemeinsame Paketlogik für amd64 und arm64; jede Architektur wird nativ gebaut und geprüft.
 """
 
 import argparse

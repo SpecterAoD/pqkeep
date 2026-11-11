@@ -11,7 +11,7 @@ import tarfile
 from release_elf import check_header
 
 
-TARGETS = {"x86_64-unknown-linux-gnu": "amd64"}
+TARGETS = {"x86_64-unknown-linux-gnu": "amd64", "aarch64-unknown-linux-gnu": "arm64"}
 DOC = "usr/share/doc/pqkeep/"
 REQUIRED = {
     "usr/bin/pqkeep", "usr/share/man/man1/pqkeep.1.gz", "usr/share/man/de/man1/pqkeep.1.gz",

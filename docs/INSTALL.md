@@ -4,19 +4,24 @@
 
 ### Debian-Paket als Testkandidat
 
-Issue #93, Phase 3 ergänzt ein **AMD64-CI-Paket**, noch kein veröffentlichtes oder
-signiertes Debian-Release. Das Actions-Artefakt `candidate-debian-amd64` im Release-Workflow
-enthält `pqkeep_<Debian-Version>_amd64.deb` und ist 14 Tage verfügbar. Verwende für einen
-Test nur den eigenen geprüften Workflowlauf und vergleiche dessen SHA-256 mit dem Download.
-Eine Prüfsumme allein bestätigt keine Herkunft; signierte Releases folgen erst in Phase 6.
+Issue #93, Phasen 3 und 4 ergänzen **CI-Pakete für AMD64 und ARM64**, noch kein
+veröffentlichtes oder signiertes Debian-Release. Die Actions-Artefakte
+`candidate-debian-amd64` und `candidate-debian-arm64` im Release-Workflow enthalten
+`pqkeep_<Debian-Version>_amd64.deb` bzw. `pqkeep_<Debian-Version>_arm64.deb` und sind
+14 Tage verfügbar. Verwende für einen Test nur den eigenen geprüften Workflowlauf und
+vergleiche dessen SHA-256 mit dem Download. Eine Prüfsumme allein bestätigt keine Herkunft;
+signierte Releases folgen erst in Phase 6.
 
-Das Paket benötigt Linux AMD64 und die im Paket ausgewiesenen Bibliotheken. Der Build
-verwendet Ubuntu 22.04; `dpkg-shlibdeps` bestimmt die konkreten Abhängigkeiten. Die erste
-Installationsprüfung umfasst Debian 12 und Ubuntu 22.04 in nativen AMD64-Testcontainern.
-Die vollständige Distributions-/Upgrade-Matrix folgt in Phase 5. ARM64-Pakete sind erst
-für Phase 4 vorgesehen. Ein AMD64-Paket lässt sich nicht als ARM64-Paket verwenden.
+Jedes Paket benötigt die passende Architektur (Linux AMD64 bzw. ARM64, 64 Bit) und die im
+Paket ausgewiesenen Bibliotheken. Beide Builds laufen nativ auf Ubuntu 22.04;
+`dpkg-shlibdeps` bestimmt die konkreten Abhängigkeiten. Die erste Installationsprüfung
+umfasst Debian 12 und Ubuntu 22.04 in nativen Testcontainern beider Architekturen.
+Die vollständige Distributions-/Upgrade-Matrix folgt in Phase 5. Die Pakete sind
+eigenständig: Ein AMD64-Paket lässt sich nicht als ARM64-Paket verwenden und umgekehrt;
+32-Bit-ARM (`armhf`) wird nicht unterstützt.
 
-Nach eigener Freigabe in einem geeigneten Testsystem (Dateiname entsprechend ersetzen):
+Nach eigener Freigabe in einem geeigneten Testsystem (Dateiname und Architektur – `amd64`
+oder `arm64`, siehe erste Zeile – entsprechend ersetzen):
 
 ```sh
 dpkg --print-architecture
@@ -64,6 +69,9 @@ python3 scripts/release_deb.py target/x86_64-unknown-linux-gnu/release/pqkeep \
   x86_64-unknown-linux-gnu deb-dist --ci-sha "$(git rev-parse HEAD)"
 ```
 
+Auf ARM64 entsprechend mit `aarch64-unknown-linux-gnu`. Der Paketbau ist nur nativ möglich:
+Ein Paket für die jeweils andere Architektur (Cross-Paketierung) wird abgewiesen.
+
 Auf einer neueren Builddistribution kann die ABI-Prüfung bewusst abbrechen, falls das
 Binary neuere glibc-Symbole benötigt. Bestehende `.deb`-Dateien werden nicht überschrieben.
 Der Installations-Testhelfer ist ausschließlich für die vorgesehenen kurzlebigen
@@ -73,18 +81,23 @@ GitHub-Actions-Container bestimmt, niemals für einen produktiven Rechner.
 
 ### Debian test candidate
 
-Issue #93 phase 3 adds an **AMD64 CI package**, not a published or signed Debian release.
-The Release workflow's `candidate-debian-amd64` artifact contains
-`pqkeep_<Debian-version>_amd64.deb` and is retained for 14 days. Use your reviewed workflow
+Issue #93 phases 3 and 4 add **CI packages for AMD64 and ARM64**, not a published or
+signed Debian release. The Release workflow's `candidate-debian-amd64` and
+`candidate-debian-arm64` artifacts contain `pqkeep_<Debian-version>_amd64.deb` and
+`pqkeep_<Debian-version>_arm64.deb` and are retained for 14 days. Use your reviewed workflow
 run and compare its SHA-256 with the download. A checksum alone does not authenticate a
 package; signed releases require phase 6 approval.
 
-The package requires Linux AMD64 and the libraries declared in its metadata. Builds use
-Ubuntu 22.04; `dpkg-shlibdeps` calculates the actual dependencies. Initial installation
-checks cover Debian 12 and Ubuntu 22.04 in native AMD64 test containers. The full
-distribution/upgrade matrix follows in phase 5; ARM64 packages follow in phase 4.
+Each package requires the matching architecture (64-bit Linux AMD64 or ARM64) and the
+libraries declared in its metadata. Both builds run natively on Ubuntu 22.04;
+`dpkg-shlibdeps` calculates the actual dependencies. Initial installation checks cover
+Debian 12 and Ubuntu 22.04 in native test containers of both architectures. The full
+distribution/upgrade matrix follows in phase 5. The packages are independent: an AMD64
+package cannot be used as an ARM64 package or vice versa; 32-bit ARM (`armhf`) is not
+supported.
 
-After approving installation in a suitable test system, substitute the actual file name:
+After approving installation in a suitable test system, substitute the actual file name
+and architecture (`amd64` or `arm64`, see the first line):
 
 ```sh
 dpkg --print-architecture
@@ -110,7 +123,9 @@ never invokes integration commands automatically.
 
 CI versions such as `0.1.0~beta.1-1~ci.<UTC-time>.<commit>` sort before the corresponding
 package revision without the CI suffix. `pqkeep --version` still reports Cargo's upstream
-version. To build locally, use the commands above on a matching native GNU system with
+version. To build locally, use the commands above (on ARM64 with
+`aarch64-unknown-linux-gnu`; packaging is native only, cross-packaging for the other
+architecture is rejected) on a matching native GNU system with
 glibc requirements at most 2.35, Python 3.10+, Rust/Cargo, cached locked dependencies,
 `binutils`, `dpkg-dev` and `dpkg`. Packaging is unprivileged and installs nothing. Newer
 build distributions can produce binaries that the ABI check correctly rejects.

@@ -60,6 +60,16 @@ Debian 12 und Ubuntu 22.04 in nativen AMD64-Containern aus; vorhandene Testschl�
 Nutzerdateien müssen dabei unverändert bleiben. Details: [Installation DE/EN](INSTALL.md)
 und [Phase-3-Bericht](issue-93-phase3.md). Kein neues Artefakt wird in Phase 3 veröffentlicht.
 
+## Debian ARM64 als CI-Kandidat (Issue #93, Phase 4)
+
+Der native ARM64-Build erzeugt mit demselben Paketierer zusätzlich `candidate-debian-arm64`.
+Es gibt keine Skriptkopie und kein eigenes Control-Template: Architektur, ELF-Ziel und
+Lizenzinventar ergeben sich aus dem Ziel `aarch64-unknown-linux-gnu`. Ein Paket mit falscher
+Architekturangabe, fremdem Binary oder dem Lizenzinventar des anderen Ziels wird abgewiesen.
+Lintian und Installation/Smoke/Entfernung laufen auf Debian 12 und Ubuntu 22.04 jetzt für
+beide Architekturen in nativen Containern (ARM64 auf `ubuntu-22.04-arm`, keine Emulation).
+Details: [Phase-4-Bericht](issue-93-phase4.md). Auch in Phase 4 wird nichts veröffentlicht.
+
 ## Windows-Signatur (SignPath)
 
 Erst nach Zusage der SignPath Foundation: Signierschritt vor dem Verpacken einbauen, Zugangsdaten
@@ -107,3 +117,11 @@ packaging must be byte-identical. CI runs Lintian and real installation/smoke/re
 checks in native AMD64 Debian 12 and Ubuntu 22.04 containers, preserving existing test
 keys and user files. See [installation instructions](INSTALL.md) and the
 [phase 3 report](issue-93-phase3.md) (German). No new artifact is published in phase 3.
+
+**Debian ARM64 CI candidate (issue #93, phase 4):** the native ARM64 build also produces
+`candidate-debian-arm64` with the same packaging script – no script copy, no separate control
+template. A package with the wrong architecture field, a foreign binary or the other
+target's license inventory is rejected. Lintian and installation/smoke/removal checks now
+run for both architectures in native Debian 12 and Ubuntu 22.04 containers (ARM64 on
+`ubuntu-22.04-arm`, no emulation). See the [phase 4 report](issue-93-phase4.md) (German).
+Nothing is published in phase 4 either.
