@@ -1,5 +1,7 @@
 """Combined publisher readiness gate tests without real network access."""
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 from check_opencode_publisher_ready import check
@@ -40,10 +42,16 @@ def github_get(path, token):
 
 
 class CombinedGateTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.snapshot = Path(self.temp.name) / "issue.json"
+        self.snapshot.write_text('{"number": 93}', encoding="utf-8")
+
     @patch("check_opencode_publisher_ready.review_proposal")
     def test_valid_checks_patch(self, review):
         review.return_value = ["docs/guide.md"]
-        result = check(None, None, None, None, proposal(),
+        result = check(None, None, None, self.snapshot, proposal(),
                        93, 12345, "a" * 40, "read-token", 456, github_get)
         self.assertEqual(result, ["docs/guide.md"])
         review.assert_called_once()
@@ -76,7 +84,7 @@ class CombinedGateTests(unittest.TestCase):
         data["draft"] = False
         with self.assertRaises(ValueError):
             check(None, None, None, None, data,
-                  93, 12345, "a" * 40, "read-token", github_get)
+                  93, 12345, "a" * 40, "read-token", 456, github_get)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
@@ -84,6 +92,14 @@ class CombinedGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
                   True, 12345, "a" * 40, "read-token", github_get)
+        review.assert_not_called()
+
+    @patch("check_opencode_publisher_ready.review_proposal")
+    def test_wrong_issue_snapshot_denied(self, review):
+        self.snapshot.write_text('{"number": 94}', encoding="utf-8")
+        with self.assertRaises(ValueError):
+            check(None, None, None, self.snapshot, proposal(),
+                  93, 12345, "a" * 40, "read-token", 456, github_get)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
