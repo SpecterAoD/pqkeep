@@ -32,9 +32,19 @@ def authorized(event: dict, repository: str) -> bool:
         return False
     if "pull_request" in issue:
         return False
-    if not isinstance(issue.get("number"), int) or issue["number"] <= 0:
+    if (
+        not isinstance(issue.get("number"), int)
+        or isinstance(issue["number"], bool)
+        or issue["number"] <= 0
+    ):
         return False
     if comment.get("body") != "/oc":
+        return False
+    if (
+        not isinstance(comment.get("id"), int)
+        or isinstance(comment["id"], bool)
+        or comment["id"] <= 0
+    ):
         return False
     return True
 
