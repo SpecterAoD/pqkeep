@@ -5,6 +5,7 @@ This only checks artifact identity. It does not authorize publication.
 """
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -15,7 +16,10 @@ MAX_ARTIFACT = 100_000
 MAX_MANIFEST = 4_096
 
 
-def verify(manifest: dict, artifact: bytes, issue: dict) -> bool:
+def verify(
+    manifest: dict, artifact: bytes, issue: dict,
+    expected_run_id: int, expected_base_sha: str,
+) -> bool:
     """Fail closed on wrong identity, size, hash, or run metadata."""
     if not isinstance(manifest, dict) or not isinstance(issue, dict):
         return False
@@ -23,6 +27,14 @@ def verify(manifest: dict, artifact: bytes, issue: dict) -> bool:
         "repository", "run_id", "issue_number", "base_sha",
         "artifact_sha256", "artifact_size",
     }:
+        return False
+    if (
+        not isinstance(expected_run_id, int)
+        or isinstance(expected_run_id, bool)
+        or expected_run_id <= 0
+        or not isinstance(expected_base_sha, str)
+        or not COMMIT.fullmatch(expected_base_sha)
+    ):
         return False
     if manifest["repository"] != "SpecterAoD/pqkeep":
         return False
@@ -34,11 +46,15 @@ def verify(manifest: dict, artifact: bytes, issue: dict) -> bool:
         manifest["issue_number"], bool
     ) or manifest["issue_number"] <= 0:
         return False
+    if manifest["run_id"] != expected_run_id:
+        return False
     if manifest["issue_number"] != issue.get("number"):
         return False
     if not isinstance(manifest["base_sha"], str) or not COMMIT.fullmatch(
         manifest["base_sha"]
     ):
+        return False
+    if manifest["base_sha"] != expected_base_sha:
         return False
     if not isinstance(manifest["artifact_sha256"], str) or not SHA256.fullmatch(
         manifest["artifact_sha256"]
@@ -70,7 +86,11 @@ def main() -> int:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         issue = json.loads(issue_path.read_text(encoding="utf-8"))
         artifact = artifact_path.read_bytes()
-        if not verify(manifest, artifact, issue):
+        expected_run = os.environ["OPENCODE_EXPECTED_RUN_ID"]
+        if not expected_run.isascii() or not expected_run.isdecimal():
+            raise ValueError("invalid trusted run ID")
+        expected_base = os.environ["OPENCODE_EXPECTED_BASE_SHA"]
+        if not verify(manifest, artifact, issue, int(expected_run), expected_base):
             raise ValueError("artifact mismatch")
     except (OSError, ValueError, TypeError, UnicodeError):
         print("DENIED: artifact identity verification failed", file=sys.stderr)
