@@ -49,6 +49,28 @@ def include_options(data: dict[str, bytes]) -> list[str]:
             for option in ("-o", f"Dpkg::Options::=--path-include=/{name}")]
 
 
+def check_installed(data: dict[str, bytes]) -> None:
+    """dpkg-Prüfsummen sowie Inhalt, Eigentümer und Rechte jeder installierten Paketdatei."""
+    verification = subprocess.check_output(["dpkg", "--verify", "pqkeep"], text=True)
+    if verification.strip():
+        raise ValueError("dpkg meldet abweichende installierte Dateien:\n" + verification)
+    for name, content in data.items():
+        path = Path("/") / name
+        s = path.lstat()
+        expected_mode = 0o755 if name == "usr/bin/pqkeep" else 0o644
+        if (path.is_symlink() or (s.st_uid, s.st_gid, stat.S_IMODE(s.st_mode)) != (0, 0, expected_mode)
+                or path.read_bytes() != content):
+            raise ValueError(f"Installierter Inhalt oder Rechte abweichend: {name}")
+
+
+def guard(arch: str) -> None:
+    """Nur im kurzlebigen GitHub-Testcontainer mit passender nativer Architektur fortfahren."""
+    if os.environ.get("GITHUB_ACTIONS") != "true" or not Path("/.dockerenv").is_file() or os.geteuid() != 0:
+        raise SystemExit("Nur im ausdrücklich vorgesehenen GitHub-Testcontainer ausführen")
+    if subprocess.check_output(["dpkg", "--print-architecture"], text=True).strip() != arch:
+        raise SystemExit("Keine native passende Paketarchitektur")
+
+
 def exercise(package: Path, arch: str, work: Path) -> None:
     """Schlüssel vor Installation anlegen, danach alle Nutzerdateien unverändert verlangen."""
     data = check_package(package, arch)
@@ -71,16 +93,7 @@ def exercise(package: Path, arch: str, work: Path) -> None:
     # Minimale Container filtern Dokumentation aus; jede PQKeep-Datei mitprüfen.
     command("apt-get", "install", "--yes", "--no-install-recommends", *include_options(data), str(package))
     command("dpkg-query", "-W", "-f=${Package} ${Version} ${Architecture} ${Status}\n", "pqkeep")
-    verification = subprocess.check_output(["dpkg", "--verify", "pqkeep"], text=True)
-    if verification.strip():
-        raise ValueError("dpkg meldet abweichende installierte Dateien:\n" + verification)
-    for name, content in data.items():
-        path = Path("/") / name
-        s = path.stat()
-        expected_mode = 0o755 if name == "usr/bin/pqkeep" else 0o644
-        if (path.is_symlink() or (s.st_uid, s.st_gid, stat.S_IMODE(s.st_mode)) != (0, 0, expected_mode)
-                or path.read_bytes() != content):
-            raise ValueError(f"Installierter Inhalt oder Rechte abweichend: {name}")
+    check_installed(data)
     smoke = Path(__file__).resolve().with_name("release_smoke.py")
     user_command(home, "python3", str(smoke), "/usr/bin/pqkeep")
     if snapshot(home) != before:
@@ -98,10 +111,7 @@ def main() -> None:
     parser.add_argument("package", type=Path)
     parser.add_argument("--arch", choices=TARGETS.values(), required=True)
     args = parser.parse_args()
-    if os.environ.get("GITHUB_ACTIONS") != "true" or not Path("/.dockerenv").is_file() or os.geteuid() != 0:
-        raise SystemExit("Nur im ausdrücklich vorgesehenen GitHub-Testcontainer ausführen")
-    if subprocess.check_output(["dpkg", "--print-architecture"], text=True).strip() != args.arch:
-        raise SystemExit("Keine native passende Paketarchitektur")
+    guard(args.arch)
     if subprocess.run(["dpkg-query", "-W", "pqkeep"], capture_output=True).returncode == 0:
         raise SystemExit("Testsystem enthält bereits PQKeep")
     command("uname", "-a")

@@ -202,6 +202,10 @@ jobs:
           python3 scripts/release_deb.py "target/${{ matrix.target }}/release/pqkeep" \
             "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA"
           cmp deb-dist/*.deb deb-repeat/*.deb
+          # Nachfolger-Testpaket nur für Upgrade-/Downgrade-Prüfungen: gleiches Binary, eine
+          # Sekunde spätere Version. Wird nie veröffentlicht (Artefaktname außerhalb dist-*).
+          SOURCE_DATE_EPOCH=$((SOURCE_DATE_EPOCH + 1)) python3 scripts/release_deb.py \
+            "target/${{ matrix.target }}/release/pqkeep" "${{ matrix.target }}" deb-next --ci-sha "$GITHUB_SHA"
           dpkg-deb --info deb-dist/*.deb
           dpkg-deb --contents deb-dist/*.deb
           sha256sum deb-dist/*.deb
@@ -211,6 +215,14 @@ jobs:
         with:
           name: candidate-debian-${{ matrix.deb_arch }}
           path: deb-dist/*.deb
+          if-no-files-found: error
+          retention-days: 14
+      - name: Nachfolger-Testpaket getrennt bereitstellen
+        if: matrix.deb_arch != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lifecycle-debian-${{ matrix.deb_arch }}
+          path: deb-next/*.deb
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -228,20 +240,33 @@ jobs:
       fail-fast: false
       matrix:
         arch: [amd64, arm64]
-        distro: [debian12, ubuntu22]
+        distro: [debian12, debian13, ubuntu22, ubuntu24, ubuntu26]
         include:
+          # `other`: Paket der jeweils anderen Architektur; es muss abgewiesen werden.
           - arch: amd64
             runner: ubuntu-22.04
+            other: arm64
           - arch: arm64
             runner: ubuntu-22.04-arm
-          # Offizielle Image-Digests am 10.11.2026 geprüft; keine beweglichen Tags allein.
-          # Beide OCI-Indizes enthalten native amd64- und arm64/v8-Manifeste.
+            other: amd64
+          # Offizielle Image-Digests am 10.11.2026 (Debian 12, Ubuntu 22.04) und 12.11.2026
+          # geprüft; keine beweglichen Tags allein.
+          # Alle OCI-Indizes enthalten native amd64- und arm64/v8-Manifeste.
           - distro: debian12
             name: Debian 12
             image: debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+          - distro: debian13
+            name: Debian 13
+            image: debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
           - distro: ubuntu22
             name: Ubuntu 22.04
             image: ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
+          - distro: ubuntu24
+            name: Ubuntu 24.04
+            image: ubuntu:24.04@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5
+          - distro: ubuntu26
+            name: Ubuntu 26.04
+            image: ubuntu:26.04@sha256:065aa8626841f16057b78b027b464cd59c4fac36c204c72dcbf48d66f5fa8a96
     # Kurzlebige native Testcontainer; keine privilegierten Optionen oder gelockerten Filter.
     container:
       image: ${{ matrix.image }}
@@ -255,6 +280,14 @@ jobs:
         with:
           name: candidate-debian-${{ matrix.arch }}
           path: candidate
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: lifecycle-debian-${{ matrix.arch }}
+          path: successor
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate-debian-${{ matrix.other }}
+          path: foreign
       - name: Werkzeuge ausschließlich im Testcontainer
         run: |
           apt-get update
@@ -266,6 +299,10 @@ jobs:
         run: lintian --allow-root --fail-on error candidate/*.deb
       - name: Native Installation, Nutzung und Entfernung
         run: python3 scripts/release_deb_smoke.py candidate/*.deb --arch "${{ matrix.arch }}"
+      - name: Lebenszyklus – Abweisungen, Upgrade, Downgrade, Wiederherstellung, Purge
+        run: |
+          python3 scripts/release_deb_lifecycle.py candidate/*.deb successor/*.deb foreign/*.deb \
+            --arch "${{ matrix.arch }}"
 
   publish:
     name: Signieren und bereitstellen / sign and stage

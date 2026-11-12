@@ -14,9 +14,12 @@ signierte Releases folgen erst in Phase 6.
 
 Jedes Paket benötigt die passende Architektur (Linux AMD64 bzw. ARM64, 64 Bit) und die im
 Paket ausgewiesenen Bibliotheken. Beide Builds laufen nativ auf Ubuntu 22.04;
-`dpkg-shlibdeps` bestimmt die konkreten Abhängigkeiten. Die erste Installationsprüfung
-umfasst Debian 12 und Ubuntu 22.04 in nativen Testcontainern beider Architekturen.
-Die vollständige Distributions-/Upgrade-Matrix folgt in Phase 5. Die Pakete sind
+`dpkg-shlibdeps` bestimmt die konkreten Abhängigkeiten. Geprüft werden Debian 12 und 13
+sowie Ubuntu 22.04, 24.04 und 26.04 in nativen Testcontainern beider Architekturen:
+Installation, Reinstall, Upgrade, Downgrade, Entfernung, Purge und abgewiesene Pakete.
+Umfang, Grenzen und nicht nachgewiesene Fälle stehen in der
+[Testmatrix](issue-93-testmatrix.md). Andere Distributionen (z. B. Linux Mint,
+Raspberry Pi OS, Kali) sind nicht geprüft. Die Pakete sind
 eigenständig: Ein AMD64-Paket lässt sich nicht als ARM64-Paket verwenden und umgekehrt;
 32-Bit-ARM (`armhf`) wird nicht unterstützt.
 
@@ -90,9 +93,12 @@ package; signed releases require phase 6 approval.
 
 Each package requires the matching architecture (64-bit Linux AMD64 or ARM64) and the
 libraries declared in its metadata. Both builds run natively on Ubuntu 22.04;
-`dpkg-shlibdeps` calculates the actual dependencies. Initial installation checks cover
-Debian 12 and Ubuntu 22.04 in native test containers of both architectures. The full
-distribution/upgrade matrix follows in phase 5. The packages are independent: an AMD64
+`dpkg-shlibdeps` calculates the actual dependencies. Checks cover Debian 12 and 13 and
+Ubuntu 22.04, 24.04 and 26.04 in native test containers of both architectures: install,
+reinstall, upgrade, downgrade, removal, purge and rejected packages. Scope, limits and
+cases without evidence are listed in the [test matrix](issue-93-testmatrix.md). Other
+distributions (e.g. Linux Mint, Raspberry Pi OS, Kali) are not tested. The packages are
+independent: an AMD64
 package cannot be used as an ARM64 package or vice versa; 32-bit ARM (`armhf`) is not
 supported.
 
