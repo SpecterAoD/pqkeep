@@ -15,6 +15,8 @@ on:
       - 'scripts/test_opencode_workflow_hold.py'
       - 'scripts/verify_opencode_artifact.py'
       - 'scripts/test_verify_opencode_artifact.py'
+      - 'scripts/verify_opencode_sandbox.py'
+      - 'scripts/test_verify_opencode_sandbox.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
