@@ -47,7 +47,17 @@ Unit-Test.
 Lokal (AMD64-Arbeitsrechner, nichts installiert): 35 Skripttests bestanden, davon neun neue;
 `scripts/check_limits.sh` und `git diff --check` ohne Befund.
 
-CI: siehe Abschnitt „Abnahme“ (wird nach dem PR-Lauf ergänzt).
+CI (PR [#165](https://github.com/SpecterAoD/pqkeep/pull/165), Lauf
+[43172198199](https://github.com/SpecterAoD/pqkeep/actions/runs/43172198199), Commit `502a74a`):
+alle 29 Prüfungen bestanden; `publish` und `verify` wie vorgesehen übersprungen.
+
+- Job „Artefaktmanifest“: zehn Dateien aus drei Build-Artefakten angenommen (fünf
+  Nutzartefakte, fünf SBOMs), einschließlich der Zuordnungsprüfung beider Pakete mit `dpkg-deb`.
+- Beide Builds: Kandidat zweimal bytegleich gebaut; die Release-Datei in `dist/` hat dieselbe
+  SHA-256 wie der getestete Kandidat. Das Nachfolgerpaket trägt die Release-Version
+  (`0.1.0~beta.1-1`) und sortiert nach dem Kandidaten.
+- Zehn Installationsjobs (fünf Distributionen × amd64/arm64): Lintian ohne Fehler für
+  Kandidat und Paket mit Release-Version; Upgrade auf die Release-Version und Downgrade bestanden.
 
 ## Nicht nachgewiesen
 
