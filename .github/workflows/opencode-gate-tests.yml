@@ -39,6 +39,8 @@ on:
       - 'scripts/test_verify_opencode_artifact_origin.py'
       - 'scripts/download_opencode_artifact.py'
       - 'scripts/test_download_opencode_artifact.py'
+      - 'scripts/unpack_opencode_github_artifact.py'
+      - 'scripts/test_unpack_opencode_github_artifact.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
