@@ -18,6 +18,15 @@ def proposal():
 
 
 def github_get(path, token):
+    if path == "/actions/runs/12345":
+        return 200, {
+            "id": 12345, "event": "issue_comment", "status": "completed",
+            "conclusion": "success", "path": ".github/workflows/opencode.yml",
+            "head_sha": "a" * 40, "actor": {"id": 77644070},
+            "triggering_actor": {"id": 77644070},
+            "repository": {"full_name": "SpecterAoD/pqkeep"},
+            "head_repository": {"full_name": "SpecterAoD/pqkeep"},
+        }
     if path == "/branches/main":
         return 200, {"commit": {"sha": "a" * 40}}
     return 404, {}
