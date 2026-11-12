@@ -25,6 +25,8 @@ on:
       - 'scripts/test_publisher_opencode_preflight.py'
       - 'scripts/review_opencode_patch.py'
       - 'scripts/test_review_opencode_patch.py'
+      - 'scripts/review_opencode_proposal.py'
+      - 'scripts/test_review_opencode_proposal.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
