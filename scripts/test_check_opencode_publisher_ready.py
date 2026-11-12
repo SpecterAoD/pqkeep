@@ -96,14 +96,14 @@ class CombinedGateTests(unittest.TestCase):
         data["draft"] = False
         with self.assertRaises(ValueError):
             check(None, None, None, None, data,
-                  93, 12345, "a" * 40, "read-token", 456, github_get)
+                  93, 12345, "a" * 40, "read-token", 456, github_get, expected_comment_id=42)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
     def test_invalid_issue_type_blocks(self, review):
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
-                  True, 12345, "a" * 40, "read-token", github_get)
+                  True, 12345, "a" * 40, "read-token", 456, github_get, expected_comment_id=42)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
@@ -123,7 +123,27 @@ class CombinedGateTests(unittest.TestCase):
             return status, data
         with self.assertRaises(ValueError):
             check(None, None, None, self.snapshot, proposal(),
-                  93, 12345, "a" * 40, "read-token", 456, modified)
+                  93, 12345, "a" * 40, "read-token", 456, modified, expected_comment_id=42)
+        review.assert_not_called()
+
+    @patch("check_opencode_publisher_ready.review_proposal")
+    def test_missing_comment_identity_denied(self, review):
+        with self.assertRaises(ValueError):
+            check(None, None, None, self.snapshot, proposal(),
+                  93, 12345, "a" * 40, "read-token", 456, github_get)
+        review.assert_not_called()
+
+    @patch("check_opencode_publisher_ready.review_proposal")
+    def test_edited_trigger_denied(self, review):
+        def edited(path, token):
+            status, data = github_get(path, token)
+            if path == "/issues/comments/42":
+                data = dict(data, body="/oc extra")
+            return status, data
+        with self.assertRaises(ValueError):
+            check(None, None, None, self.snapshot, proposal(),
+                  93, 12345, "a" * 40, "read-token", 456, edited,
+                  expected_comment_id=42)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
