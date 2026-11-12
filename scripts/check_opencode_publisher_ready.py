@@ -15,6 +15,7 @@ from github_opencode_publisher_preflight import preflight as github_preflight
 from review_opencode_proposal import review as review_proposal
 from verify_opencode_run_provenance import verify_run
 from verify_opencode_artifact_origin import verify_artifact_listing
+from verify_opencode_trigger_comment import verify_comment
 from verify_opencode_issue import snapshot as issue_snapshot_from_api
 
 
@@ -22,7 +23,7 @@ def check(
     repository: Path, manifest: Path, archive: Path, issue_snapshot: Path,
     proposal: dict, issue_number: int, run_id: int, base_sha: str,
     read_token: str, artifact_id: int, github_get=None, verify_provenance=None,
-    verify_origin=None,
+    verify_origin=None, expected_comment_id=None,
 ) -> list[str]:
     """Fail closed unless both GitHub state and patch checks pass."""
     if not isinstance(issue_number, int) or isinstance(issue_number, bool):
@@ -43,6 +44,10 @@ def check(
         issue_number, run_id, base_sha, artifact_id, read_token, github_get
     ):
         raise ValueError("GitHub Actions artifact origin denied")
+    if not verify_comment(
+        issue_number, expected_comment_id, read_token, github_get
+    ):
+        raise ValueError("GitHub trigger comment denied")
     # Snapshot must be independently trusted and match the requested issue.
     snapshot_path = Path(issue_snapshot)
     if snapshot_path.is_symlink() or not snapshot_path.is_file():
@@ -75,7 +80,9 @@ def main() -> int:
         base = os.environ["OPENCODE_EXPECTED_BASE_SHA"]
         token = os.environ["GH_READ_TOKEN"]
         artifact_text = os.environ["OPENCODE_EXPECTED_ARTIFACT_ID"]
-        if not artifact_text.isascii() or not artifact_text.isdecimal():
+        comment_text = os.environ["OPENCODE_EXPECTED_COMMENT_ID"]
+        if not all(value.isascii() and value.isdecimal() and int(value) > 0
+                   for value in (artifact_text, comment_text)):
             raise ValueError("invalid artifact ID")
         if not all(
             value.isascii() and value.isdecimal()
@@ -89,7 +96,7 @@ def main() -> int:
         paths = check(
             Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]),
             Path(sys.argv[4]), proposal, int(issue_text), int(run_text),
-            base, token, int(artifact_text),
+            base, token, int(artifact_text), expected_comment_id=int(comment_text),
         )
     except (
         OSError, ValueError, TypeError, UnicodeError, zipfile.BadZipFile,
