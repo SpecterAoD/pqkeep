@@ -13,10 +13,11 @@ dem unabhängig erwarteten Issue entspricht. Regressionstest ergänzt.
 
 ## Offene Blocker
 
-1. **Issue-Snapshot-Vertrauen:** Ein lokal bereitgestellter Snapshot ist noch
-   kein unabhängig verifizierter GitHub-Zustand. Der Publisher muss die
-   ursprüngliche Issue-/Kommentar-Identität über die GitHub-API erneut
-   bestätigen und den Snapshot aus diesem vertrauenswürdigen Kontext erzeugen.
+1. **Issue-/Kommentar-Vertrauen:** Der Publisher vergleicht den vollständigen
+   Issue-Snapshot inzwischen mit einer frischen GitHub-API-Antwort und verwirft
+   nachträgliche Änderungen. **Offen:** Die ursprüngliche `/oc`-Kommentar-ID
+   und deren Autorisierung müssen aus unabhängig vertrauenswürdigen Run-Daten
+   abgeleitet und unmittelbar vor Veröffentlichung erneut geprüft werden.
 2. **Actions-Lauf/Artefakt:** Die Herkunftsprüfung muss auf einen echten
    erfolgreichen Agent-Lauf zugeschnitten werden. Der derzeit aktive
    `opencode.yml` ist absichtlich nur ein Autorisierungs-Hold und erzeugt
