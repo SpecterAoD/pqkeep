@@ -62,6 +62,29 @@ pub fn seal(key: &[u8], plaintext: &[u8], aad: &[u8]) -> Result<Sealed> {
     Ok(Sealed { nonce, ciphertext })
 }
 
+/// DE: Wie [`seal`], aber mit vorgegebener Nonce (Format v2: die Nonce steht im Header und ist
+/// Teil der AAD, muss also vorher feststehen). Der Aufrufer muss die Nonce frisch und zufällig
+/// wählen und darf sie je Schlüssel nur einmal verwenden.
+/// EN: Like [`seal`] but with a given nonce (format v2: the nonce is part of the header and of
+/// the AAD, so it must be fixed beforehand). The caller must pick a fresh random nonce and use
+/// it only once per key.
+pub(crate) fn seal_with_nonce(
+    key: &[u8],
+    nonce: [u8; NONCE_LEN],
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>> {
+    cipher(key)?
+        .encrypt(
+            &Nonce::<Aes256Gcm>::from(nonce),
+            Payload {
+                msg: plaintext,
+                aad,
+            },
+        )
+        .map_err(|_| Error::Crypto)
+}
+
 /// DE: Entschlüsselt und prüft den Tag. Jede Abweichung (Schlüssel, Nonce,
 /// Chiffrat, Tag, AAD, Länge) führt zu [`Error::Decrypt`] ohne Klartext.
 /// EN: Decrypts and verifies the tag. Any mismatch (key, nonce, ciphertext,

@@ -8,10 +8,11 @@ use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 
 use super::archive::ArchiveWriter;
+use super::encrypt_v2;
 use super::format::{Content, FileHeader, HeaderMode};
 use super::output::TempOutput;
 use super::walk::{self, SourceEntry, SourceKind};
-use super::{Protection, Report};
+use super::{PassphraseAccess, Protection, Report};
 use crate::crypto::kdf::KdfParams;
 use crate::crypto::kdf::SALT_LEN;
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
@@ -63,12 +64,13 @@ fn write_archive(
     protection: &Protection<'_>,
 ) -> Result<Report> {
     let file_key = aead::generate_key()?;
-    let header = build_header(content, protection, &file_key)?;
+    let prefix = rng::array::<PREFIX_LEN>()?;
+    let (header, stream_aad) = build_header(content, prefix, protection, &file_key)?;
 
     let (temp, file) = TempOutput::file(target)?;
     let mut out = BufWriter::new(file);
-    out.write_all(&header.encode())?;
-    let enc = EncryptWriter::new(file_key.expose(), header.prefix, &header.stream_aad(), out)?;
+    out.write_all(&header)?;
+    let enc = EncryptWriter::new(file_key.expose(), prefix, &stream_aad, out)?;
     drop(file_key);
     let mut archive = ArchiveWriter::new(enc);
     let mut report = Report {
@@ -108,18 +110,42 @@ fn write_entry<W: Write>(
     Ok(())
 }
 
+/// DE: Kodierter Header und Strom-AAD. Schreibt v1, wenn ein einzelner Zugang ohne Faktordatei
+/// genügt (ältere Versionen bleiben lesefähig), sonst v2.
+/// EN: Encoded header and stream AAD. Writes v1 if a single slot without factor file suffices
+/// (older versions can still read it), else v2.
 fn build_header(
     content: Content,
+    prefix: [u8; PREFIX_LEN],
     protection: &Protection<'_>,
     file_key: &SecretBytes,
-) -> Result<FileHeader> {
-    let prefix = rng::array::<PREFIX_LEN>()?;
-    match protection {
-        Protection::Passphrase { passphrase, params } => {
-            passphrase_header(content, prefix, passphrase, params, file_key)
+) -> Result<(Vec<u8>, Vec<u8>)> {
+    let v1 = match protection {
+        Protection::Passphrase { passphrase, params }
+        | Protection::Slots {
+            passphrase:
+                Some(PassphraseAccess {
+                    passphrase,
+                    params,
+                    factor: None,
+                }),
+            recipients: [],
+        } => passphrase_header(content, prefix, passphrase, params, file_key)?,
+        Protection::Recipient(key)
+        | Protection::Slots {
+            passphrase: None,
+            recipients: [key],
+        } => recipient_header(content, prefix, key, file_key)?,
+        Protection::Slots {
+            passphrase,
+            recipients,
+        } => {
+            let header =
+                encrypt_v2::build(content, prefix, passphrase.as_ref(), recipients, file_key)?;
+            return Ok((header.encode()?, header.stream_aad()?));
         }
-        Protection::Recipient(key) => recipient_header(content, prefix, key, file_key),
-    }
+    };
+    Ok((v1.encode(), v1.stream_aad()))
 }
 
 fn placeholder() -> Wrapped {

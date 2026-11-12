@@ -6,6 +6,7 @@
 #![allow(dead_code, clippy::unwrap_used)]
 
 pub mod fake_dialog;
+pub mod v2_files;
 pub mod v2_header;
 
 use pqkeep::crypto::kdf::{self, KdfParams};

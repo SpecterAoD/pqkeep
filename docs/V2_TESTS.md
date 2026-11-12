@@ -19,13 +19,13 @@ Zu [V2_DRAFT.md](V2_DRAFT.md). `reference` = ausführbare Python-Referenz in `sc
 | V09 | Faktordatei 0/31/32/33/4096 Byte | nur genau 32 | #39 | reference |
 | V10 | Katalog eindeutig, jede `reference`-Zeile hat einen Test, Links gültig | erfüllt | #39 | reference |
 | C01 | Argon2id mit Secret F und AD, echte Mindestparameter | unabhängiger Vektor (argon2pure) + RFC 9106 | #40 | core |
-| C02 | Hüllen und Inhalt: AES-256-GCM-Vektoren inkl. AAD | unabhängige Vektoren, nicht nur Rundlauf | #40 | planned |
+| C02 | Hüllen und Inhalt: AES-256-GCM-Vektoren inkl. AAD | unabhängige Vektoren, nicht nur Rundlauf | #40 | core |
 | C03 | Faktordatei fehlt/falsch/zu groß/Link/Gerät/zu offene Rechte (D4) | Fehler vor Argon2id, nie neu erzeugt | #40 | core |
-| C04 | jedes Header-/Hüllen-/Strom-Byte verändert, Zugang entfernt/vertauscht | Öffnen scheitert, keine Ausgabe | #40/#46 | planned |
+| C04 | jedes Header-/Hüllen-/Strom-Byte verändert, Zugang entfernt/vertauscht | Öffnen scheitert, keine Ausgabe | #40/#46 | core |
 | C05 | Kürzen an jeder Headerposition, Längen bis u32::MAX, 256-KiB-Budget | begrenzter Parser, keine Panik | #40/#46 | core |
-| C06 | v1↔v2-Matrix, Downgrade-Versuche, D3 (v1 wenn möglich) | wie Kompatibilitätstabelle | #40 | planned |
+| C06 | v1↔v2-Matrix, Downgrade-Versuche, D3 (v1 wenn möglich) | wie Kompatibilitätstabelle | #40 | core |
 | C07 | Schlüsseldatei v2: alle Algorithmen, falscher Faktor, v1-Leser | Seed unverändert, v1 lehnt ab | #40 | planned |
-| C08 | 1/2/64 Empfänger gemischter KEM-Stufen, eigener Schlüssel fehlt | jeder öffnet, klare Meldung | #46 | planned |
+| C08 | 1/2/64 Empfänger gemischter KEM-Stufen, eigener Schlüssel fehlt | jeder öffnet, klare Meldung | #46 | core |
 | C09 | Fuzzing JSON-/Binärparser v2 | keine Panik, begrenzter Speicher | #40/#46 | planned |
 | U01 | CLI: `--factor`, Faktordatei erzeugen, `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | planned |
 | U02 | Sandbox: Faktordatei lesbar, sonst nichts zusätzlich | Landlock-Freigaben minimal | #41 | planned |
@@ -40,12 +40,15 @@ python3 -m unittest discover -s scripts -p 'test_v2_*.py' -v
 V07-Sollwerte wurden unabhängig mit `cryptography` 41.0.7 berechnet; die Tests nutzen nur die
 Standardbibliothek. C01: Sollwerte in `tests/kat/v2_argon2id.json`, einmalig erzeugt mit
 `scripts/v2_argon2_vectors.py` (`argon2pure`, nicht Teil der CI); geprüft in `tests/crypto_v2_kat.rs`,
-die HKDF-Schritte zusätzlich in `src/crypto/v2_tests.rs`. C02 ist erst für die Hülle abgedeckt (ein
-unabhängiger Vektor in `tests/crypto_v2_kat.rs`), der Inhalt folgt mit dem Ver-/Entschlüsseln. C03:
-`tests/crypto_factor.rs`. Der Header (V01–V06) ist im Rust-Core bytegenau nachgebaut
+die HKDF-Schritte zusätzlich in `src/crypto/v2_tests.rs`. C02: unabhängige Hülle in
+`tests/crypto_v2_kat.rs` und eine ganze, ohne den Rust-Code gebaute v2-Datei (`tests/kat/v2_content.json`
+aus `scripts/v2_content_vector.py`, Python `cryptography`), die `tests/files_v2_kat.rs` öffnen muss. C03:
+`tests/crypto_factor.rs`. C04: `tests/files_v2_tamper.rs`; C06 und C08: `tests/files_v2_roundtrip.rs`
+(Ver-/Entschlüsseln im Core, noch ohne CLI; C06 für die Schlüsseldatei folgt mit C07). Der Header (V01–V06) ist im Rust-Core bytegenau nachgebaut
 (`tests/files_v2_header.rs`, gemeinsame Sollwerte mit `test_V02_shared_digests`); C05:
 `tests/files_v2_header_limits.rs`. C09 ist für den Binärparser begonnen (Fuzz-Ziel `pqkf_header_v2`),
-der JSON-Teil folgt mit der Schlüsseldatei. Keine echten Geheimnisse oder verschlüsselten Dateien im Repository.
+der JSON-Teil folgt mit der Schlüsseldatei. Keine echten Geheimnisse im Repository; der C02-Vektor enthält
+nur öffentliche Testbytes.
 
 ---
 
@@ -58,9 +61,12 @@ follow-up issue. Reference tests check encoding and rules, not the security of a
 implementation. Run with the command above. V07 expected values were computed independently with
 `cryptography` 41.0.7; the tests use only the standard library. C01: expected values in
 `tests/kat/v2_argon2id.json`, generated once with `scripts/v2_argon2_vectors.py` (`argon2pure`, not part
-of CI) and checked in `tests/crypto_v2_kat.rs`; C02 so far covers the wrap only; C03:
-`tests/crypto_factor.rs`. The header (V01–V06) is rebuilt byte-exactly in the Rust core
+of CI) and checked in `tests/crypto_v2_kat.rs`; C02: independent wrap in `tests/crypto_v2_kat.rs` and a
+whole v2 file built without the Rust code (`tests/kat/v2_content.json` from
+`scripts/v2_content_vector.py`, Python `cryptography`) that `tests/files_v2_kat.rs` must open; C03:
+`tests/crypto_factor.rs`; C04: `tests/files_v2_tamper.rs`; C06 and C08: `tests/files_v2_roundtrip.rs`
+(encrypting/decrypting in the core, no CLI yet; C06 for the key file follows with C07). The header (V01–V06) is rebuilt byte-exactly in the Rust core
 (`tests/files_v2_header.rs`, expected values shared with `test_V02_shared_digests`); C05:
 `tests/files_v2_header_limits.rs`. C09 has started for the binary parser (fuzz target `pqkf_header_v2`),
-the JSON part follows with the key file. No real secrets or encrypted files are
-committed.
+the JSON part follows with the key file. No real secrets are committed; the C02 vector contains public
+test bytes only.

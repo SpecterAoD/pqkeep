@@ -15,11 +15,13 @@ use std::path::Path;
 use sha3::{Digest, Sha3_256};
 
 use super::archive::{ArchiveReader, Entry};
-use super::format::{Content, FileHeader, HeaderMode};
+use super::decrypt_v2;
+use super::format::{Content, FileHeader, HeaderMode, MAGIC};
+use super::format_v2::{self, HeaderV2};
 use super::output::{self, TempOutput};
 use super::paths::{self, PathSet};
 use super::{Report, Unlock};
-use crate::crypto::stream::DecryptReader;
+use crate::crypto::stream::{DecryptReader, PREFIX_LEN, read_full};
 use crate::crypto::wrap;
 use crate::crypto::{KeyAlgorithm, SecretBytes};
 use crate::{Error, Result};
@@ -29,29 +31,70 @@ use crate::{Error, Result};
 ///
 /// # Errors
 /// DE/EN: [`Error::Decrypt`] (falscher Schlüssel/Manipulation / wrong key/tampering),
-/// [`Error::InvalidInput`] (Header, Archiv, Pfad, Prüfsumme, Schlüsselart /
-/// header, archive, path, checksum, key kind), [`Error::Io`] (u. a. `AlreadyExists`).
+/// [`Error::InvalidInput`] (Header, Archiv, Pfad, Prüfsumme, Schlüsselart, Faktordatei /
+/// header, archive, path, checksum, key kind, factor file), [`Error::Unsupported`]
+/// (Version, Zugangstyp / version, slot type), [`Error::Io`] (u. a. `AlreadyExists`).
 pub fn decrypt(source: &Path, target: &Path, unlock: &Unlock<'_>) -> Result<Report> {
-    let mut reader = BufReader::new(File::open(source)?);
-    let header = FileHeader::read(&mut reader)?;
-    let file_key = unwrap_key(&header, unlock)?;
+    let mut file = BufReader::new(File::open(source)?);
+    // DE: Magic und Version vorab lesen und dem passenden Parser wieder voranstellen.
+    // EN: Read magic and version up front and put them back in front of the matching parser.
+    let mut start = [0u8; MAGIC.len() + 2];
+    let filled = read_full(&mut file, &mut start)?;
+    let mut reader = start[..filled].chain(file);
+    let opened = if is_v2(&start[..filled]) {
+        let header = HeaderV2::read(&mut reader)?;
+        Opened {
+            file_key: decrypt_v2::unwrap_key(&header, unlock)?,
+            stream_aad: header.stream_aad()?,
+            prefix: header.prefix,
+            content: header.content,
+        }
+    } else {
+        let header = FileHeader::read(&mut reader)?;
+        Opened {
+            file_key: unwrap_key(&header, unlock)?,
+            stream_aad: header.stream_aad(),
+            prefix: header.prefix,
+            content: header.content,
+        }
+    };
     let dec = DecryptReader::new(
-        file_key.expose(),
-        header.prefix,
-        &header.stream_aad(),
+        opened.file_key.expose(),
+        opened.prefix,
+        &opened.stream_aad,
         reader,
     )?;
-    drop(file_key);
+    drop(opened.file_key);
     let archive = ArchiveReader::new(dec);
-    match header.content {
+    match opened.content {
         Content::File => extract_file(archive, target),
         Content::Directory => extract_dir(archive, target),
     }
 }
 
+/// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
+struct Opened {
+    file_key: SecretBytes,
+    stream_aad: Vec<u8>,
+    prefix: [u8; PREFIX_LEN],
+    content: Content,
+}
+
+/// DE: Nur Magic + Version 2 führt zum v2-Parser; alles andere prüft der v1-Parser wie bisher
+/// (unbekannte Version = „nicht unterstützt“).
+/// EN: Only magic + version 2 leads to the v2 parser; everything else is checked by the v1
+/// parser as before (unknown version = "unsupported").
+fn is_v2(start: &[u8]) -> bool {
+    start.strip_prefix(MAGIC) == Some(&format_v2::VERSION.to_le_bytes()[..])
+}
+
 fn unwrap_key(header: &FileHeader, unlock: &Unlock<'_>) -> Result<SecretBytes> {
     let aad = header.wrap_aad();
     match (&header.mode, unlock) {
+        // DE: v1 kennt keine Faktordatei; nie still ignorieren. EN: v1 has no factor file.
+        (_, Unlock::PassphraseWithFactor { .. }) => Err(Error::InvalidInput {
+            field: "factor_unused",
+        }),
         (HeaderMode::Passphrase { params, salt }, Unlock::Passphrase(pass)) => {
             wrap::unwrap_with_passphrase(pass, params, salt, &header.wrapped, &aad)
         }
