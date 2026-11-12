@@ -1,7 +1,8 @@
 # Issue #93 – Testmatrix der Debian-Pakete / Debian package test matrix
 
-Stand: 12.11.2026 (Phase 5). Gilt für die CI-Kandidaten `pqkeep_<Version>_amd64.deb` und
-`pqkeep_<Version>_arm64.deb`. Es ist weiterhin nichts veröffentlicht oder signiert.
+Stand: 12.11.2026 (Phase 5; Verweis auf die Release-Pakete aus Phase 6 ergänzt). Geprüft
+werden die CI-Kandidaten `pqkeep_<Version>_amd64.deb` und `pqkeep_<Version>_arm64.deb`; die
+Release-Pakete `pqkeep-<Version>-<Architektur>.deb` sind dieselben Dateien unter anderem Namen.
 
 ## Deutsch
 

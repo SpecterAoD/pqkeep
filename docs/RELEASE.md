@@ -8,7 +8,7 @@ Häkchenliste: [`CHECKLIST.md`](CHECKLIST.md) („Release-Checkliste“).
 ## Trockenlauf (ohne Veröffentlichung)
 
 1. GitHub → *Actions* → *Release* → *Run workflow* (Branch `main`).
-2. Nach Build und Rauchtest wartet der Job „Signieren und bereitstellen“ auf die Freigabe:
+2. Nach Build, Rauchtest, Paketinstallationen und Manifestabgleich wartet der Job „Signieren und bereitstellen“ auf die Freigabe:
    *Review deployments* → `release` → *Approve*.
 3. Ergebnis: Artefakt `release-bundle` (Pakete, SBOMs, `SHA256SUMS`, Sigstore-Bundles); der Job
    „Prüfung“ muss grün sein. Es entsteht **kein** GitHub-Release. Hinweis: Attestationen und
@@ -36,39 +36,43 @@ bricht das Verpacken ab. Mit SignPath wären beide zu signieren.
 5. Fehlgeschlagen: Entwurf löschen, Ursache beheben, Tag löschen (`git push --delete origin <tag>`,
    `git tag -d <tag>`) und neu erstellen – nur solange nichts veröffentlicht wurde.
 
-## Linux ARM64 als CI-Kandidat (Issue #93, Phase 2)
+## Artefakte und Manifest (Issue #93, Phase 6)
 
-`aarch64-unknown-linux-gnu` wird auf `ubuntu-22.04-arm` nativ gebaut und getestet.
-Wie bei AMD64 gilt glibc 2.35 als Obergrenze der benötigten glibc-Symbolversionen.
-ELF-Architektur, Loader, PIE, Full RELRO und NX werden geprüft; der vorhandene Rauchtest
-führt das Release-Binary einschließlich Sandbox und Verschlüsselungsrundlauf aus.
-Die Archivprüfung vergleicht das verpackte Programm bytegenau mit diesem Binary.
+Ein Release besteht aus genau fünf Nutzartefakten, je mit eigener CycloneDX-SBOM:
 
-Das Actions-Artefakt `candidate-aarch64-unknown-linux-gnu` enthält das `.tar.gz` und
-die zielbezogene CycloneDX-SBOM. Es ist 14 Tage verfügbar und gehört noch nicht zum
-signierten `release-bundle`: Signaturen, Attestationen und Veröffentlichung der neuen
-Artefakte folgen erst nach gesonderter Freigabe in Phase 6. Debian-Pakete sind in Phase 2
-nicht enthalten. Details und Abnahme: [Phase-2-Bericht](issue-93-phase2.md).
+| Artefakt | Datei | SBOM |
+|---|---|---|
+| Linux AMD64 | `pqkeep-<Version>-x86_64-unknown-linux-gnu.tar.gz` | `…-x86_64-unknown-linux-gnu.cdx.json` |
+| Linux ARM64 | `pqkeep-<Version>-aarch64-unknown-linux-gnu.tar.gz` | `…-aarch64-unknown-linux-gnu.cdx.json` |
+| Windows | `pqkeep-<Version>-x86_64-pc-windows-msvc.zip` | `…-x86_64-pc-windows-msvc.cdx.json` |
+| Debian amd64 | `pqkeep-<Version>-amd64.deb` | `pqkeep-<Version>-amd64.deb.cdx.json` |
+| Debian arm64 | `pqkeep-<Version>-arm64.deb` | `pqkeep-<Version>-arm64.deb.cdx.json` |
 
-## Debian AMD64 als CI-Kandidat (Issue #93, Phase 3)
+Dazu kommen `SHA256SUMS` (alle zehn Dateien) und je ein Sigstore-Bundle (`.sigstore.json`) für
+die fünf Artefakte und `SHA256SUMS`. Jedes Artefakt erhält eine Build-Provenance- und eine
+CycloneDX-Attestation.
 
-Der bestehende AMD64-Build erzeugt zusätzlich `candidate-debian-amd64`, getrennt von
-`dist-*` und dem signierten Release-Bundle. Der Paketierer verwendet genau das geprüfte
-Release-Binary und prüft dessen unveränderte Identität im `.deb`. Zwei Paketläufe müssen
-bytegleich sein. Die CI führt Lintian und echte Installation/Smoke/Entfernung auf
-Debian 12 und Ubuntu 22.04 in nativen AMD64-Containern aus; vorhandene Testschlüssel und
-Nutzerdateien müssen dabei unverändert bleiben. Details: [Installation DE/EN](INSTALL.md)
-und [Phase-3-Bericht](issue-93-phase3.md). Kein neues Artefakt wird in Phase 3 veröffentlicht.
+- **Manifest:** `scripts/release_manifest.py` enthält die Liste fest. Der Job
+  „Artefaktmanifest“ (läuft auch in PRs, ohne Rechte) prüft die Build-Artefakte `dist-*`:
+  fehlende, zusätzliche, doppelte oder falsch zugeordnete Dateien brechen ab. Geprüft wird
+  auch die Zuordnung: SBOM ↔ Ziel und Commit, Paket ↔ Architektur, Programm im Paket ↔
+  Programm im Archiv derselben Architektur. Signiert wird nur das Ergebnis (`release-input`).
+  Der Job „Prüfung“ gleicht das fertige Bündel erneut mit dem Manifest ab.
+- **Reihenfolge:** Signiert wird erst, wenn alle Installations- und Lebenszyklusjobs
+  (`debian`) grün sind. `candidate-debian-*` (Eingabe dieser Tests, bytegleich mit dem
+  Release-Paket) und `lifecycle-debian-*` (Nachfolger-Testpaket) werden nie veröffentlicht.
+- **Paketversion:** Bei einem signierten Tag `<Upstream>-<Revision>` mit `~` vor einer
+  Vorabkennung (z. B. `0.1.0~beta.2-1`), sonst CI-Schema `…~ci.<UTC-Zeit>.<Commit>`. Der
+  Dateiname im Release folgt dem Schema der Archive, weil GitHub `~` in Asset-Namen ersetzt.
+  Die Paketrevision steht in `packaging/debian/metadata.json`.
+- **Paket-SBOM:** aus der SBOM des Archivs derselben Architektur abgeleitet, mit eigener
+  `serialNumber` und den Eigenschaften `pqkeep:debian:package`, `…:version`,
+  `…:architecture`, `…:binary-sha256`.
+- **Builds:** beide Linux-Ziele nativ (`ubuntu-22.04`, `ubuntu-22.04-arm`), glibc-Symbole bis
+  2.35; getestete Distributionen und Grenzen: [Testmatrix](issue-93-testmatrix.md).
 
-## Debian ARM64 als CI-Kandidat (Issue #93, Phase 4)
-
-Der native ARM64-Build erzeugt mit demselben Paketierer zusätzlich `candidate-debian-arm64`.
-Es gibt keine Skriptkopie und kein eigenes Control-Template: Architektur, ELF-Ziel und
-Lizenzinventar ergeben sich aus dem Ziel `aarch64-unknown-linux-gnu`. Ein Paket mit falscher
-Architekturangabe, fremdem Binary oder dem Lizenzinventar des anderen Ziels wird abgewiesen.
-Lintian und Installation/Smoke/Entfernung laufen auf Debian 12 und Ubuntu 22.04 jetzt für
-beide Architekturen in nativen Containern (ARM64 auf `ubuntu-22.04-arm`, keine Emulation).
-Details: [Phase-4-Bericht](issue-93-phase4.md). Auch in Phase 4 wird nichts veröffentlicht.
+Berichte der Phasen: [2](issue-93-phase2.md), [3](issue-93-phase3.md), [4](issue-93-phase4.md),
+[5](issue-93-phase5.md), [6](issue-93-phase6.md).
 
 ## Windows-Signatur (SignPath)
 
@@ -82,7 +86,8 @@ nur als Secret im Environment `release`, Hinweis gemäß [`CODE_SIGNING_POLICY.m
 For the maintainer. Implementation: `.github/workflows/release.yml`; requirements: SPEC 5a;
 checklist: [`CHECKLIST.md`](CHECKLIST.md).
 
-**Dry run:** Actions → Release → Run workflow (`main`); approve the `release` environment when asked;
+**Dry run:** Actions → Release → Run workflow (`main`); after build, package installation tests and
+the manifest check, approve the `release` environment when asked;
 the artifact `release-bundle` is produced and the "verification" job must pass. No GitHub release
 is created. Attestations and Sigstore entries are public and permanent (checksums and workflow
 identity only).
@@ -100,28 +105,22 @@ without a console window). Both Windows programs pass the hardening check; packa
 **Windows signing (SignPath):** only after approval by the SignPath Foundation – add the signing
 step before packaging, credentials only as secrets of the `release` environment.
 
-**Linux ARM64 CI candidate (issue #93, phase 2):** `aarch64-unknown-linux-gnu` builds and
-tests natively on `ubuntu-22.04-arm`, with required glibc symbol versions capped at 2.35.
-Checks cover ELF architecture, loader, PIE, full RELRO and NX. The existing smoke test
-executes the release binary, including sandboxing and an encryption round trip. The
-archive check verifies that the packaged executable is identical to the tested binary.
-The Actions artifact `candidate-aarch64-unknown-linux-gnu` contains the `.tar.gz` and
-target-specific CycloneDX SBOM, retained for 14 days. It is not yet part of the signed
-`release-bundle`; signing, attestations and publishing require separate phase 6 approval.
-Debian packages are outside phase 2. See the [phase 2 report](issue-93-phase2.md) (German).
-
-**Debian AMD64 CI candidate (issue #93, phase 3):** the existing AMD64 build also produces
-`candidate-debian-amd64`, separate from `dist-*` and the signed release bundle. Packaging
-uses the exact tested executable and checks its identity inside the `.deb`. Repeated
-packaging must be byte-identical. CI runs Lintian and real installation/smoke/removal
-checks in native AMD64 Debian 12 and Ubuntu 22.04 containers, preserving existing test
-keys and user files. See [installation instructions](INSTALL.md) and the
-[phase 3 report](issue-93-phase3.md) (German). No new artifact is published in phase 3.
-
-**Debian ARM64 CI candidate (issue #93, phase 4):** the native ARM64 build also produces
-`candidate-debian-arm64` with the same packaging script – no script copy, no separate control
-template. A package with the wrong architecture field, a foreign binary or the other
-target's license inventory is rejected. Lintian and installation/smoke/removal checks now
-run for both architectures in native Debian 12 and Ubuntu 22.04 containers (ARM64 on
-`ubuntu-22.04-arm`, no emulation). See the [phase 4 report](issue-93-phase4.md) (German).
-Nothing is published in phase 4 either.
+**Artifacts and manifest (issue #93, phase 6):** a release consists of exactly five user
+artifacts, each with its own CycloneDX SBOM (file names: see the table above): Linux AMD64 and
+ARM64 archives, the Windows ZIP, and Debian packages for amd64 and arm64. `SHA256SUMS` covers
+all ten files; the five artifacts and `SHA256SUMS` each get a Sigstore bundle, and every
+artifact gets a build provenance and a CycloneDX attestation. `scripts/release_manifest.py`
+holds the fixed list. The "artifact manifest" job (also in PRs, without permissions) rejects
+missing, additional, duplicate or wrongly assigned files and checks the assignment: SBOM ↔
+target and commit, package ↔ architecture, program in the package ↔ program in the archive of
+the same architecture. Only its result (`release-input`) is signed, and only after all
+installation and lifecycle jobs passed; the "verification" job checks the finished bundle
+against the manifest again. `candidate-debian-*` and `lifecycle-debian-*` are never published.
+For a signed tag the package version is `<upstream>-<revision>` with `~` before a pre-release
+identifier (e.g. `0.1.0~beta.2-1`), otherwise the CI scheme `…~ci.<UTC time>.<commit>`; the
+release file name follows the archive scheme because GitHub replaces `~` in asset names. The
+package SBOM is derived from the archive SBOM of the same architecture, with its own
+`serialNumber` and `pqkeep:debian:*` properties. Both Linux targets build natively with glibc
+symbols capped at 2.35; tested distributions and limits: [test matrix](issue-93-testmatrix.md).
+Phase reports (German): [2](issue-93-phase2.md), [3](issue-93-phase3.md),
+[4](issue-93-phase4.md), [5](issue-93-phase5.md), [6](issue-93-phase6.md).
