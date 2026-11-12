@@ -31,6 +31,8 @@ on:
       - 'scripts/test_policy_opencode_publisher.py'
       - 'scripts/github_opencode_publisher_preflight.py'
       - 'scripts/test_github_opencode_publisher_preflight.py'
+      - 'scripts/check_opencode_publisher_ready.py'
+      - 'scripts/test_check_opencode_publisher_ready.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
