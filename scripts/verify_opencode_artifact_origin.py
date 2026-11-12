@@ -55,9 +55,8 @@ def verify_artifact_listing(
             and workflow.get("id") == run
             and type(workflow.get("id")) is int
             and workflow.get("head_sha") == base_sha
-            and workflow.get("repository_id") == payload.get(
-                "repository_id", workflow.get("repository_id")
-            )
+            and type(workflow.get("repository_id")) is int
+            and workflow["repository_id"] > 0
         )
     except (HTTPError, URLError, OSError, ValueError, TypeError, KeyError):
         return False
