@@ -18,6 +18,13 @@ def proposal():
 
 
 def github_get(path, token):
+    if path == "/actions/runs/12345/artifacts?per_page=100&page=1":
+        return 200, {"total_count": 1, "artifacts": [{
+            "id": 456, "name": "opencode-issue-93-run-12345",
+            "expired": False, "size_in_bytes": 1000,
+            "workflow_run": {"id": 12345, "head_sha": "a" * 40,
+                             "repository_id": 77},
+        }]}
     if path == "/actions/runs/12345":
         return 200, {
             "id": 12345, "event": "issue_comment", "status": "completed",
@@ -37,7 +44,7 @@ class CombinedGateTests(unittest.TestCase):
     def test_valid_checks_patch(self, review):
         review.return_value = ["docs/guide.md"]
         result = check(None, None, None, None, proposal(),
-                       93, 12345, "a" * 40, "read-token", github_get)
+                       93, 12345, "a" * 40, "read-token", 456, github_get)
         self.assertEqual(result, ["docs/guide.md"])
         review.assert_called_once()
 
@@ -49,7 +56,7 @@ class CombinedGateTests(unittest.TestCase):
             return 404, {}
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
-                  93, 12345, "a" * 40, "read-token", changed)
+                  93, 12345, "a" * 40, "read-token", 456, changed)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
@@ -60,7 +67,7 @@ class CombinedGateTests(unittest.TestCase):
             return 200, {"ref": "refs/heads/opencode/issue-93-run-12345"}
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
-                  93, 12345, "a" * 40, "read-token", existing)
+                  93, 12345, "a" * 40, "read-token", 456, existing)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
