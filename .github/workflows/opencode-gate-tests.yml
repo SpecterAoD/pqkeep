@@ -1,0 +1,24 @@
+name: OpenCode Authorization Gate Tests
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/authorize_opencode.py'
+      - 'scripts/test_authorize_opencode.py'
+      - '.github/workflows/opencode-gate-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify authorization scenarios
+        run: python3 -m unittest discover -s scripts -p 'test_authorize_opencode.py' -v
