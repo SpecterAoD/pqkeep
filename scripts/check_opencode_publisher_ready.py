@@ -15,6 +15,7 @@ from github_opencode_publisher_preflight import preflight as github_preflight
 from review_opencode_proposal import review as review_proposal
 from verify_opencode_run_provenance import verify_run
 from verify_opencode_artifact_origin import verify_artifact_listing
+from verify_opencode_issue import snapshot as issue_snapshot_from_api
 
 
 def check(
@@ -53,6 +54,12 @@ def check(
             or type(snapshot.get("number")) is not int
             or snapshot["number"] != issue_number):
         raise ValueError("issue snapshot does not match trusted issue")
+    # Verify every snapshot field against GitHub's current issue state.
+    status, current_issue = github_get(f"/issues/{issue_number}", read_token)
+    if status != 200 or not isinstance(current_issue, dict):
+        raise ValueError("GitHub issue lookup denied")
+    if snapshot != issue_snapshot_from_api(current_issue, "SpecterAoD/pqkeep"):
+        raise ValueError("issue snapshot differs from GitHub")
     return review_proposal(
         repository, manifest, archive, issue_snapshot, run_id, base_sha
     )
