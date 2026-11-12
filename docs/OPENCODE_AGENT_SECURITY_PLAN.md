@@ -1,6 +1,6 @@
 # OpenCode Issue Agent – Sicherheitskonzept (Entwurf)
 
-Status: **Design / keine Aktivierung**. Die vorhandene Action bleibt unverändert, bis alle Sicherheitsgates implementiert und getestet sind.
+Status: **Implementierung in Draft-PR / keine produktive Agentenaktivierung**. Auf dem Entwicklungsbranch ist die frühere OpenCode-Action durch einen read-only Autorisierungsworkflow ersetzt. Auf `main` ist diese Änderung noch nicht wirksam. Die Isolationsanforderungen stehen in [OPENCODE_AGENT_ISOLATION.md](OPENCODE_AGENT_ISOLATION.md).
 
 ## Ziel
 
@@ -41,4 +41,4 @@ Unvertrauenswürdig sind Issue-Titel/-Text, Kommentare, Repository-Dateien, Abh�
 
 ## Rollback
 
-Die bestehende Action wird in dieser Planungsphase nicht verändert. Spätere Aktivierung in eigenem PR, nach Tests und manueller Freigabe. Rollback durch Revert der Action-/Konfigurationsänderung und Deaktivierung des Workflows. API-Key bei Verdacht sofort rotieren.
+Die bestehende Action auf `main` bleibt bis zu einem ausdrücklich freigegebenen Merge unverändert. Im Draft-PR wurde sie durch einen read-only Hold ersetzt. Spätere Agentenaktivierung nur nach gesonderter Prüfung und manueller Freigabe. Rollback durch Revert der Action-/Konfigurationsänderung und Deaktivierung des Workflows. API-Key bei Verdacht sofort rotieren.
