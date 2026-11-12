@@ -21,6 +21,8 @@ on:
       - 'scripts/test_smoke_opencode_sandbox.py'
       - 'scripts/extract_opencode_artifact.py'
       - 'scripts/test_extract_opencode_artifact.py'
+      - 'scripts/publisher_opencode_preflight.py'
+      - 'scripts/test_publisher_opencode_preflight.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
