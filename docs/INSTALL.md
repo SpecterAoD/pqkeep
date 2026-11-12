@@ -2,15 +2,19 @@
 
 ## Deutsch
 
-### Debian-Paket als Testkandidat
+### Debian-Paket
 
-Issue #93, Phasen 3 und 4 ergänzen **CI-Pakete für AMD64 und ARM64**, noch kein
-veröffentlichtes oder signiertes Debian-Release. Die Actions-Artefakte
-`candidate-debian-amd64` und `candidate-debian-arm64` im Release-Workflow enthalten
-`pqkeep_<Debian-Version>_amd64.deb` bzw. `pqkeep_<Debian-Version>_arm64.deb` und sind
-14 Tage verfügbar. Verwende für einen Test nur den eigenen geprüften Workflowlauf und
-vergleiche dessen SHA-256 mit dem Download. Eine Prüfsumme allein bestätigt keine Herkunft;
-signierte Releases folgen erst in Phase 6.
+Releases nach v0.1.0-beta.1 enthalten Debian-Pakete für AMD64 und ARM64:
+`pqkeep-<Version>-amd64.deb` und `pqkeep-<Version>-arm64.deb` auf der
+[Release-Seite](https://github.com/SpecterAoD/pqkeep/releases). Vor der Installation die
+Datei prüfen – Prüfsumme, Attestation und Sigstore-Signatur wie im
+[README](../README.md#release-prüfen) beschrieben. Eine Prüfsumme allein bestätigt keine
+Herkunft. Es gibt kein APT-Repository: Aktualisiert wird durch Installieren des neueren Pakets.
+
+Zum Testen eines Entwicklungsstands erzeugt jeder Lauf des Release-Workflows zusätzlich die
+Actions-Artefakte `candidate-debian-amd64` und `candidate-debian-arm64` (14 Tage verfügbar,
+unsigniert, Dateiname `pqkeep_<Debian-Version>_<Architektur>.deb`). Dafür nur den eigenen
+geprüften Workflowlauf verwenden.
 
 Jedes Paket benötigt die passende Architektur (Linux AMD64 bzw. ARM64, 64 Bit) und die im
 Paket ausgewiesenen Bibliotheken. Beide Builds laufen nativ auf Ubuntu 22.04;
@@ -23,13 +27,13 @@ Raspberry Pi OS, Kali) sind nicht geprüft. Die Pakete sind
 eigenständig: Ein AMD64-Paket lässt sich nicht als ARM64-Paket verwenden und umgekehrt;
 32-Bit-ARM (`armhf`) wird nicht unterstützt.
 
-Nach eigener Freigabe in einem geeigneten Testsystem (Dateiname und Architektur – `amd64`
-oder `arm64`, siehe erste Zeile – entsprechend ersetzen):
+Installation (Dateiname und Architektur – `amd64` oder `arm64`, siehe erste Zeile –
+entsprechend ersetzen):
 
 ```sh
 dpkg --print-architecture
-dpkg-deb --info "./pqkeep_<Debian-Version>_amd64.deb"
-sudo apt install "./pqkeep_<Debian-Version>_amd64.deb"
+dpkg-deb --info "./pqkeep-<Version>-amd64.deb"
+sudo apt install "./pqkeep-<Version>-amd64.deb"
 pqkeep --version
 pqkeep --lang de --help
 man pqkeep
@@ -43,7 +47,7 @@ Lizenztexte, Copyright, Lizenzinventar und Änderungsnotizen liegen unter
 oder Desktop-/Shell-Profile geändert. Vorhandene CLI-Befehle und das Standardfeature
 `api` bleiben erhalten; ein Server startet nur durch einen ausdrücklichen CLI-Aufruf.
 
-Entfernung im Testsystem:
+Entfernung:
 
 ```sh
 sudo apt remove pqkeep
@@ -55,9 +59,11 @@ mit `pqkeep integrate` erzeugte Kontextmenüs gehören weiterhin dem Benutzer un
 nach der Deinstallation verwaisen; bei Bedarf vorher ausdrücklich über die bestehende
 CLI entfernen. Das Paket führt diesen Befehl niemals automatisch aus.
 
-CI-Versionen verwenden beispielsweise `0.1.0~beta.1-1~ci.<UTC-Zeit>.<Commit>` und sortieren
-vor der entsprechenden Paketrevision ohne CI-Suffix. `pqkeep --version` zeigt weiterhin
-die Upstream-Version aus Cargo an. Paket- und Programmversion haben unterschiedliche Zwecke.
+Die Paketversion eines Releases lautet beispielsweise `0.1.0~beta.2-1` (die Tilde sortiert
+Vorabversionen vor `0.1.0-1`); der Dateiname folgt dem Schema der übrigen Release-Dateien.
+CI-Versionen wie `0.1.0~beta.2-1~ci.<UTC-Zeit>.<Commit>` sortieren vor der entsprechenden
+Release-Version. `pqkeep --version` zeigt die Upstream-Version aus Cargo an. Paket- und
+Programmversion haben unterschiedliche Zwecke.
 
 ### Paket lokal bauen
 
@@ -72,6 +78,8 @@ python3 scripts/release_deb.py target/x86_64-unknown-linux-gnu/release/pqkeep \
   x86_64-unknown-linux-gnu deb-dist --ci-sha "$(git rev-parse HEAD)"
 ```
 
+Das ergibt ein Paket im CI-Versionsschema; `--release` (Version ohne CI-Suffix) ist dem
+Release-Workflow für signierte Tags vorbehalten.
 Auf ARM64 entsprechend mit `aarch64-unknown-linux-gnu`. Der Paketbau ist nur nativ möglich:
 Ein Paket für die jeweils andere Architektur (Cross-Paketierung) wird abgewiesen.
 
@@ -82,14 +90,18 @@ GitHub-Actions-Container bestimmt, niemals für einen produktiven Rechner.
 
 ## English
 
-### Debian test candidate
+### Debian package
 
-Issue #93 phases 3 and 4 add **CI packages for AMD64 and ARM64**, not a published or
-signed Debian release. The Release workflow's `candidate-debian-amd64` and
-`candidate-debian-arm64` artifacts contain `pqkeep_<Debian-version>_amd64.deb` and
-`pqkeep_<Debian-version>_arm64.deb` and are retained for 14 days. Use your reviewed workflow
-run and compare its SHA-256 with the download. A checksum alone does not authenticate a
-package; signed releases require phase 6 approval.
+Releases after v0.1.0-beta.1 include Debian packages for AMD64 and ARM64:
+`pqkeep-<version>-amd64.deb` and `pqkeep-<version>-arm64.deb` on the
+[releases page](https://github.com/SpecterAoD/pqkeep/releases). Verify the file before
+installing it – checksum, attestation and Sigstore signature as described in the
+[README](../README.md#verifying-a-release). A checksum alone does not authenticate a package.
+There is no APT repository: update by installing the newer package.
+
+To test a development state, every Release workflow run also produces the Actions artifacts
+`candidate-debian-amd64` and `candidate-debian-arm64` (retained for 14 days, unsigned, file
+name `pqkeep_<Debian-version>_<architecture>.deb`). Use your own reviewed workflow run only.
 
 Each package requires the matching architecture (64-bit Linux AMD64 or ARM64) and the
 libraries declared in its metadata. Both builds run natively on Ubuntu 22.04;
@@ -102,13 +114,13 @@ independent: an AMD64
 package cannot be used as an ARM64 package or vice versa; 32-bit ARM (`armhf`) is not
 supported.
 
-After approving installation in a suitable test system, substitute the actual file name
-and architecture (`amd64` or `arm64`, see the first line):
+To install, substitute the actual file name and architecture (`amd64` or `arm64`, see the
+first line):
 
 ```sh
 dpkg --print-architecture
-dpkg-deb --info "./pqkeep_<Debian-version>_amd64.deb"
-sudo apt install "./pqkeep_<Debian-version>_amd64.deb"
+dpkg-deb --info "./pqkeep-<version>-amd64.deb"
+sudo apt install "./pqkeep-<version>-amd64.deb"
 pqkeep --version
 pqkeep --lang en --help
 man pqkeep
@@ -127,9 +139,12 @@ Context menus created manually with `pqkeep integrate` remain user data and can 
 stale; remove them explicitly with the existing CLI beforehand if desired. Packaging
 never invokes integration commands automatically.
 
-CI versions such as `0.1.0~beta.1-1~ci.<UTC-time>.<commit>` sort before the corresponding
-package revision without the CI suffix. `pqkeep --version` still reports Cargo's upstream
-version. To build locally, use the commands above (on ARM64 with
+A release package version looks like `0.1.0~beta.2-1` (the tilde sorts pre-releases before
+`0.1.0-1`); the file name follows the scheme of the other release files. CI versions such as
+`0.1.0~beta.2-1~ci.<UTC-time>.<commit>` sort before the corresponding release version.
+`pqkeep --version` reports Cargo's upstream version. To build locally, use the commands above
+(they give the CI version scheme; `--release` is reserved for the Release workflow on signed
+tags; on ARM64 with
 `aarch64-unknown-linux-gnu`; packaging is native only, cross-packaging for the other
 architecture is rejected) on a matching native GNU system with
 glibc requirements at most 2.35, Python 3.10+, Rust/Cargo, cached locked dependencies,

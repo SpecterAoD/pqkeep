@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Debian-CI-Kandidat aus einem nativ geprüften GNU-Release-Binary erzeugen.
+"""Debian-Paket (CI-Kandidat oder Release) aus einem nativ geprüften GNU-Release-Binary erzeugen.
 
 Keine Installation, Maintainerskripte oder Änderungen an Nutzerdateien.
 Gemeinsame Paketlogik für amd64 und arm64; jede Architektur wird nativ gebaut und geprüft.
+`--release` ergibt die Paketversion ohne CI-Suffix (nur für signierte Tags), `--successor`
+ein höher sortierendes Testpaket für Upgrade-/Downgrade-Prüfungen, das nie veröffentlicht wird.
 """
 
 import argparse
@@ -37,8 +39,9 @@ def regular(path: Path) -> Path:
     return path
 
 
-def deb_version(upstream: str, revision: str, stamp: int, sha: str) -> str:
-    """SemVer-Prerelease vor finaler Version; CI vor der eigentlichen Paketrevision."""
+def deb_version(upstream: str, revision: str, stamp: int, sha: str,
+                release: bool = False, successor: bool = False) -> str:
+    """SemVer-Prerelease vor finaler Version; CI vor der Paketrevision, Testnachfolger danach."""
     pattern = r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?"
     match = re.fullmatch(pattern, upstream)
     if not match or not re.fullmatch(r"[1-9]\d*", revision):
@@ -51,7 +54,8 @@ def deb_version(upstream: str, revision: str, stamp: int, sha: str) -> str:
         raise ValueError("Ungültiger Commit oder SOURCE_DATE_EPOCH")
     date = datetime.fromtimestamp(stamp, timezone.utc).strftime("%Y%m%d%H%M%S")
     version = upstream.replace("-", "~", 1) if pre else upstream
-    return f"{version}-{revision}~ci.{date}.{sha[:12]}"
+    suffix = "" if release else f"~ci.{date}.{sha[:12]}"
+    return f"{version}-{revision}{suffix}" + ("+test1" if successor else "")
 
 
 def put(stage: Path, name: str, data: bytes, mode: int = 0o644) -> None:
@@ -63,7 +67,7 @@ def put(stage: Path, name: str, data: bytes, mode: int = 0o644) -> None:
 
 
 def docs(stage: Path, root: Path, binary: Path, version: str,
-         metadata: dict, stamp: int) -> None:
+         metadata: dict, stamp: int, release: bool) -> None:
     """Vorhandene Texte und CLI-Generatoren wiederverwenden, gzip ohne Zeitstempel."""
     for name, source in EXTRA_FILES:
         data = regular(root / source).read_bytes()
@@ -86,8 +90,10 @@ def docs(stage: Path, root: Path, binary: Path, version: str,
     notes = regular(root / "CHANGELOG.md").read_bytes()
     put(stage, f"{DOC}/changelog.gz", gzip.compress(notes, mtime=0))
     date = format_datetime(datetime.fromtimestamp(stamp, timezone.utc))
-    changes = (f"pqkeep ({version}) UNRELEASED; urgency=medium\n\n"
-               "  * Debian-CI-Kandidat / Debian CI candidate; native GNU binary.\n\n"
+    kind = ("unstable", "Release-Paket / release package") if release else (
+        "UNRELEASED", "Debian-CI-Kandidat / Debian CI candidate")
+    changes = (f"pqkeep ({version}) {kind[0]}; urgency=medium\n\n"
+               f"  * {kind[1]}; native GNU binary.\n\n"
                f" -- {metadata['maintainer']}  {date}\n")
     put(stage, f"{DOC}/changelog.Debian.gz", gzip.compress(changes.encode(), mtime=0))
     put(stage, f"{DOC}/CC-BY-4.0", regular(root / "packaging/debian/CC-BY-4.0").read_bytes())
@@ -135,7 +141,8 @@ def normalize(stage: Path, stamp: int) -> None:
         os.utime(path, (stamp, stamp))
 
 
-def build(binary: Path, target: str, out: Path, sha: str, root: Path) -> Path:
+def build(binary: Path, target: str, out: Path, sha: str, root: Path,
+          release: bool = False, successor: bool = False) -> Path:
     """Isoliert bauen und erst nach Erfolg atomar ohne Überschreiben bereitstellen."""
     if os.geteuid() == 0:
         raise ValueError("Paketbau muss ohne Root-Rechte erfolgen")
@@ -153,7 +160,7 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path) -> Path:
     stamp = epoch()
     if "SOURCE_DATE_EPOCH" not in os.environ:
         raise ValueError("SOURCE_DATE_EPOCH muss ausdrücklich gesetzt sein")
-    version = deb_version(upstream, metadata["revision"], stamp, sha)
+    version = deb_version(upstream, metadata["revision"], stamp, sha, release, successor)
     if subprocess.check_output([str(binary), "--version"], text=True).strip() != "pqkeep " + upstream:
         raise ValueError("Binary-Version passt nicht zu Cargo.toml")
     if any(p.is_symlink() for p in (out.absolute(), *out.absolute().parents)):
@@ -167,7 +174,7 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path) -> Path:
         stage = work / "debian/pqkeep"
         put(stage, "usr/bin/pqkeep", binary.read_bytes(), 0o755)
         staged = stage / "usr/bin/pqkeep"
-        docs(stage, root, staged, version, metadata, stamp)
+        docs(stage, root, staged, version, metadata, stamp, release and not successor)
         write_licenses(root, target, stage / DOC)
         control(stage, arch, version, dependencies(stage, work), metadata)
         normalize(stage, stamp)
@@ -186,9 +193,12 @@ def main() -> int:
     parser.add_argument("target", choices=TARGETS)
     parser.add_argument("out", type=Path)
     parser.add_argument("--ci-sha", required=True)
+    parser.add_argument("--release", action="store_true")
+    parser.add_argument("--successor", action="store_true")
     args = parser.parse_args()
     try:
-        build(args.binary, args.target, args.out, args.ci_sha, Path(__file__).resolve().parents[1])
+        build(args.binary, args.target, args.out, args.ci_sha, Path(__file__).resolve().parents[1],
+              args.release, args.successor)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"FEHLER: {error}")
         return 1

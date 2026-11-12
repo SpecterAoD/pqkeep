@@ -111,6 +111,19 @@ class DebianTests(unittest.TestCase):
                              (candidate, deb.deb_version("0.1.0-beta.1", "1", 1700000001, "0000000"))]:
             subprocess.run(["dpkg", "--compare-versions", older, "lt", newer], check=True)
 
+    def test_release_and_successor_versions(self):
+        args = ("0.1.0-beta.2", "1", 1700000000, "abcdef0")
+        candidate, release = deb.deb_version(*args), deb.deb_version(*args, release=True)
+        self.assertEqual(release, "0.1.0~beta.2-1")
+        self.assertEqual(deb.deb_version("1.2.3", "2", 0, "abcdef0", release=True), "1.2.3-2")
+        successor = deb.deb_version(*args, release=True, successor=True)
+        self.assertEqual(successor, "0.1.0~beta.2-1+test1")
+        self.assertEqual(deb.deb_version(*args, successor=True), candidate + "+test1")
+        for older, newer in [(candidate, release), (release, successor), (successor, "0.1.0-1"),
+                             (candidate, candidate + "+test1"), (candidate + "+test1", release),
+                             ("0.1.0~beta.1-1", release)]:
+            subprocess.run(["dpkg", "--compare-versions", older, "lt", newer], check=True)
+
     def test_invalid_versions(self):
         for version in ("../1", "01.2.3", "1.2", "1.2.3+meta", "1.2.3-beta..1",
                         "1.2.3-01", "1.2.3-", "1.2.3\nPackage: evil", "1:2.3.4"):

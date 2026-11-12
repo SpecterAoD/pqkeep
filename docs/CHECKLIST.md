@@ -23,7 +23,9 @@
 - [ ] Version in `Cargo.toml` und `CHANGELOG` angepasst
 - [ ] **Signierten** Git-Tag `vX.Y.Z` bzw. `vX.Y.Z-beta.N` erstellt
 - [ ] Release-Workflow lief im Environment `release` (Reviewer hat freigegeben)
-- [ ] Artefakte: Build-Provenance-Attestation, Sigstore-Signatur, `SHA256SUMS` (signiert), SBOM
+- [ ] Fünf Artefakte (Linux AMD64/ARM64, Windows, Debian amd64/arm64): je Build-Provenance- und
+      SBOM-Attestation, Sigstore-Signatur, SBOM; `SHA256SUMS` (signiert); Manifest-Job grün
+- [ ] Paketrevision in `packaging/debian/metadata.json` geprüft (neue Upstream-Version: `1`)
 - [ ] Windows-Binary mit SignPath signiert (sobald freigegeben), sonst Hinweis auf SmartScreen in den Release-Notes
 - [ ] Verifikations-Job grün (Attestation, Signatur, Prüfsumme)
 - [ ] Release-Entwurf geprüft (Assets, Notes) und von Hand veröffentlicht

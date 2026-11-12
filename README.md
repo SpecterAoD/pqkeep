@@ -37,7 +37,9 @@ telemetry and opens no outgoing network connections.
 
 Download the archive for your platform from the [releases page](https://github.com/SpecterAoD/pqkeep/releases),
 [verify it](#verifying-a-release) and unpack it. Linux builds need glibc ≥ 2.35 (e.g. Ubuntu 22.04+,
-Debian 12+, Linux Mint 21+). Alternatively build from source (Rust ≥ 1.88):
+Debian 12+, Linux Mint 21+). Releases after v0.1.0-beta.1 also provide Linux ARM64 (64-bit) archives
+and Debian packages (`.deb`) for amd64 and arm64 – see [installation](docs/INSTALL.md).
+Alternatively build from source (Rust ≥ 1.88):
 
 ```
 git clone https://github.com/SpecterAoD/pqkeep
@@ -100,9 +102,11 @@ assistance is not a substitute for an independent security review.
 
 ### Verifying a release
 
-Releases are built by GitHub Actions from this repository only. Each archive comes with a
-SHA-256 checksum, a build provenance attestation, a Sigstore signature and an SBOM (CycloneDX).
-Replace `<version>` and `<target>` with the values of the file you downloaded:
+Releases are built by GitHub Actions from this repository only. Each archive and each Debian
+package comes with a SHA-256 checksum, a build provenance attestation, a Sigstore signature and
+an SBOM (CycloneDX). Replace `<version>` and `<target>` with the values of the file you
+downloaded; the commands work the same way for `.zip` and `.deb` files
+(`pqkeep-<version>-amd64.deb`, `pqkeep-<version>-arm64.deb`):
 
 ```
 sha256sum -c SHA256SUMS --ignore-missing          # Windows: Get-FileHash <file> -Algorithm SHA256
@@ -164,7 +168,8 @@ Telemetrie und ohne ausgehende Netzwerkverbindungen.
 
 Archiv für die eigene Plattform von der [Release-Seite](https://github.com/SpecterAoD/pqkeep/releases)
 laden, [prüfen](#release-prüfen) und entpacken (Linux: glibc ≥ 2.35, z. B. Ubuntu 22.04+, Debian 12+,
-Linux Mint 21+). Alternativ Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --locked`,
+Linux Mint 21+). Releases nach v0.1.0-beta.1 enthalten zusätzlich Linux-ARM64-Archive (64 Bit) und
+Debian-Pakete (`.deb`) für amd64 und arm64 – siehe [Installation](docs/INSTALL.md). Alternativ Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --locked`,
 Programm unter `target/release/pqkeep`.
 
 ```
@@ -199,10 +204,10 @@ unabhängiges Sicherheitsreview.
 
 ### Release prüfen
 
-Releases baut ausschließlich GitHub Actions aus diesem Repository. Jedes Archiv hat eine
-SHA-256-Prüfsumme, eine Build-Attestation, eine Sigstore-Signatur und eine SBOM. Prüfung wie im
-englischen Abschnitt „Verifying a release“ (`sha256sum -c`, `gh attestation verify`,
-`cosign verify-blob`). Das Windows-Programm ist noch nicht Authenticode-signiert; SmartScreen kann
+Releases baut ausschließlich GitHub Actions aus diesem Repository. Jedes Archiv und jedes
+Debian-Paket hat eine SHA-256-Prüfsumme, eine Build-Attestation, eine Sigstore-Signatur und eine
+SBOM. Prüfung wie im englischen Abschnitt „Verifying a release“ (`sha256sum -c`,
+`gh attestation verify`, `cosign verify-blob`) – für `.tar.gz`, `.zip` und `.deb` gleich. Das Windows-Programm ist noch nicht Authenticode-signiert; SmartScreen kann
 beim ersten Start warnen.
 
 ### Projekt
