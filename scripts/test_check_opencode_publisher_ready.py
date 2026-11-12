@@ -110,6 +110,18 @@ class CombinedGateTests(unittest.TestCase):
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
+    def test_issue_modified_on_github_denied(self, review):
+        def modified(path, token):
+            status, data = github_get(path, token)
+            if path == "/issues/93":
+                data = dict(data, body="Modified after agent run")
+            return status, data
+        with self.assertRaises(ValueError):
+            check(None, None, None, self.snapshot, proposal(),
+                  93, 12345, "a" * 40, "read-token", 456, modified)
+        review.assert_not_called()
+
+    @patch("check_opencode_publisher_ready.review_proposal")
     def test_patch_failure_is_propagated(self, review):
         review.side_effect = ValueError("forbidden source change")
         with self.assertRaises(ValueError):
