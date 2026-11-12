@@ -42,6 +42,17 @@ def check(
         issue_number, run_id, base_sha, artifact_id, read_token, github_get
     ):
         raise ValueError("GitHub Actions artifact origin denied")
+    # Snapshot must be independently trusted and match the requested issue.
+    snapshot_path = Path(issue_snapshot)
+    if snapshot_path.is_symlink() or not snapshot_path.is_file():
+        raise ValueError("invalid issue snapshot")
+    if not 0 < snapshot_path.stat().st_size <= 16_384:
+        raise ValueError("invalid issue snapshot size")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    if (not isinstance(snapshot, dict)
+            or type(snapshot.get("number")) is not int
+            or snapshot["number"] != issue_number):
+        raise ValueError("issue snapshot does not match trusted issue")
     return review_proposal(
         repository, manifest, archive, issue_snapshot, run_id, base_sha
     )
