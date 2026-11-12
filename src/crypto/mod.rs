@@ -6,6 +6,7 @@
 
 pub mod aead;
 pub mod dsa;
+pub mod factor;
 pub mod kdf;
 pub mod kem;
 pub mod protect;
@@ -13,6 +14,7 @@ pub mod rng;
 mod secret;
 pub mod stream;
 mod stream_io;
+pub mod v2;
 pub mod wrap;
 
 pub use secret::SecretBytes;

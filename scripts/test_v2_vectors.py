@@ -8,9 +8,14 @@ EN: Independently computed on 2026-11-08 with `cryptography` 41.0.7; the test it
     hashlib/hmac. Public test bytes as above. No real secrets.
 """
 
+import json
+import pathlib
 import unittest
 
+import v2_argon2_vectors as argon
 import v2_reference as ref
+
+KAT = pathlib.Path(__file__).resolve().parent.parent / "tests/kat/v2_argon2id.json"
 
 KDF_SLOT = {
     ("file", 0): "4f41ede1889d37fa2f68f1031731f3ea4cc88ab7454660cb7f2821f282f3cedc",
@@ -31,6 +36,21 @@ class V2VectorTests(unittest.TestCase):
         ss, rid = bytes(range(64, 96)), bytes(range(96, 128))
         ct = bytes(i % 256 for i in range(1568))
         self.assertEqual(ref.hkdf_sha3(ss, ct, ref.recipient_info(rid)).hex(), RECIPIENT)
+
+    def test_C01_kat_file_is_consistent(self):
+        """DE: Die Datei passt zum Erzeugungsskript; der HKDF-Schritt wird nachgerechnet (Argon2id
+        selbst prüft der Rust-Test). EN: File matches the generator; HKDF step is recomputed."""
+        data = json.loads(KAT.read_text(encoding="utf-8"))
+        self.assertEqual(data["passphrase_hex"], argon.PASSPHRASE.hex())
+        self.assertEqual(data["salt_hex"], argon.SALT.hex())
+        self.assertEqual(data["factor_hex"], argon.FACTOR.hex())
+        self.assertEqual(len(data["cases"]), len(argon.CASES))
+        for case, expected in zip(data["cases"], argon.CASES):
+            got = tuple(case[k] for k in ("domain", "factor", "memory_kib", "iterations", "parallelism"))
+            self.assertEqual(got, expected)
+            wrap_key = ref.hkdf_sha3(bytes.fromhex(case["argon2id"]), argon.SALT,
+                                     ref.kdf_slot_info(case["domain"], case["factor"]))
+            self.assertEqual(wrap_key.hex(), case["hkdf_hex"])
 
 
 if __name__ == "__main__":
