@@ -37,6 +37,11 @@ def github_get(path, token):
             "repository": {"full_name": "SpecterAoD/pqkeep"},
             "head_repository": {"full_name": "SpecterAoD/pqkeep"},
         }
+    if path == "/issues/comments/42":
+        return 200, {"id": 42, "user": {"id": 77644070},
+                     "body": "/oc", "created_at": "2026-11-13T00:00:00Z",
+                     "updated_at": "2026-11-13T00:00:00Z",
+                     "issue_url": "https://api.github.com/repos/SpecterAoD/pqkeep/issues/93"}
     if path == "/issues/93":
         return 200, {"number": 93, "user": {"id": 77644070},
                      "title": "Safe documentation", "body": "Document flow",
@@ -59,7 +64,7 @@ class CombinedGateTests(unittest.TestCase):
     def test_valid_checks_patch(self, review):
         review.return_value = ["docs/guide.md"]
         result = check(None, None, None, self.snapshot, proposal(),
-                       93, 12345, "a" * 40, "read-token", 456, github_get)
+                       93, 12345, "a" * 40, "read-token", 456, github_get, expected_comment_id=42)
         self.assertEqual(result, ["docs/guide.md"])
         review.assert_called_once()
 
@@ -71,7 +76,7 @@ class CombinedGateTests(unittest.TestCase):
             return 404, {}
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
-                  93, 12345, "a" * 40, "read-token", 456, changed)
+                  93, 12345, "a" * 40, "read-token", 456, changed, expected_comment_id=42)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
@@ -82,7 +87,7 @@ class CombinedGateTests(unittest.TestCase):
             return 200, {"ref": "refs/heads/opencode/issue-93-run-12345"}
         with self.assertRaises(ValueError):
             check(None, None, None, None, proposal(),
-                  93, 12345, "a" * 40, "read-token", 456, existing)
+                  93, 12345, "a" * 40, "read-token", 456, existing, expected_comment_id=42)
         review.assert_not_called()
 
     @patch("check_opencode_publisher_ready.review_proposal")
