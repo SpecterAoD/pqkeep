@@ -4,7 +4,7 @@
 
 ### Debian-Paket
 
-Releases nach v0.1.0-beta.1 enthalten Debian-Pakete für AMD64 und ARM64:
+Seit v0.1.0-beta.2 enthalten Releases Debian-Pakete für AMD64 und ARM64:
 `pqkeep-<Version>-amd64.deb` und `pqkeep-<Version>-arm64.deb` auf der
 [Release-Seite](https://github.com/SpecterAoD/pqkeep/releases). Vor der Installation die
 Datei prüfen – Prüfsumme, Attestation und Sigstore-Signatur wie im
@@ -92,7 +92,7 @@ GitHub-Actions-Container bestimmt, niemals für einen produktiven Rechner.
 
 ### Debian package
 
-Releases after v0.1.0-beta.1 include Debian packages for AMD64 and ARM64:
+Since v0.1.0-beta.2, releases include Debian packages for AMD64 and ARM64:
 `pqkeep-<version>-amd64.deb` and `pqkeep-<version>-arm64.deb` on the
 [releases page](https://github.com/SpecterAoD/pqkeep/releases). Verify the file before
 installing it – checksum, attestation and Sigstore signature as described in the

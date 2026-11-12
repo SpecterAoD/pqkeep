@@ -6,20 +6,23 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] – 2026-11-12
+
+Second public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
+
 ### Added
+- **Linux ARM64** (64-bit, `aarch64`): natively built and tested release archive (glibc ≥ 2.35).
+- **Debian packages** (`.deb`) for amd64 and arm64: program, German and English man pages, shell
+  completions and licence texts; no maintainer scripts, services or changes to user files. Tested in
+  native containers on Debian 12/13 and Ubuntu 22.04/24.04/26.04 (install, upgrade, downgrade,
+  removal, purge, rejected packages) – see `docs/INSTALL.md` and `docs/issue-93-testmatrix.md`.
+- Release pipeline: all five artifacts (Linux AMD64/ARM64, Windows, Debian amd64/arm64) carry a
+  checksum, build provenance and SBOM attestations and a Sigstore signature; a fixed artifact manifest
+  rejects missing, additional, duplicate or wrongly assigned files – see `docs/RELEASE.md`.
 - Context menu for **Thunar** (Xfce): `pqkeep integrate install` adds two custom actions to
   `~/.config/Thunar/uca.xml` (multi-selection, window or terminal mode) without touching foreign
   actions; strict layout check, backup before writing, checksums per entry (integration list version 2),
   fully reversible – see `docs/INTEGRATION.md`.
-
-### Changed
-- `pqkeep passphrase` now shows the same conservative strength estimate as `pqkeep validate`
-  (previously the higher formula value), so both commands agree.
-- **New passphrases need at least 128 bits** (was 80) – fit for post-quantum use even without counting
-  Argon2id; `--min-bits` (128–256) raises it further. Existing files stay readable. The generator
-  now defaults to 32 characters (≈ 210 bits, minimum 24); short form `pqkeep passphrase 40`.
-
-### Added
 - Guided flows for beginners: creating a key (purpose, strength with NIST category, name and further
   details, protection profile, passphrase, file names), signing and verifying. They start from the menu
   or when `generate`, `sign` or `verify` are called in a terminal without the required input – never
@@ -49,6 +52,20 @@ German release notes: see `docs/releases/`.
 - `pqkeep sign` / `pqkeep verify`: detached signatures from the command line; verification prints
   `[VERIFIED]` or `[INVALID]` with the signer's fingerprint, exit code 7 for an invalid signature.
 
+### Changed
+- `pqkeep passphrase` now shows the same conservative strength estimate as `pqkeep validate`
+  (previously the higher formula value), so both commands agree.
+- **New passphrases need at least 128 bits** (was 80) – fit for post-quantum use even without counting
+  Argon2id; `--min-bits` (128–256) raises it further. Existing files stay readable. The generator
+  now defaults to 32 characters (≈ 210 bits, minimum 24); short form `pqkeep passphrase 40`.
+
+### Known limitations
+- No external audit; cryptographic crates are 0.x versions.
+- Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
+- Debian packages: no APT repository (update by installing the newer package); not tested on other
+  distributions, on distribution kernels or on kernels with 64 KiB pages.
+- See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
+
 ## [0.1.0-beta.1] – 2026-11-07
 
 First public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
@@ -75,4 +92,5 @@ First public beta. **Not audited, not FIPS 140 validated – do not use for secr
 - Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
 - See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
 
+[0.1.0-beta.2]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1

@@ -4,7 +4,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-> **Status: beta (`v0.1.0-beta.1`) – not audited, not FIPS 140 validated.**
+> **Status: beta (`v0.1.0-beta.2`) – not audited, not FIPS 140 validated.**
 > File formats and options may still change before 1.0. Please do not use PQKeep to protect
 > secrets you cannot afford to lose. See [Status and limitations](#status-and-limitations).
 
@@ -37,7 +37,7 @@ telemetry and opens no outgoing network connections.
 
 Download the archive for your platform from the [releases page](https://github.com/SpecterAoD/pqkeep/releases),
 [verify it](#verifying-a-release) and unpack it. Linux builds need glibc ≥ 2.35 (e.g. Ubuntu 22.04+,
-Debian 12+, Linux Mint 21+). Releases after v0.1.0-beta.1 also provide Linux ARM64 (64-bit) archives
+Debian 12+, Linux Mint 21+). Since v0.1.0-beta.2, releases also provide Linux ARM64 (64-bit) archives
 and Debian packages (`.deb`) for amd64 and arm64 – see [installation](docs/INSTALL.md).
 Alternatively build from source (Rust ≥ 1.88):
 
@@ -82,7 +82,7 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
 
 ### Status and limitations
 
-- **Development status:** first beta (`v0.1.0-beta.1`), active development. Formats and options
+- **Development status:** second beta (`v0.1.0-beta.2`), active development. Formats and options
   may change before 1.0. Changes: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit status:** no external security audit has been performed. An independent review is
   planned before 1.0.
@@ -160,7 +160,7 @@ dokumentierten JSON-Container, verschlüsselt mit **AES-256-GCM**; der Schlüsse
 **Argon2id** aus einer starken Passphrase abgeleitet. Läuft unter Windows und Linux, ohne
 Telemetrie und ohne ausgehende Netzwerkverbindungen.
 
-> **Status: Beta (`v0.1.0-beta.1`), nicht auditiert.** Dateiformate und Optionen
+> **Status: Beta (`v0.1.0-beta.2`), nicht auditiert.** Dateiformate und Optionen
 > können sich bis 1.0 ändern. Bitte nicht für Geheimnisse verwenden, deren Verlust nicht
 > verkraftbar ist. Die verwendeten Krypto-Bibliotheken sind nicht FIPS-140-validiert.
 
@@ -168,7 +168,7 @@ Telemetrie und ohne ausgehende Netzwerkverbindungen.
 
 Archiv für die eigene Plattform von der [Release-Seite](https://github.com/SpecterAoD/pqkeep/releases)
 laden, [prüfen](#release-prüfen) und entpacken (Linux: glibc ≥ 2.35, z. B. Ubuntu 22.04+, Debian 12+,
-Linux Mint 21+). Releases nach v0.1.0-beta.1 enthalten zusätzlich Linux-ARM64-Archive (64 Bit) und
+Linux Mint 21+). Seit v0.1.0-beta.2 enthalten Releases zusätzlich Linux-ARM64-Archive (64 Bit) und
 Debian-Pakete (`.deb`) für amd64 und arm64 – siehe [Installation](docs/INSTALL.md). Alternativ Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --locked`,
 Programm unter `target/release/pqkeep`.
 
