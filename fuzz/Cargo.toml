@@ -48,6 +48,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "pqkf_header_v2"
+path = "fuzz_targets/pqkf_header_v2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "archive_paths"
 path = "fuzz_targets/archive_paths.rs"
 test = false

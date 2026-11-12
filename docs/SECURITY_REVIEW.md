@@ -24,7 +24,7 @@ ersetzt (TLS über Reverse Proxy statt rustls). Bekannte Grenzen stehen unten un
 | 5 | Mögliche Abstürze durch Indizes/Slices | clippy einmalig mit `indexing_slicing`, `string_slice`, `arithmetic_side_effects`, `as_conversions` als Prüfhilfe; alle 46 Index-/Slice-Stellen gesichtet, die fremde Eingaben verarbeiten (Archiv, Streaming, Pfade, Hex, Zeitstempel, Passphrase-Prüfung) | Alle begrenzt: Länge vor Zugriff geprüft, Lesemengen ≤ Puffer, Byte-Offsets auf Zeichengrenzen (Kleinschreibung über das erste Zeichen von `to_lowercase`, gleiche Länge der Listen). Überläufe führen wegen `overflow-checks` im Release zum Abbruch statt zu falschen Werten. |
 | 6 | Grenzwerte | Konstanten gesichtet | Pfade (255 B/Komponente, 4096 B, Tiefe 64, 10⁶ Einträge), Schlüsseldatei 64 KiB, API-Body 64 KiB, Metadaten 128/64 Zeichen, Passphrase 16–1024 Zeichen (Eingabe ≤ 4096), Argon2id 64 MiB–1 GiB / 3–10 Iterationen / ≤ 16 Threads, Salt 16–64 B, API: Verbindungen, Rate-Limit, Sperre, Argon2-Budget. |
 | 7 | Abhängigkeiten | `cargo tree`, `cargo deny check`, `cargo audit` | 121 Crates (Standard-Features, Linux). `cargo deny`: Advisories, Lizenzen, Quellen ok. `cargo audit`: keine Funde. Einzige doppelte Version: `syn` (nur zur Übersetzungszeit). Wöchentliches Audit in der CI. |
-| 8 | Fuzzing (SPEC 5b) | cargo-fuzz, 7 Ziele mit Eigenschaftsprüfungen (Parser-Roundtrips, Manipulationserkennung im Streaming-AEAD, Pfadregeln, Passphrase-Prüfung, REST-API) | Erste Läufe je Ziel ohne Fund; wöchentlicher Lauf je 10 min (`.github/workflows/fuzz.yml`). |
+| 8 | Fuzzing (SPEC 5b) | cargo-fuzz, 8 Ziele mit Eigenschaftsprüfungen (Parser-Roundtrips, Manipulationserkennung im Streaming-AEAD, Pfadregeln, Passphrase-Prüfung, REST-API) | Erste Läufe je Ziel ohne Fund; wöchentlicher Lauf je 10 min (`.github/workflows/fuzz.yml`). |
 | 9 | Statische Analyse | CodeQL (Rust, Python, Actions) | 24 frühere Meldungen geprüft: alle Fehlalarme (Testvektoren, mit Nullen angelegte Puffer vor dem Befüllen, statische Hinweistexte); Tests und Fuzz-Ziele sind von der Analyse ausgenommen. 0 offene Meldungen. |
 | 10 | Geheimnis-Scan | gitleaks über die gesamte Historie (CI), GitHub Secret Scanning + Push Protection | Keine Funde. |
 | 11 | Binärhärtung | `scripts/check_binary.py` in CI und Release | Linux: PIE, Full RELRO, NX. Windows: ASLR (High Entropy), DEP, Control Flow Guard. |
@@ -70,7 +70,7 @@ generated passphrase); no `Debug`/`Clone` on secret types; no `unsafe`; no `unwr
 production code; all 46 indexing/slicing sites that process external input reviewed with additional
 clippy lints – all bounded; limits for paths, files, metadata, passphrases, Argon2id and the API;
 dependencies (121 crates, `cargo deny` and `cargo audit` clean, only duplicate `syn`, build time only);
-fuzzing with 7 property-based targets (no findings so far, weekly runs); CodeQL (24 former alerts
+fuzzing with 8 property-based targets (no findings so far, weekly runs); CodeQL (24 former alerts
 reviewed as false positives, 0 open); gitleaks and GitHub secret scanning (no findings); binary
 hardening checked in CI and release.
 

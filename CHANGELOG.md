@@ -8,9 +8,11 @@ German release notes: see `docs/releases/`.
 
 ### Added
 - Core groundwork for the planned file format v2 (factor file, several recipients; `docs/V2_DRAFT.md`):
-  key derivation with domain separation (Argon2id with the factor file as secret, HKDF-SHA3-256) and
+  key derivation with domain separation (Argon2id with the factor file as secret, HKDF-SHA3-256),
   reading/creating factor files (exactly 32 bytes, regular files only, Linux: mode `0600`, too open
-  permissions are rejected). **Not usable from the command line yet**; nothing changes for existing files.
+  permissions are rejected), and the binary v2 header with several access slots (strict, bounded parser;
+  byte-exact against the Python reference). **Not usable from the command line yet**; nothing changes for
+  existing files.
 
 ## [0.1.0-beta.2] – 2026-11-12
 

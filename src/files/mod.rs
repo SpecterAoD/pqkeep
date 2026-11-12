@@ -13,8 +13,10 @@ mod archive;
 mod decrypt;
 mod encrypt;
 pub mod format;
+pub mod format_v2;
 mod output;
 pub mod paths;
+mod slot_v2;
 mod walk;
 
 use std::fs::File;
@@ -25,6 +27,7 @@ pub use crate::fsutil::set_temp_tag;
 pub use decrypt::decrypt;
 pub use encrypt::{encrypt, encrypt_many};
 pub use format::{Content, FileHeader, HeaderMode};
+pub use format_v2::{HeaderV2, Slot};
 pub use walk::{SkipReason, Skipped};
 
 use crate::Result;

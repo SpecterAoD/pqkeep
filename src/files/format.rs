@@ -69,7 +69,7 @@ pub struct FileHeader {
     pub wrapped: Wrapped,
 }
 
-fn kem_code(a: KemAlgorithm) -> u8 {
+pub(super) fn kem_code(a: KemAlgorithm) -> u8 {
     match a {
         KemAlgorithm::MlKem512 => 1,
         KemAlgorithm::MlKem768 => 2,
@@ -77,7 +77,7 @@ fn kem_code(a: KemAlgorithm) -> u8 {
     }
 }
 
-fn kem_from_code(code: u8) -> Result<(KemAlgorithm, usize)> {
+pub(super) fn kem_from_code(code: u8) -> Result<(KemAlgorithm, usize)> {
     match code {
         1 => Ok((KemAlgorithm::MlKem512, 768)),
         2 => Ok((KemAlgorithm::MlKem768, 1088)),
@@ -199,7 +199,7 @@ impl FileHeader {
     }
 }
 
-fn bad() -> Error {
+pub(super) fn bad() -> Error {
     Error::InvalidInput { field: "header" }
 }
 
@@ -233,22 +233,22 @@ fn read_recipient_mode(r: &mut Reader<'_, impl Read>) -> Result<HeaderMode> {
     })
 }
 
-struct Reader<'a, R: Read> {
-    inner: &'a mut R,
+pub(super) struct Reader<'a, R: Read> {
+    pub(super) inner: &'a mut R,
 }
 
 impl<R: Read> Reader<'_, R> {
-    fn array<const N: usize>(&mut self) -> Result<[u8; N]> {
+    pub(super) fn array<const N: usize>(&mut self) -> Result<[u8; N]> {
         let mut out = [0u8; N];
         self.inner.read_exact(&mut out).map_err(|_| bad())?;
         Ok(out)
     }
 
-    fn byte(&mut self) -> Result<u8> {
+    pub(super) fn byte(&mut self) -> Result<u8> {
         Ok(self.array::<1>()?[0])
     }
 
-    fn bytes(&mut self, len: usize) -> Result<Vec<u8>> {
+    pub(super) fn bytes(&mut self, len: usize) -> Result<Vec<u8>> {
         let mut out = vec![0u8; len];
         self.inner.read_exact(&mut out).map_err(|_| bad())?;
         Ok(out)
