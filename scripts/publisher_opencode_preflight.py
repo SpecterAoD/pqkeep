@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 from extract_opencode_artifact import extract
@@ -52,7 +53,7 @@ def main() -> int:
             Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]),
             int(run), base,
         )
-    except (OSError, ValueError, TypeError, UnicodeError):
+    except (OSError, ValueError, TypeError, UnicodeError, zipfile.BadZipFile):
         print("DENIED: publisher preflight failed", file=sys.stderr)
         return 1
     print(f"PASS: verified artifact and extracted {size} inert patch bytes")
