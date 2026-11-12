@@ -9,6 +9,7 @@ on:
       - 'scripts/test_validate_opencode_patch.py'
       - 'scripts/verify_opencode_issue.py'
       - 'scripts/test_verify_opencode_issue.py'
+      - 'scripts/test_opencode_patch_integration.py'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
 
