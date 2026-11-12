@@ -18,7 +18,15 @@ def compliant(config: dict) -> bool:
     if not isinstance(host, dict) or not isinstance(settings, dict):
         return False
     user = settings.get("User")
-    if not isinstance(user, str) or not user or user in ("root", "0", "0:0"):
+    if not isinstance(user, str) or not user:
+        return False
+    # Require explicit positive numeric UID and GID; names and UID 0 fail.
+    parts = user.split(":")
+    if (
+        len(parts) != 2
+        or any(not part.isascii() or not part.isdecimal() for part in parts)
+        or any(int(part) <= 0 for part in parts)
+    ):
         return False
     if not host.get("ReadonlyRootfs", False):
         return False
@@ -36,13 +44,17 @@ def compliant(config: dict) -> bool:
         return False
     if host.get("CgroupnsMode") == "host":
         return False
-    if host.get("Memory", 0) < 128 * 1024 * 1024:
+    if (
+        not isinstance(host.get("Memory"), int)
+        or isinstance(host["Memory"], bool)
+        or not 128 * 1024 * 1024 <= host["Memory"] <= 1024 * 1024 * 1024
+    ):
         return False
-    if not isinstance(host.get("PidsLimit"), int) or not (
+    if not isinstance(host.get("PidsLimit"), int) or isinstance(host["PidsLimit"], bool) or not (
         1 <= host["PidsLimit"] <= 128
     ):
         return False
-    if not isinstance(host.get("NanoCpus"), int) or not (
+    if not isinstance(host.get("NanoCpus"), int) or isinstance(host["NanoCpus"], bool) or not (
         1 <= host["NanoCpus"] <= 2_000_000_000
     ):
         return False
@@ -57,6 +69,8 @@ def compliant(config: dict) -> bool:
     if host.get("Dns"):
         return False
     if host.get("Mounts"):
+        return False
+    if host.get("ReadonlyPaths") and not isinstance(host["ReadonlyPaths"], list):
         return False
     if settings.get("Entrypoint") is None:
         return False
