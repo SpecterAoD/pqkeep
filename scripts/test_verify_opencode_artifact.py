@@ -19,13 +19,13 @@ class ArtifactVerificationTests(unittest.TestCase):
         }
 
     def test_valid(self):
-        self.assertTrue(verify(self.manifest, self.artifact, self.issue))
+        self.assertTrue(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_modified_bytes(self):
-        self.assertFalse(verify(self.manifest, self.artifact + b"x", self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact + b"x", self.issue, 12345, "a" * 40))
 
     def test_wrong_issue(self):
-        self.assertFalse(verify(self.manifest, self.artifact, {"number": 94}))
+        self.assertFalse(verify(self.manifest, self.artifact, {"number": 94}, 12345, "a" * 40))
 
     def test_wrong_repository(self):
         self.manifest["repository"] = "attacker/fork"
@@ -48,10 +48,27 @@ class ArtifactVerificationTests(unittest.TestCase):
         self.assertFalse(verify(self.manifest, self.artifact, self.issue))
 
     def test_oversized_artifact(self):
-        self.assertFalse(verify(self.manifest, b"x" * 100_001, self.issue))
+        self.assertFalse(verify(self.manifest, b"x" * 100_001, self.issue, 12345, "a" * 40))
+
+    def test_manifest_replaced_with_matching_fake_run(self):
+        self.manifest["run_id"] = 99999
+        self.assertFalse(verify(
+            self.manifest, self.artifact, self.issue, 12345, "a" * 40
+        ))
+
+    def test_manifest_replaced_with_matching_fake_base(self):
+        self.manifest["base_sha"] = "b" * 40
+        self.assertFalse(verify(
+            self.manifest, self.artifact, self.issue, 12345, "a" * 40
+        ))
+
+    def test_trusted_run_boolean_rejected(self):
+        self.assertFalse(verify(
+            self.manifest, self.artifact, self.issue, True, "a" * 40
+        ))
 
     def test_empty_artifact(self):
-        self.assertFalse(verify(self.manifest, b"", self.issue))
+        self.assertFalse(verify(self.manifest, b"", self.issue, 12345, "a" * 40))
 
 
 if __name__ == "__main__":
