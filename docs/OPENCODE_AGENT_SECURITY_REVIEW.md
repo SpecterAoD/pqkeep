@@ -18,6 +18,13 @@ dem unabhängig erwarteten Issue entspricht. Regressionstest ergänzt.
    nachträgliche Änderungen. **Offen:** Die ursprüngliche `/oc`-Kommentar-ID
    und deren Autorisierung müssen aus unabhängig vertrauenswürdigen Run-Daten
    abgeleitet und unmittelbar vor Veröffentlichung erneut geprüft werden.
+   **Wichtig:** Die Actions-Run-API liefert die auslösende Kommentar-ID
+   nicht als eigenständigen vertrauenswürdigen Beleg. Ein vom Agenten
+   geliefertes Manifest oder eine frei gesetzte Umgebungsvariable reicht
+   nicht aus. Erforderlich ist eine separat attestierte Bindung
+   `repository + run_id + issue_id + comment_id + base_sha`, erzeugt
+   im autorisierten Preflight und vom Publisher unabhängig überprüft.
+   Bis dahin bleibt jede Veröffentlichung gesperrt.
 2. **Actions-Lauf/Artefakt:** Die Herkunftsprüfung muss auf einen echten
    erfolgreichen Agent-Lauf zugeschnitten werden. Der derzeit aktive
    `opencode.yml` ist absichtlich nur ein Autorisierungs-Hold und erzeugt
