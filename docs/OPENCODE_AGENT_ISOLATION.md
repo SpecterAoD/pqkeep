@@ -81,3 +81,19 @@ Die Workflow-Datei `.github/workflows/opencode.yml` bleibt auf
 **read-only authorization hold**. Keine `GEMINI_API_KEY`-Weitergabe, kein
 Agentenlauf, kein automatisches Publishing. Änderungen an dieser Grenze
 bedürfen einer eigenen Review.
+
+## Artefaktidentität und Vertrauensanker
+
+Der Publisher darf den `run_id` und den `base_sha` **nicht** aus dem
+Agenten-Artifact oder dessen Manifest übernehmen. Er muss beide Werte aus
+einer vertrauenswürdigen GitHub-Actions-Ausführung beziehungsweise einem
+vorher autorisierten Preflight-Kontext beziehen. Die CLI-Prüfung
+`scripts/verify_opencode_artifact.py` verlangt deshalb die expliziten
+Umgebungswerte `OPENCODE_EXPECTED_RUN_ID` und
+`OPENCODE_EXPECTED_BASE_SHA`. Ein Angreifer, der sowohl Artifact als
+auch Manifest austauscht, kann diese erwarteten Werte nicht durch das
+Manifest selbst verändern. Ein SHA-256-Vergleich schützt dennoch **nicht**
+gegen einen Angreifer, der auch die vertrauenswürdigen Erwartungswerte
+kontrolliert. Vor produktivem Einsatz muss die Herkunft der Erwartungswerte
+und der GitHub-Artifact-Download über vertrauenswürdige Run-ID/Artifact-ID
+verifiziert werden.
