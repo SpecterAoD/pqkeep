@@ -8,10 +8,11 @@ import os
 from pathlib import Path
 import re
 import sys
-import tempfile
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
+
+from verify_opencode_artifact_origin import verify_artifact_listing
 
 API = "https://api.github.com/repos/SpecterAoD/pqkeep/actions/artifacts/"
 MAX_ZIP_BYTES = 120_000
@@ -95,18 +96,26 @@ def download(artifact_id: int, token: str, destination: Path,
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
+    """Verify artifact listing before downloading; no bypass flag."""
+    if len(sys.argv) != 2:
         return 1
     try:
-        artifact = os.environ["OPENCODE_EXPECTED_ARTIFACT_ID"]
-        if not ID.fullmatch(artifact):
-            raise ValueError("invalid artifact identifier")
-        size = download(
-            int(artifact), os.environ["GH_READ_TOKEN"], Path(sys.argv[2])
-        ) if sys.argv[1] == "--verified-origin" else 0
-        if size == 0:
-            raise ValueError("origin verification required")
-    except (OSError, ValueError, HTTPError):
+        artifact_text = os.environ["OPENCODE_EXPECTED_ARTIFACT_ID"]
+        run_text = os.environ["OPENCODE_EXPECTED_RUN_ID"]
+        issue_text = os.environ["OPENCODE_EXPECTED_ISSUE"]
+        if not all(ID.fullmatch(value) for value in (
+            artifact_text, run_text, issue_text
+        )):
+            raise ValueError("invalid expected identifiers")
+        artifact, run, issue = map(int, (
+            artifact_text, run_text, issue_text
+        ))
+        base = os.environ["OPENCODE_EXPECTED_BASE_SHA"]
+        token = os.environ["GH_READ_TOKEN"]
+        if not verify_artifact_listing(issue, run, base, artifact, token):
+            raise ValueError("artifact origin not verified")
+        size = download(artifact, token, Path(sys.argv[1]))
+    except (OSError, ValueError, HTTPError, KeyError):
         print("DENIED: artifact download failed", file=sys.stderr)
         return 1
     print(f"PASS: downloaded {size} bytes without forwarding GitHub token")
