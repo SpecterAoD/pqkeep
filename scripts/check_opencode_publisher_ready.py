@@ -13,12 +13,13 @@ import zipfile
 
 from github_opencode_publisher_preflight import preflight as github_preflight
 from review_opencode_proposal import review as review_proposal
+from verify_opencode_run_provenance import verify_run
 
 
 def check(
     repository: Path, manifest: Path, archive: Path, issue_snapshot: Path,
     proposal: dict, issue_number: int, run_id: int, base_sha: str,
-    read_token: str, github_get=None,
+    read_token: str, github_get=None, verify_provenance=None,
 ) -> list[str]:
     """Fail closed unless both GitHub state and patch checks pass."""
     if not isinstance(issue_number, int) or isinstance(issue_number, bool):
@@ -29,6 +30,10 @@ def check(
         proposal, issue_number, run_id, base_sha, read_token, github_get
     ):
         raise ValueError("GitHub publication state denied")
+    if verify_provenance is None:
+        verify_provenance = verify_run
+    if not verify_provenance(run_id, base_sha, read_token, github_get):
+        raise ValueError("GitHub Actions run provenance denied")
     return review_proposal(
         repository, manifest, archive, issue_snapshot, run_id, base_sha
     )
