@@ -1,0 +1,35 @@
+{
+  "source": "argon2pure 1.3 + hashlib/hmac (scripts/v2_argon2_vectors.py)",
+  "passphrase_hex": "50514b656570207632205465737476656b746f7220e28093206e696368742067656865696d",
+  "salt_hex": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+  "factor_hex": "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+  "cases": [
+    {
+      "domain": "file",
+      "factor": 1,
+      "memory_kib": 65536,
+      "iterations": 3,
+      "parallelism": 1,
+      "argon2id": "bc4b03b8489773dc5dfcb7d7936ce77110c44c584bd0805408a56659a454f81e",
+      "hkdf_hex": "02d7fb5d96ff955696cb945d6e25b458b74578a00885946f8a032cb5de7636b8"
+    },
+    {
+      "domain": "file",
+      "factor": 0,
+      "memory_kib": 65536,
+      "iterations": 3,
+      "parallelism": 1,
+      "argon2id": "66e43d742d6bfa13abf9e02d3966577d37b69f0521cbb26aceb7a0ca8e5ee0dc",
+      "hkdf_hex": "376b9eb4c727a3442968b8df94da644204d5fc69f419746e18730b454282cc80"
+    },
+    {
+      "domain": "key",
+      "factor": 1,
+      "memory_kib": 65536,
+      "iterations": 3,
+      "parallelism": 4,
+      "argon2id": "dc47a71c465ade6c25cb791d989ccc70d3612660f364d0a7ed999236d7f9c1df",
+      "hkdf_hex": "d2853d5b0cade60816959c98648e7944fa8f9ad608140a0aa8e85104c032ff72"
+    }
+  ]
+}

@@ -9,3 +9,5 @@
 .env
 .env.*
 __pycache__/
+# DE: Lokale Python-Umgebung (nur zum Erzeugen von Testvektoren). EN: Local Python environment (test vectors only).
+.venv/
