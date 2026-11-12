@@ -7,11 +7,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: read
 
 jobs:
   opencode-run:
-    # Maximale Härtung: Nur echte Issues, und SOWOHL das Issue 
-    # ALS AUCH der /oc-Kommentar müssen zwingend von dir (SpecterAoD) stammen.
     if: |
       github.event.issue.pull_request == null &&
       github.event.issue.user.login == 'SpecterAoD' &&
@@ -42,11 +41,8 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Extrahiere den Text direkt hinter /oc oder /opencode
           USER_INSTRUCTION=$(printf '%s' "$COMMENT_BODY" | sed -E 's/^\/(opencode|oc)[[:space:]]*//')
           
-          # Falls hinter dem Befehl kein Text stand, nutze den Issue-Inhalt als Kontext
-          # Eingerahmt in XML-Tags, damit das LLM sie als passive Daten (nicht als Befehle) interpretiert.
           if [ -z "$USER_INSTRUCTION" ]; then
             PROMPT=$(cat <<EOF
 Behebe das Problem, das in den folgenden Issue-Daten beschrieben ist.
@@ -63,7 +59,37 @@ EOF
             PROMPT="$USER_INSTRUCTION"
           fi
 
-          # OpenCode starten (nutzt automatisch die opencode.json im Root)
           opencode run \
             --format json \
             -p "$PROMPT"
+
+      - name: Änderungen auf Feature-Branch committen und PR erstellen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name "OpenCode Bot"
+            git config --global user.email "opencode-bot@users.noreply.github.com"
+
+            BRANCH_NAME="opencode/issue-${{ github.event.issue.number }}-${{ github.run_id }}"
+            BASE_BRANCH="${{ github.event.repository.default_branch }}"
+
+            # Sicherheits-Check: Niemals direkt auf den Default-Branch pushen
+            if [ "$BRANCH_NAME" = "$BASE_BRANCH" ] || [ "$BRANCH_NAME" = "main" ]; then
+              echo "Abbruch: Push auf Hauptbranch ist blockiert."
+              exit 1
+            fi
+
+            git checkout -b "$BRANCH_NAME"
+            git add .
+            git commit -m "fix: automatisierter Fix für Issue #${{ github.event.issue.number }} durch OpenCode"
+            git push origin "$BRANCH_NAME"
+
+            gh pr create \
+              --title "Fix #${{ github.event.issue.number }}: Automatischer Vorschlag durch OpenCode" \
+              --body "Dieser Pull Request wurde automatisch für Issue #${{ github.event.issue.number }} erstellt. Bitte vor dem Merge prüfen." \
+              --base "$BASE_BRANCH" \
+              --head "$BRANCH_NAME"
+          else
+            echo "Keine Dateiänderungen durch OpenCode vorgenommen."
+          fi
