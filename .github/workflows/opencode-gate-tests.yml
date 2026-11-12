@@ -33,6 +33,8 @@ on:
       - 'scripts/test_github_opencode_publisher_preflight.py'
       - 'scripts/check_opencode_publisher_ready.py'
       - 'scripts/test_check_opencode_publisher_ready.py'
+      - 'scripts/verify_opencode_run_provenance.py'
+      - 'scripts/test_verify_opencode_run_provenance.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
