@@ -12,6 +12,8 @@ on:
       - 'scripts/test_opencode_patch_integration.py'
       - 'scripts/revalidate_opencode_event.py'
       - 'scripts/test_revalidate_opencode_event.py'
+      - 'scripts/test_opencode_workflow_hold.py'
+      - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
 
