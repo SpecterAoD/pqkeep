@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from check_opencode_publisher_ready import check
+from verify_opencode_issue import snapshot
 
 
 def proposal():
@@ -36,6 +37,10 @@ def github_get(path, token):
             "repository": {"full_name": "SpecterAoD/pqkeep"},
             "head_repository": {"full_name": "SpecterAoD/pqkeep"},
         }
+    if path == "/issues/93":
+        return 200, {"number": 93, "user": {"id": 77644070},
+                     "title": "Safe documentation", "body": "Document flow",
+                     "updated_at": "2026-11-13T00:00:00Z"}
     if path == "/branches/main":
         return 200, {"commit": {"sha": "a" * 40}}
     return 404, {}
@@ -46,7 +51,9 @@ class CombinedGateTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.snapshot = Path(self.temp.name) / "issue.json"
-        self.snapshot.write_text('{"number": 93}', encoding="utf-8")
+        self.snapshot.write_text(__import__("json").dumps(snapshot(
+            github_get("/issues/93", "token")[1], "SpecterAoD/pqkeep"
+        )), encoding="utf-8")
 
     @patch("check_opencode_publisher_ready.review_proposal")
     def test_valid_checks_patch(self, review):
