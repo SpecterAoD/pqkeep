@@ -66,8 +66,20 @@ def validate(base: str) -> list[str]:
     if not base or any(ch not in "0123456789abcdef" for ch in base) or len(base) != 40:
         raise ValueError("base must be a full commit SHA")
     git("cat-file", "-e", base + "^{commit}")
+    if git("status", "--porcelain", "--untracked-files=all"):
+        raise ValueError("working tree not clean")
+    if git("rev-list", "--count", base + "..HEAD").strip() != b"1":
+        raise ValueError("expected exactly one proposed commit")
+    if git("merge-base", base, "HEAD").strip().decode("ascii") != base:
+        raise ValueError("base is not an ancestor of proposed commit")
     paths = parse_changes(git("diff", "--name-status", "-z", "--no-renames", base, "HEAD"))
+    for path in paths:
+        previous = git("ls-tree", base, "--", path)
+        if previous and not previous.startswith(b"100644 blob "):
+            raise ValueError("base file has forbidden mode")
     patch = git("diff", "--binary", "--no-ext-diff", base, "HEAD")
+    if b"GIT binary patch" in patch or b"Binary files " in patch:
+        raise ValueError("binary patch not allowed")
     if len(patch) > MAX_PATCH_BYTES:
         raise ValueError("patch too large")
     for path in paths:
