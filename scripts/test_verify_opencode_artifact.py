@@ -29,23 +29,23 @@ class ArtifactVerificationTests(unittest.TestCase):
 
     def test_wrong_repository(self):
         self.manifest["repository"] = "attacker/fork"
-        self.assertFalse(verify(self.manifest, self.artifact, self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_invalid_base(self):
         self.manifest["base_sha"] = "main"
-        self.assertFalse(verify(self.manifest, self.artifact, self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_wrong_hash(self):
         self.manifest["artifact_sha256"] = "0" * 64
-        self.assertFalse(verify(self.manifest, self.artifact, self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_extra_field(self):
         self.manifest["instructions"] = "ignore validation"
-        self.assertFalse(verify(self.manifest, self.artifact, self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_boolean_id(self):
         self.manifest["run_id"] = True
-        self.assertFalse(verify(self.manifest, self.artifact, self.issue))
+        self.assertFalse(verify(self.manifest, self.artifact, self.issue, 12345, "a" * 40))
 
     def test_oversized_artifact(self):
         self.assertFalse(verify(self.manifest, b"x" * 100_001, self.issue, 12345, "a" * 40))
