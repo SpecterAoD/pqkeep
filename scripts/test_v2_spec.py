@@ -6,6 +6,7 @@ EN: Check encoding, rules, limits and AAD binding – not Rust, not cryptographi
 Aufruf / usage: python3 -m unittest discover -s scripts -p 'test_v2_*.py'
 """
 
+import hashlib
 import unittest
 
 import v2_reference as ref
@@ -42,6 +43,20 @@ class V2SpecTests(unittest.TestCase):
         meta = ref.metadata(1, bytes(range(7)), [pslot()])
         head = "50514b46454e4300" "0200" "01" "00000100" "00010203040506" "01"
         self.assertEqual(meta.hex(), head + pslot().hex())
+
+    def test_V02_shared_digests(self):
+        # DE: Dieselben Sollwerte prüft der Rust-Core in tests/files_v2_header.rs.
+        # EN: The Rust core checks the same expected values in tests/files_v2_header.rs.
+        slots = [pslot()] + [rslot(k, kem=k) for k in (1, 2, 3)]
+        meta = ref.metadata(2, bytes(range(7)), slots)
+        full = ref.header(meta, [bytes([i]) * 48 for i in range(4)], 4)
+        self.assertEqual((len(meta), len(full)), (3644, 3836))
+        digests = [hashlib.sha3_256(meta).hexdigest(), ref.stream_aad(full).hex(),
+                   hashlib.sha3_256(ref.wrap_aad("file", meta, 3)).hexdigest()]
+        self.assertEqual(digests, [
+            "5925f33cd2bae61bce5cc87f7b4631ec23ae35c729f9a9374165fed6e98b5425",
+            "2ec08e1891cf6491066fee1bbd158476605bc7b3be07c7b87dae898214b6f471",
+            "2d0755aefd77e20c590465cc412f0d28259b5e23672003f4ddb0410d1f1d306a"])
 
     def test_V03_slot_rules(self):
         ok = [[pslot()], [rslot(1)], [pslot(), rslot(1), rslot(2)]]
