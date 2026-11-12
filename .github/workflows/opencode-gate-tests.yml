@@ -35,6 +35,8 @@ on:
       - 'scripts/test_check_opencode_publisher_ready.py'
       - 'scripts/verify_opencode_run_provenance.py'
       - 'scripts/test_verify_opencode_run_provenance.py'
+      - 'scripts/verify_opencode_artifact_origin.py'
+      - 'scripts/test_verify_opencode_artifact_origin.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
