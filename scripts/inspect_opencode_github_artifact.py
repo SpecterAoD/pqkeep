@@ -22,7 +22,7 @@ from verify_opencode_run_provenance import verify_run
 def inspect(
     repository: Path, issue_snapshot: Path, proposal: dict,
     issue: int, run: int, base: str, artifact_id: int, token: str,
-    get=github_get, fetch=download,
+    get=github_get, fetch=download, expected_comment_id=None,
 ) -> list[str]:
     """Bind remote run/artifact, download once, unpack and validate patch."""
     if not verify_run(run, base, token, get):
@@ -39,6 +39,7 @@ def inspect(
         return check(
             repository, manifest, inner, issue_snapshot, proposal,
             issue, run, base, token, artifact_id, get,
+            expected_comment_id=expected_comment_id,
         )
 
 
@@ -51,8 +52,9 @@ def main() -> int:
         run = os.environ["OPENCODE_EXPECTED_RUN_ID"]
         issue = os.environ["OPENCODE_EXPECTED_ISSUE"]
         artifact = os.environ["OPENCODE_EXPECTED_ARTIFACT_ID"]
+        comment = os.environ["OPENCODE_EXPECTED_COMMENT_ID"]
         if not all(value.isascii() and value.isdecimal() and
-                   int(value) > 0 for value in (run, issue, artifact)):
+                   int(value) > 0 for value in (run, issue, artifact, comment)):
             raise ValueError("invalid trusted IDs")
         proposal_path = Path(sys.argv[3])
         if proposal_path.stat().st_size > 4096:
@@ -62,6 +64,7 @@ def main() -> int:
             Path(sys.argv[1]), Path(sys.argv[2]), proposal,
             int(issue), int(run), os.environ["OPENCODE_EXPECTED_BASE_SHA"],
             int(artifact), os.environ["GH_READ_TOKEN"],
+            expected_comment_id=int(comment),
         )
     except (
         OSError, ValueError, TypeError, UnicodeError, KeyError,
