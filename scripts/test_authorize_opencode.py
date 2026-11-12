@@ -12,7 +12,7 @@ def event():
         "action": "created",
         "sender": dict(OWNER),
         "repository": {"full_name": "SpecterAoD/pqkeep"},
-        "comment": {"body": "/oc", "user": dict(OWNER)},
+        "comment": {"id": 1001, "body": "/oc", "user": dict(OWNER)},
         "issue": {"number": 93, "user": dict(OWNER)},
     }
 
@@ -64,6 +64,16 @@ class AuthorizationTests(unittest.TestCase):
     def test_edited_comment(self):
         e = event()
         e["action"] = "edited"
+        self.assertFalse(authorized(e, "SpecterAoD/pqkeep"))
+
+    def test_boolean_issue_number(self):
+        e = event()
+        e["issue"]["number"] = True
+        self.assertFalse(authorized(e, "SpecterAoD/pqkeep"))
+
+    def test_missing_comment_id(self):
+        e = event()
+        del e["comment"]["id"]
         self.assertFalse(authorized(e, "SpecterAoD/pqkeep"))
 
     def test_missing_data(self):
