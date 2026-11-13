@@ -7,6 +7,7 @@ use std::path::Path;
 
 use pqkeep::security::{Lang, MIN_BITS, generator};
 
+use super::factor::FactorPlan;
 use super::levels::{Level, Purpose, for_purpose};
 use super::text::{GuideTexts, guide_texts};
 use super::{child, command_line, confirm, input, select};
@@ -24,6 +25,8 @@ pub struct KeyPlan {
     pub pass_len: Option<usize>,
     pub out: String,
     pub export: Option<String>,
+    /// DE: Faktordatei (zweiter Faktor). EN: Factor file (second factor).
+    pub factor: Option<FactorPlan>,
 }
 
 impl KeyPlan {
@@ -53,6 +56,9 @@ impl KeyPlan {
         if self.min_bits > MIN_BITS {
             a.extend(["--min-bits".to_owned(), self.min_bits.to_string()]);
         }
+        if let Some(f) = &self.factor {
+            a.extend(f.use_args());
+        }
         a.extend(["--out".to_owned(), self.out.clone()]);
         a
     }
@@ -70,7 +76,8 @@ impl KeyPlan {
 
     /// DE: Alle Befehle in Reihenfolge. EN: All commands in order.
     pub fn commands(&self) -> Vec<Vec<String>> {
-        let mut all: Vec<Vec<String>> = self.passphrase_args().into_iter().collect();
+        let create = self.factor.as_ref().and_then(FactorPlan::create_args);
+        let mut all: Vec<Vec<String>> = create.into_iter().chain(self.passphrase_args()).collect();
         all.push(self.generate_args());
         all.extend(self.export_args());
         all
@@ -168,7 +175,7 @@ fn ask_files(g: &GuideTexts, name: &str, purpose: Purpose) -> CliResult<(String,
 }
 
 /// DE: Fragt alles ab und liefert den Plan (ohne Ausführung). EN: Asks everything, returns the plan.
-fn ask(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
+fn ask(lang: Lang, preset: Option<Purpose>, factor: Option<String>) -> CliResult<KeyPlan> {
     let g = guide_texts(lang);
     eprintln!("\n{}\n", g.keygen_title);
     let level = ask_level(g, lang, preset)?;
@@ -191,6 +198,7 @@ fn ask(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
         None
     };
     let (out, export) = ask_files(g, &name, level.purpose)?;
+    let factor = super::factor::ask(lang, &name, factor)?;
     Ok(KeyPlan {
         algorithm: level.id,
         name,
@@ -200,10 +208,11 @@ fn ask(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
         pass_len,
         out,
         export,
+        factor,
     })
 }
 
-fn show(g: &GuideTexts, plan: &KeyPlan) {
+fn show(g: &GuideTexts, lang: Lang, plan: &KeyPlan) {
     eprintln!("\n{}:", g.summary);
     eprintln!("  {}  ·  {}", plan.algorithm.to_uppercase(), plan.name);
     for (flag, value) in &plan.details {
@@ -231,6 +240,9 @@ fn show(g: &GuideTexts, plan: &KeyPlan) {
             .map(|p| format!(", {p}"))
             .unwrap_or_default()
     );
+    if let Some(f) = &plan.factor {
+        eprintln!("  {}", f.summary(lang));
+    }
     eprintln!("\n{}", g.equivalent);
     for cmd in plan.commands() {
         eprintln!("  {}", command_line(&cmd));
@@ -247,13 +259,19 @@ fn succeed(exit: i32) -> CliResult {
     }
 }
 
-/// DE: Geführtes Erstellen; liefert den ausgeführten Plan. EN: Guided creation; returns the plan.
-pub fn run(lang: Lang, preset: Option<Purpose>) -> CliResult<KeyPlan> {
+/// DE: Geführtes Erstellen; liefert den ausgeführten Plan. `factor` = schon angegebene Faktordatei.
+/// EN: Guided creation; returns the plan. `factor` = factor file already given.
+pub fn run(lang: Lang, preset: Option<Purpose>, factor: Option<String>) -> CliResult<KeyPlan> {
     let g = guide_texts(lang);
-    let plan = ask(lang, preset)?;
-    show(g, &plan);
+    let plan = ask(lang, preset, factor)?;
+    show(g, lang, &plan);
     if !confirm(g.confirm, true)? {
         return Err(super::cancelled());
+    }
+    // DE: Faktordatei zuerst: schlägt das fehl, wurde noch keine Passphrase erzeugt.
+    // EN: Factor file first: if that fails no passphrase has been generated yet.
+    if let Some(args) = plan.factor.as_ref().and_then(FactorPlan::create_args) {
+        succeed(child(lang, &args)?)?;
     }
     if let Some(args) = plan.passphrase_args() {
         succeed(child(lang, &args)?)?;

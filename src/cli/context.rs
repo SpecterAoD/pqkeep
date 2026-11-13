@@ -10,9 +10,11 @@ use std::path::{Path, PathBuf};
 
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
 use dialoguer::{Confirm, Input, Select};
-use pqkeep::files::{self, HeaderMode};
+use pqkeep::files;
 use pqkeep::security::Lang;
 
+use super::factor_cmd::FLAG;
+use super::factor_ui::{Ask, for_decrypt, ui_texts};
 use super::files_cmd::{default_decrypted, default_encrypted, free_target};
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
@@ -80,6 +82,14 @@ pub(super) fn ask_path(prompt: &str) -> CliResult<String> {
     Ok(absolute(Path::new(unquoted)).to_string_lossy().into_owned())
 }
 
+/// DE: Schlüsseldatei bzw. Faktordatei abfragen. EN: Ask for the key file or the factor file.
+pub(super) fn ask_for(s: &IntegrateTexts, lang: Lang, what: Ask) -> CliResult<String> {
+    ask_path(match what {
+        Ask::Key => s.ctx_prompt_key,
+        Ask::Factor => ui_texts(lang).needed,
+    })
+}
+
 /// DE: `--out` mit freiem Namen. EN: `--out` with a free name.
 pub(super) fn out_arg(target: Option<&Path>, lang: Lang) -> CliResult<String> {
     let free = target.and_then(free_target);
@@ -104,8 +114,17 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
         .interact()
         .map_err(|_| Failure::new(code::ERROR, ""))?;
     let out = out_arg(default_encrypted(Path::new(path)).as_deref(), lang)?;
-    if mode == 0 {
-        return child(lang, &["encrypt", "--out", &out, "--", path]);
+    // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
+    if mode != 1 {
+        let factor = (mode == 2)
+            .then(|| ask_path(ui_texts(lang).existing))
+            .transpose()?;
+        let mut args = vec!["encrypt"];
+        if let Some(f) = &factor {
+            args.extend([FLAG, f.as_str()]);
+        }
+        args.extend(["--out", &out, "--", path]);
+        return child(lang, &args);
     }
     let public = ask_path(s.ctx_prompt_pub)?;
     child(lang, &["inspect", "--", &public])?;
@@ -127,13 +146,12 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
     if source.extension().and_then(|e| e.to_str()) != Some(files::EXTENSION) {
         return Err(Failure::new(code::USAGE, s.ctx_not_pqkf));
     }
-    let header = files::inspect(source).map_err(|e| Failure::from_error(&e, lang))?;
+    let extra = for_decrypt(source, lang, |what| ask_for(s, lang, what))?;
     let out = out_arg(default_decrypted(source).as_deref(), lang)?;
-    if let HeaderMode::Recipient { .. } = header.mode {
-        let key = ask_path(s.ctx_prompt_key)?;
-        return child(lang, &["decrypt", "--key", &key, "--out", &out, "--", path]);
-    }
-    child(lang, &["decrypt", "--out", &out, "--", path])
+    let mut args = vec!["decrypt"];
+    args.extend(extra.refs());
+    args.extend(["--out", &out, "--", path]);
+    child(lang, &args)
 }
 
 /// DE: `pqkeep context`. EN: `pqkeep context`.

@@ -8,12 +8,12 @@
 
 use std::path::PathBuf;
 
-use pqkeep::files::{self, HeaderMode};
-
 use super::context::utf8;
 use super::context_child::Outcome;
 use super::context_dialog::{Ui, cancelled};
 use super::context_many::{all_pqkf, container_default, container_target, selection_dir};
+use super::factor_cmd::FLAG;
+use super::factor_ui::{Ask, for_decrypt};
 use super::files_cmd::{default_decrypted, default_encrypted};
 use super::io::{CliResult, Failure, code};
 use super::many_text::{ManyTexts, many_texts};
@@ -113,12 +113,17 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
         vec![target]
     };
     let modes: Vec<&str> = ui.s.ctx_modes.split('|').collect();
-    if ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)? == 1 {
+    let mode = ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)?;
+    if mode == 1 {
         let public = ui.recipient(&sources[0])?;
         cmd.extend(["--to".into(), public, "--".into()]);
         cmd.extend(refs.iter().map(|r| (*r).to_owned()));
         let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
         return repeat(ui, m, || ui.plain(&args, &targets, each));
+    }
+    // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
+    if mode == 2 {
+        cmd.extend([FLAG.to_owned(), ui.ask_for(&sources[0], Ask::Factor)?]);
     }
     let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
     repeat(ui, m, || {
@@ -130,22 +135,17 @@ fn decrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     if !all_pqkf(sources) {
         return Err(Failure::new(code::USAGE, ui.s.ctx_not_pqkf));
     }
-    let header = files::inspect(&sources[0]).map_err(|e| Failure::from_error(&e, ui.lang))?;
+    // DE: Die erste Datei bestimmt, wonach gefragt wird. EN: The first file decides what is asked.
+    let extra = for_decrypt(&sources[0], ui.lang, |what| ui.ask_for(&sources[0], what))?;
     let targets: Vec<PathBuf> = sources
         .iter()
         .filter_map(|s| default_decrypted(s))
         .collect();
-    let d = ui.d;
-    if let HeaderMode::Recipient { .. } = header.mode {
-        let key = ui.pick(d.pick_key, &sources[0], "*.json", d.filter_key)?;
-        let cmd = ["decrypt", "--rename", "--progress", "--key", &key];
-        return repeat(ui, m, || {
-            ui.with_pass(d.key_pass, false, &cmd, refs, &targets, true)
-        });
-    }
-    let cmd = ["decrypt", "--rename", "--progress"];
+    let mut cmd = vec!["decrypt", "--rename", "--progress"];
+    cmd.extend(extra.refs());
+    let prompt = ui.pass_prompt(&extra);
     repeat(ui, m, || {
-        ui.with_pass(d.pass, false, &cmd, refs, &targets, true)
+        ui.with_pass(prompt, false, &cmd, refs, &targets, true)
     })
 }
 

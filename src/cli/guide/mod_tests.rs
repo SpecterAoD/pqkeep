@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
+use super::signing::sign_args;
 use super::{command_line, quote, wanted};
 use crate::cli::args::build;
 use pqkeep::security::Lang;
@@ -12,6 +13,38 @@ fn quoting_for_display() {
     assert_eq!(quote(""), "''");
     let args = ["generate".to_owned(), "--name".to_owned(), "A B".to_owned()];
     assert_eq!(command_line(&args), "pqkeep generate --name 'A B'");
+}
+
+/// DE: U01: Geführtes Signieren gibt die Faktordatei nur weiter, wenn eine gewählt wurde.
+/// EN: U01: guided signing passes the factor file on only if one was chosen.
+#[test]
+fn u01_sign_arguments_with_and_without_factor_file() {
+    assert_eq!(
+        sign_args("k.key.json", None, "a.sig", "a.pdf"),
+        [
+            "sign",
+            "--key",
+            "k.key.json",
+            "--out",
+            "a.sig",
+            "--",
+            "a.pdf"
+        ]
+    );
+    assert_eq!(
+        sign_args("k.key.json", Some("/usb/k.factor"), "a.sig", "-a.pdf"),
+        [
+            "sign",
+            "--key",
+            "k.key.json",
+            "--factor-file",
+            "/usb/k.factor",
+            "--out",
+            "a.sig",
+            "--",
+            "-a.pdf"
+        ]
+    );
 }
 
 #[test]

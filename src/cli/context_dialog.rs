@@ -10,13 +10,15 @@
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
-use pqkeep::files::{self, HeaderMode};
+use pqkeep::files;
 use pqkeep::security::Lang;
 
 use super::context::{out_arg, utf8};
 use super::context_child::{Outcome, Watch, finish, new_tag, spawn, with_tag};
 use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
+use super::factor_cmd::FLAG;
+use super::factor_ui::{Ask, Extra, for_decrypt, ui_texts};
 use super::files_cmd::{default_decrypted, default_encrypted};
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
@@ -146,6 +148,24 @@ impl Ui<'_> {
         utf8(&file.ok_or_else(cancelled)?, self.lang)
     }
 
+    /// DE: Schlüsseldatei bzw. Faktordatei wählen. EN: Pick the key file or the factor file.
+    pub(super) fn ask_for(&self, near: &Path, what: Ask) -> CliResult<String> {
+        let (d, f) = (self.d, ui_texts(self.lang));
+        match what {
+            Ask::Key => self.pick(d.pick_key, near, "*.json", d.filter_key),
+            Ask::Factor => self.pick(f.pick, near, "*", f.filter),
+        }
+    }
+
+    /// DE: Text des Passwortfensters beim Entschlüsseln. EN: Password window text for decrypting.
+    pub(super) fn pass_prompt(&self, extra: &Extra) -> &str {
+        if extra.key {
+            self.d.key_pass
+        } else {
+            self.d.pass
+        }
+    }
+
     /// DE: Empfänger wählen, Fingerabdruck zeigen und bestätigen lassen.
     /// EN: Pick a recipient, show the fingerprint and ask for confirmation.
     pub(super) fn recipient(&self, near: &Path) -> CliResult<String> {
@@ -184,8 +204,15 @@ impl Ui<'_> {
             .ok_or_else(cancelled)?;
         let out = out_arg(default_encrypted(Path::new(path)).as_deref(), self.lang)?;
         let targets = [PathBuf::from(&out)];
-        if mode == 0 {
-            let cmd = ["encrypt", "--out", &out];
+        // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
+        if mode != 1 {
+            let factor = (mode == 2)
+                .then(|| self.ask_for(Path::new(path), Ask::Factor))
+                .transpose()?;
+            let mut cmd = vec!["encrypt", "--out", &out];
+            if let Some(f) = &factor {
+                cmd.extend([FLAG, f.as_str()]);
+            }
             let new_pass = self.d.new_pass;
             return self.repeat(&out, || {
                 self.with_pass(new_pass, true, &cmd, &[path], &targets, false)
@@ -200,20 +227,14 @@ impl Ui<'_> {
         if source.extension().and_then(|e| e.to_str()) != Some(files::EXTENSION) {
             return Err(Failure::new(code::USAGE, self.s.ctx_not_pqkf));
         }
-        let header = files::inspect(source).map_err(|e| Failure::from_error(&e, self.lang))?;
+        let extra = for_decrypt(source, self.lang, |what| self.ask_for(source, what))?;
         let out = out_arg(default_decrypted(source).as_deref(), self.lang)?;
         let targets = [PathBuf::from(&out)];
-        let d = self.d;
-        if let HeaderMode::Recipient { .. } = header.mode {
-            let key = self.pick(d.pick_key, source, "*.json", d.filter_key)?;
-            let cmd = ["decrypt", "--key", &key, "--out", &out];
-            return self.repeat(&out, || {
-                self.with_pass(d.key_pass, false, &cmd, &[path], &targets, false)
-            });
-        }
-        let cmd = ["decrypt", "--out", &out];
+        let mut cmd = vec!["decrypt", "--out", &out];
+        cmd.extend(extra.refs());
+        let prompt = self.pass_prompt(&extra);
         self.repeat(&out, || {
-            self.with_pass(d.pass, false, &cmd, &[path], &targets, false)
+            self.with_pass(prompt, false, &cmd, &[path], &targets, false)
         })
     }
 }

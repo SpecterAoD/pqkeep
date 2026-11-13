@@ -25,8 +25,8 @@ telemetry and opens no outgoing network connections.
   integrity-protected; public key export with fingerprint.
 - **File and directory encryption** (`.pqkf`): passphrase mode or recipient mode (ML-KEM-768),
   streaming AEAD, safe extraction rules, no partial output.
-- **Optional second factor** (after beta.2): a factor file (`pqkeep factor`, `--factor-file`) in
-  addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
+- **Optional second factor** (after beta.2): a factor file (`pqkeep factor`, `--factor-file`; also in
+  the menu and the context menu) in addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
 - **Passphrases:** strength check with reasons (Unicode NFKC, patterns, word lists), generator.

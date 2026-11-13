@@ -18,6 +18,8 @@ use super::io::{CliResult, Failure};
 
 /// DE: Name der Option. EN: Name of the option.
 pub const OPTION: &str = "factor-file";
+/// DE: Option mit Strichen, für Kindprozesse. EN: Option with dashes, for child processes.
+pub const FLAG: &str = "--factor-file";
 
 struct FactorTexts {
     about: &'static str,

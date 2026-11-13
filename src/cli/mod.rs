@@ -16,6 +16,7 @@ mod context_many;
 mod dialog;
 mod dialog_text;
 mod factor_cmd;
+mod factor_ui;
 mod files_cmd;
 mod files_many;
 mod guide;
@@ -157,7 +158,7 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
     if let Some((name, m)) = matches.subcommand()
         && guide::wanted(name, m)
     {
-        return guide::run(name, lang);
+        return guide::run(name, lang, m);
     }
     let sandboxed = !matches.get_flag("no-sandbox");
     if !sandboxed {
