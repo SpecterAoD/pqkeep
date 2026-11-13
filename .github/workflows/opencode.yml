@@ -1,0 +1,55 @@
+name: OpenCode
+# One workflow: PR regression checks and maintainer-only issue authorization.
+# No model execution, secrets or write permissions until reviewed.
+on:
+  pull_request:
+    paths:
+      - '.github/opencode-analysis.json'
+      - '.github/workflows/opencode.yml'
+      - 'scripts/oc_gate.py'
+      - 'tests/test_oc_gate.py'
+      - 'tests/test_opencode_config.py'
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate Python syntax
+        run: python3 -m py_compile scripts/oc_gate.py tests/test_oc_gate.py tests/test_opencode_config.py
+      - name: Authorization and policy regression tests
+        run: python3 -m unittest discover -s tests -p 'test_oc_gate.py' -v && python3 -m unittest discover -s tests -p 'test_opencode_config.py' -v
+
+  authorize:
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.repository == 'SpecterAoD/pqkeep' &&
+      github.event.issue.pull_request == null &&
+      github.event.comment.user.id == 77644070 &&
+      github.event.sender.id == 77644070 &&
+      (startsWith(github.event.comment.body, '/oc plan ') ||
+       startsWith(github.event.comment.body, '/oc review ') ||
+       startsWith(github.event.comment.body, '/oc explain ') ||
+       startsWith(github.event.comment.body, '/oc implement '))
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify triggering comment against GitHub API
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          OC_VERIFY_LIVE: '1'
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/oc_gate.py "$GITHUB_EVENT_PATH" "$GITHUB_REPOSITORY"
