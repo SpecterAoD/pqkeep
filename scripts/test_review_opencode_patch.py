@@ -78,6 +78,22 @@ class ReviewPatchTests(unittest.TestCase):
                 review_patch(self.repo, self.patch, self.base)
             git.assert_not_called()
 
+    def test_valid_new_document_patch(self):
+        file = self.repo / "docs" / "new-guide.md"
+        file.write_text("new documentation\\n")
+        self.git("add", "docs/new-guide.md")
+        self.patch.write_bytes(subprocess.check_output(
+            ["git", "-C", str(self.repo), "diff", "--cached", "--",
+             "docs/new-guide.md"]
+        ))
+        self.git("reset", "-q", "HEAD", "--", "docs/new-guide.md")
+        file.unlink()
+        self.assertEqual(
+            review_patch(self.repo, self.patch, self.base),
+            ["docs/new-guide.md"],
+        )
+        self.assertFalse(file.exists())
+
     def test_reject_source_patch(self):
         # New source file is staged only for creating a diff, never committed.
         file = self.repo / "src" / "lib.rs"
