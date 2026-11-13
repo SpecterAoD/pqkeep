@@ -4,6 +4,8 @@ import unittest
 from unittest.mock import patch
 
 from smoke_opencode_sandbox import IMAGE_RE, docker, main
+
+IMAGE_ID = "sha256:" + "c" * 64
 from test_verify_opencode_sandbox import safe
 import json
 
@@ -43,12 +45,13 @@ class SmokeTests(unittest.TestCase):
         def fake_docker(*args, **kwargs):
             calls.append(args)
             if args[:2] == ("image", "inspect"):
-                return json.dumps([{"RepoDigests": [digest]}])
+                return json.dumps([{"RepoDigests": [digest], "Id": IMAGE_ID}])
             if args[0] == "create":
                 return "test-container-id"
             if args[0] == "inspect":
                 config = safe()
                 config["Id"] = "test-container-id"
+                config["Image"] = IMAGE_ID
                 config["Config"]["Image"] = digest
                 config["State"] = {"Running": False}
                 if sum(call[0] == "inspect" for call in calls) == 2:
@@ -94,6 +97,35 @@ class SmokeTests(unittest.TestCase):
         self.assertFalse(any(call[0] == "start" for call in calls))
         self.assertTrue(any(call[0] == "rm" for call in calls))
 
+    def test_reject_container_with_different_image_id(self):
+        digest = "alpine@sha256:" + "a" * 64
+        calls = []
+        def fake_docker(*args, **kwargs):
+            calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [digest],
+                                    "Id": IMAGE_ID}])
+            if args[0] == "create":
+                return "test-container-id"
+            if args[0] == "inspect":
+                config = safe()
+                config["Id"] = "test-container-id"
+                config["Image"] = "sha256:" + "d" * 64
+                config["Config"]["Image"] = digest
+                config["State"] = {"Running": False}
+                return json.dumps([config])
+            if args[0] == "rm":
+                return ""
+            if args[0] == "start":
+                self.fail("different image ID must never start")
+            raise AssertionError(args)
+        with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": digest}):
+            with patch("smoke_opencode_sandbox.docker",
+                       side_effect=fake_docker):
+                self.assertEqual(main(), 1)
+        self.assertFalse(any(call[0] == "start" for call in calls))
+        self.assertTrue(any(call[0] == "rm" for call in calls))
+
     def test_create_never_pulls_image(self):
         digest = "alpine@sha256:" + "a" * 64
         calls = []
@@ -121,7 +153,7 @@ class SmokeTests(unittest.TestCase):
             if args[:2] == ("image", "inspect"):
                 return json.dumps([{"RepoDigests": [
                     "alpine@sha256:" + "b" * 64
-                ]}])
+                ], "Id": IMAGE_ID}])
             self.fail("container must not be created without image digest")
         with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": digest}):
             with patch("smoke_opencode_sandbox.docker",
