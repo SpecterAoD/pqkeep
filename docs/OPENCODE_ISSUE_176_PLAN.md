@@ -76,3 +76,31 @@ Secret-/Tool-Trennung: **Stop**, Architektur erneut entscheiden.
 
 Workflow, eventuelle Hilfsskripte, Environment/Secrets und Agent-Zugänge
 entfernen; keine Änderungen an vorhandener CI nötig.
+
+
+## Prüfung der vorhandenen OpenCode-GitHub-Integration (13.11.2026)
+
+Die offizielle OpenCode-GitHub-Action unterstützt bereits Issue-Kommentare,
+Codeänderungen, Branches und PRs. Die Beispiel-Trigger verwenden allerdings
+`contains(..., '/oc')`; das genügt **nicht** für unsere Autorisierung.
+Die Action kann zudem ein GitHub-App-Installationstoken erhalten, das über
+die im Workflow angegebenen `permissions` hinausgehende Rechte besitzen
+kann. `id-token: write` ist daher nicht gleichbedeutend mit reinem
+Lesezugriff. Vor Nutzung sind die effektiven App-Rechte zu überprüfen.
+
+**Entscheidung:** Keine direkte Aktivierung der Standard-Action. Zuerst
+nachweisen, ob ein eng begrenztes Token, feste Befehlsauswertung,
+geschützte Secrets und ein ausschließlich als Draft erstellter PR
+zuverlässig erzwungen werden können. Andernfalls die OpenCode-CLI mit
+getrennten Jobs verwenden, statt eine umfangreiche Eigenimplementierung
+zu entwickeln.
+
+**Erster ausführbarer Nachweis:** Autorisierung und `/oc plan` mit
+Gemini auf einem isolierten Testlauf, ohne GitHub-Schreibtoken beim Modell;
+anschließend getrennte Kommentar-Veröffentlichung. `/oc implement` erst
+nach erfolgreichem Nachweis von Branch-/Draft-PR-Grenzen.
+
+**Keine Aktivierung durch diesen Plan.** Der frühere Gemini-Schlüssel
+wurde laut Issue #176 entfernt; ein neuer Schlüssel darf erst nach
+geprüfter Ausführungsarchitektur in einem geschützten Environment
+eingerichtet werden.
