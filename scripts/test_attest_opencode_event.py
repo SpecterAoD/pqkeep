@@ -18,6 +18,13 @@ class AttestationTests(unittest.TestCase):
     def test_valid(self):
         self.assertTrue(verify(sign(RECORD.copy(), KEY), KEY, RECORD))
 
+    def test_signed_binding_is_not_mutable_alias(self):
+        original = RECORD.copy()
+        envelope = sign(original, KEY)
+        original["comment_id"] = 99
+        self.assertEqual(envelope["binding"]["comment_id"], 42)
+        self.assertTrue(verify(envelope, KEY, RECORD))
+
     def test_tampered_comment(self):
         envelope = sign(RECORD.copy(), KEY)
         envelope["binding"]["comment_id"] = 43
