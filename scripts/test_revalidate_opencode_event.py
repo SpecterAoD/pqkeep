@@ -45,6 +45,27 @@ class RevalidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verified_metadata(e, c, i)
 
+    def test_boolean_live_comment_id(self):
+        e, c, i = sample()
+        e["comment"]["id"] = 1
+        c["id"] = True
+        with self.assertRaises(ValueError):
+            verified_metadata(e, c, i)
+
+    def test_boolean_live_issue_number(self):
+        e, c, i = sample()
+        e["issue"]["number"] = 1
+        c["issue_url"] = c["issue_url"].replace("/93", "/1")
+        i["number"] = True
+        with self.assertRaises(ValueError):
+            verified_metadata(e, c, i)
+
+    def test_boolean_live_author_id(self):
+        e, c, i = sample()
+        c["user"] = {"id": True}
+        with self.assertRaises(ValueError):
+            verified_metadata(e, c, i)
+
     def test_comment_edited(self):
         e, c, i = sample()
         c["updated_at"] = "2026-11-12T11:01:00Z"
