@@ -58,7 +58,18 @@ def parse_changes(data: bytes) -> list[str]:
 
 def git(*args: str) -> bytes:
     """Execute a fixed git command; never interpolate untrusted shell text."""
-    return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
+    env = {key: value for key, value in os.environ.items()
+           if not key.startswith("GIT_")}
+    env.update({
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_NO_REPLACE_OBJECTS": "1",
+    })
+    return subprocess.check_output(
+        ["git", "-c", "core.fsmonitor=false", *args],
+        stderr=subprocess.DEVNULL, env=env, timeout=30,
+    )
 
 
 def validate(base: str) -> list[str]:
