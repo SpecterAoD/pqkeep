@@ -138,28 +138,37 @@ jobs:
               ]
               # Model names are public identifiers, not secrets.
               print("Available generateContent models:", ", ".join(models[:30]))
-              preferred = [
-                  "models/gemini-3.1-flash-lite",
-                  "models/gemini-3.5-flash-lite",
-                  "models/gemini-2.5-flash-lite",
-              ]
-              model = next((m for m in preferred if m in models), None)
-              if not model:
-                  raise RuntimeError("No supported Gemini Flash Lite model found")
-              print("Testing:", model)
+              primary = "models/gemini-3.8-flash"
+              fallback = "models/gemini-3.1-flash-lite"
+              if primary not in models:
+                  raise RuntimeError("Primary Gemini model absent from API catalog")
               payload = json.dumps({
                   "contents": [{"parts": [{"text": "Reply with exactly TEST_OK"}]}],
                   "generationConfig": {"maxOutputTokens": 80}
               }).encode()
-              result = request(base + "/" + model + ":generateContent", payload)
-              answer = "".join(
-                  part.get("text", "")
-                  for candidate in result.get("candidates", [])
-                  for part in candidate.get("content", {}).get("parts", [])
-              ).strip()
-              if answer != "TEST_OK":
-                  raise RuntimeError("Model response did not match expected marker")
-              print("Gemini direct API smoke test passed:", model)
+              def check(model):
+                  result = request(base + "/" + model + ":generateContent", payload)
+                  answer = "".join(
+                      part.get("text", "")
+                      for candidate in result.get("candidates", [])
+                      for part in candidate.get("content", {}).get("parts", [])
+                  ).strip()
+                  if answer != "TEST_OK":
+                      raise RuntimeError("Unexpected model response: " + model)
+                  print("Gemini direct API smoke test passed:", model)
+
+              print("Testing primary:", primary)
+              try:
+                  check(primary)
+              except urllib.error.HTTPError as exc:
+                  print("Primary model HTTP status:", exc.code)
+                  if exc.code not in (429, 503):
+                      raise
+                  if fallback not in models:
+                      raise RuntimeError("Fallback model absent from API catalog")
+                  print("Testing diagnostic fallback:", fallback)
+                  check(fallback)
+                  print("Primary model unavailable; fallback works (diagnostic only).")
           except urllib.error.HTTPError as exc:
               # Avoid printing response bodies, headers, or request objects.
               print("Gemini API HTTP status:", exc.code)
