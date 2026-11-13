@@ -1,6 +1,9 @@
 name: OpenCode Authorization Gate Tests
 
 on:
+  push:
+    branches:
+      - security/opencode-issue-agent-hardening
   pull_request:
     paths:
       - 'scripts/authorize_opencode.py'
