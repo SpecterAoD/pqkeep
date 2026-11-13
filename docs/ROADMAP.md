@@ -23,7 +23,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 
 | Update | Inhalt | Issues |
 |---|---|---|
-| U0 | Zweiter Faktor als Faktordatei – Format v2 gemeinsam mit U2: [V2_DRAFT.md](V2_DRAFT.md); Core umgesetzt, keine CLI; TPM/FIDO2 als Recherche | #39–#41 |
+| U0 | Zweiter Faktor als Faktordatei – Format v2 gemeinsam mit U2: [V2_DRAFT.md](V2_DRAFT.md); Core und Kommandozeile (`pqkeep factor`, `--factor-file`) umgesetzt, Menü/Kontextmenü offen; TPM/FIDO2 als Recherche | #39–#41 |
 | U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur; U1-1 Format `.pqsig` + Core und U1-2 `sign`/`verify` umgesetzt ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)) | #42–#44 |
 | U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) – Format v2: [V2_DRAFT.md](V2_DRAFT.md); Core umgesetzt, keine CLI | #45–#47 |
 | U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |

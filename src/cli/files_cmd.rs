@@ -5,14 +5,13 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
+use pqkeep::crypto::factor::Factor;
 use pqkeep::crypto::kdf::{KdfParams, KdfProfile};
 use pqkeep::envelope;
-use pqkeep::files::{self, HeaderMode, Protection, Report, SkipReason, Unlock};
+use pqkeep::files::{self, PassphraseAccess, Protection, Report, SkipReason};
 use pqkeep::security::{Lang, StrongPassphrase};
 
-use super::io::{
-    CliResult, Failure, code, read_confirmed_stdin, read_passphrase, read_passphrase_as,
-};
+use super::io::{CliResult, Failure, code, read_confirmed_stdin, read_passphrase};
 use super::text::Texts;
 use super::validate::print_rejection;
 
@@ -55,20 +54,29 @@ pub(super) fn default_for(m: &ArgMatches, default: Option<PathBuf>) -> Option<Pa
     }
 }
 
-/// DE: Eingelesener Schutz (öffentlicher Schlüssel bzw. geprüfte Passphrase).
-/// EN: Read protection (public key or checked passphrase).
+/// DE: Eingelesener Schutz (öffentlicher Schlüssel bzw. geprüfte Passphrase, optional mit
+/// Faktordatei). EN: Read protection (public key or checked passphrase, optional factor file).
 pub(super) enum OwnedProtection {
     Recipient(envelope::PublicKeyFile),
-    Passphrase(StrongPassphrase, KdfParams),
+    Passphrase(StrongPassphrase, KdfParams, Option<Factor>),
 }
 
 impl OwnedProtection {
     pub(super) fn get(&self) -> Protection<'_> {
         match self {
             Self::Recipient(public) => Protection::Recipient(public),
-            Self::Passphrase(passphrase, params) => Protection::Passphrase {
+            Self::Passphrase(passphrase, params, None) => Protection::Passphrase {
                 passphrase,
                 params: *params,
+            },
+            // DE: Mit Faktordatei entsteht Format v2. EN: With a factor file format v2 is written.
+            Self::Passphrase(passphrase, params, Some(factor)) => Protection::Slots {
+                passphrase: Some(PassphraseAccess {
+                    passphrase,
+                    params: *params,
+                    factor: Some(factor),
+                }),
+                recipients: &[],
             },
         }
     }
@@ -86,6 +94,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
     } else {
         KdfProfile::Standard
     };
+    let factor = super::factor_cmd::load(m, lang)?;
     let pass = if m.get_flag("confirm-stdin") {
         read_confirmed_stdin(t, lang)?
     } else {
@@ -95,7 +104,11 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
         print_rejection(t, lang, &rejection);
         Failure::new(code::WEAK, "")
     })?;
-    Ok(OwnedProtection::Passphrase(strong, profile.params()))
+    Ok(OwnedProtection::Passphrase(
+        strong,
+        profile.params(),
+        factor,
+    ))
 }
 
 /// DE: Standardziel beim Verschlüsseln. EN: Default target when encrypting.
@@ -175,32 +188,12 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     }
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let src = source(m);
-    let header = files::inspect(&src).map_err(fail)?;
+    let access = super::unlock::Access::read(&src).map_err(fail)?;
     let out = target(t, m, default_for(m, default_decrypted(&src)))?;
-    let stdin = m.get_flag("passphrase-stdin");
-    let key = m.get_one::<PathBuf>("key");
-    let report = match (&header.mode, key) {
-        (HeaderMode::Recipient { .. }, None) => {
-            return Err(Failure::new(code::USAGE, t.msg_need_key));
-        }
-        (HeaderMode::Recipient { .. }, Some(key_path)) => {
-            let (key_file, warnings) = envelope::load(key_path).map_err(fail)?;
-            for w in warnings {
-                eprintln!("{}: {}", t.msg_warning, w.message(lang));
-            }
-            let pass = read_passphrase_as(t, lang, stdin, false, t.prompt_key_passphrase)?;
-            let unlocked = key_file.unlock(&pass).map_err(fail)?;
-            drop(pass);
-            files::decrypt(&src, &out, &Unlock::Key(&unlocked)).map_err(fail)?
-        }
-        (HeaderMode::Passphrase { .. }, key) => {
-            if key.is_some() {
-                eprintln!("{}: {}", t.msg_warning, t.msg_no_key_needed);
-            }
-            let pass = read_passphrase(t, lang, stdin, false)?;
-            files::decrypt(&src, &out, &Unlock::Passphrase(&pass)).map_err(fail)?
-        }
-    };
+    let use_key = access.use_key(m.get_one::<PathBuf>("key").is_some());
+    let opened = super::unlock::for_decrypt(t, lang, m, use_key, access.passphrase)?;
+    let report = files::decrypt(&src, &out, &opened.get()).map_err(fail)?;
+    drop(opened);
     print_report(t, lang, t.msg_decrypted, &out, &report);
     Ok(())
 }

@@ -66,6 +66,7 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let (out, overwrite) = target(t, lang, m)?;
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     meta.normalized().map_err(fail)?;
+    let factor = super::factor_cmd::load(m, lang)?;
     let pass = read_passphrase(t, lang, m.get_flag("passphrase-stdin"), true)?;
     let strong = match super::validate::strong(m, pass) {
         Ok(p) => p,
@@ -74,12 +75,20 @@ pub fn generate(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
             return Err(Failure::new(code::WEAK, ""));
         }
     };
-    let key = KeyFile::generate(&strong, alg, &meta, &profile.params()).map_err(fail)?;
-    drop(strong);
+    // DE: Mit Faktordatei entsteht Version 2, sonst Version 1. EN: Version 2 with a factor file.
+    let key = match &factor {
+        Some(f) => KeyFile::generate_with_factor(&strong, f, alg, &meta, &profile.params()),
+        None => KeyFile::generate(&strong, alg, &meta, &profile.params()),
+    }
+    .map_err(fail)?;
+    drop((strong, factor));
     envelope::save(&key, &out, overwrite).map_err(fail)?;
     println!("{}: {}", t.msg_created, out.display());
     println!("{}: {}", t.lbl_algorithm, alg.id());
     println!("{}: {}", t.msg_fingerprint, fingerprint(&key.key_id_hex()));
+    if key.needs_factor() {
+        println!("{}", super::factor_cmd::needed(lang));
+    }
     eprintln!("{}", t.msg_metadata_plaintext);
     Ok(())
 }
@@ -145,6 +154,9 @@ pub fn inspect(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
         "{}: m={} KiB, t={}, p={}",
         t.lbl_kdf, k.memory_kib, k.iterations, k.parallelism
     );
+    if key.needs_factor() {
+        println!("{}", super::factor_cmd::needed(lang));
+    }
     for w in warnings {
         eprintln!("{}: {}", t.msg_warning, w.message(lang));
     }
@@ -160,7 +172,10 @@ fn is_encrypted_file(path: &Path) -> bool {
 }
 
 fn inspect_encrypted(t: &Texts, lang: Lang, path: &Path) -> CliResult {
-    let header = files::inspect(path).map_err(|e| Failure::from_error(&e, lang))?;
+    let header = match files::inspect(path) {
+        Err(pqkeep::Error::Unsupported) => return super::inspect_v2::print(t, lang, path),
+        other => other.map_err(|e| Failure::from_error(&e, lang))?,
+    };
     println!("{}: {}", t.lbl_type, t.type_encrypted);
     let content = match header.content {
         Content::File => t.content_file,

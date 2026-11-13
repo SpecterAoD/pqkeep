@@ -4,7 +4,7 @@
 
 Zu [V2_DRAFT.md](V2_DRAFT.md). `reference` = ausführbare Python-Referenz in `scripts/test_v2_*.py`
 (läuft in der CI auf Linux und Windows); `core` = im Rust-Core umgesetzt und in `tests/*.rs` geprüft
-(noch ohne CLI); `planned` = **noch nicht umgesetzt**, gehört zum genannten Folge-Issue. Referenztests prüfen Kodierung und Regeln, nicht die Sicherheit einer Rust-Umsetzung.
+oder – bei den U-Fällen – über die Kommandozeile; `planned` = **noch nicht umgesetzt**, gehört zum genannten Folge-Issue. Referenztests prüfen Kodierung und Regeln, nicht die Sicherheit einer Rust-Umsetzung.
 
 | ID | Fall | Soll | Phase | Status |
 |---|---|---|---|---|
@@ -27,9 +27,9 @@ Zu [V2_DRAFT.md](V2_DRAFT.md). `reference` = ausführbare Python-Referenz in `sc
 | C07 | Schlüsseldatei v2: alle Algorithmen, falscher Faktor, jedes Feld verändert, Version umgeschrieben | Seed unverändert, unabhängiger Vektor, Öffnen scheitert | #40 | core |
 | C08 | 1/2/64 Empfänger gemischter KEM-Stufen, eigener Schlüssel fehlt | jeder öffnet, klare Meldung | #46 | core |
 | C09 | Fuzzing JSON-/Binärparser v2 | keine Panik, begrenzter Speicher | #40/#46 | core |
-| U01 | CLI: `--factor`, Faktordatei erzeugen, `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | planned |
-| U02 | Sandbox: Faktordatei lesbar, sonst nichts zusätzlich | Landlock-Freigaben minimal | #41 | planned |
-| U03 | Geheimnisse nicht in argv/Umgebung/Logs, API lehnt v2-Optionen ab | keine Offenlegung | #41 | planned |
+| U01 | CLI: `--factor-file`, Faktordatei erzeugen (`pqkeep factor`), `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | planned |
+| U02 | Sandbox: Faktordatei lesbar, sonst nichts zusätzlich | Landlock-Freigaben minimal | #41 | core |
+| U03 | Geheimnisse nicht in argv/Umgebung/Logs, API lehnt v2-Optionen ab | keine Offenlegung | #41 | core |
 
 ## Ausführung
 
@@ -51,7 +51,10 @@ automatisch geprüft (siehe V2_DRAFT.md: Meldung „ungültiges JSON“). Der He
 (`tests/files_v2_header.rs`, gemeinsame Sollwerte mit `test_V02_shared_digests`); C05:
 `tests/files_v2_header_limits.rs`. C09: Fuzz-Ziele `pqkf_header_v2` (Binärparser) und `keyfile_parse` (JSON, Version 1 und 2) in der CI, dazu
 ein fester Durchlauf (jede Kürzung, Einzelbyte-Änderungen) in `tests/envelope_v2_kat.rs`. Keine echten Geheimnisse im Repository; der C02-Vektor enthält
-wie der C07-Vektor nur öffentliche Testbytes.
+wie der C07-Vektor nur öffentliche Testbytes. U01 (Teil Faktordatei: `pqkeep factor`, `--factor-file`, Meldungen, Hilfe DE/EN), U02 und U03:
+`tests/cli_factor.rs`; U02 zusätzlich die Freigabeliste selbst in `src/cli/access_tests.rs`; U03 zusätzlich `tests/api_generate.rs` (die API lehnt
+unbekannte Felder wie `factor_file` ab). U01 bleibt `planned`, bis `--to` mehrfach (#47) umgesetzt ist; Menü, geführter Ablauf und
+Kontextmenü bieten die Faktordatei noch nicht an (#41, zweiter Teil).
 
 ---
 
@@ -59,7 +62,7 @@ wie der C07-Vektor nur öffentliche Testbytes.
 
 Catalogue for [V2_DRAFT.md](V2_DRAFT.md). `reference` = executable Python reference in
 `scripts/test_v2_*.py` (runs in CI on Linux and Windows); `core` = implemented in the Rust core and
-checked in `tests/*.rs` (no CLI yet); `planned` = **not implemented yet**, belongs to the named
+checked in `tests/*.rs` or – for the U cases – via the command line; `planned` = **not implemented yet**, belongs to the named
 follow-up issue. Reference tests check encoding and rules, not the security of a Rust
 implementation. Run with the command above. V07 expected values were computed independently with
 `cryptography` 41.0.7; the tests use only the standard library. C01: expected values in
@@ -75,4 +78,7 @@ automatically (see V2_DRAFT.md: message "invalid JSON"). The header (V01–V06) 
 (`tests/files_v2_header.rs`, expected values shared with `test_V02_shared_digests`); C05:
 `tests/files_v2_header_limits.rs`. C09: fuzz targets `pqkf_header_v2` (binary parser) and `keyfile_parse` (JSON, versions 1 and 2) in CI, plus a
 fixed pass (every truncation, single-byte changes) in `tests/envelope_v2_kat.rs`. No real secrets are committed; the C02 and C07 vectors contain
-public test bytes only.
+public test bytes only. U01 (factor file part: `pqkeep factor`, `--factor-file`, messages, help DE/EN), U02 and U03: `tests/cli_factor.rs`;
+U02 also the permission list itself in `src/cli/access_tests.rs`; U03 also `tests/api_generate.rs` (the API rejects unknown fields such as
+`factor_file`). U01 stays `planned` until repeated `--to` (#47) is implemented; menu, guided flow and context menu do not offer the factor
+file yet (#41, second part).

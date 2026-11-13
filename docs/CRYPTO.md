@@ -1,7 +1,7 @@
 # Kryptografie / Cryptography
 
-> DE: Format v2 (Faktordatei, mehrere Empfänger) ist im Rust-Core umgesetzt, aber **noch nicht über die Kommandozeile nutzbar**; dieses Dokument beschreibt v1. Siehe [V2_DRAFT.md](V2_DRAFT.md).
-> EN: Format v2 (factor file, several recipients) is implemented in the Rust core but **not usable from the command line yet**; this document describes v1. See [V2_DRAFT.md](V2_DRAFT.md).
+> DE: Format v2 ist im Rust-Core umgesetzt. Über die Kommandozeile ist davon die **Faktordatei** nutzbar (`--factor-file`, nur dann entsteht v2); mehrere Empfänger noch nicht. Dieses Dokument beschreibt v1. Siehe [V2_DRAFT.md](V2_DRAFT.md).
+> EN: Format v2 is implemented in the Rust core. From the command line the **factor file** is usable (`--factor-file`, only then v2 is written); several recipients not yet. This document describes v1. See [V2_DRAFT.md](V2_DRAFT.md).
 
 **DE** | [EN](#english)
 
@@ -107,8 +107,8 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
 - **TLS nicht eingebaut** (SPEC 5b nennt optional rustls): Die API lauscht standardmäßig nur auf
   127.0.0.1; für Netzzugriff ist ein Reverse Proxy mit TLS vorgesehen ([`API.md`](API.md)). Das hält
   die TLS-Bibliothek samt eigener Sicherheitsmeldungen aus dem Programm heraus.
-- **Optionaler zweiter Faktor** (Pepper/Schlüsseldatei, SPEC 5b) auf ein Update verschoben
-  (Issues #39–#41), weil er eine neue Formatversion kurz vor der Beta erfordert hätte.
+- **Optionaler zweiter Faktor** (SPEC 5b) kam erst nach der Beta als Faktordatei mit eigener
+  Formatversion 2 (Issues #39–#41, [V2_DRAFT.md](V2_DRAFT.md)); ohne `--factor-file` bleibt alles v1.
 
 ## English
 
@@ -149,5 +149,6 @@ confirmed by a mutation test.
 **Decisions before the first beta:** no hybrid scheme (X25519 + ML-KEM) yet – ML-KEM is standardised
 (FIPS 203); a hybrid would double key formats, tests and attack surface for a file tool without a
 real-time protocol; re-evaluation in issue #56. No built-in TLS – the API listens on 127.0.0.1 by
-default and relies on a reverse proxy for network access. The optional second factor is deferred to an
-update (issues #39–#41) because it requires a new format version.
+default and relies on a reverse proxy for network access. The optional second factor came after the beta as a
+factor file with its own format version 2 (issues #39–#41, [V2_DRAFT.md](V2_DRAFT.md)); without
+`--factor-file` everything stays v1.

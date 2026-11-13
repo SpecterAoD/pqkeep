@@ -80,6 +80,10 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
     if let Some(p) = super::unattended::pass_file() {
         access.read.push(existing(p.to_path_buf(), lang)?);
     }
+    // DE: Faktordatei: nur diese eine Datei, nur lesen. EN: Factor file: this one file, read only.
+    if let Some(p) = super::factor_cmd::path(m) {
+        access.read.push(existing(p, lang)?);
+    }
     let mut read = |p: Option<PathBuf>| -> CliResult {
         if let Some(p) = p {
             access.read.push(existing(p, lang)?);
@@ -87,7 +91,7 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
         Ok(())
     };
     let target = match name {
-        "generate" => path_arg(m, "out"),
+        "generate" | "factor" => path_arg(m, "out"),
         "inspect" => {
             read(path_arg(m, "file"))?;
             None
@@ -121,3 +125,7 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
     }
     Ok(Some(access))
 }
+
+#[cfg(test)]
+#[path = "access_tests.rs"]
+mod tests;

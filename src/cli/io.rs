@@ -58,6 +58,10 @@ impl Failure {
             Error::WeakPassphrase => code::WEAK,
             Error::InvalidSignature => code::INVALID,
             Error::Io(ErrorKind::AlreadyExists) => code::EXISTS,
+            // DE: Option fehlt oder ist überflüssig. EN: Option missing or superfluous.
+            Error::InvalidInput {
+                field: "factor_required" | "factor_unused",
+            } => code::USAGE,
             _ => code::ERROR,
         };
         let text = match err {
@@ -72,6 +76,8 @@ impl Failure {
                 "Zugriff verweigert / permission denied".to_owned()
             }
             Error::Io(kind) => format!("Ein-/Ausgabefehler ({kind}) / I/O error ({kind})"),
+            Error::InvalidInput { field } => super::factor_cmd::message(field)
+                .map_or_else(|| err.to_string(), str::to_owned),
             other => other.to_string(),
         };
         Self::new(code, localize(&text, lang))

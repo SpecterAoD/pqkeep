@@ -111,6 +111,15 @@ async fn invalid_requests_are_400() {
     unknown_meta["metadata"]["email"] = json!("a@b");
     let mut bad_profile = body(p, "ml-kem-768");
     bad_profile["profile"] = json!("turbo");
+    // DE: U03 – die API kennt keine v2-Optionen (Faktordatei, Formatversion, Empfänger).
+    // EN: U03 – the API knows no v2 options (factor file, format version, recipients).
+    for field in ["factor", "factor_file", "format_version", "recipients"] {
+        let mut v2 = body(p, "ml-kem-768");
+        v2[field] = json!("x");
+        let (status, _, value) = send(&app, req(TOKEN, &v2)).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{field}");
+        assert_eq!(value, json!({ "error": "bad_request" }));
+    }
     let cases = [
         body(p, "ML-KEM-768"),
         body(p, "rsa-4096"),
