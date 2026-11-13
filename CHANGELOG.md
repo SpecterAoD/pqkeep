@@ -24,9 +24,14 @@ German release notes: see `docs/releases/`.
   stays v1. `inspect` shows v2 files and whether a factor file is required. A missing or
   superfluous `--factor-file` is reported before the passphrase prompt (exit code 2), a wrong one
   like a wrong passphrase (exit code 3). The sandbox additionally allows reading exactly this one
-  file. Not yet offered in the menu, the guided flow and the context menu; several recipients per
-  file are not available from the command line yet. **Back up the factor file – without it nothing
-  protected with it can be opened.**
+  file. Several recipients per file are not available from the command line yet. **Back up the
+  factor file – without it nothing protected with it can be opened.**
+- **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
+  file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
+  "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file
+  requires one; guided key generation can use an existing factor file or create a new one, guided
+  signing asks for it if the key needs it. These parts only pass the path on – the child process
+  with the full sandbox reads the file.
 
 ## [0.1.0-beta.2] – 2026-11-12
 

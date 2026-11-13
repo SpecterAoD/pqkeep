@@ -11,6 +11,7 @@ use super::text::guide_texts;
 use super::{child, command_line, confirm, path, select};
 use crate::cli::io::{CliResult, Failure, code};
 use crate::cli::sign_cmd::default_sig;
+use crate::cli::{factor_cmd, factor_ui};
 
 /// DE: Befehl anzeigen, bestätigen lassen, ausführen. EN: Show, confirm and run a command.
 fn run_shown(lang: Lang, args: &[String]) -> CliResult {
@@ -37,16 +38,33 @@ pub fn sign(lang: Lang) -> CliResult {
     eprintln!("\n{}\n", g.sign_title);
     let file = path(g.sign_file, None, true, g.not_found)?;
     let choices: Vec<&str> = g.key_choice.split('|').collect();
-    let key = if select(g.key_path, &choices, 0)? == 1 {
-        keygen::run(lang, Some(Purpose::Sign))?.out
+    let (key, factor) = if select(g.key_path, &choices, 0)? == 1 {
+        let plan = keygen::run(lang, Some(Purpose::Sign), None)?;
+        (plan.out, plan.factor.map(|f| f.path))
     } else {
-        path(g.key_path, None, true, g.not_found)?
+        let key = path(g.key_path, None, true, g.not_found)?;
+        // DE: Nur fragen, wenn die Schlüsseldatei eine Faktordatei verlangt.
+        // EN: Only ask if the key file requires a factor file.
+        let factor = if factor_ui::key_needs(Path::new(&key)) {
+            let prompt = factor_ui::ui_texts(lang).needed;
+            Some(path(prompt, None, true, g.not_found)?)
+        } else {
+            None
+        };
+        (key, factor)
     };
     let out = path(g.sig_out, Some(&sig_default(&file)), false, g.not_found)?;
-    let args: Vec<String> = ["sign", "--key", &key, "--out", &out, "--", &file]
-        .map(str::to_owned)
-        .to_vec();
-    run_shown(lang, &args)
+    run_shown(lang, &sign_args(&key, factor.as_deref(), &out, &file))
+}
+
+/// DE: Argumente für `pqkeep sign`. EN: Arguments for `pqkeep sign`.
+pub(super) fn sign_args(key: &str, factor: Option<&str>, out: &str, file: &str) -> Vec<String> {
+    let mut args = vec!["sign", "--key", key];
+    if let Some(f) = factor {
+        args.extend([factor_cmd::FLAG, f]);
+    }
+    args.extend(["--out", out, "--", file]);
+    args.into_iter().map(str::to_owned).collect()
 }
 
 /// DE: Signatur geführt prüfen. EN: Verify a signature, guided.

@@ -1,6 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use super::{KeyPlan, suggest};
+use super::{FactorPlan, KeyPlan, suggest};
 
 fn plan() -> KeyPlan {
     KeyPlan {
@@ -17,7 +17,31 @@ fn plan() -> KeyPlan {
         pass_len: Some(40),
         out: "anna-muster.key.json".to_owned(),
         export: Some("anna-muster.pub.json".to_owned()),
+        factor: None,
     }
+}
+
+/// DE: U01: Mit Faktordatei kommt `--factor-file` dazu; eine neue wird zuerst erzeugt.
+/// EN: U01: with a factor file `--factor-file` is added; a new one is created first.
+#[test]
+fn u01_factor_file_is_passed_on_and_created_first() {
+    let mut p = plan();
+    p.factor = Some(FactorPlan {
+        path: "/media/usb/anna.factor".to_owned(),
+        create: false,
+    });
+    let args = p.generate_args();
+    let at = args.iter().position(|a| a == "--factor-file").unwrap();
+    assert_eq!(args[at + 1], "/media/usb/anna.factor");
+    assert_eq!(args[at + 2], "--out");
+    assert_eq!(p.commands().len(), 3);
+
+    p.factor.as_mut().unwrap().create = true;
+    let all = p.commands();
+    assert_eq!(all.len(), 4);
+    assert_eq!(all[0], ["factor", "--out", "/media/usb/anna.factor"]);
+    assert_eq!(all[1][0], "passphrase");
+    assert_eq!(all[2], p.generate_args());
 }
 
 #[test]

@@ -8,10 +8,12 @@
 use std::path::{Path, PathBuf};
 
 use dialoguer::{Confirm, Input, Select};
-use pqkeep::files::{self, HeaderMode};
+use pqkeep::files;
 use pqkeep::security::Lang;
 
-use super::context::{ask_path, child, utf8};
+use super::context::{ask_for, ask_path, child, utf8};
+use super::factor_cmd::FLAG;
+use super::factor_ui::{for_decrypt, ui_texts};
 use super::files_cmd::free_target;
 use super::integrate_text::IntegrateTexts;
 use super::io::{CliResult, Failure, code};
@@ -146,15 +148,10 @@ pub(super) fn terminal(
         if !all_pqkf(sources) {
             return Err(Failure::new(code::USAGE, s.ctx_not_pqkf));
         }
-        let header = files::inspect(&sources[0]).map_err(|e| Failure::from_error(&e, lang))?;
-        let key = match header.mode {
-            HeaderMode::Recipient { .. } => Some(ask_path(s.ctx_prompt_key)?),
-            HeaderMode::Passphrase { .. } => None,
-        };
+        // DE: Die erste Datei bestimmt, wonach gefragt wird. EN: The first file decides what is asked.
+        let extra = for_decrypt(&sources[0], lang, |what| ask_for(s, lang, what))?;
         let mut args = vec!["decrypt", "--rename"];
-        if let Some(k) = &key {
-            args.extend(["--key", k.as_str()]);
-        }
+        args.extend(extra.refs());
         args.push("--");
         args.extend(&refs);
         return child(lang, &args);
@@ -176,13 +173,14 @@ pub(super) fn terminal(
         args.extend(["--out", out.as_str()]);
     }
     let modes: Vec<&str> = s.ctx_modes.split('|').collect();
-    let public = if select(s.ctx_mode, &modes)? == 1 {
-        Some(recipient(s, lang)?)
-    } else {
-        None
+    // DE: 1 = Empfänger, 2 = Passphrase und Faktordatei. EN: 1 = recipient, 2 = with factor file.
+    let extra = match select(s.ctx_mode, &modes)? {
+        1 => Some(("--to", recipient(s, lang)?)),
+        2 => Some((FLAG, ask_path(ui_texts(lang).existing)?)),
+        _ => None,
     };
-    if let Some(p) = &public {
-        args.extend(["--to", p.as_str()]);
+    if let Some((flag, value)) = &extra {
+        args.extend([*flag, value.as_str()]);
     }
     args.push("--");
     args.extend(&refs);

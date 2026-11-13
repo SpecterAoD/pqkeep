@@ -19,7 +19,9 @@
   überschreibt sie nie und zeigt ihren Inhalt nie an. Wer sie kopieren kann, besitzt den Faktor –
   sie schützt vor einer erratenen oder abgegriffenen Passphrase, nicht vor Schadsoftware auf dem
   eigenen Rechner. Dateien und Schlüssel mit Faktordatei (Format v2) können ältere
-  pqkeep-Versionen nicht öffnen.
+  pqkeep-Versionen nicht öffnen. Menü („Faktordatei erzeugen“), geführte Abläufe und Kontextmenü
+  bieten sie ebenfalls an und fragen beim Entschlüsseln bzw. Signieren nur dann danach, wenn die
+  Datei oder der Schlüssel sie verlangt.
 - Öffentliche Schlüssel (`*.pub.json`) sind nicht geheim; sie lassen sich jederzeit mit
   `pqkeep export` aus der Schlüsseldatei neu erzeugen.
 - Verschlüsselte Dateien (`.pqkf`) im Empfänger-Modus lassen sich **nur** mit der passenden
@@ -72,7 +74,8 @@ opened again – not even with the right passphrase. It must belong to you and b
 only (Linux: `chmod 600`); pqkeep never overwrites it and never shows its content. Whoever can copy
 it holds the factor – it protects against a guessed or captured passphrase, not against malware on
 your own machine. Files and keys with a factor file (format v2) cannot be opened by older pqkeep
-versions.
+versions. The menu ("Create factor file"), the guided flows and the context menu offer it too and
+ask for it when decrypting or signing only if the file or the key requires it.
 
 **Changing the passphrase:** no dedicated command yet; create a new key (see rotation).
 

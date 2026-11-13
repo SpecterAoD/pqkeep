@@ -9,9 +9,12 @@
 //! verifying are guided (`guide`). Short hints (passphrase rules, plaintext metadata) appear where
 //! relevant.
 
+use std::path::Path;
+
 use dialoguer::{Input, Select};
 use pqkeep::security::Lang;
 
+use super::factor_ui::Ask;
 use super::guide;
 use super::io::{CliResult, Failure, code};
 use super::text::Texts;
@@ -40,9 +43,41 @@ fn push_out(argv: &mut Vec<String>, t: &Texts) -> CliResult {
     Ok(())
 }
 
+/// DE: Ver-/Entschlüsseln: Pfad, dann nur die Angaben, die nötig sind. Beim Entschlüsseln
+/// entscheidet der Header der Datei (Schlüsseldatei, Faktordatei); ist er nicht lesbar, meldet
+/// der Befehl selbst den Fehler.
+/// EN: Encrypt/decrypt: path, then only the input that is needed. When decrypting, the file's
+/// header decides (key file, factor file); if it cannot be read the command reports the error.
+fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> CliResult {
+    let f = super::factor_ui::ui_texts(lang);
+    argv.push(if encrypt { "encrypt" } else { "decrypt" }.to_owned());
+    let path = ask(t.menu_path, false)?;
+    if encrypt {
+        let to = ask(t.menu_recipient, true)?;
+        if to.is_empty() {
+            let factor = ask(f.menu_optional, true)?;
+            if !factor.is_empty() {
+                argv.extend([super::factor_cmd::FLAG.to_owned(), factor]);
+            }
+        } else {
+            argv.extend(["--to".to_owned(), to]);
+        }
+    } else {
+        let extra = super::factor_ui::for_decrypt(Path::new(&path), lang, |what| match what {
+            Ask::Key => ask(t.menu_keyfile, false),
+            Ask::Factor => ask(f.needed, false),
+        });
+        argv.extend(extra.map(|e| e.args).unwrap_or_default());
+    }
+    push_out(argv, t)?;
+    // DE: Pfad zuletzt nach `--`, damit er nie als Option gilt. EN: Path last after `--`.
+    argv.extend(["--".to_owned(), path]);
+    Ok(())
+}
+
 /// DE: Baut die Argumente für eine Menüauswahl; `None` = Beenden.
 /// EN: Builds the arguments for a menu choice; `None` = quit.
-fn choice_args(t: &Texts, choice: usize) -> CliResult<Option<Vec<String>>> {
+fn choice_args(t: &Texts, lang: Lang, choice: usize) -> CliResult<Option<Vec<String>>> {
     let mut argv: Vec<String> = Vec::new();
     match choice {
         1 => {
@@ -61,21 +96,12 @@ fn choice_args(t: &Texts, choice: usize) -> CliResult<Option<Vec<String>>> {
                 argv.extend(["--out".to_owned(), ask(t.arg_out, false)?]);
             }
         }
-        5 | 6 => {
-            argv.push(if choice == 5 { "encrypt" } else { "decrypt" }.to_owned());
-            argv.push(ask(t.menu_path, false)?);
-            let (flag, prompt) = if choice == 5 {
-                ("--to", t.menu_recipient)
-            } else {
-                ("--key", t.menu_keyfile)
-            };
-            let extra = ask(prompt, true)?;
-            if !extra.is_empty() {
-                argv.extend([flag.to_owned(), extra]);
-            }
-            push_out(&mut argv, t)?;
+        5 | 6 => crypt_args(t, lang, choice == 5, &mut argv)?,
+        9 => {
+            let out = ask(super::factor_ui::ui_texts(lang).menu_out, false)?;
+            argv.extend(["factor".to_owned(), "--out".to_owned(), out]);
         }
-        9 => argv.push("help".to_owned()),
+        10 => argv.push("help".to_owned()),
         _ => return Ok(None),
     }
     Ok(Some(argv))
@@ -95,7 +121,7 @@ pub fn run(t: &Texts, lang: Lang, execute: impl Fn(Vec<String>) -> CliResult) ->
         // DE: Geführte Abläufe (Plan G2) starten ihre Befehle selbst als Kindprozesse.
         // EN: Guided flows (plan G2) start their commands themselves as child processes.
         let guided = match choice {
-            0 => Some(guide::keygen(lang, None).map(|_| ())),
+            0 => Some(guide::keygen(lang, None, None).map(|_| ())),
             7 => Some(guide::sign(lang)),
             8 => Some(guide::verify(lang)),
             _ => None,
@@ -104,7 +130,7 @@ pub fn run(t: &Texts, lang: Lang, execute: impl Fn(Vec<String>) -> CliResult) ->
             println!();
             continue;
         }
-        let Some(choice_argv) = choice_args(t, choice)? else {
+        let Some(choice_argv) = choice_args(t, lang, choice)? else {
             return Ok(());
         };
         let lang_code = if lang == Lang::De { "de" } else { "en" };

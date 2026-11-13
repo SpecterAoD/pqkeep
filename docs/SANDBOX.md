@@ -51,7 +51,8 @@ statt eines Absturzes.
 Landlock lässt sich nicht lockern. Deshalb startet das Menü **jede Aktion als eigenen Prozess**
 mit voller Sandbox für genau diese Aktion. Der Menü-Prozess selbst ist nicht eingeschränkt
 (er muss Programme starten können), verarbeitet aber weder Passphrasen noch Schlüssel – er
-fragt nur Pfade und Namen ab. Dasselbe gilt für die geführten Abläufe (`pqkeep generate`, `sign`,
+fragt nur Pfade und Namen ab (auch den Pfad einer Faktordatei; gelesen wird sie erst im
+Kindprozess). Dasselbe gilt für die geführten Abläufe (`pqkeep generate`, `sign`,
 `verify` im Terminal ohne Pflichtangaben): Sie fragen nur ab und starten dann dieselben Befehle als
 eigene Prozesse mit voller Sandbox.
 
@@ -113,7 +114,8 @@ checkable `clone`; `ioctl` without `TIOCSTI`/`TIOCLINUX`; `prlimit64` read-only;
 
 **Interactive menu:** Landlock cannot be relaxed, so the menu starts **every action as its own
 process** with the full sandbox for exactly that action. The menu process itself is not
-restricted (it must start programs) but handles neither passphrases nor keys. The same holds for
+restricted (it must start programs) but handles neither passphrases nor keys (of a factor file
+only the path; the child process reads it). The same holds for
 the guided flows (`pqkeep generate`, `sign`, `verify` in a terminal without the required input).
 
 **`--no-sandbox`:** disables both – **for troubleshooting only**. A warning lists the risks; in a

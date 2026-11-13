@@ -116,11 +116,13 @@ Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
 
 Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) mit `pqkeep context`:
 
-- **Verschlüsseln:** Auswahl „Mit Passphrase“ oder „Für einen Empfänger“. Beim Empfänger wird nach
+- **Verschlüsseln:** Auswahl „Mit Passphrase“, „Für einen Empfänger“ oder „Mit Passphrase und
+  Faktordatei“ (zweiter Faktor, siehe [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md)). Beim Empfänger wird nach
   dessen öffentlicher Schlüsseldatei gefragt (Pfad eintippen oder ins Fenster ziehen) und der
   **Fingerabdruck zur Bestätigung** angezeigt.
 - **Entschlüsseln:** Der Modus wird aus der Datei erkannt; bei Empfänger-Dateien wird nach der
-  eigenen Schlüsseldatei gefragt.
+  eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
+  sie verlangt. Weitergegeben wird nur ihr Pfad.
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
   (`bericht (2).txt`); überschrieben wird nie.
 - Die Passphrase wird verdeckt im Terminal eingegeben – in einem eigenen Prozess mit voller Sandbox,
@@ -230,9 +232,11 @@ window. Limit: zenity/kdialog keep the passphrase briefly in their own memory, w
 zero. File names with control characters or `\ : < > " | ? *` are rejected by the archive rules.
 On Windows PowerShell/.NET keep the passphrase briefly unzeroed in their own memory.
 
-**On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase or recipient (the
-recipient's public key fingerprint is shown for confirmation); decryption detects the mode and asks
-for your key file in recipient mode. The result is placed next to the source under a free name
+**On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase, recipient (the
+recipient's public key fingerprint is shown for confirmation) or passphrase with factor file (second factor, see
+[KEY_MANAGEMENT.md](KEY_MANAGEMENT.md)); decryption detects the mode, asks
+for your key file in recipient mode and for the factor file only if the file or the key file requires it (only its path is
+passed on). The result is placed next to the source under a free name
 (`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
 sandboxed process (on Linux also via small windows, see above).
 

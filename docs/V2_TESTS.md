@@ -53,8 +53,9 @@ automatisch geprüft (siehe V2_DRAFT.md: Meldung „ungültiges JSON“). Der He
 ein fester Durchlauf (jede Kürzung, Einzelbyte-Änderungen) in `tests/envelope_v2_kat.rs`. Keine echten Geheimnisse im Repository; der C02-Vektor enthält
 wie der C07-Vektor nur öffentliche Testbytes. U01 (Teil Faktordatei: `pqkeep factor`, `--factor-file`, Meldungen, Hilfe DE/EN), U02 und U03:
 `tests/cli_factor.rs`; U02 zusätzlich die Freigabeliste selbst in `src/cli/access_tests.rs`; U03 zusätzlich `tests/api_generate.rs` (die API lehnt
-unbekannte Felder wie `factor_file` ab). U01 bleibt `planned`, bis `--to` mehrfach (#47) umgesetzt ist; Menü, geführter Ablauf und
-Kontextmenü bieten die Faktordatei noch nicht an (#41, zweiter Teil).
+unbekannte Felder wie `factor_file` ab). Menü, geführter Ablauf und Kontextmenü (U01): welche Fragen gestellt und welche Argumente
+weitergegeben werden, prüfen `src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` und `src/cli/guide/mod_tests.rs`; die Fenster
+selbst werden von Hand geprüft. U01 bleibt `planned`, bis `--to` mehrfach (#47) umgesetzt ist.
 
 ---
 
@@ -80,5 +81,6 @@ automatically (see V2_DRAFT.md: message "invalid JSON"). The header (V01–V06) 
 fixed pass (every truncation, single-byte changes) in `tests/envelope_v2_kat.rs`. No real secrets are committed; the C02 and C07 vectors contain
 public test bytes only. U01 (factor file part: `pqkeep factor`, `--factor-file`, messages, help DE/EN), U02 and U03: `tests/cli_factor.rs`;
 U02 also the permission list itself in `src/cli/access_tests.rs`; U03 also `tests/api_generate.rs` (the API rejects unknown fields such as
-`factor_file`). U01 stays `planned` until repeated `--to` (#47) is implemented; menu, guided flow and context menu do not offer the factor
-file yet (#41, second part).
+`factor_file`). Menu, guided flow and context menu (U01): which questions are asked and which arguments are passed on is checked in
+`src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` and `src/cli/guide/mod_tests.rs`; the windows themselves are checked by
+hand. U01 stays `planned` until repeated `--to` (#47) is implemented.

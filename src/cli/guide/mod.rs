@@ -9,6 +9,7 @@
 //! asks and then runs **the same commands** as child processes with the full sandbox; it handles no
 //! secrets. At the end it shows the corresponding commands.
 
+mod factor;
 mod keygen;
 mod levels;
 mod signing;
@@ -136,21 +137,21 @@ pub fn wanted(name: &str, m: &ArgMatches) -> bool {
     let missing = |id: &str| m.try_get_one::<String>(id).ok().flatten().is_none();
     let missing_path = |id: &str| m.try_get_one::<PathBuf>(id).ok().flatten().is_none();
     match name {
-        // DE: Mit `--factor-file` kein geführter Ablauf (er kennt die Option noch nicht).
-        // EN: No guided flow with `--factor-file` (it does not know the option yet).
-        "generate" => {
-            (missing("name") || missing_path("out")) && super::factor_cmd::path(m).is_none()
-        }
+        "generate" => missing("name") || missing_path("out"),
         "sign" => missing_path("file") || missing_path("key"),
         "verify" => missing_path("file") || missing_path("pub"),
         _ => false,
     }
 }
 
-/// DE: Geführten Ablauf zu einem Befehl starten. EN: Start the guided flow for a command.
-pub fn run(name: &str, lang: Lang) -> CliResult {
+/// DE: Geführten Ablauf zu einem Befehl starten; ein schon angegebenes `--factor-file` wird beim
+/// Erstellen eines Schlüssels übernommen.
+/// EN: Start the guided flow for a command; a `--factor-file` already given is taken over when
+/// creating a key.
+pub fn run(name: &str, lang: Lang, m: &ArgMatches) -> CliResult {
+    let given = super::factor_cmd::path(m).map(|p| p.to_string_lossy().into_owned());
     match name {
-        "generate" => keygen(lang, None).map(|_| ()),
+        "generate" => keygen(lang, None, given).map(|_| ()),
         "sign" => sign(lang),
         _ => verify(lang),
     }
