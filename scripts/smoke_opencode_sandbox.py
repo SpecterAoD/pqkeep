@@ -87,6 +87,18 @@ def main() -> int:
                 or second[0].get("Id") != container_id):
             raise ValueError("container identity changed before start")
         docker("start", "-a", container_id)
+        completed = json.loads(docker("inspect", container_id))
+        if not isinstance(completed, list) or len(completed) != 1:
+            raise ValueError("unexpected post-run inspection")
+        state = completed[0].get("State")
+        if (completed[0].get("Id") != container_id
+                or completed[0].get("Image") != image_id
+                or not isinstance(state, dict)
+                or state.get("Running") is not False
+                or state.get("Status") != "exited"
+                or type(state.get("ExitCode")) is not int
+                or state["ExitCode"] != 0):
+            raise ValueError("sandbox did not exit cleanly")
         print("PASS: offline sandbox started and exited successfully")
         return 0
     except (
