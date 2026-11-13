@@ -42,6 +42,8 @@ class SmokeTests(unittest.TestCase):
         calls = []
         def fake_docker(*args, **kwargs):
             calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [digest]}])
             if args[0] == "create":
                 return "test-container-id"
             if args[0] == "inspect":
@@ -70,6 +72,8 @@ class SmokeTests(unittest.TestCase):
         calls = []
         def fake_docker(*args, **kwargs):
             calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [digest]}])
             if args[0] == "create":
                 return "test-container-id"
             if args[0] == "inspect":
@@ -95,6 +99,8 @@ class SmokeTests(unittest.TestCase):
         calls = []
         def fake_docker(*args, **kwargs):
             calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [digest]}])
             if args[0] == "create":
                 raise OSError("test stop before any container starts")
             return ""
@@ -102,9 +108,26 @@ class SmokeTests(unittest.TestCase):
             with patch("smoke_opencode_sandbox.docker",
                        side_effect=fake_docker):
                 self.assertEqual(main(), 1)
-        self.assertEqual(calls[0][:3], ("create", "--pull", "never"))
-        self.assertIn("--network", calls[0])
-        self.assertIn("none", calls[0])
+        create = next(call for call in calls if call[0] == "create")
+        self.assertEqual(create[:3], ("create", "--pull", "never"))
+        self.assertIn("--network", create)
+        self.assertIn("none", create)
+
+    def test_reject_image_without_matching_repo_digest(self):
+        digest = "alpine@sha256:" + "a" * 64
+        calls = []
+        def fake_docker(*args, **kwargs):
+            calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [
+                    "alpine@sha256:" + "b" * 64
+                ]}])
+            self.fail("container must not be created without image digest")
+        with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": digest}):
+            with patch("smoke_opencode_sandbox.docker",
+                       side_effect=fake_docker):
+                self.assertEqual(main(), 1)
+        self.assertEqual(len(calls), 1)
 
     def test_no_docker_call_without_digest(self):
         with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": ""}):
