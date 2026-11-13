@@ -9,7 +9,9 @@ def event(body="/oc plan Analyse", author=77644070):
         "sender": {"id": author},
         "repository": {"full_name": "SpecterAoD/pqkeep"},
         "issue": {"number": 176, "body": "<!-- /oc implement -->"},
-        "comment": {"id": 12345, "user": {"id": author}, "body": body,\n                    "created_at": "2026-11-13T10:00:00Z",\n                    "updated_at": "2026-11-13T10:00:00Z"},
+        "comment": {"id": 12345, "user": {"id": author}, "body": body,
+                    "created_at": "2026-11-13T10:00:00Z",
+                    "updated_at": "2026-11-13T10:00:00Z"},
     }
 
 
