@@ -66,6 +66,18 @@ class ReviewPatchTests(unittest.TestCase):
                     ["docs/guide.md"],
                 )
 
+    def test_unsafe_patch_rejected_before_any_git_operation(self):
+        self.patch.write_bytes(
+            b"diff --git a/src/lib.rs b/src/lib.rs\\n"
+            b"index 1111111..2222222 100644\\n"
+            b"--- a/src/lib.rs\\n+++ b/src/lib.rs\\n"
+            b"@@ -1 +1 @@\\n-old\\n+new\\n"
+        )
+        with patch("review_opencode_patch.git") as git:
+            with self.assertRaises(ValueError):
+                review_patch(self.repo, self.patch, self.base)
+            git.assert_not_called()
+
     def test_reject_source_patch(self):
         # New source file is staged only for creating a diff, never committed.
         file = self.repo / "src" / "lib.rs"
