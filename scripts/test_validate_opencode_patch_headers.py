@@ -23,6 +23,7 @@ class HeaderTests(unittest.TestCase):
             EDIT.replace(b"docs/guide.md", b"src/lib.rs"),
             EDIT.replace(b"docs/guide.md", b"docs/../evil.md"),
             EDIT.replace(b"docs/guide.md", b"docs/OPENCODE_AGENT_ISOLATION.md"),
+            EDIT.replace(b"docs/guide.md", b"docs/OPENCODE_PR171_MERGE_CHECKLIST.md"),
             EDIT.replace(b"index 1111111..2222222 100644",
                          b"old mode 100644\nnew mode 100755"),
             EDIT.replace(b"--- a/docs/guide.md", b"--- /dev/null"),
