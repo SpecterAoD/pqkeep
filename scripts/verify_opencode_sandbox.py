@@ -53,8 +53,6 @@ def compliant(config: dict) -> bool:
         return False
     if host.get("Ulimits"):
         return False
-    if host.get("SecurityOpt") != ["no-new-privileges:true"]:
-        return False
     if host.get("PidMode") not in ("", None):
         return False
     if host.get("IpcMode") == "host":
