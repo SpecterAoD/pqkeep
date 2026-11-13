@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "update": "disable",
   "permissions": [
     {
       "action": "*",
@@ -21,22 +20,15 @@
       "action": "grep",
       "resource": "*",
       "effect": "allow"
-    }
-  ],
-  "policies": [
+    },
     {
-      "action": "tool.use",
-      "resource": "shell:*",
+      "action": "read",
+      "resource": "*.env*",
       "effect": "deny"
     },
     {
-      "action": "tool.use",
-      "resource": "edit:*",
-      "effect": "deny"
-    },
-    {
-      "action": "tool.use",
-      "resource": "external_directory:*",
+      "action": "read",
+      "resource": "*secret*",
       "effect": "deny"
     }
   ]
