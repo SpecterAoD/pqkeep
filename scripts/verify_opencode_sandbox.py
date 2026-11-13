@@ -90,6 +90,8 @@ def compliant(config: dict) -> bool:
     # credentials hidden under arbitrary environment variable names.
     return all(
         item.split("=", 1)[0] in {"PATH", "HOME", "LANG", "LC_ALL", "TZ"}
+        and not any(ord(character) < 32 or ord(character) == 127
+                    for character in item)
         for item in env
     )
 
