@@ -17,9 +17,15 @@ IMAGE_RE = re.compile(r"[a-zA-Z0-9./:_-]+@sha256:[0-9a-f]{64}\Z")
 
 def docker(*args: str, timeout: int = 25) -> str:
     """Run only predetermined Docker commands, without a shell."""
+    # Do not inherit DOCKER_HOST, Docker contexts or CLI plugin overrides.
+    environment = {
+        "PATH": "/usr/bin:/bin",
+        "HOME": "/nonexistent",
+        "DOCKER_CONFIG": "/nonexistent",
+    }
     result = subprocess.run(
         ["docker", *args], check=True, capture_output=True,
-        text=True, timeout=timeout,
+        text=True, timeout=timeout, env=environment,
     )
     return result.stdout.strip()
 
