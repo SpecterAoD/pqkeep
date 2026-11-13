@@ -6,6 +6,13 @@ from inspect_opencode_github_artifact import inspect
 
 
 class EndToEndTests(unittest.TestCase):
+    def test_missing_comment_never_fetches(self):
+        def forbidden(*args):
+            raise AssertionError("no network or download expected")
+        with self.assertRaises(ValueError):
+            inspect(None, None, {}, 93, 12345, "a" * 40,
+                    456, "token", get=forbidden, fetch=forbidden)
+
     def test_untrusted_run_never_downloads(self):
         with patch("inspect_opencode_github_artifact.verify_run",
                    return_value=False):
@@ -13,7 +20,7 @@ class EndToEndTests(unittest.TestCase):
                 raise AssertionError("download must not happen")
             with self.assertRaises(ValueError):
                 inspect(None, None, {}, 93, 12345, "a" * 40,
-                        456, "token", fetch=forbidden)
+                        456, "token", fetch=forbidden, expected_comment_id=42)
 
     def test_untrusted_artifact_never_downloads(self):
         with patch("inspect_opencode_github_artifact.verify_run",
@@ -41,9 +48,10 @@ class EndToEndTests(unittest.TestCase):
                    "inspect_opencode_github_artifact.check",
                    return_value=["docs/guide.md"]) as combined:
             paths = inspect(None, None, {}, 93, 12345, "a" * 40,
-                            456, "token", fetch=fetch)
+                            456, "token", fetch=fetch, expected_comment_id=42)
             self.assertEqual(paths, ["docs/guide.md"])
             combined.assert_called_once()
+            self.assertEqual(combined.call_args.kwargs["expected_comment_id"], 42)
 
 
 if __name__ == "__main__":
