@@ -104,3 +104,27 @@ nach erfolgreichem Nachweis von Branch-/Draft-PR-Grenzen.
 wurde laut Issue #176 entfernt; ein neuer Schlüssel darf erst nach
 geprüfter Ausführungsarchitektur in einem geschützten Environment
 eingerichtet werden.
+
+
+## Gemini-Secret und OpenCode-Analyseprofil (13.11.2026)
+
+Maintainer hat die Einrichtung eines `GEMINI_API_KEY`-Secrets bestätigt.
+Der Secret-Wert wurde nicht ausgelesen oder getestet.
+
+`.github/opencode-analysis.json` enthält einen Entwurf für ein
+**separates, ausschließlich lesendes OpenCode-Profil**. Es ist bewusst
+noch nicht in den Workflow eingebunden. Vor dem ersten Lauf sind
+die Konfigurationssyntax gegen die konkret gepinnte OpenCode-Version
+zu prüfen und die Policy als **nicht überschreibbare Runner-/Systempolicy**
+zu erzwingen: Repository-Konfiguration allein ist keine Sandbox.
+
+Wichtig: Die OpenCode-CLI braucht den Gemini-Schlüssel zur
+Provider-Kommunikation. Eine reine Modellanweisung oder Tool-Deny-Regel
+garantiert nicht, dass der Prozess den eigenen Schlüssel nicht lesen kann.
+Daher darf ein Agent mit Shell-/Plugin-/Netzwerkwerkzeugen nicht einfach
+im selben Vertrauensbereich mit dem Schlüssel laufen. Für Analyse ist
+ein minimales, tatsächlich durchgesetztes Read-only-Profil nötig.
+
+Noch ausstehend: geprüfte OpenCode-Version und Installationsweg,
+Modellkennung, Konfigurations-/Policy-Ladetest, Ende-zu-Ende-Lauf,
+getrennter Kommentar-Publisher. Keine Aktivierung ohne diese Nachweise.
