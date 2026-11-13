@@ -34,6 +34,8 @@ on:
       - 'scripts/github_opencode_publisher_preflight.py'
       - 'scripts/test_github_opencode_publisher_preflight.py'
       - 'scripts/check_opencode_publisher_ready.py'
+      - 'scripts/check_opencode_bound_publisher.py'
+      - 'scripts/test_check_opencode_bound_publisher.py'
       - 'scripts/test_check_opencode_publisher_ready.py'
       - 'scripts/verify_opencode_run_provenance.py'
       - 'scripts/test_verify_opencode_run_provenance.py'
