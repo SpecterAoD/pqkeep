@@ -81,6 +81,14 @@ def download(artifact_id: int, token: str, destination: Path,
     with open_request(storage_request, timeout=30) as response:
         if response.status != 200:
             raise ValueError("artifact storage rejected request")
+        # Reject any transport that silently followed a second redirect.
+        if response.geturl() != location:
+            raise ValueError("artifact storage redirected unexpectedly")
+        length = response.headers.get("Content-Length")
+        if length is not None and (not length.isascii() or
+                                   not length.isdecimal() or
+                                   int(length) > MAX_ZIP_BYTES):
+            raise ValueError("artifact storage length invalid")
         content = response.read(MAX_ZIP_BYTES + 1)
     if not 0 < len(content) <= MAX_ZIP_BYTES:
         raise ValueError("artifact exceeds size limit")
