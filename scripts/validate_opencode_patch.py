@@ -16,6 +16,8 @@ PROTECTED_NAMES = {
     "docs/CRYPTO.md", "docs/FORMAT.md", "docs/FILE_FORMAT.md",
     "docs/KEY_MANAGEMENT.md", "docs/SECURITY_REVIEW.md",
     "docs/OPENCODE_AGENT_SECURITY_PLAN.md",
+    "docs/OPENCODE_AGENT_ISOLATION.md",
+    "docs/OPENCODE_AGENT_SECURITY_REVIEW.md",
 }
 
 
