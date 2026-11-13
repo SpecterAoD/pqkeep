@@ -34,7 +34,7 @@ def main() -> int:
     try:
         # This is a smoke test, not an OpenCode execution.
         container_id = docker(
-            "create", "--network", "none", "--read-only",
+            "create", "--pull", "never", "--network", "none", "--read-only",
             "--user", "10001:10001", "--cap-drop", "ALL",
             "--security-opt", "no-new-privileges:true",
             "--memory", "256m", "--pids-limit", "32", "--cpus", "1",
