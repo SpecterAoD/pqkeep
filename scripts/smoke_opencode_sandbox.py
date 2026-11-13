@@ -47,6 +47,10 @@ def main() -> int:
         if (not isinstance(repo_digests, list)
                 or image not in repo_digests):
             raise ValueError("pinned image digest missing from local store")
+        image_id = image_data[0].get("Id")
+        if (not isinstance(image_id, str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", image_id)):
+            raise ValueError("invalid local Docker image ID")
         # This is a smoke test, not an OpenCode execution.
         container_id = docker(
             "create", "--pull", "never", "--network", "none", "--read-only",
@@ -60,6 +64,8 @@ def main() -> int:
             raise ValueError("unexpected Docker inspection")
         if not compliant(inspected[0]):
             raise ValueError("sandbox configuration rejected")
+        if inspected[0].get("Image") != image_id:
+            raise ValueError("container uses a different image ID")
         if inspected[0].get("Config", {}).get("Image") != image:
             raise ValueError("unexpected sandbox image")
         if inspected[0].get("State", {}).get("Running") is not False:
@@ -70,6 +76,8 @@ def main() -> int:
             raise ValueError("unexpected pre-start inspection")
         if not compliant(second[0]):
             raise ValueError("sandbox configuration changed before start")
+        if second[0].get("Image") != image_id:
+            raise ValueError("container image ID changed before start")
         if second[0].get("Config", {}).get("Image") != image:
             raise ValueError("sandbox image changed before start")
         if second[0].get("State", {}).get("Running") is not False:
