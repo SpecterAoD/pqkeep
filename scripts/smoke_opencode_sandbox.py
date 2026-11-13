@@ -51,12 +51,20 @@ def main() -> int:
             raise ValueError("unexpected Docker inspection")
         if not compliant(inspected[0]):
             raise ValueError("sandbox configuration rejected")
+        if inspected[0].get("Config", {}).get("Image") != image:
+            raise ValueError("unexpected sandbox image")
+        if inspected[0].get("State", {}).get("Running") is not False:
+            raise ValueError("container already running")
         # Inspect again immediately before starting: refuse altered containers.
         second = json.loads(docker("inspect", container_id))
         if not isinstance(second, list) or len(second) != 1:
             raise ValueError("unexpected pre-start inspection")
         if not compliant(second[0]):
             raise ValueError("sandbox configuration changed before start")
+        if second[0].get("Config", {}).get("Image") != image:
+            raise ValueError("sandbox image changed before start")
+        if second[0].get("State", {}).get("Running") is not False:
+            raise ValueError("container started before validation")
         if (not isinstance(inspected[0].get("Id"), str)
                 or inspected[0]["Id"] != container_id
                 or second[0].get("Id") != container_id):
