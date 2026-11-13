@@ -36,7 +36,14 @@ def compliant(config: dict) -> bool:
         return False
     if host.get("CapDrop") != ["ALL"]:
         return False
-    if "no-new-privileges:true" not in (host.get("SecurityOpt") or []):
+    if host.get("CapAdd"):
+        return False
+    security_opts = host.get("SecurityOpt")
+    if not isinstance(security_opts, list) or (
+        "no-new-privileges:true" not in security_opts
+    ) or not all(isinstance(option, str) for option in security_opts):
+        return False
+    if host.get("UsernsMode") == "host":
         return False
     if host.get("PidMode") not in ("", None):
         return False
@@ -77,16 +84,14 @@ def compliant(config: dict) -> bool:
     env = settings.get("Env") or []
     if not isinstance(env, list):
         return False
-    if any(
-        isinstance(item, str)
-        and any(key in item.upper() for key in (
-            "GEMINI_API_KEY=", "GOOGLE_GENERATIVE_AI_API_KEY=",
-            "GITHUB_TOKEN=", "GH_TOKEN=", "OPENROUTER_API_KEY=",
-        ))
-        for item in env
-    ):
+    if not all(isinstance(item, str) and "=" in item for item in env):
         return False
-    return all(isinstance(item, str) for item in env)
+    # Allowlist beats substring matching: reject aliases, proxies and
+    # credentials hidden under arbitrary environment variable names.
+    return all(
+        item.split("=", 1)[0] in {"PATH", "HOME", "LANG", "LC_ALL", "TZ"}
+        for item in env
+    )
 
 
 def main() -> int:
