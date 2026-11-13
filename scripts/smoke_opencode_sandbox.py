@@ -38,6 +38,15 @@ def main() -> int:
         return 1
     container_id = ""
     try:
+        # Confirm the local Docker image store knows the exact pinned digest.
+        # A container Config.Image string alone is not sufficient evidence.
+        image_data = json.loads(docker("image", "inspect", image))
+        if not isinstance(image_data, list) or len(image_data) != 1:
+            raise ValueError("unexpected Docker image inspection")
+        repo_digests = image_data[0].get("RepoDigests")
+        if (not isinstance(repo_digests, list)
+                or image not in repo_digests):
+            raise ValueError("pinned image digest missing from local store")
         # This is a smoke test, not an OpenCode execution.
         container_id = docker(
             "create", "--pull", "never", "--network", "none", "--read-only",
