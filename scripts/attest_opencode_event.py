@@ -45,7 +45,8 @@ def sign(record: dict, key: bytes) -> dict:
     if not isinstance(key, bytes) or len(key) < 32:
         raise ValueError("invalid signing key")
     digest = hmac.new(key, canonical(record), hashlib.sha256).hexdigest()
-    return {"binding": record, "mac_sha256": digest}
+    # Never expose a mutable alias of the caller-owned signing input.
+    return {"binding": record.copy(), "mac_sha256": digest}
 
 
 def verify(envelope: dict, key: bytes, expected: dict) -> bool:
