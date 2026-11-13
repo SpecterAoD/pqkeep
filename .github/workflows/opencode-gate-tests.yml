@@ -47,6 +47,8 @@ on:
       - 'scripts/test_verify_opencode_trigger_comment.py'
       - 'scripts/attest_opencode_event.py'
       - 'scripts/test_attest_opencode_event.py'
+      - 'scripts/verify_opencode_event_binding.py'
+      - 'scripts/test_verify_opencode_event_binding.py'
       - '.github/workflows/opencode.yml'
       - '.github/workflows/opencode-gate-tests.yml'
   workflow_dispatch:
