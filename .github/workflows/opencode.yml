@@ -108,75 +108,22 @@ jobs:
     timeout-minutes: 3
     permissions: {}
     steps:
-      - name: Check Gemini API availability without OpenCode
+      - name: Install pinned OpenCode CLI
+        run: npm install --global @opencode/cli@2.2.7
+      - name: Verify OpenCode with known-working Gemini model
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -eu
           test -n "$GEMINI_API_KEY" || { echo 'Gemini secret missing'; exit 1; }
-          python3 - <<'PY'
-          import json
-          import os
-          import urllib.error
-          import urllib.request
-
-          key = os.environ["GEMINI_API_KEY"]
-          base = "https://generativelanguage.googleapis.com/v1beta"
-          headers = {"x-goog-api-key": key}
-          def request(url, data=None):
-              req = urllib.request.Request(url, data=data, headers={
-                  **headers, "Content-Type": "application/json"
-              })
-              with urllib.request.urlopen(req, timeout=25) as resp:
-                  return json.load(resp)
-
-          try:
-              catalog = request(base + "/models?pageSize=100")
-              models = [
-                  m["name"] for m in catalog.get("models", [])
-                  if "generateContent" in m.get("supportedGenerationMethods", [])
-              ]
-              # Model names are public identifiers, not secrets.
-              print("Available generateContent models:", ", ".join(models[:30]))
-              primary = "models/gemini-3.8-flash"
-              fallback = "models/gemini-3.1-flash-lite"
-              if primary not in models:
-                  raise RuntimeError("Primary Gemini model absent from API catalog")
-              payload = json.dumps({
-                  "contents": [{"parts": [{"text": "Reply with exactly TEST_OK"}]}],
-                  "generationConfig": {"maxOutputTokens": 80}
-              }).encode()
-              def check(model):
-                  result = request(base + "/" + model + ":generateContent", payload)
-                  answer = "".join(
-                      part.get("text", "")
-                      for candidate in result.get("candidates", [])
-                      for part in candidate.get("content", {}).get("parts", [])
-                  ).strip()
-                  if answer != "TEST_OK":
-                      raise RuntimeError("Unexpected model response: " + model)
-                  print("Gemini direct API smoke test passed:", model)
-
-              print("Testing primary:", primary)
-              try:
-                  check(primary)
-              except urllib.error.HTTPError as exc:
-                  print("Primary model HTTP status:", exc.code)
-                  if exc.code not in (429, 503):
-                      raise
-                  if fallback not in models:
-                      raise RuntimeError("Fallback model absent from API catalog")
-                  print("Testing diagnostic fallback:", fallback)
-                  check(fallback)
-                  print("Primary model unavailable; fallback works (diagnostic only).")
-          except urllib.error.HTTPError as exc:
-              # Avoid printing response bodies, headers, or request objects.
-              print("Gemini API HTTP status:", exc.code)
-              raise SystemExit(1)
-          except (urllib.error.URLError, TimeoutError) as exc:
-              print("Gemini API network error:", type(exc).__name__)
-              raise SystemExit(1)
-          except RuntimeError as exc:
-              print(str(exc))
-              raise SystemExit(1)
-          PY
+          mkdir -p /tmp/opencode-smoke
+          cd /tmp/opencode-smoke
+          # Isolated smoke test: no checkout, issue data or GitHub write token.
+          # Avoid long provider retry loops.
+          timeout --signal=TERM --kill-after=10s 90s \
+            opencode run --standalone --model google/gemini-3.1-flash-lite \
+            'Antworte ausschließlich mit TEST_OK.' > /tmp/oc-smoke-result.txt
+          grep -Fxq 'TEST_OK' /tmp/oc-smoke-result.txt || {
+            echo 'OpenCode did not return the expected marker'; exit 1;
+          }
+          echo 'OpenCode Gemini 3.1 Flash Lite smoke test passed.'
