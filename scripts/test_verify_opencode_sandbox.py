@@ -92,6 +92,29 @@ class SandboxTests(unittest.TestCase):
         data["HostConfig"]["UsernsMode"] = "host"
         self.assertFalse(compliant(data))
 
+    def test_security_profile_overrides_denied(self):
+        for options in (
+            ["no-new-privileges:true", "seccomp=unconfined"],
+            ["no-new-privileges:true", "apparmor=unconfined"],
+            ["no-new-privileges:true", "label=disable"],
+        ):
+            with self.subTest(options=options):
+                data = safe()
+                data["HostConfig"]["SecurityOpt"] = options
+                self.assertFalse(compliant(data))
+
+    def test_namespace_and_sysctl_overrides_denied(self):
+        for name, value in (
+            ("UTSMode", "host"),
+            ("CgroupParent", "/host.slice"),
+            ("Sysctls", {"kernel.shm_rmid_forced": "0"}),
+            ("Ulimits", [{"Name": "nofile", "Soft": 1024, "Hard": 1024}]),
+        ):
+            with self.subTest(name=name):
+                data = safe()
+                data["HostConfig"][name] = value
+                self.assertFalse(compliant(data))
+
     def test_extra_hosts_forbidden(self):
         data = safe()
         data["HostConfig"]["ExtraHosts"] = ["gateway:127.0.0.1"]
