@@ -97,3 +97,33 @@ gegen einen Angreifer, der auch die vertrauenswürdigen Erwartungswerte
 kontrolliert. Vor produktivem Einsatz muss die Herkunft der Erwartungswerte
 und der GitHub-Artifact-Download über vertrauenswürdige Run-ID/Artifact-ID
 verifiziert werden.
+
+## Konkrete Sicherheitsgrenzen für die nächste Implementierungsphase
+
+| Prozess | Darf lesen | Darf schreiben | Verboten |
+| --- | --- | --- | --- |
+| Autorisierung | GitHub-Event, Issue und Kommentar per Read-API | ausschließlich vertrauenswürdige Event-Bindung | Gemini-Key, PR-Token, Agent-Artefakte |
+| Modell-Gateway | Gemini-Key, erlaubte Modell-Anfragen | Gemini-API-Aufrufe | GitHub-Token, Git-Checkout, Host-Dateien |
+| Agent-Sandbox | begrenzter Issue-Kontext, dokumentationsbezogene Arbeitskopie | temporäre Vorschlagsdateien | GitHub-Credentials, HMAC-Key, Host-Netz, Docker-Socket |
+| Validierung | Basis-Commit, nicht vertrauenswürdiges Patch-Artefakt | temporärer Worktree | GitHub-Schreibtoken, Gemini-Key, Ausführung von Repository-Code |
+| Publisher | attestierte Bindung, Read-API, validiertes Artefakt | perspektivisch nur neuer Branch und Draft-PR | Gemini-Key, ungeprüfte Ausführung, Merge |
+
+**Schlüsselregel:** Der HMAC-Schlüssel für die Event-Bindung darf nur in
+einem isolierten vertrauenswürdigen Signaturdienst liegen. Ein GitHub-Job,
+der gleichzeitig untrusted Agent-Code und Signaturschlüssel ausführt,
+erfüllt diese Anforderung nicht. Ein reines Workflow-Environment-Secret
+ist kein Nachweis einer Prozessgrenze.
+
+**Verifikation:** Vor Aktivierung müssen negative Integrationstests
+nachweisen, dass Agent-Prozesse keine Schlüssel oder Token lesen,
+keine beliebigen Ziele erreichen und keine attestierten Werte verändern.
+Der Publisher muss unabhängig verifizieren, dass die attestierte Run-ID
+zum erfolgreichen GitHub-Workflow und die attestierte Kommentar-ID
+zum autorisierten unveränderten `/oc`-Kommentar gehört.
+
+**Dokumentenschutz:** Die Dateien
+`docs/OPENCODE_AGENT_SECURITY_PLAN.md`,
+`docs/OPENCODE_AGENT_ISOLATION.md` und
+`docs/OPENCODE_AGENT_SECURITY_REVIEW.md` sind in der
+Patch-Allowlist gesperrt. Der Agent darf seine eigenen Sicherheitsregeln
+nicht über Dokumentationsvorschläge ändern.
