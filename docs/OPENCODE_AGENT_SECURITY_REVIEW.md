@@ -54,3 +54,20 @@ dem unabhängig erwarteten Issue entspricht. Regressionstest ergänzt.
 - Nur neue, eindeutig benannte Branches; ausschließlich Draft-PR.
 - Geschützte `main`-Branch-Regeln und erforderliche menschliche Reviews.
 - Bewusste Freigabe durch Repository-Eigentümer vor Aktivierung.
+
+## Ereignisnachweis – implementiertes Format, noch nicht aktiviert
+
+`scripts/attest_opencode_event.py` definiert einen kanonischen HMAC-SHA256-
+Nachweis für Repository, Workflow, Run-ID, Issue, Kommentar-ID, Ausgangs-SHA,
+Event-Typ und Autor-ID. Die Prüfung vergleicht sämtliche unabhängig erwarteten
+Felder und verwendet konstante Zeit für MAC-Vergleiche.
+
+**Kein Freigabenachweis:** HMAC ist nur dann aussagekräftig, wenn der
+Signaturschlüssel ausschließlich im vertrauenswürdigen Preflight liegt und
+weder der KI-Agent noch untrusted Workflow-Schritte ihn lesen können.
+Der Publisher muss die erwarteten Werte aus eigenständig verifizierten
+GitHub-Daten beziehen; eine Kopie aus dem Agenten-Artefakt reicht nicht.
+Ein reines GitHub-Actions-Secret in einem gemeinsamen untrusted Job ist
+keine ausreichende Isolation. Schlüsselverwaltung, Lauf-Bindung und
+separater Publisher-Job sind noch offen. Das HMAC-Modul wird deshalb
+**nicht** in einen produktiven Publisher-Workflow geschaltet.
