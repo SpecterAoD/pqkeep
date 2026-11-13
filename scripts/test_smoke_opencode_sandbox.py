@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from smoke_opencode_sandbox import IMAGE_RE, main
+from smoke_opencode_sandbox import IMAGE_RE, docker, main
 
 
 class SmokeTests(unittest.TestCase):
@@ -17,6 +17,23 @@ class SmokeTests(unittest.TestCase):
         self.assertIsNotNone(IMAGE_RE.fullmatch(
             "alpine@sha256:" + "a" * 64
         ))
+
+    def test_docker_does_not_inherit_remote_daemon(self):
+        from types import SimpleNamespace
+        with patch.dict(os.environ, {
+            "DOCKER_HOST": "tcp://attacker.example:2375",
+            "DOCKER_CONTEXT": "remote",
+            "DOCKER_CONFIG": "/tmp/attacker",
+            "HTTP_PROXY": "http://attacker.example",
+        }):
+            with patch("smoke_opencode_sandbox.subprocess.run",
+                       return_value=SimpleNamespace(stdout="ok")) as run:
+                self.assertEqual(docker("version"), "ok")
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(environment["DOCKER_CONFIG"], "/nonexistent")
+        self.assertNotIn("DOCKER_HOST", environment)
+        self.assertNotIn("DOCKER_CONTEXT", environment)
+        self.assertNotIn("HTTP_PROXY", environment)
 
     def test_create_never_pulls_image(self):
         digest = "alpine@sha256:" + "a" * 64
