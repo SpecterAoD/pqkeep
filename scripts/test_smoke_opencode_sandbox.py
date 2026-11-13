@@ -126,6 +126,37 @@ class SmokeTests(unittest.TestCase):
         self.assertFalse(any(call[0] == "start" for call in calls))
         self.assertTrue(any(call[0] == "rm" for call in calls))
 
+    def test_nonzero_container_exit_is_denied(self):
+        digest = "alpine@sha256:" + "a" * 64
+        calls = []
+        def fake_docker(*args, **kwargs):
+            calls.append(args)
+            if args[:2] == ("image", "inspect"):
+                return json.dumps([{"RepoDigests": [digest],
+                                    "Id": IMAGE_ID}])
+            if args[0] == "create":
+                return "test-container-id"
+            if args[0] == "inspect":
+                config = safe()
+                config["Id"] = "test-container-id"
+                config["Image"] = IMAGE_ID
+                config["Config"]["Image"] = digest
+                count = sum(call[0] == "inspect" for call in calls)
+                config["State"] = (
+                    {"Running": False, "Status": "exited", "ExitCode": 1}
+                    if count == 3 else {"Running": False}
+                )
+                return json.dumps([config])
+            if args[0] in ("start", "rm"):
+                return ""
+            raise AssertionError(args)
+        with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": digest}):
+            with patch("smoke_opencode_sandbox.docker",
+                       side_effect=fake_docker):
+                self.assertEqual(main(), 1)
+        self.assertEqual(sum(call[0] == "start" for call in calls), 1)
+        self.assertEqual(sum(call[0] == "rm" for call in calls), 1)
+
     def test_create_never_pulls_image(self):
         digest = "alpine@sha256:" + "a" * 64
         calls = []
