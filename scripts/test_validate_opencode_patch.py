@@ -36,7 +36,10 @@ class PatchPolicyTests(unittest.TestCase):
             ".github/workflows/ci.yml", "opencode.json", "Cargo.toml",
             "Cargo.lock", "src/lib.rs", "scripts/check_limits.sh",
             "docs/SPEC.md", "docs/CRYPTO.md", "docs/THREAT_MODEL.md",
-            "docs/OPENCODE_AGENT_SECURITY_PLAN.md", "docs/../src/lib.rs",
+            "docs/OPENCODE_AGENT_SECURITY_PLAN.md",
+            "docs/OPENCODE_AGENT_ISOLATION.md",
+            "docs/OPENCODE_AGENT_SECURITY_REVIEW.md",
+            "docs/../src/lib.rs",
             "docs//guide.md", "docs/a\\b.md", "docs/evil\nname.md",
             "docs/ä.md", "docs/file.MD", "docs/file.md/other",
         ):
