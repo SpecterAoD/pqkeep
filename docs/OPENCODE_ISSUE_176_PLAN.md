@@ -128,3 +128,22 @@ ein minimales, tatsächlich durchgesetztes Read-only-Profil nötig.
 Noch ausstehend: geprüfte OpenCode-Version und Installationsweg,
 Modellkennung, Konfigurations-/Policy-Ladetest, Ende-zu-Ende-Lauf,
 getrennter Kommentar-Publisher. Keine Aktivierung ohne diese Nachweise.
+
+
+## OpenCode-V2-Abgleich (13.11.2026)
+
+Die aktuelle OpenCode-Dokumentation verwendet die Berechtigungsaktionen
+`read`, `glob`, `grep`, `shell`, `edit`, `subagent`,
+`execute`, `external_directory` und weitere. Die erste
+Analysekonfiguration enthielt nicht dokumentierte `tool.use`-Regeln;
+diese wurden entfernt. Das Profil enthält jetzt eine abschließende
+Default-Deny-Regel, drei Leseausnahmen und zusätzliche Leseverbote für
+Secret-Dateinamen. Die **tatsächliche Wirksamkeit** muss noch mit einer
+fest gepinnten CLI-Version getestet werden.
+
+Offizielle CLI-Dokumentation: `opencode run --standalone --model ...`
+mit Anbieter-Schlüssel als CI-Secret. Modellkennung und
+Installationsversion vor dem Lauf aus dem verfügbaren Modellkatalog
+ermitteln, nicht raten. Ein `GEMINI_API_KEY` im OpenCode-Prozess ist
+nicht automatisch vor Prompt-Injection geschützt; deshalb noch kein
+Live-Workflow mit dem Secret, bevor die Tool-Sperren geprüft sind.
