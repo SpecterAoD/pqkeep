@@ -93,38 +93,6 @@ jobs:
           test -s /tmp/oc-plan-result.txt
           echo 'Gemini returned a non-empty plan; publication is not enabled yet.'
 
-  gemini-manual-smoke:
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.repository == 'SpecterAoD/pqkeep' &&
-      github.ref == 'refs/heads/feature/176-opencode-gemini' &&
-      github.actor_id == 77644070
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Install pinned OpenCode
-        run: npm install --global @opencode/cli@2.2.7
-      - name: Gemini isolated smoke test
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENCODE_CONFIG: ${{ github.workspace }}/.github/opencode-analysis.json
-        run: |
-          test -n "$GEMINI_API_KEY" || { echo 'GEMINI_API_KEY is not configured'; exit 1; }
-          mkdir -p /tmp/oc-smoke-workspace
-          cd /tmp/oc-smoke-workspace
-          # Fixed harmless request; no issue text, repository data or write credentials.
-          # Never print prompt, provider responses, or environment variables to logs.
-          opencode run --standalone --model google/gemini-3.8-flash \
-            'Antworte ausschließlich mit dem Wort TEST_OK.' > /tmp/oc-smoke-output.txt
-          test -s /tmp/oc-smoke-output.txt
-          grep -Fxq 'TEST_OK' /tmp/oc-smoke-output.txt || {
-            echo 'Gemini response did not match the expected marker'; exit 1;
-          }
-          echo 'Gemini smoke test succeeded.'
-
   gemini-pr-smoke:
     # Secrets are available only for this specific maintainer-owned, same-repo PR.
     # No checkout: PR-controlled repository files are never executed by this job.
@@ -137,7 +105,7 @@ jobs:
       github.event.pull_request.head.ref == 'feature/176-opencode-gemini' &&
       github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 4
     permissions: {}
     steps:
       - name: Install pinned OpenCode CLI
@@ -151,7 +119,7 @@ jobs:
           mkdir -p /tmp/opencode-smoke
           cd /tmp/opencode-smoke
           # No checkout, tools, issue data, or GitHub write token.
-          opencode run --standalone --model google/gemini-3.8-flash \
+          timeout --signal=TERM --kill-after=10s 150s opencode run --standalone --model google/gemini-3.8-flash \
             'Antworte ausschließlich mit TEST_OK.' > /tmp/opencode-smoke-result.txt
           grep -Fxq 'TEST_OK' /tmp/opencode-smoke-result.txt || {
             echo 'Model did not return the expected marker'; exit 1;
