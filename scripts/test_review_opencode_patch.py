@@ -53,7 +53,7 @@ class ReviewPatchTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             injected = Path(tmp) / "global.gitconfig"
             injected.write_text(
-                "[user]\\n\\tname = Injected\\n\\temail = attacker@example.invalid\\n"
+                "[user]\n\\tname = Injected\n\\temail = attacker@example.invalid\n"
             )
             with patch.dict(os.environ, {
                 "GIT_CONFIG_GLOBAL": str(injected),
@@ -68,10 +68,10 @@ class ReviewPatchTests(unittest.TestCase):
 
     def test_unsafe_patch_rejected_before_any_git_operation(self):
         self.patch.write_bytes(
-            b"diff --git a/src/lib.rs b/src/lib.rs\\n"
-            b"index 1111111..2222222 100644\\n"
-            b"--- a/src/lib.rs\\n+++ b/src/lib.rs\\n"
-            b"@@ -1 +1 @@\\n-old\\n+new\\n"
+            b"diff --git a/src/lib.rs b/src/lib.rs\n"
+            b"index 1111111..2222222 100644\n"
+            b"--- a/src/lib.rs\n+++ b/src/lib.rs\n"
+            b"@@ -1 +1 @@\n-old\n+new\n"
         )
         with patch("review_opencode_patch.git") as git:
             with self.assertRaises(ValueError):
@@ -83,11 +83,11 @@ class ReviewPatchTests(unittest.TestCase):
         safe = self.patch.read_bytes()
         forbidden = (
             b"diff --git a/.github/workflows/opencode.yml "
-            b"b/.github/workflows/opencode.yml\\n"
-            b"index 1111111..2222222 100644\\n"
-            b"--- a/.github/workflows/opencode.yml\\n"
-            b"+++ b/.github/workflows/opencode.yml\\n"
-            b"@@ -1 +1 @@\\n-old\\n+new\\n"
+            b"b/.github/workflows/opencode.yml\n"
+            b"index 1111111..2222222 100644\n"
+            b"--- a/.github/workflows/opencode.yml\n"
+            b"+++ b/.github/workflows/opencode.yml\n"
+            b"@@ -1 +1 @@\n-old\n+new\n"
         )
         self.patch.write_bytes(safe + forbidden)
         with patch("review_opencode_patch.git") as git:
@@ -97,7 +97,7 @@ class ReviewPatchTests(unittest.TestCase):
 
     def test_valid_new_document_patch(self):
         file = self.repo / "docs" / "new-guide.md"
-        file.write_text("new documentation\\n")
+        file.write_text("new documentation\n")
         self.git("add", "docs/new-guide.md")
         self.patch.write_bytes(subprocess.check_output(
             ["git", "-C", str(self.repo), "diff", "--cached", "--",
