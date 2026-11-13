@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
       - name: Regression tests
         run: python3 -m unittest discover -s tests -p 'test_oc_gate.py' -v
-      - name: Check triggering event
+      - name: Validate OpenCode V2 analysis policy\n        run: python3 -m unittest discover -s tests -p 'test_opencode_config.py' -v\n      - name: Check triggering event
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_REPOSITORY: ${{ github.repository }}
