@@ -6,6 +6,8 @@ on:
       - 'scripts/authorize_opencode.py'
       - 'scripts/test_authorize_opencode.py'
       - 'scripts/validate_opencode_patch.py'
+      - 'scripts/validate_opencode_patch_headers.py'
+      - 'scripts/test_validate_opencode_patch_headers.py'
       - 'scripts/test_validate_opencode_patch.py'
       - 'scripts/verify_opencode_issue.py'
       - 'scripts/test_verify_opencode_issue.py'
