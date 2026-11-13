@@ -12,6 +12,7 @@ import sys
 import tempfile
 
 from validate_opencode_patch import validate
+from validate_opencode_patch_headers import validate_headers
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 MAX_PATCH_BYTES = 100_000
@@ -48,8 +49,7 @@ def review_patch(repository: Path, patch_file: Path, base: str) -> list[str]:
     if not 0 < patch_file.stat().st_size <= MAX_PATCH_BYTES:
         raise ValueError("patch exceeds size policy")
     patch = patch_file.read_bytes()
-    if b"\0" in patch:
-        raise ValueError("NUL in patch")
+    validate_headers(patch)
     git(repository, "cat-file", "-e", base + "^{commit}")
     with tempfile.TemporaryDirectory(prefix="opencode-patch-review-") as tmp:
         # Worktree must not exist before git worktree add.
