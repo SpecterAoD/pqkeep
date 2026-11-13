@@ -82,7 +82,7 @@ class ReviewPatchTests(unittest.TestCase):
 
     def test_reject_malformed_patch(self):
         self.patch.write_bytes(b"not a git patch\n")
-        with self.assertRaises(subprocess.CalledProcessError):
+        with self.assertRaises(ValueError):
             review_patch(self.repo, self.patch, self.base)
 
     def test_reject_wrong_base(self):
