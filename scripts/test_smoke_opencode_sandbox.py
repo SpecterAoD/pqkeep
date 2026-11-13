@@ -76,7 +76,7 @@ class SmokeTests(unittest.TestCase):
         def fake_docker(*args, **kwargs):
             calls.append(args)
             if args[:2] == ("image", "inspect"):
-                return json.dumps([{"RepoDigests": [digest]}])
+                return json.dumps([{"RepoDigests": [digest], "Id": IMAGE_ID}])
             if args[0] == "create":
                 return "test-container-id"
             if args[0] == "inspect":
@@ -163,7 +163,7 @@ class SmokeTests(unittest.TestCase):
         def fake_docker(*args, **kwargs):
             calls.append(args)
             if args[:2] == ("image", "inspect"):
-                return json.dumps([{"RepoDigests": [digest]}])
+                return json.dumps([{"RepoDigests": [digest], "Id": IMAGE_ID}])
             if args[0] == "create":
                 raise OSError("test stop before any container starts")
             return ""
