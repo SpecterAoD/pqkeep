@@ -21,6 +21,11 @@ def verified_metadata(event: dict, comment: dict, issue: dict) -> dict:
     if not authorized(event, REPOSITORY):
         raise ValueError("event unauthorized")
     original = event["comment"]
+    expected_issue_url = (
+        f"{API_ROOT}/issues/{event['issue']['number']}"
+    )
+    if comment.get("issue_url") != expected_issue_url:
+        raise ValueError("comment belongs to another issue")
     if comment.get("id") != original["id"]:
         raise ValueError("comment ID changed")
     if (comment.get("user") or {}).get("id") != MAINTAINER_ID:
