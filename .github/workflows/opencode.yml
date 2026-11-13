@@ -88,7 +88,7 @@ jobs:
           Path("/tmp/oc-plan-prompt.txt").write_text(prompt, encoding="utf-8")
           PY
           # Do not print prompt or model output to Actions logs.
-          opencode run --standalone --model google/gemini-2.5-flash \
+          opencode run --standalone --model google/gemini-3.8-flash \
             "$(cat /tmp/oc-plan-prompt.txt)" > /tmp/oc-plan-result.txt
           test -s /tmp/oc-plan-result.txt
           echo 'Gemini returned a non-empty plan; publication is not enabled yet.'
@@ -117,7 +117,7 @@ jobs:
           cd /tmp/oc-smoke-workspace
           # Fixed harmless request; no issue text, repository data or write credentials.
           # Never print prompt, provider responses, or environment variables to logs.
-          opencode run --standalone --model google/gemini-2.5-flash \
+          opencode run --standalone --model google/gemini-3.8-flash \
             'Antworte ausschließlich mit dem Wort TEST_OK.' > /tmp/oc-smoke-output.txt
           test -s /tmp/oc-smoke-output.txt
           grep -Fxq 'TEST_OK' /tmp/oc-smoke-output.txt || {
@@ -151,7 +151,7 @@ jobs:
           mkdir -p /tmp/opencode-smoke
           cd /tmp/opencode-smoke
           # No checkout, tools, issue data, or GitHub write token.
-          opencode run --standalone --model google/gemini-2.5-flash \
+          opencode run --standalone --model google/gemini-3.8-flash \
             'Antworte ausschließlich mit TEST_OK.' > /tmp/opencode-smoke-result.txt
           grep -Fxq 'TEST_OK' /tmp/opencode-smoke-result.txt || {
             echo 'Model did not return the expected marker'; exit 1;
