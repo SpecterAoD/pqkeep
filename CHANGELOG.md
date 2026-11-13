@@ -15,8 +15,18 @@ German release notes: see `docs/releases/`.
   (one passphrase, optionally with factor file, plus up to 64 recipients; a single slot without factor
   file is still written as v1), and key files protected by passphrase and factor file (`*.key.json`
   with `format_version` 2; without a factor file key files stay version 1, byte for byte as before;
-  older releases reject version 2 key files as invalid). **Not usable from the command line yet**; nothing changes for existing
-  files.
+  older releases reject version 2 key files as invalid). Nothing changes for existing files.
+- **Optional second factor on the command line:** `pqkeep factor --out <path>` creates a factor file
+  (32 random bytes, never overwritten, Linux: mode `0600`); `--factor-file <path>` with `generate`,
+  `encrypt` (passphrase mode), `decrypt` and `sign` uses it in addition to the passphrase. Only the
+  path is passed; the content never appears in arguments, environment or output. Only with this
+  option format v2 is written (older releases cannot open such files and keys); without it output
+  stays v1. `inspect` shows v2 files and whether a factor file is required. A missing or
+  superfluous `--factor-file` is reported before the passphrase prompt (exit code 2), a wrong one
+  like a wrong passphrase (exit code 3). The sandbox additionally allows reading exactly this one
+  file. Not yet offered in the menu, the guided flow and the context menu; several recipients per
+  file are not available from the command line yet. **Back up the factor file – without it nothing
+  protected with it can be opened.**
 
 ## [0.1.0-beta.2] – 2026-11-12
 

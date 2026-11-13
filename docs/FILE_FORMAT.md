@@ -1,7 +1,7 @@
 # Format verschlüsselter Dateien (`.pqkf`) / Encrypted file format (`.pqkf`)
 
-> DE: Format v2 (Faktordatei, mehrere Empfänger) ist im Rust-Core umgesetzt, aber **noch nicht über die Kommandozeile nutzbar**; dieses Dokument beschreibt v1. Siehe [V2_DRAFT.md](V2_DRAFT.md).
-> EN: Format v2 (factor file, several recipients) is implemented in the Rust core but **not usable from the command line yet**; this document describes v1. See [V2_DRAFT.md](V2_DRAFT.md).
+> DE: Format v2 ist im Rust-Core umgesetzt. Über die Kommandozeile ist davon die **Faktordatei** nutzbar (`--factor-file`, nur dann entsteht v2); mehrere Empfänger noch nicht. Dieses Dokument beschreibt v1. Siehe [V2_DRAFT.md](V2_DRAFT.md).
+> EN: Format v2 is implemented in the Rust core. From the command line the **factor file** is usable (`--factor-file`, only then v2 is written); several recipients not yet. This document describes v1. See [V2_DRAFT.md](V2_DRAFT.md).
 
 **DE** | [EN](#english)
 

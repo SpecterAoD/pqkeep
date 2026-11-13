@@ -15,10 +15,12 @@ mod context_dialog_many;
 mod context_many;
 mod dialog;
 mod dialog_text;
+mod factor_cmd;
 mod files_cmd;
 mod files_many;
 mod guide;
 mod help;
+mod inspect_v2;
 mod integrate;
 mod integrate_text;
 mod io;
@@ -38,6 +40,7 @@ mod text_en;
 mod topics_de;
 mod topics_en;
 mod unattended;
+mod unlock;
 mod validate;
 
 use std::io::IsTerminal;
@@ -110,6 +113,7 @@ fn dispatch(
 ) -> CliResult {
     match matches.subcommand() {
         Some(("generate", m)) => keys::generate(t, lang, m),
+        Some(("factor", m)) => factor_cmd::create(lang, m),
         Some(("export", m)) => keys::export(t, lang, m),
         Some(("inspect", m)) => keys::inspect(t, lang, m),
         Some(("validate", m)) => validate::validate(t, lang, m),

@@ -136,6 +136,7 @@ fn generate(lang: Lang) -> Command {
         .args(out_args(lang, false))
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
         .arg(min_bits(lang))
+        .arg(super::factor_cmd::arg(lang))
 }
 
 /// DE: `--min-bits` (128–256) für neue Passphrasen. EN: `--min-bits` (128–256) for new passphrases.
@@ -186,6 +187,7 @@ pub fn build(lang: Lang) -> Command {
         )
         .args(global_args(lang))
         .subcommand(generate(lang))
+        .subcommand(super::factor_cmd::command(lang))
         .subcommands(pass_commands(lang))
         .subcommand(
             base("inspect", t.inspect_about, t.inspect_after, lang).arg(path("file", t.arg_file)),

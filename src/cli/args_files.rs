@@ -26,6 +26,9 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(out_optional(lang))
             .arg(super::args::min_bits(lang))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
+            // DE: Die Faktordatei ergänzt die Passphrase, nicht den Empfängerschlüssel.
+            // EN: The factor file complements the passphrase, not the recipient key.
+            .arg(super::factor_cmd::arg(lang).conflicts_with("to"))
             // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
             // EN: Internal for the context menu: read and compare two lines.
             .arg(
@@ -44,6 +47,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
                     .value_parser(value_parser!(PathBuf)),
             )
             .arg(out_optional(lang))
-            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin)),
+            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
+            .arg(super::factor_cmd::arg(lang)),
     ]
 }

@@ -25,6 +25,8 @@ telemetry and opens no outgoing network connections.
   integrity-protected; public key export with fingerprint.
 - **File and directory encryption** (`.pqkf`): passphrase mode or recipient mode (ML-KEM-768),
   streaming AEAD, safe extraction rules, no partial output.
+- **Optional second factor** (after beta.2): a factor file (`pqkeep factor`, `--factor-file`) in
+  addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
 - **Passphrases:** strength check with reasons (Unicode NFKC, patterns, word lists), generator.
@@ -54,6 +56,8 @@ pqkeep passphrase                        # generate a secure passphrase
 pqkeep generate --name "Jane Doe" --out jane.key.json
 pqkeep export jane.key.json --out jane.pub.json   # share your public key
 pqkeep encrypt report.pdf                # with a passphrase
+pqkeep factor --out /media/usb/jane.factor        # optional second factor (keep it apart, back it up)
+pqkeep encrypt report.pdf --factor-file /media/usb/jane.factor   # passphrase + factor file
 pqkeep encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
 pqkeep decrypt folder.pqkf --key anna.key.json
 pqkeep sign --key anna.key.json contract.pdf      # → contract.pdf.pqsig (ML-DSA-87 key)
@@ -179,6 +183,8 @@ pqkeep passphrase                        # sichere Passphrase erzeugen
 pqkeep generate --name "Max Muster" --out max.key.json
 pqkeep export max.key.json --out max.pub.json   # öffentlichen Schlüssel weitergeben
 pqkeep encrypt bericht.pdf               # mit Passphrase
+pqkeep factor --out /media/usb/max.factor         # optionaler zweiter Faktor (getrennt aufbewahren, sichern)
+pqkeep encrypt bericht.pdf --factor-file /media/usb/max.factor   # Passphrase + Faktordatei
 pqkeep encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
 pqkeep decrypt Ordner.pqkf --key anna.key.json
 pqkeep sign --key anna.key.json vertrag.pdf       # → vertrag.pdf.pqsig (ML-DSA-87-Schlüssel)

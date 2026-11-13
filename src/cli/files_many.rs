@@ -10,14 +10,13 @@
 use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
-use pqkeep::envelope;
-use pqkeep::files::{self, HeaderMode, Report, Unlock};
+use pqkeep::files::{self, Report};
 use pqkeep::security::Lang;
 
 use super::files_cmd::{
     default_decrypted, default_encrypted, default_for, print_report, read_protection,
 };
-use super::io::{CliResult, Failure, code, read_passphrase, read_passphrase_as};
+use super::io::{CliResult, Failure, code};
 use super::many_text::{ManyTexts, many_texts};
 use super::text::Texts;
 
@@ -124,44 +123,27 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
     if m.get_one::<PathBuf>("out").is_some() {
         return Err(Failure::new(code::USAGE, s.no_out));
     }
-    let mut recipient = None;
+    let key_given = m.get_one::<PathBuf>("key").is_some();
+    let mut use_key = None;
     for src in sources {
-        let is_recipient = matches!(
-            files::inspect(src).map_err(fail)?.mode,
-            HeaderMode::Recipient { .. }
-        );
-        if *recipient.get_or_insert(is_recipient) != is_recipient {
+        let wanted = super::unlock::Access::read(src)
+            .map_err(fail)?
+            .use_key(key_given);
+        if *use_key.get_or_insert(wanted) != wanted {
             return Err(Failure::new(code::USAGE, s.mixed));
         }
     }
-    let stdin = m.get_flag("passphrase-stdin");
+    let opened = super::unlock::for_decrypt(t, lang, m, use_key == Some(true), None)?;
+    let unlock = opened.get();
     let mut tally = Tally::new(s, m, sources.len());
-    let mut run = |unlock: &Unlock<'_>| {
-        for src in sources {
-            tally.begin();
-            let Some(out) = default_for(m, default_decrypted(src)) else {
-                tally.missing_target(src);
-                continue;
-            };
-            let r = files::decrypt(src, &out, unlock).map(|r| (t.msg_decrypted, r));
-            tally.record(t, lang, src, &out, r);
-        }
-    };
-    if recipient == Some(true) {
-        let key_path = m
-            .get_one::<PathBuf>("key")
-            .ok_or_else(|| Failure::new(code::USAGE, t.msg_need_key))?;
-        let (key_file, warnings) = envelope::load(key_path).map_err(fail)?;
-        for w in warnings {
-            eprintln!("{}: {}", t.msg_warning, w.message(lang));
-        }
-        let pass = read_passphrase_as(t, lang, stdin, false, t.prompt_key_passphrase)?;
-        let unlocked = key_file.unlock(&pass).map_err(fail)?;
-        drop(pass);
-        run(&Unlock::Key(&unlocked));
-    } else {
-        let pass = read_passphrase(t, lang, stdin, false)?;
-        run(&Unlock::Passphrase(&pass));
+    for src in sources {
+        tally.begin();
+        let Some(out) = default_for(m, default_decrypted(src)) else {
+            tally.missing_target(src);
+            continue;
+        };
+        let r = files::decrypt(src, &out, &unlock).map(|r| (t.msg_decrypted, r));
+        tally.record(t, lang, src, &out, r);
     }
     tally.finish()
 }

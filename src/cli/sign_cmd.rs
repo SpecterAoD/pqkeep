@@ -14,7 +14,7 @@ use pqkeep::security::Lang;
 use pqkeep::{Error, sign};
 
 use super::args::{base, flag, opt, path};
-use super::io::{CliResult, Failure, code, read_passphrase_as};
+use super::io::{CliResult, Failure, code};
 use super::sign_text::sign_texts;
 use super::text::{Texts, texts};
 
@@ -28,7 +28,8 @@ pub fn commands(lang: Lang) -> [Command; 2] {
             .arg(path("file", s.arg_file).required(false))
             .arg(file("key", s.arg_key).short('k'))
             .arg(file("out", s.arg_out).short('o'))
-            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin)),
+            .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
+            .arg(super::factor_cmd::arg(lang)),
         base("verify", s.verify_about, s.verify_after, lang)
             .arg(path("file", s.arg_file).required(false))
             .arg(file("pub", s.arg_pub).short('p'))
@@ -74,10 +75,7 @@ pub fn sign(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     if key_file.algorithm() != sign::SIG_ALGORITHM {
         return Err(Failure::new(code::USAGE, s.need_ml_dsa_87));
     }
-    let stdin = m.get_flag("passphrase-stdin");
-    let pass = read_passphrase_as(t, lang, stdin, false, t.prompt_key_passphrase)?;
-    let unlocked = key_file.unlock(&pass).map_err(fail)?;
-    drop(pass);
+    let unlocked = super::unlock::open_key(t, lang, m, &key_file)?;
     let signature = sign::sign_file(&unlocked, &file).map_err(fail)?;
     drop(unlocked);
     let json = signature.to_json().map_err(fail)?;

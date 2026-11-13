@@ -136,7 +136,11 @@ pub fn wanted(name: &str, m: &ArgMatches) -> bool {
     let missing = |id: &str| m.try_get_one::<String>(id).ok().flatten().is_none();
     let missing_path = |id: &str| m.try_get_one::<PathBuf>(id).ok().flatten().is_none();
     match name {
-        "generate" => missing("name") || missing_path("out"),
+        // DE: Mit `--factor-file` kein geführter Ablauf (er kennt die Option noch nicht).
+        // EN: No guided flow with `--factor-file` (it does not know the option yet).
+        "generate" => {
+            (missing("name") || missing_path("out")) && super::factor_cmd::path(m).is_none()
+        }
         "sign" => missing_path("file") || missing_path("key"),
         "verify" => missing_path("file") || missing_path("pub"),
         _ => false,
