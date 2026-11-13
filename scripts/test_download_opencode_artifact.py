@@ -11,8 +11,12 @@ from download_opencode_artifact import approved_download_url, download
 
 class FakeResponse:
     status = 200
-    def __init__(self, content):
+    def __init__(self, content, url="https://objects.githubusercontent.com/a?sig=x", headers=None):
         self.stream = io.BytesIO(content)
+        self.url = url
+        self.headers = headers or {}
+    def geturl(self):
+        return self.url
     def read(self, n):
         return self.stream.read(n)
     def __enter__(self):
@@ -63,6 +67,24 @@ class DownloadTests(unittest.TestCase):
             return FakeResponse(b"x" * 120_001)
         with self.assertRaises(ValueError):
             download(456, "token", self.destination, oversized)
+        self.assertFalse(self.destination.exists())
+
+    def test_secondary_redirect_denied(self):
+        def redirected(request, timeout):
+            if request.full_url.startswith("https://api.github.com/"):
+                return self.fake(request, timeout)
+            return FakeResponse(b"ZIP", url="https://attacker.example/zip")
+        with self.assertRaises(ValueError):
+            download(456, "token", self.destination, redirected)
+        self.assertFalse(self.destination.exists())
+
+    def test_declared_oversize_denied(self):
+        def oversized_header(request, timeout):
+            if request.full_url.startswith("https://api.github.com/"):
+                return self.fake(request, timeout)
+            return FakeResponse(b"ZIP", headers={"Content-Length": "120001"})
+        with self.assertRaises(ValueError):
+            download(456, "token", self.destination, oversized_header)
         self.assertFalse(self.destination.exists())
 
     def test_bad_redirect_host(self):
