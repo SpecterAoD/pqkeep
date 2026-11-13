@@ -46,8 +46,11 @@ def main() -> int:
         output = Path(sys.argv[7])
         if output.is_symlink() or output.exists():
             raise ValueError("output must be new and not a symlink")
-        with output.open("x", encoding="utf-8") as handle:
-            os.chmod(output, 0o600)
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(output, flags, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             json.dump(result, handle, sort_keys=True)
             handle.write("\n")
     except (OSError, ValueError, TypeError, UnicodeError, KeyError):
