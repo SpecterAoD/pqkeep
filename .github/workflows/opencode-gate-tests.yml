@@ -57,6 +57,8 @@ on:
       - 'scripts/test_opencode_binding_chain.py'
       - 'scripts/sign_opencode_verified_event.py'
       - 'scripts/test_sign_opencode_verified_event.py'
+      - 'scripts/package_opencode_proposal.py'
+      - 'scripts/test_package_opencode_proposal.py'
       - 'scripts/attest_opencode_event.py'
       - 'scripts/test_attest_opencode_event.py'
       - 'scripts/verify_opencode_event_binding.py'
