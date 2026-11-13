@@ -6,14 +6,19 @@
 //! the unambiguous binary encoding of the header for the AAD. The AAD is
 //! deliberately not built from the JSON bytes since JSON can be formatted ambiguously.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use super::Metadata;
 
 /// DE: Kennung des Dateityps. EN: File type identifier.
 pub const MAGIC: &str = "PQKEEP-KEY";
-/// DE: Aktuelle Formatversion. EN: Current format version.
+/// DE: Formatversion ohne Faktordatei (Standard). EN: Format version without factor file (default).
 pub const FORMAT_VERSION: u32 = 1;
+/// DE: Formatversion mit Faktordatei (`docs/V2_DRAFT.md`). EN: Format version with factor file.
+pub const FORMAT_VERSION_V2: u32 = 2;
+/// DE: Wert von `kdf.factor` in Version 2: Faktordatei mit 32 Bytes.
+/// EN: Value of `kdf.factor` in version 2: factor file with 32 bytes.
+pub const KDF_FACTOR_FILE: &str = "file-32";
 /// DE: KDF-Bezeichner. EN: KDF identifier.
 pub const KDF_ALGORITHM: &str = "argon2id";
 /// DE: Argon2-Version 1.3. EN: Argon2 version 1.3.
@@ -61,6 +66,19 @@ pub(crate) struct KdfJson {
     pub iterations: u32,
     pub parallelism: u32,
     pub salt: String,
+    /// DE: Nur Version 2 (dort Pflicht). EN: Version 2 only (mandatory there).
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "present"
+    )]
+    pub factor: Option<String>,
+}
+
+/// DE: Ein vorhandenes Feld muss ein String sein; `null` gilt nicht als „fehlt“.
+/// EN: A field that is present must be a string; `null` does not count as "absent".
+fn present<'de, D: Deserializer<'de>>(input: D) -> Result<Option<String>, D::Error> {
+    String::deserialize(input).map(Some)
 }
 
 /// DE: Verschlüsselter Teil im JSON. EN: Encrypted part in JSON.
@@ -97,14 +115,17 @@ impl From<MetadataJson> for Metadata {
 }
 
 /// DE: Header-Felder, die per AAD gebunden werden (Algorithmus, KDF und Salt bindet
-/// `crypto::protect` selbst).
+/// `crypto::protect` bzw. `crypto::protect_v2` selbst). Mit `factor` wird Version 2 kodiert:
+/// wie Version 1, aber Versionsnummer 2 und ein angehängtes Faktorbyte (1 = Faktordatei).
 /// EN: Header fields bound via the AAD (algorithm, KDF and salt are bound by
-/// `crypto::protect` itself).
+/// `crypto::protect` or `crypto::protect_v2` itself). With `factor`, version 2 is encoded:
+/// as version 1 but version number 2 and an appended factor byte (1 = factor file).
 pub(crate) struct Header<'a> {
     pub key_id: &'a [u8],
     pub created_utc: &'a str,
     pub metadata: &'a Metadata,
     pub public_key: &'a [u8],
+    pub factor: bool,
 }
 
 impl Header<'_> {
@@ -114,7 +135,12 @@ impl Header<'_> {
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(256 + self.public_key.len());
         push(&mut out, MAGIC.as_bytes());
-        out.extend_from_slice(&FORMAT_VERSION.to_le_bytes());
+        let version = if self.factor {
+            FORMAT_VERSION_V2
+        } else {
+            FORMAT_VERSION
+        };
+        out.extend_from_slice(&version.to_le_bytes());
         push(&mut out, self.key_id);
         push(&mut out, self.created_utc.as_bytes());
         for (_, value) in self.metadata.fields() {
@@ -127,6 +153,9 @@ impl Header<'_> {
             }
         }
         push(&mut out, self.public_key);
+        if self.factor {
+            out.push(1);
+        }
         out
     }
 }

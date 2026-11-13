@@ -52,10 +52,13 @@ fn unknown_and_missing_fields() {
 
 #[test]
 fn identifiers_and_version() {
-    let cases: [(&str, &str, Value, Option<Error>); 6] = [
+    // DE: Version 2 ist bekannt, aber nur mit `kdf.factor` gültig (`tests/envelope_v2.rs`).
+    // EN: Version 2 is known but only valid with `kdf.factor` (`tests/envelope_v2.rs`).
+    let cases: [(&str, &str, Value, Option<Error>); 7] = [
         ("magic", "", json!("OTHER"), invalid("magic")),
         ("format_version", "", json!(0), Some(Error::Unsupported)),
-        ("format_version", "", json!(2), Some(Error::Unsupported)),
+        ("format_version", "", json!(2), invalid("kdf_factor")),
+        ("format_version", "", json!(3), Some(Error::Unsupported)),
         ("algorithm", "", json!("RSA-4096"), Some(Error::Unsupported)),
         (
             "kdf",

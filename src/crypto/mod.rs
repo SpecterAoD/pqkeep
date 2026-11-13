@@ -10,6 +10,7 @@ pub mod factor;
 pub mod kdf;
 pub mod kem;
 pub mod protect;
+pub mod protect_v2;
 pub mod rng;
 mod secret;
 pub mod stream;

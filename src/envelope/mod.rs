@@ -11,6 +11,7 @@ mod encoding;
 mod format;
 pub mod io;
 mod keyfile;
+mod keyfile_v2;
 mod metadata;
 mod parse;
 mod public;
@@ -18,7 +19,7 @@ pub mod time;
 
 pub use encoding::hex_encode;
 pub(crate) use encoding::{b64_decode, b64_encode, hex_decode};
-pub use format::{FORMAT_VERSION, MAGIC};
+pub use format::{FORMAT_VERSION, FORMAT_VERSION_V2, KDF_FACTOR_FILE, MAGIC};
 pub use io::{
     FileWarning, Overwrite, load, load_public, read_limited, save, save_public, write_atomic,
 };

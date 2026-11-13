@@ -127,6 +127,34 @@ class V2SpecTests(unittest.TestCase):
             with self.subTest(size=size), self.assertRaises(ValueError):
                 ref.factor_file(bytes(size))
 
+    def test_C07_key_file_header_and_aad(self):
+        """DE: Header und AAD der Schlüsseldatei v2: exakte Bytes, jedes Feld gebunden.
+        EN: Header and AAD of key file v2: exact bytes, every field bound."""
+        meta = {"name": "A", "company": "Ä"}
+        head = ref.key_header(bytes(32), "t", meta, b"pk")
+        expected = (ref.uint(10, 64) + b"PQKEEP-KEY" + ref.uint(2, 32) + ref.uint(32, 64) + bytes(32)
+                    + ref.uint(1, 64) + b"t" + b"\x01" + ref.uint(1, 64) + b"A" + b"\x00"
+                    + b"\x01" + ref.uint(2, 64) + "Ä".encode() + b"\x00\x00"
+                    + ref.uint(2, 64) + b"pk" + b"\x01")
+        self.assertEqual(head, expected)
+        aad = ref.key_aad("AES-256", 65536, 3, 4, b"salt", head)
+        self.assertEqual(aad, b"PQKeep/key/v2\0aad/key\0" + ref.uint(7, 64) + b"AES-256"
+                         + ref.uint(65536, 32) + ref.uint(3, 32) + ref.uint(4, 32)
+                         + ref.uint(4, 64) + b"salt" + ref.uint(len(head), 64) + head)
+        others = [ref.key_aad("AES-256", 65536, 3, 4, b"salt",
+                              ref.key_header(bytes(32), "t", dict(meta, department="x"), b"pk")),
+                  ref.key_aad("ML-KEM-768", 65536, 3, 4, b"salt", head),
+                  ref.key_aad("AES-256", 65537, 3, 4, b"salt", head),
+                  ref.key_aad("AES-256", 65536, 4, 4, b"salt", head),
+                  ref.key_aad("AES-256", 65536, 3, 1, b"salt", head),
+                  ref.key_aad("AES-256", 65536, 3, 4, b"Salt", head)]
+        self.assertEqual(len({aad, *others}), 7)
+        for bad in ({}, {"name": None}, {"name": "A", "other": "x"}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                ref.key_header(bytes(32), "t", bad, b"")
+        with self.assertRaises(ValueError):
+            ref.key_header(bytes(31), "t", meta, b"")
+
 
 if __name__ == "__main__":
     unittest.main()
