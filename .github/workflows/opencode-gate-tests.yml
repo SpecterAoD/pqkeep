@@ -49,6 +49,7 @@ on:
       - 'scripts/test_verify_opencode_trigger_comment.py'
       - 'scripts/build_opencode_event_binding.py'
       - 'scripts/test_build_opencode_event_binding.py'
+      - 'scripts/test_opencode_binding_chain.py'
       - 'scripts/attest_opencode_event.py'
       - 'scripts/test_attest_opencode_event.py'
       - 'scripts/verify_opencode_event_binding.py'
