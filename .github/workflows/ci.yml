@@ -10,7 +10,7 @@ name: CI
 # EN: Push on main only; branches run via the pull request (no duplicate runs).
 on:
   push:
-    branches: [main]
+    branches: [main, security/opencode-issue-agent-hardening]
   pull_request:
 
 permissions:
