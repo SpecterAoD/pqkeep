@@ -147,3 +147,21 @@ Installationsversion vor dem Lauf aus dem verfügbaren Modellkatalog
 ermitteln, nicht raten. Ein `GEMINI_API_KEY` im OpenCode-Prozess ist
 nicht automatisch vor Prompt-Injection geschützt; deshalb noch kein
 Live-Workflow mit dem Secret, bevor die Tool-Sperren geprüft sind.
+
+
+## Korrektur der Konfigurationssyntax (13.11.2026)
+
+**Wichtig:** Auch die vorherige angebliche V2-Korrektur war nicht belegt.
+Die offiziellen CLI-Beispiele und die dokumentierte Konfiguration verwenden
+`permission` (Singular) als Objekt mit `allow`/`ask`/`deny`,
+nicht das zuvor verwendete `permissions`-Array. Die Datei
+`.github/opencode-analysis.json` wurde auf dieses dokumentierte
+Format umgestellt. Dokumentation:
+https://opencode.ai/docs/permissions/
+https://opencode.ai/docs/cli/commands
+
+Das Profil ist weiterhin **nicht automatisch aktiv**: Es muss beim
+OpenCode-Aufruf explizit geladen und gegen eine konkrete, festgelegte
+CLI-Version getestet werden. Keine Annahme, dass JSON-Konfiguration
+eine Prozess-Sandbox darstellt. Ohne verifizierten Secret- und
+Tool-Isolationsnachweis kein Gemini-Live-Lauf.
