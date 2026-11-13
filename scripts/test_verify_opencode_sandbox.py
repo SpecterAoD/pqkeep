@@ -69,6 +69,29 @@ class SandboxTests(unittest.TestCase):
         data["HostConfig"]["PidsLimit"] = 0
         self.assertFalse(compliant(data))
 
+    def test_arbitrary_environment_denied(self):
+        for item in ("CUSTOM_TOKEN=secret", "HTTPS_PROXY=http://host",
+                     "PATH=/bin\\nGITHUB_TOKEN=secret", "SECRET=abc"):
+            with self.subTest(item=item):
+                data = safe()
+                data["Config"]["Env"] = [item]
+                self.assertFalse(compliant(data))
+
+    def test_known_nonsecret_environment(self):
+        data = safe()
+        data["Config"]["Env"] = ["PATH=/usr/bin", "LANG=C.UTF-8"]
+        self.assertTrue(compliant(data))
+
+    def test_added_capabilities_denied(self):
+        data = safe()
+        data["HostConfig"]["CapAdd"] = ["NET_ADMIN"]
+        self.assertFalse(compliant(data))
+
+    def test_host_user_namespace_denied(self):
+        data = safe()
+        data["HostConfig"]["UsernsMode"] = "host"
+        self.assertFalse(compliant(data))
+
     def test_extra_hosts_forbidden(self):
         data = safe()
         data["HostConfig"]["ExtraHosts"] = ["gateway:127.0.0.1"]
