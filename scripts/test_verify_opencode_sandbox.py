@@ -71,7 +71,7 @@ class SandboxTests(unittest.TestCase):
 
     def test_arbitrary_environment_denied(self):
         for item in ("CUSTOM_TOKEN=secret", "HTTPS_PROXY=http://host",
-                     "PATH=/bin\\nGITHUB_TOKEN=secret", "SECRET=abc"):
+                     "PATH=/bin" + chr(10) + "GITHUB_TOKEN=secret", "SECRET=abc"):
             with self.subTest(item=item):
                 data = safe()
                 data["Config"]["Env"] = [item]
