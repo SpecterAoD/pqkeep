@@ -13,6 +13,7 @@ def sample():
     }
     comment = {
         "id": 1001, "user": author, "body": "/oc",
+        "issue_url": "https://api.github.com/repos/SpecterAoD/pqkeep/issues/93",
         "created_at": "2026-11-12T11:00:00Z",
         "updated_at": "2026-11-12T11:00:00Z",
     }
@@ -29,6 +30,20 @@ class RevalidationTests(unittest.TestCase):
     def test_valid(self):
         e, c, i = sample()
         self.assertEqual(verified_metadata(e, c, i)["number"], 93)
+
+    def test_comment_from_another_issue(self):
+        e, c, i = sample()
+        c["issue_url"] = (
+            "https://api.github.com/repos/SpecterAoD/pqkeep/issues/94"
+        )
+        with self.assertRaises(ValueError):
+            verified_metadata(e, c, i)
+
+    def test_comment_missing_issue_url(self):
+        e, c, i = sample()
+        del c["issue_url"]
+        with self.assertRaises(ValueError):
+            verified_metadata(e, c, i)
 
     def test_comment_edited(self):
         e, c, i = sample()
