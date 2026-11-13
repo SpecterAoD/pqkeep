@@ -4,6 +4,8 @@ import unittest
 from unittest.mock import patch
 
 from smoke_opencode_sandbox import IMAGE_RE, docker, main
+from test_verify_opencode_sandbox import safe
+import json
 
 
 class SmokeTests(unittest.TestCase):
@@ -34,6 +36,32 @@ class SmokeTests(unittest.TestCase):
         self.assertNotIn("DOCKER_HOST", environment)
         self.assertNotIn("DOCKER_CONTEXT", environment)
         self.assertNotIn("HTTP_PROXY", environment)
+
+    def test_reject_changed_configuration_before_start(self):
+        digest = "alpine@sha256:" + "a" * 64
+        calls = []
+        def fake_docker(*args, **kwargs):
+            calls.append(args)
+            if args[0] == "create":
+                return "test-container-id"
+            if args[0] == "inspect":
+                config = safe()
+                config["Id"] = "test-container-id"
+                if sum(call[0] == "inspect" for call in calls) == 2:
+                    config["HostConfig"]["Privileged"] = True
+                return json.dumps([config])
+            if args[0] == "rm":
+                return ""
+            if args[0] == "start":
+                self.fail("unsafe container was started")
+            raise AssertionError(args)
+        with patch.dict(os.environ, {"OPENCODE_TEST_IMAGE": digest}):
+            with patch("smoke_opencode_sandbox.docker",
+                       side_effect=fake_docker):
+                self.assertEqual(main(), 1)
+        self.assertEqual(sum(call[0] == "inspect" for call in calls), 2)
+        self.assertFalse(any(call[0] == "start" for call in calls))
+        self.assertTrue(any(call[0] == "rm" for call in calls))
 
     def test_create_never_pulls_image(self):
         digest = "alpine@sha256:" + "a" * 64
