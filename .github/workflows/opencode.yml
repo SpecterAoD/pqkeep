@@ -28,6 +28,13 @@ jobs:
         run: python3 -m py_compile scripts/oc_gate.py tests/test_oc_gate.py tests/test_opencode_config.py
       - name: Authorization and policy regression tests
         run: python3 -m unittest discover -s tests -p 'test_oc_gate.py' -v && python3 -m unittest discover -s tests -p 'test_opencode_config.py' -v
+      - name: Install pinned OpenCode CLI
+        run: npm install --global @opencode/cli@2.2.7
+      - name: OpenCode CLI smoke test (no Gemini secret)
+        run: |
+          opencode --version
+          opencode run --help > /dev/null
+          python3 -m json.tool .github/opencode-analysis.json > /dev/null
 
   authorize:
     if: >-
