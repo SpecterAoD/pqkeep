@@ -78,6 +78,23 @@ class ReviewPatchTests(unittest.TestCase):
                 review_patch(self.repo, self.patch, self.base)
             git.assert_not_called()
 
+    def test_mixed_safe_and_unsafe_patch_never_reaches_git(self):
+        self.make_patch()
+        safe = self.patch.read_bytes()
+        forbidden = (
+            b"diff --git a/.github/workflows/opencode.yml "
+            b"b/.github/workflows/opencode.yml\\n"
+            b"index 1111111..2222222 100644\\n"
+            b"--- a/.github/workflows/opencode.yml\\n"
+            b"+++ b/.github/workflows/opencode.yml\\n"
+            b"@@ -1 +1 @@\\n-old\\n+new\\n"
+        )
+        self.patch.write_bytes(safe + forbidden)
+        with patch("review_opencode_patch.git") as git:
+            with self.assertRaises(ValueError):
+                review_patch(self.repo, self.patch, self.base)
+            git.assert_not_called()
+
     def test_valid_new_document_patch(self):
         file = self.repo / "docs" / "new-guide.md"
         file.write_text("new documentation\\n")
