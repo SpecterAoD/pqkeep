@@ -59,6 +59,8 @@ on:
       - 'scripts/test_sign_opencode_verified_event.py'
       - 'scripts/package_opencode_proposal.py'
       - 'scripts/test_package_opencode_proposal.py'
+      - 'scripts/build_opencode_github_artifact.py'
+      - 'scripts/test_build_opencode_github_artifact.py'
       - 'scripts/attest_opencode_event.py'
       - 'scripts/test_attest_opencode_event.py'
       - 'scripts/verify_opencode_event_binding.py'
