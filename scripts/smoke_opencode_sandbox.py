@@ -51,6 +51,14 @@ def main() -> int:
             raise ValueError("unexpected Docker inspection")
         if not compliant(inspected[0]):
             raise ValueError("sandbox configuration rejected")
+        # Inspect again immediately before starting: refuse altered containers.
+        second = json.loads(docker("inspect", container_id))
+        if not isinstance(second, list) or len(second) != 1:
+            raise ValueError("unexpected pre-start inspection")
+        if not compliant(second[0]):
+            raise ValueError("sandbox configuration changed before start")
+        if inspected[0].get("Id") != second[0].get("Id"):
+            raise ValueError("container identity changed before start")
         docker("start", "-a", container_id)
         print("PASS: offline sandbox started and exited successfully")
         return 0
