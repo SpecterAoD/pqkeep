@@ -13,9 +13,11 @@ import pathlib
 import unittest
 
 import v2_argon2_vectors as argon
+import v2_content_vector as content
 import v2_reference as ref
 
 KAT = pathlib.Path(__file__).resolve().parent.parent / "tests/kat/v2_argon2id.json"
+CONTENT = KAT.with_name("v2_content.json")
 
 KDF_SLOT = {
     ("file", 0): "4f41ede1889d37fa2f68f1031731f3ea4cc88ab7454660cb7f2821f282f3cedc",
@@ -51,6 +53,31 @@ class V2VectorTests(unittest.TestCase):
             wrap_key = ref.hkdf_sha3(bytes.fromhex(case["argon2id"]), argon.SALT,
                                      ref.kdf_slot_info(case["domain"], case["factor"]))
             self.assertEqual(wrap_key.hex(), case["hkdf_hex"])
+
+    def test_C02_content_file_is_consistent(self):
+        """DE: Die Datei passt zum Erzeugungsskript: Header M, Längen, Klartext (AES-GCM selbst
+        prüft der Rust-Test). EN: File matches the generator: header M, lengths, plaintext."""
+        data = json.loads(CONTENT.read_text(encoding="utf-8"))
+        raw = bytes.fromhex(data["file_hex"])
+        meta = content.meta()
+        self.assertEqual(raw[:len(meta)], meta)
+        self.assertEqual(len(raw), len(meta) + 48 + len(content.archive()) + content.TAG_LEN)
+        self.assertEqual((data["name"], data["plain_hex"]), (content.NAME, content.PLAIN.hex()))
+        marker = object()
+        calls = []
+
+        def seal(*args):
+            calls.append(args)
+            return bytes(48) if len(calls) == 1 else b"S"
+
+        built = content.build(marker, seal)
+        self.assertIs(calls[0][0], marker)
+        self.assertEqual(calls[0][1:], (content.WRAP_NONCE, content.CONTENT_SECRET,
+                                        ref.wrap_aad("file", meta, 0)))
+        full = meta + bytes(48)
+        self.assertEqual(calls[1], (content.CONTENT_SECRET, content.PREFIX + bytes(4) + b"\x01",
+                                    content.archive(), ref.stream_aad(full)))
+        self.assertEqual(built, full + b"S")
 
 
 if __name__ == "__main__":
