@@ -26,8 +26,12 @@ def verified_metadata(event: dict, comment: dict, issue: dict) -> dict:
     )
     if comment.get("issue_url") != expected_issue_url:
         raise ValueError("comment belongs to another issue")
+    if type(comment.get("id")) is not int:
+        raise ValueError("invalid live comment ID")
     if comment.get("id") != original["id"]:
         raise ValueError("comment ID changed")
+    if type((comment.get("user") or {}).get("id")) is not int:
+        raise ValueError("invalid live author ID")
     if (comment.get("user") or {}).get("id") != MAINTAINER_ID:
         raise ValueError("comment author changed")
     if comment.get("body") != "/oc":
@@ -38,6 +42,8 @@ def verified_metadata(event: dict, comment: dict, issue: dict) -> dict:
         raise ValueError("comment edited after creation")
     if comment.get("created_at") != original.get("created_at"):
         raise ValueError("comment creation timestamp mismatch")
+    if type(issue.get("number")) is not int:
+        raise ValueError("invalid live issue number")
     if issue.get("number") != event["issue"]["number"]:
         raise ValueError("issue identity changed")
     if issue.get("updated_at") != event["issue"].get("updated_at"):
