@@ -1,4 +1,6 @@
 """Integration tests for disposable-worktree AI patch review."""
+import os
+from unittest.mock import patch
 from pathlib import Path
 import subprocess
 import tempfile
@@ -45,6 +47,24 @@ class ReviewPatchTests(unittest.TestCase):
         )
         self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
         self.assertEqual((self.repo / "docs" / "guide.md").read_text(), "before\n")
+
+    def test_inherited_git_config_is_ignored(self):
+        self.make_patch()
+        with tempfile.TemporaryDirectory() as tmp:
+            injected = Path(tmp) / "global.gitconfig"
+            injected.write_text(
+                "[user]\\n\\tname = Injected\\n\\temail = attacker@example.invalid\\n"
+            )
+            with patch.dict(os.environ, {
+                "GIT_CONFIG_GLOBAL": str(injected),
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "core.hooksPath",
+                "GIT_CONFIG_VALUE_0": str(Path(tmp) / "hooks"),
+            }):
+                self.assertEqual(
+                    review_patch(self.repo, self.patch, self.base),
+                    ["docs/guide.md"],
+                )
 
     def test_reject_source_patch(self):
         # New source file is staged only for creating a diff, never committed.
