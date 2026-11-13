@@ -19,12 +19,18 @@ MAX_PATCH_BYTES = 100_000
 
 def git(directory: Path, *args: str, input_bytes: bytes = None) -> bytes:
     """Run git with fixed arguments and no interactive prompts or hooks."""
+    # Do not inherit Git configuration injection from the caller.
     env = {
-        **os.environ,
+        key: value for key, value in os.environ.items()
+        if not key.startswith("GIT_")
+    }
+    env.update({
         "GIT_TERMINAL_PROMPT": "0",
         "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
         "GIT_OPTIONAL_LOCKS": "0",
-    }
+        "GIT_NO_REPLACE_OBJECTS": "1",
+    })
     return subprocess.run(
         ["git", "-c", "core.hooksPath=/dev/null", "-c",
          "core.fsmonitor=false", "-C", str(directory), *args],
