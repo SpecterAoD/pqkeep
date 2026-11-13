@@ -25,6 +25,8 @@ def inspect(
     get=github_get, fetch=download, expected_comment_id=None,
 ) -> list[str]:
     """Bind remote run/artifact, download once, unpack and validate patch."""
+    if type(expected_comment_id) is not int or expected_comment_id <= 0:
+        raise ValueError("trusted comment identity missing")
     if not verify_run(run, base, token, get):
         raise ValueError("run provenance rejected")
     if not verify_artifact_listing(issue, run, base, artifact_id, token, get):
