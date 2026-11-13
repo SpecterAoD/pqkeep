@@ -13,7 +13,9 @@ German release notes: see `docs/releases/`.
   permissions are rejected), the binary v2 header with several access slots (strict, bounded parser;
   byte-exact against the Python reference), and encrypting/decrypting with several slots in the library
   (one passphrase, optionally with factor file, plus up to 64 recipients; a single slot without factor
-  file is still written as v1). **Not usable from the command line yet**; nothing changes for existing
+  file is still written as v1), and key files protected by passphrase and factor file (`*.key.json`
+  with `format_version` 2; without a factor file key files stay version 1, byte for byte as before;
+  older releases reject version 2 key files as invalid). **Not usable from the command line yet**; nothing changes for existing
   files.
 
 ## [0.1.0-beta.2] – 2026-11-12

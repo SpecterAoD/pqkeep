@@ -24,9 +24,9 @@ Zu [V2_DRAFT.md](V2_DRAFT.md). `reference` = ausführbare Python-Referenz in `sc
 | C04 | jedes Header-/Hüllen-/Strom-Byte verändert, Zugang entfernt/vertauscht | Öffnen scheitert, keine Ausgabe | #40/#46 | core |
 | C05 | Kürzen an jeder Headerposition, Längen bis u32::MAX, 256-KiB-Budget | begrenzter Parser, keine Panik | #40/#46 | core |
 | C06 | v1↔v2-Matrix, Downgrade-Versuche, D3 (v1 wenn möglich) | wie Kompatibilitätstabelle | #40 | core |
-| C07 | Schlüsseldatei v2: alle Algorithmen, falscher Faktor, v1-Leser | Seed unverändert, v1 lehnt ab | #40 | planned |
+| C07 | Schlüsseldatei v2: alle Algorithmen, falscher Faktor, jedes Feld verändert, Version umgeschrieben | Seed unverändert, unabhängiger Vektor, Öffnen scheitert | #40 | core |
 | C08 | 1/2/64 Empfänger gemischter KEM-Stufen, eigener Schlüssel fehlt | jeder öffnet, klare Meldung | #46 | core |
-| C09 | Fuzzing JSON-/Binärparser v2 | keine Panik, begrenzter Speicher | #40/#46 | planned |
+| C09 | Fuzzing JSON-/Binärparser v2 | keine Panik, begrenzter Speicher | #40/#46 | core |
 | U01 | CLI: `--factor`, Faktordatei erzeugen, `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | planned |
 | U02 | Sandbox: Faktordatei lesbar, sonst nichts zusätzlich | Landlock-Freigaben minimal | #41 | planned |
 | U03 | Geheimnisse nicht in argv/Umgebung/Logs, API lehnt v2-Optionen ab | keine Offenlegung | #41 | planned |
@@ -44,11 +44,14 @@ die HKDF-Schritte zusätzlich in `src/crypto/v2_tests.rs`. C02: unabhängige Hü
 `tests/crypto_v2_kat.rs` und eine ganze, ohne den Rust-Code gebaute v2-Datei (`tests/kat/v2_content.json`
 aus `scripts/v2_content_vector.py`, Python `cryptography`), die `tests/files_v2_kat.rs` öffnen muss. C03:
 `tests/crypto_factor.rs`. C04: `tests/files_v2_tamper.rs`; C06 und C08: `tests/files_v2_roundtrip.rs`
-(Ver-/Entschlüsseln im Core, noch ohne CLI; C06 für die Schlüsseldatei folgt mit C07). Der Header (V01–V06) ist im Rust-Core bytegenau nachgebaut
+(Ver-/Entschlüsseln im Core, noch ohne CLI). C07 und C06 für die Schlüsseldatei: `tests/envelope_v2.rs` sowie eine ohne den Rust-Code gebaute
+`*.key.json` v2 (`tests/kat/v2_keyfile.json` aus `scripts/v2_keyfile_vector.py`), die `tests/envelope_v2_kat.rs` entsperren und bytegleich wieder
+ausgeben muss; Header und AAD zusätzlich in der Python-Referenz (`test_C07_…`). Dass die veröffentlichten v1-Leser v2 ablehnen, ist nicht
+automatisch geprüft (siehe V2_DRAFT.md: Meldung „ungültiges JSON“). Der Header (V01–V06) ist im Rust-Core bytegenau nachgebaut
 (`tests/files_v2_header.rs`, gemeinsame Sollwerte mit `test_V02_shared_digests`); C05:
-`tests/files_v2_header_limits.rs`. C09 ist für den Binärparser begonnen (Fuzz-Ziel `pqkf_header_v2`),
-der JSON-Teil folgt mit der Schlüsseldatei. Keine echten Geheimnisse im Repository; der C02-Vektor enthält
-nur öffentliche Testbytes.
+`tests/files_v2_header_limits.rs`. C09: Fuzz-Ziele `pqkf_header_v2` (Binärparser) und `keyfile_parse` (JSON, Version 1 und 2) in der CI, dazu
+ein fester Durchlauf (jede Kürzung, Einzelbyte-Änderungen) in `tests/envelope_v2_kat.rs`. Keine echten Geheimnisse im Repository; der C02-Vektor enthält
+wie der C07-Vektor nur öffentliche Testbytes.
 
 ---
 
@@ -65,8 +68,11 @@ of CI) and checked in `tests/crypto_v2_kat.rs`; C02: independent wrap in `tests/
 whole v2 file built without the Rust code (`tests/kat/v2_content.json` from
 `scripts/v2_content_vector.py`, Python `cryptography`) that `tests/files_v2_kat.rs` must open; C03:
 `tests/crypto_factor.rs`; C04: `tests/files_v2_tamper.rs`; C06 and C08: `tests/files_v2_roundtrip.rs`
-(encrypting/decrypting in the core, no CLI yet; C06 for the key file follows with C07). The header (V01–V06) is rebuilt byte-exactly in the Rust core
+(encrypting/decrypting in the core, no CLI yet). C07 and C06 for the key file: `tests/envelope_v2.rs` plus a `*.key.json` v2 built without the
+Rust code (`tests/kat/v2_keyfile.json` from `scripts/v2_keyfile_vector.py`) that `tests/envelope_v2_kat.rs` must unlock and write back
+byte-identically; header and AAD also in the Python reference (`test_C07_…`). That the released v1 readers reject v2 is not checked
+automatically (see V2_DRAFT.md: message "invalid JSON"). The header (V01–V06) is rebuilt byte-exactly in the Rust core
 (`tests/files_v2_header.rs`, expected values shared with `test_V02_shared_digests`); C05:
-`tests/files_v2_header_limits.rs`. C09 has started for the binary parser (fuzz target `pqkf_header_v2`),
-the JSON part follows with the key file. No real secrets are committed; the C02 vector contains public
-test bytes only.
+`tests/files_v2_header_limits.rs`. C09: fuzz targets `pqkf_header_v2` (binary parser) and `keyfile_parse` (JSON, versions 1 and 2) in CI, plus a
+fixed pass (every truncation, single-byte changes) in `tests/envelope_v2_kat.rs`. No real secrets are committed; the C02 and C07 vectors contain
+public test bytes only.

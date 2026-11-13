@@ -141,8 +141,8 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 
 - **Passphrase-Normalisierung:** Unicode **NFKC** vor der Ableitung, sonst kann dieselbe Passphrase unter Windows und Linux zu unterschiedlichen Schlüsseln führen.
 - **Optionaler zweiter Faktor:** Keyfile oder „Pepper“ (separate Datei) zusätzlich zur Passphrase in die Ableitung einbeziehen.
-  - DE: Entwurf: Faktordatei (32 Zufallsbytes) als Argon2id-Secret, siehe [V2_DRAFT.md](V2_DRAFT.md); nicht implementiert, v1 unverändert.
-  - EN: Draft: factor file (32 random bytes) as Argon2id secret, see [V2_DRAFT.md](V2_DRAFT.md); unimplemented, v1 unchanged.
+  - DE: Faktordatei (32 Zufallsbytes) als Argon2id-Secret, siehe [V2_DRAFT.md](V2_DRAFT.md); im Core umgesetzt, noch keine CLI, v1 unverändert.
+  - EN: Factor file (32 random bytes) as Argon2id secret, see [V2_DRAFT.md](V2_DRAFT.md); implemented in the core, no CLI yet, v1 unchanged.
 - **Downgrade-Schutz:** Container mit zu alter `format_version` oder zu schwachen KDF-Parametern werden abgelehnt oder nur mit expliziter Warnung/Bestätigung geöffnet.
 - **Dateirechte beim Laden prüfen:** Unter Linux Warnung bei `group/world`-lesbaren Containern. Unter Windows Ablage im Benutzerprofil mit eingeschränkter ACL.
 - **Kein Clipboard, keine Historie:** Passphrasen werden nie automatisch in die Zwischenablage kopiert, nie als Argument übergeben (Shell-History) und im Terminal nicht angezeigt (Ausnahme: Generator, nur auf ausdrücklichen Wunsch).

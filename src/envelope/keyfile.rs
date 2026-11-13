@@ -1,15 +1,14 @@
-//! DE: Schlüsseldatei: erzeugen (nur mit `StrongPassphrase`), als JSON ausgeben,
-//! streng einlesen und mit `Passphrase` entsperren.
-//! EN: Key file: create (only with `StrongPassphrase`), serialise to JSON, parse
-//! strictly and unlock with `Passphrase`.
+//! DE: Schlüsseldatei: erzeugen (nur mit `StrongPassphrase`), streng einlesen und mit
+//! `Passphrase` entsperren. JSON-Ausgabe und -Prüfung: `parse.rs`; Version 2 mit Faktordatei:
+//! `keyfile_v2.rs`.
+//! EN: Key file: create (only with `StrongPassphrase`), parse strictly and unlock with
+//! `Passphrase`. JSON output and validation: `parse.rs`; version 2 with factor file:
+//! `keyfile_v2.rs`.
 
 use sha3::{Digest, Sha3_256};
 
-use super::encoding::{b64_encode, hex_encode};
-use super::format::{
-    CIPHER_ALGORITHM, CipherJson, FORMAT_VERSION, Header, KDF_ALGORITHM, KDF_VERSION, KdfJson,
-    KeyFileJson, MAGIC,
-};
+use super::encoding::hex_encode;
+use super::format::Header;
 use super::{Metadata, time};
 use crate::crypto::kdf::{self, KdfParams};
 use crate::crypto::protect::{self, ProtectedKey};
@@ -26,12 +25,15 @@ pub const KEY_ID_LEN: usize = 32;
 /// EN: Protected key with metadata (all fields safe to store publicly).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyFile {
-    algorithm: KeyAlgorithm,
-    key_id: Vec<u8>,
-    created_utc: String,
-    metadata: Metadata,
-    public_key: Vec<u8>,
-    protected: ProtectedKey,
+    pub(super) algorithm: KeyAlgorithm,
+    pub(super) key_id: Vec<u8>,
+    pub(super) created_utc: String,
+    pub(super) metadata: Metadata,
+    pub(super) public_key: Vec<u8>,
+    /// DE: Version 2: zum Entsperren ist die Faktordatei nötig.
+    /// EN: Version 2: the factor file is needed to unlock.
+    pub(super) factor: bool,
+    pub(super) protected: ProtectedKey,
 }
 
 /// DE: Entsperrter Schlüssel. Das Geheimnis wird beim Drop genullt.
@@ -41,7 +43,7 @@ pub struct UnlockedKey {
     pub algorithm: KeyAlgorithm,
     /// DE: Öffentlicher Schlüssel (AES: leer). EN: Public key (AES: empty).
     pub public_key: Vec<u8>,
-    secret: SecretBytes,
+    pub(super) secret: SecretBytes,
 }
 
 impl UnlockedKey {
@@ -65,6 +67,22 @@ pub(crate) fn fingerprint(public_key: &[u8]) -> Vec<u8> {
     Sha3_256::digest(public_key).to_vec()
 }
 
+/// DE: Neues Schlüsselmaterial: (Seed bzw. AES-Schlüssel, öffentlicher Schlüssel).
+/// EN: Fresh key material: (seed or AES key, public key).
+pub(super) fn new_secret(algorithm: KeyAlgorithm) -> Result<(SecretBytes, Vec<u8>)> {
+    Ok(match algorithm {
+        KeyAlgorithm::Kem(a) => {
+            let kp = kem::generate(a)?;
+            (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
+        }
+        KeyAlgorithm::Dsa(a) => {
+            let kp = dsa::generate(a)?;
+            (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
+        }
+        KeyAlgorithm::Aes256 => (aead::generate_key()?, Vec::new()),
+    })
+}
+
 impl KeyFile {
     /// DE: Erzeugt einen neuen Schlüssel und schützt ihn. EN: Generates and protects a new key.
     ///
@@ -76,17 +94,7 @@ impl KeyFile {
         metadata: &Metadata,
         params: &KdfParams,
     ) -> Result<Self> {
-        let (secret, public_key) = match algorithm {
-            KeyAlgorithm::Kem(a) => {
-                let kp = kem::generate(a)?;
-                (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
-            }
-            KeyAlgorithm::Dsa(a) => {
-                let kp = dsa::generate(a)?;
-                (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
-            }
-            KeyAlgorithm::Aes256 => (aead::generate_key()?, Vec::new()),
-        };
+        let (secret, public_key) = new_secret(algorithm)?;
         Self::create(
             passphrase,
             algorithm,
@@ -111,6 +119,23 @@ impl KeyFile {
         metadata: &Metadata,
         params: &KdfParams,
     ) -> Result<Self> {
+        Self::build(algorithm, secret, public_key, metadata, false, |header| {
+            protect::protect(passphrase, algorithm, secret, params, header)
+        })
+    }
+
+    /// DE: Gemeinsamer Teil des Erzeugens: prüft Material und Metadaten, bildet ID und Header;
+    /// `protect` verschlüsselt mit dem kodierten Header als AAD-Teil.
+    /// EN: Shared part of creation: checks material and metadata, builds ID and header;
+    /// `protect` encrypts with the encoded header as part of the AAD.
+    pub(super) fn build(
+        algorithm: KeyAlgorithm,
+        secret: &[u8],
+        public_key: &[u8],
+        metadata: &Metadata,
+        factor: bool,
+        protect: impl FnOnce(&[u8]) -> Result<ProtectedKey>,
+    ) -> Result<Self> {
         let metadata = metadata.normalized()?;
         if derive_public(algorithm, secret)? != public_key {
             return Err(Error::InvalidInput {
@@ -129,14 +154,16 @@ impl KeyFile {
             created_utc: &created_utc,
             metadata: &metadata,
             public_key,
+            factor,
         };
-        let protected = protect::protect(passphrase, algorithm, secret, params, &header.encode())?;
+        let protected = protect(&header.encode())?;
         Ok(Self {
             algorithm,
             key_id,
             created_utc,
             metadata,
             public_key: public_key.to_vec(),
+            factor,
             protected,
         })
     }
@@ -146,9 +173,22 @@ impl KeyFile {
     ///
     /// # Errors
     /// DE/EN: [`Error::Decrypt`] (falsche Passphrase/Manipulation / wrong passphrase/tampering),
-    /// [`Error::KdfParams`], [`Error::InvalidInput`].
+    /// [`Error::KdfParams`], [`Error::InvalidInput`] (`factor_required`: Version 2 braucht die
+    /// Faktordatei, siehe [`Self::unlock_with_factor`]; gemeldet vor der Ableitung / reported
+    /// before the derivation).
     pub fn unlock(&self, passphrase: &Passphrase) -> Result<UnlockedKey> {
+        if self.factor {
+            return Err(Error::InvalidInput {
+                field: "factor_required",
+            });
+        }
         let secret = protect::unprotect(passphrase, &self.protected, &self.header().encode())?;
+        self.finish(secret)
+    }
+
+    /// DE: Prüft das entschlüsselte Geheimnis gegen den öffentlichen Schlüssel.
+    /// EN: Checks the decrypted secret against the public key.
+    pub(super) fn finish(&self, secret: SecretBytes) -> Result<UnlockedKey> {
         if derive_public(self.algorithm, secret.expose())? != self.public_key {
             return Err(Error::InvalidInput {
                 field: "public_key",
@@ -161,12 +201,13 @@ impl KeyFile {
         })
     }
 
-    fn header(&self) -> Header<'_> {
+    pub(super) fn header(&self) -> Header<'_> {
         Header {
             key_id: &self.key_id,
             created_utc: &self.created_utc,
             metadata: &self.metadata,
             public_key: &self.public_key,
+            factor: self.factor,
         }
     }
 
@@ -210,73 +251,6 @@ impl KeyFile {
     #[must_use]
     pub fn kdf_params(&self) -> KdfParams {
         self.protected.kdf
-    }
-
-    /// DE: JSON-Darstellung (eingerückt). EN: JSON representation (pretty-printed).
-    ///
-    /// # Errors
-    /// DE/EN: [`Error::InvalidInput`] (praktisch nie / practically never).
-    pub fn to_json(&self) -> Result<String> {
-        let p = &self.protected;
-        let json = KeyFileJson {
-            magic: MAGIC.to_owned(),
-            format_version: FORMAT_VERSION,
-            algorithm: self.algorithm.id().to_owned(),
-            key_id: self.key_id_hex(),
-            created_utc: self.created_utc.clone(),
-            metadata: (&self.metadata).into(),
-            public_key: b64_encode(&self.public_key),
-            kdf: KdfJson {
-                algorithm: KDF_ALGORITHM.to_owned(),
-                version: KDF_VERSION,
-                memory_kib: p.kdf.memory_kib,
-                iterations: p.kdf.iterations,
-                parallelism: p.kdf.parallelism,
-                salt: b64_encode(&p.salt),
-            },
-            cipher: CipherJson {
-                algorithm: CIPHER_ALGORITHM.to_owned(),
-                nonce: b64_encode(&p.nonce),
-                ciphertext: b64_encode(&p.ciphertext),
-            },
-        };
-        let mut text = serde_json::to_string_pretty(&json)
-            .map_err(|_| Error::InvalidInput { field: "json" })?;
-        text.push('\n');
-        Ok(text)
-    }
-
-    /// DE: Liest und prüft JSON streng (Größe, Felder, Version, Längen, Grenzen).
-    /// EN: Parses and validates JSON strictly (size, fields, version, lengths, bounds).
-    ///
-    /// # Errors
-    /// DE/EN: [`Error::InvalidInput`] mit Feldnamen / with field name, [`Error::Unsupported`],
-    /// [`Error::KdfParams`].
-    pub fn from_json(text: &str) -> Result<Self> {
-        if text.len() > MAX_FILE_BYTES {
-            return Err(Error::InvalidInput { field: "file" });
-        }
-        let json: KeyFileJson =
-            serde_json::from_str(text).map_err(|_| Error::InvalidInput { field: "json" })?;
-        super::parse::from_parsed(json)
-    }
-
-    pub(crate) fn from_parts(
-        algorithm: KeyAlgorithm,
-        key_id: Vec<u8>,
-        created_utc: String,
-        metadata: Metadata,
-        public_key: Vec<u8>,
-        protected: ProtectedKey,
-    ) -> Self {
-        Self {
-            algorithm,
-            key_id,
-            created_utc,
-            metadata,
-            public_key,
-            protected,
-        }
     }
 }
 

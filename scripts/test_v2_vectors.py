@@ -8,16 +8,19 @@ EN: Independently computed on 2026-11-08 with `cryptography` 41.0.7; the test it
     hashlib/hmac. Public test bytes as above. No real secrets.
 """
 
+import base64
 import json
 import pathlib
 import unittest
 
 import v2_argon2_vectors as argon
 import v2_content_vector as content
+import v2_keyfile_vector as keyfile
 import v2_reference as ref
 
 KAT = pathlib.Path(__file__).resolve().parent.parent / "tests/kat/v2_argon2id.json"
 CONTENT = KAT.with_name("v2_content.json")
+KEYFILE = KAT.with_name("v2_keyfile.json")
 
 KDF_SLOT = {
     ("file", 0): "4f41ede1889d37fa2f68f1031731f3ea4cc88ab7454660cb7f2821f282f3cedc",
@@ -78,6 +81,34 @@ class V2VectorTests(unittest.TestCase):
         self.assertEqual(calls[1], (content.CONTENT_SECRET, content.PREFIX + bytes(4) + b"\x01",
                                     content.archive(), ref.stream_aad(full)))
         self.assertEqual(built, full + b"S")
+
+    def test_C07_key_file_is_consistent(self):
+        """DE: Die Datei passt zum Erzeugungsskript: JSON-Text, Felder, Längen, AAD-Aufruf
+        (AES-GCM selbst prüft der Rust-Test). EN: File matches the generator: JSON text, fields,
+        lengths, AAD call (AES-GCM itself is checked by the Rust test)."""
+        data = json.loads(KEYFILE.read_text(encoding="utf-8"))
+        text = bytes.fromhex(data["document_hex"]).decode()
+        doc = json.loads(text)
+        sealed = base64.b64decode(doc["cipher"]["ciphertext"])
+        self.assertEqual(text, keyfile.document(sealed))
+        self.assertEqual(data["plain_hex"], keyfile.PLAIN.hex())
+        self.assertEqual(len(sealed), len(keyfile.PLAIN) + 16)
+        self.assertEqual((doc["format_version"], doc["kdf"]["factor"]), (2, "file-32"))
+        case = json.loads(KAT.read_text(encoding="utf-8"))["cases"][2]
+        got = tuple(case[k] for k in ("domain", "factor", "memory_kib", "iterations", "parallelism"))
+        self.assertEqual(got, ("key", 1, keyfile.MEMORY, keyfile.ITERATIONS, keyfile.PARALLELISM))
+        marker = object()
+        calls = []
+
+        def seal(*args):
+            calls.append(args)
+            return sealed
+
+        self.assertEqual(keyfile.build(marker, seal), text)
+        header = ref.key_header(keyfile.IDENT, keyfile.CREATED, keyfile.METADATA, b"")
+        self.assertIs(calls[0][0], marker)
+        self.assertEqual(calls[0][1:], (keyfile.NONCE, keyfile.PLAIN, ref.key_aad(
+            "AES-256", keyfile.MEMORY, keyfile.ITERATIONS, keyfile.PARALLELISM, argon.SALT, header)))
 
 
 if __name__ == "__main__":

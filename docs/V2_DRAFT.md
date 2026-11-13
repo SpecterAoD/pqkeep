@@ -2,7 +2,8 @@
 
 **DE** | [EN](#english)
 
-> **Freigegebener Entwurf, nicht implementiert** (Stand 09.11.2026). Das produktive Format bleibt v1
+> **Freigegebener Entwurf; im Rust-Core umgesetzt, noch nicht über die Kommandozeile nutzbar** (Stand
+> 13.11.2026; CLI folgt mit #41 und #47). Die Kommandozeile schreibt weiter nur v1
 > ([FORMAT.md](FORMAT.md), [FILE_FORMAT.md](FILE_FORMAT.md)). Ein Entwurf für U0 (#39, zweiter Faktor) und
 > U2 (#45, mehrere Empfänger) zusammen, damit es **einen** Formatwechsel gibt statt zwei.
 > TPM/FIDO2 sind ausgelagert (Recherche-Issue #89); ihre Nummern bleiben reserviert.
@@ -69,8 +70,22 @@ ein Zugang kann weder entfernt noch vertauscht werden, ohne dass das Öffnen sch
 Nur mit Faktordatei (D3). Felder wie v1, `format_version: 2`, zusätzlich `kdf.factor: "file-32"`.
 Header-Kodierung wie v1 mit Version 2 und angehängtem Faktorbyte; Schlüssel des AES-256-GCM =
 Wpass mit `D = "PQKeep/key/v2\0"`, also HKDF-SHA3-256(S, B, `PQKeep/key/v2\0wrap/passphrase\0` || U8(faktor))
-– dieselbe Ableitung wie beim Passphrase-Zugang, getrennt nur über die Domäne (Referenz und Testwerte V07). Ein v1-Leser lehnt v2 ab
-(„nicht unterstützt“), ein v2-Leser liest v1 unverändert.
+– dieselbe Ableitung wie beim Passphrase-Zugang, getrennt nur über die Domäne (Referenz und Testwerte V07). Ein v1-Leser lehnt v2 ab,
+ein v2-Leser liest v1 unverändert.
+
+Präzisierung bei der Umsetzung (13.11.2026, #40) – `L64(x)` = U64-Länge + Bytes wie im v1-Header:
+
+```text
+Header = wie v1 (FORMAT.md) mit U32(2) als Version ‖ U8(1)                       (1 = Faktordatei)
+AAD    = "PQKeep/key/v2\0" ‖ "aad/key\0" ‖ L64(Algorithmus) ‖ U32(m) U32(t) U32(p) ‖ L64(S) ‖ L64(Header)
+```
+
+- `format_version` 1 mit `kdf.factor`, Version 2 ohne das Feld oder mit einem anderen Wert als `"file-32"`:
+  ungültig (`kdf_factor`); andere Versionen: „nicht unterstützt“. Version und Faktor sind an Ableitung und
+  AAD gebunden – eine Datei lässt sich nicht von v2 auf v1 (oder umgekehrt) umschreiben.
+- Die bereits veröffentlichten v1-Leser (0.1.0-beta.1/-beta.2) lehnen eine v2-Schlüsseldatei schon am
+  unbekannten Feld `kdf.factor` ab und melden deshalb „ungültiges JSON“ statt „nicht unterstützt“.
+  Abgelehnt wird sie in jedem Fall; nur die Meldung ist ungenauer als oben vorgesehen.
 
 ## Kompatibilität und Fehler
 
@@ -101,7 +116,8 @@ CLI `--to` mehrfach) mit eigenen Plänen; Testkatalog: [V2_TESTS.md](V2_TESTS.md
 
 ## English
 
-> **Approved draft, not implemented** (2026-11-09). Production stays v1. One draft for U0 (#39, second
+> **Approved draft; implemented in the Rust core, not usable from the command line yet** (2026-11-13; the
+> CLI follows with #41 and #47). The command line still writes v1 only. One draft for U0 (#39, second
 > factor) and U2 (#45, several recipients) so there is **one** format change instead of two. TPM/FIDO2 (#89)
 > moved to a research issue; their numbers stay reserved.
 
@@ -128,6 +144,13 @@ whole M and its index; the stream binds the header with **all** wraps – slots 
 **Key file v2:** only with a factor file; v1 fields, `format_version: 2`, `kdf.factor: "file-32"`, header
 encoding as v1 with version 2 plus factor byte; AES-256-GCM key = Wpass with `D = "PQKeep/key/v2\0"`
 (same derivation as the passphrase slot, separated by the domain only; reference and vectors V07). v1 readers reject v2, v2 readers read v1 unchanged.
+Refined during implementation (2026-11-13, #40; see the code block above): the header is the v1 header with
+version 2 plus a factor byte 1; AAD = domain ‖ `"aad/key\0"` ‖ algorithm ‖ KDF parameters ‖ salt ‖ header
+(U64 length prefixes as in the v1 header). Version 1 with `kdf.factor`, or version 2 without it or with
+another value, is invalid; other versions are unsupported; a file cannot be rewritten from v2 to v1 or back.
+The released v1 readers (0.1.0-beta.1/-beta.2) reject a v2 key file at the unknown field `kdf.factor` and
+therefore report "invalid JSON" rather than "unsupported" – rejected either way, only the message is less
+precise than intended above.
 
 **Compatibility:** see the table above (v1 unchanged; factor never silently ignored; missing factor fails
 before Argon2id; uniform "decryption failed"; reserved/unknown types unsupported before derivation; clear

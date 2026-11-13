@@ -163,3 +163,37 @@ def factor_file(data):
     EN: Factor file: exactly 32 raw bytes; at most 33 are read."""
     data = data[:FACTOR_LEN + 1]
     return exact(data, FACTOR_LEN)
+
+
+KEY_MAGIC = b"PQKEEP-KEY"
+# DE: Reihenfolge der Metadaten im Header der Schlüsseldatei. EN: Metadata order in the key file header.
+KEY_METADATA = ("name", "organization", "company", "department", "account_type")
+
+
+def field64(value):
+    """DE: Wie Schlüsseldatei v1: U64-Länge + Bytes. EN: As key file v1: U64 length + bytes."""
+    if not isinstance(value, bytes) or len(value) > HEADER_LIMIT:
+        raise ValueError("field")
+    return uint(len(value), 64) + value
+
+
+def key_header(key_id, created_utc, metadata, public_key):
+    """DE: Header der Schlüsseldatei v2: wie v1 (docs/FORMAT.md), aber Version 2 und angehängtes
+    Faktorbyte 1 (v2 gibt es nur mit Faktordatei). `metadata`: Wörterbuch, fehlend/None = Feld fehlt.
+    EN: Key file v2 header: as v1 (docs/FORMAT.md) but version 2 and an appended factor byte 1
+    (v2 only exists with a factor file). `metadata`: dict, missing/None = field absent."""
+    if set(metadata) - set(KEY_METADATA) or not isinstance(metadata.get("name"), str):
+        raise ValueError("metadata")
+    out = field64(KEY_MAGIC) + uint(VERSION, 32) + field64(exact(key_id, 32))
+    out += field64(created_utc.encode())
+    for name in KEY_METADATA:
+        value = metadata.get(name)
+        out += b"\x00" if value is None else b"\x01" + field64(value.encode())
+    return out + field64(public_key) + uint(FACTOR_FILE, 8)
+
+
+def key_aad(algorithm, memory, iterations, parallelism, salt, header):
+    """DE: AAD der Schlüsseldatei v2: Domäne, Algorithmus, KDF-Parameter, Salt, Header.
+    EN: AAD of key file v2: domain, algorithm, KDF parameters, salt, header."""
+    return (DOMAINS["key"] + b"aad/key\0" + field64(algorithm.encode()) + uint(memory, 32)
+            + uint(iterations, 32) + uint(parallelism, 32) + field64(salt) + field64(header))

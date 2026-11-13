@@ -25,6 +25,10 @@ Argon2id (kein Dateivektor / no file vector):
 - Format v2 (`v2_content.json`): eine ganze `.pqkf` v2 (Passphrase-Zugang mit Faktordatei, eine kleine
   Datei), erzeugt mit `scripts/v2_content_vector.py` ohne den Rust-Code (Header aus `scripts/v2_reference.py`,
   Packschlüssel aus `v2_argon2id.json`, AES-256-GCM aus `cryptography` 41.0.7). Nur öffentliche Testbytes.
+- Format v2 (`v2_keyfile.json`): eine ganze Schlüsseldatei `*.key.json` v2 (AES-256, Passphrase +
+  Faktordatei), erzeugt mit `scripts/v2_keyfile_vector.py` ohne den Rust-Code (Header und AAD aus
+  `scripts/v2_reference.py`, Schlüssel aus `v2_argon2id.json`, AES-256-GCM aus `cryptography` 41.0.7).
+  Nur öffentliche Testbytes.
 
 EN: Extracts from the official NIST ACVP test vectors (repository `usnistgov/ACVP-Server`,
 commit `975de31eb83d87039ec88934fdc47d8c312b892d`, directory `gen-val/json-files/`).
@@ -38,4 +42,6 @@ Argon2id with secret and associated data, then HKDF-SHA3-256) was generated with
 first); the AES-256-GCM wrap in `tests/crypto_v2_kat.rs` comes from Python `cryptography` 41.0.7.
 `v2_content.json` is a whole `.pqkf` v2 (passphrase slot with factor file, one small file) generated with
 `scripts/v2_content_vector.py` without the Rust code (header from `scripts/v2_reference.py`, wrapping key
-from `v2_argon2id.json`, AES-256-GCM from `cryptography` 41.0.7). Public test bytes only.
+from `v2_argon2id.json`, AES-256-GCM from `cryptography` 41.0.7). `v2_keyfile.json` is a whole key file
+`*.key.json` v2 (AES-256, passphrase + factor file) generated the same way with
+`scripts/v2_keyfile_vector.py` (header and AAD from `scripts/v2_reference.py`). Public test bytes only.
