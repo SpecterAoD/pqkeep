@@ -26,7 +26,8 @@ def allowed_path(path: str) -> bool:
     """Allow only non-security Markdown documentation without path tricks."""
     if not isinstance(path, str) or not path.startswith(ALLOWED_PREFIX):
         return False
-    if path in PROTECTED_NAMES or not path.endswith(".md"):
+    if (path.casefold() in {name.casefold() for name in PROTECTED_NAMES}
+            or not path.endswith(".md")):
         return False
     parts = path.split("/")
     if any(part in ("", ".", "..") for part in parts):
