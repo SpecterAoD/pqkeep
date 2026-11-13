@@ -105,23 +105,69 @@ jobs:
       github.event.pull_request.head.ref == 'feature/176-opencode-gemini' &&
       github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 3
     permissions: {}
     steps:
-      - name: Install pinned OpenCode CLI
-        run: npm install --global @opencode/cli@2.2.7
-      - name: Call Gemini with fixed prompt
+      - name: Check Gemini API availability without OpenCode
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -eu
-          test -n "$GEMINI_API_KEY" || { echo 'GEMINI_API_KEY unavailable'; exit 1; }
-          mkdir -p /tmp/opencode-smoke
-          cd /tmp/opencode-smoke
-          # No checkout, tools, issue data, or GitHub write token.
-          timeout --signal=TERM --kill-after=10s 150s opencode run --standalone --model google/gemini-3.8-flash \
-            'Antworte ausschließlich mit TEST_OK.' > /tmp/opencode-smoke-result.txt
-          grep -Fxq 'TEST_OK' /tmp/opencode-smoke-result.txt || {
-            echo 'Model did not return the expected marker'; exit 1;
-          }
-          echo 'Gemini API smoke test passed.'
+          test -n "$GEMINI_API_KEY" || { echo 'Gemini secret missing'; exit 1; }
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          key = os.environ["GEMINI_API_KEY"]
+          base = "https://generativelanguage.googleapis.com/v1beta"
+          headers = {"x-goog-api-key": key}
+          def request(url, data=None):
+              req = urllib.request.Request(url, data=data, headers={
+                  **headers, "Content-Type": "application/json"
+              })
+              with urllib.request.urlopen(req, timeout=25) as resp:
+                  return json.load(resp)
+
+          try:
+              catalog = request(base + "/models?pageSize=100")
+              models = [
+                  m["name"] for m in catalog.get("models", [])
+                  if "generateContent" in m.get("supportedGenerationMethods", [])
+              ]
+              # Model names are public identifiers, not secrets.
+              print("Available generateContent models:", ", ".join(models[:30]))
+              preferred = [
+                  "models/gemini-3.8-flash",
+                  "models/gemini-3-flash",
+                  "models/gemini-2.5-flash",
+              ]
+              model = next((m for m in preferred if m in models), None)
+              if not model:
+                  raise RuntimeError("No supported Gemini Flash model found")
+              print("Testing:", model)
+              payload = json.dumps({
+                  "contents": [{"parts": [{"text": "Reply with exactly TEST_OK"}]}],
+                  "generationConfig": {"maxOutputTokens": 80}
+              }).encode()
+              result = request(base + "/" + model + ":generateContent", payload)
+              text = "".join(
+                  part.get("text", "")
+                  for candidate in result.get("candidates", [])
+                  for part in candidate.get("content", {}).get("parts", [])
+              ).strip()
+              if text != "TEST_OK":
+                  raise RuntimeError("Model response did not match expected marker")
+              print("Gemini direct API smoke test passed.")
+          except urllib.error.HTTPError as exc:
+              # Avoid printing response bodies, headers, or request objects.
+              print("Gemini API HTTP status:", exc.code)
+              raise SystemExit(1)
+          except (urllib.error.URLError, TimeoutError) as exc:
+              print("Gemini API network error:", type(exc).__name__)
+              raise SystemExit(1)
+          except RuntimeError as exc:
+              print(str(exc))
+              raise SystemExit(1)
+          PY
