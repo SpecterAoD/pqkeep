@@ -1,10 +1,32 @@
 """Negative tests for strict AI patch path/status validation."""
+import os
+from unittest.mock import patch
+import subprocess
+import tempfile
+from pathlib import Path
 import unittest
 
-from validate_opencode_patch import allowed_path, parse_changes
+from validate_opencode_patch import allowed_path, parse_changes, git
 
 
 class PatchPolicyTests(unittest.TestCase):
+    def test_validator_ignores_git_config_injection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            previous = os.getcwd()
+            try:
+                os.chdir(repo)
+                with patch.dict(os.environ, {
+                    "GIT_CONFIG_COUNT": "1",
+                    "GIT_CONFIG_KEY_0": "alias.status",
+                    "GIT_CONFIG_VALUE_0": "!false",
+                }):
+                    self.assertEqual(git("status", "--porcelain"), b"")
+            finally:
+                os.chdir(previous)
+
+
     def test_allowed_docs(self):
         self.assertTrue(allowed_path("docs/USER_GUIDE.md"))
         self.assertEqual(parse_changes(b"M\0docs/USER_GUIDE.md\0"), ["docs/USER_GUIDE.md"])
