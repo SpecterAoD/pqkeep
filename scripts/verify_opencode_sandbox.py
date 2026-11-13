@@ -39,11 +39,21 @@ def compliant(config: dict) -> bool:
     if host.get("CapAdd"):
         return False
     security_opts = host.get("SecurityOpt")
-    if not isinstance(security_opts, list) or (
-        "no-new-privileges:true" not in security_opts
-    ) or not all(isinstance(option, str) for option in security_opts):
+    if security_opts != ["no-new-privileges:true"]:
         return False
+    # Explicitly deny alternate privilege paths, even if ordinary sandbox
+    # settings appear safe. No host namespace or custom device controls.
     if host.get("UsernsMode") == "host":
+        return False
+    if host.get("UTSMode") == "host":
+        return False
+    if host.get("CgroupParent"):
+        return False
+    if host.get("Sysctls"):
+        return False
+    if host.get("Ulimits"):
+        return False
+    if host.get("SecurityOpt") != ["no-new-privileges:true"]:
         return False
     if host.get("PidMode") not in ("", None):
         return False
