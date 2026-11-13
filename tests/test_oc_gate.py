@@ -1,6 +1,6 @@
 """Authorization regression tests for issue #176."""
 import unittest
-from scripts.oc_gate import validate
+from scripts.oc_gate import validate, unchanged_comment
 
 
 def event(body="/oc plan Analyse", author=77644070):
@@ -9,13 +9,37 @@ def event(body="/oc plan Analyse", author=77644070):
         "sender": {"id": author},
         "repository": {"full_name": "SpecterAoD/pqkeep"},
         "issue": {"number": 176, "body": "<!-- /oc implement -->"},
-        "comment": {"user": {"id": author}, "body": body},
+        "comment": {"id": 12345, "user": {"id": author}, "body": body,\n                    "created_at": "2026-11-13T10:00:00Z",\n                    "updated_at": "2026-11-13T10:00:00Z"},
     }
 
 
 class GateTests(unittest.TestCase):
     def check(self, payload):
         return validate(payload, "SpecterAoD/pqkeep")
+
+    def test_live_comment_matches(self):
+        payload = event()
+        self.assertTrue(unchanged_comment(payload, payload["comment"]))
+
+    def test_live_comment_modified(self):
+        payload = event()
+        current = dict(payload["comment"], body="/oc implement malicious")
+        self.assertFalse(unchanged_comment(payload, current))
+
+    def test_live_comment_edited_then_restored(self):
+        payload = event()
+        current = dict(payload["comment"], updated_at="2026-11-13T10:01:00Z")
+        self.assertFalse(unchanged_comment(payload, current))
+
+    def test_live_comment_wrong_author(self):
+        payload = event()
+        current = dict(payload["comment"], user={"id": 12})
+        self.assertFalse(unchanged_comment(payload, current))
+
+    def test_live_comment_missing_id(self):
+        payload = event()
+        del payload["comment"]["id"]
+        self.assertFalse(unchanged_comment(payload, payload["comment"]))
 
     def test_valid(self):
         self.assertEqual(self.check(event()), ("plan", "Analyse"))
