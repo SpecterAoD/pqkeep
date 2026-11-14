@@ -1,3 +1,12 @@
+# Default owner
 * @SpecterAoD
+# Critical CI, automation, release and authorization surfaces
 /.github/ @SpecterAoD
+/.github/CODEOWNERS @SpecterAoD
+/.github/workflows/ @SpecterAoD
+/.github/actions/ @SpecterAoD
+/scripts/oc_gate.py @SpecterAoD
+/scripts/release_*.py @SpecterAoD
+/scripts/test_release_*.py @SpecterAoD
+/scripts/check_actions_policy.py @SpecterAoD
 /docs/SPEC.md @SpecterAoD
