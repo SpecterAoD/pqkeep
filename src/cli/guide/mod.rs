@@ -125,13 +125,13 @@ fn command_line(args: &[String]) -> String {
     format!("pqkeep {}", quoted.join(" "))
 }
 
-/// DE: Soll statt eines Fehlers der geführte Ablauf starten? Nur im Terminal, nie mit `--batch`,
-/// und nur wenn Pflichtangaben fehlen.
+/// DE: Soll statt eines Fehlers der geführte Ablauf starten? Nur im Terminal, nie mit `--batch`
+/// oder `--json` (dort ein JSON-Bedienfehler), und nur wenn Pflichtangaben fehlen.
 /// EN: Should the guided flow start instead of an error? Only in a terminal, never with
-/// `--batch`, and only when required input is missing.
+/// `--batch` or `--json` (a JSON usage error there), and only when required input is missing.
 pub fn wanted(name: &str, m: &ArgMatches) -> bool {
     let interactive = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
-    if !interactive || super::unattended::batch() {
+    if !interactive || super::unattended::batch() || super::json_out::wanted(m) {
         return false;
     }
     let missing = |id: &str| m.try_get_one::<String>(id).ok().flatten().is_none();
