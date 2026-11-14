@@ -93,6 +93,24 @@ fn u01_each_recipient_file_adds_one_read_permission() {
     assert!(access(&["pqkeep", "encrypt", s, "--to", k, "--to", text(&missing)]).is_none());
 }
 
+/// DE: #86: `check` liest Quellen, Schlüssel und Faktordatei – und darf nirgends schreiben.
+/// EN: #86: `check` reads sources, key and factor file – and may write nowhere.
+#[test]
+fn check_reads_only() {
+    let (_dir, source, key, factor) = setup();
+    let (s, k, f) = (text(&source), text(&key), text(&factor));
+    let argv = ["pqkeep", "check", s, "-k", k, "--factor-file", f];
+    let allowed = access(&argv).unwrap();
+    assert_eq!(allowed.read, [factor.clone(), source.clone(), key.clone()]);
+    assert_eq!(allowed.write_dirs, [] as [PathBuf; 0]);
+    // DE: Fehlende Quelle bricht nicht ab (Meldung je Datei), fehlender Schlüssel schon.
+    // EN: A missing source does not abort (per-file message), a missing key does.
+    let missing = source.with_file_name("fehlt.pqkf");
+    let argv = ["pqkeep", "check", s, text(&missing), "-k", k];
+    assert_eq!(access(&argv).unwrap().read, [source.clone(), key.clone()]);
+    assert!(access(&["pqkeep", "check", s, "-k", text(&missing)]).is_none());
+}
+
 #[test]
 fn u02_factor_command_writes_only_into_the_target_directory() {
     let (dir, ..) = setup();

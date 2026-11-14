@@ -8,6 +8,7 @@
 mod access;
 mod args;
 mod args_files;
+mod check_cmd;
 mod context;
 mod context_child;
 mod context_dialog;
@@ -123,6 +124,7 @@ fn dispatch(
         Some(("passphrase", m)) => validate::passphrase(t, lang, m),
         Some(("encrypt", m)) => files_cmd::encrypt(t, lang, m),
         Some(("decrypt", m)) => files_cmd::decrypt(t, lang, m),
+        Some(("check", m)) => check_cmd::run(t, lang, m),
         Some(("sign", m)) => sign_cmd::sign(t, lang, m),
         Some(("verify", m)) => sign_cmd::verify(lang, m),
         Some(("help", m)) => help::help(t, lang, m),

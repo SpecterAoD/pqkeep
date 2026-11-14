@@ -13,6 +13,7 @@
 //! else still v1; both are read.
 
 mod archive;
+mod check;
 mod decrypt;
 mod decrypt_v2;
 mod encrypt;
@@ -29,6 +30,7 @@ use std::io::BufReader;
 use std::path::Path;
 
 pub use crate::fsutil::set_temp_tag;
+pub use check::check;
 pub use decrypt::decrypt;
 pub use encrypt::{encrypt, encrypt_many};
 pub use format::{Content, FileHeader, HeaderMode};

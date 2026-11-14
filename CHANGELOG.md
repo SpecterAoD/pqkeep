@@ -37,6 +37,12 @@ German release notes: see `docs/releases/`.
   ("empty = done") and then whether to add an own passphrase (optionally with a factor file); the
   context menu (terminal and windows, one or several files) asks "Add another recipient?" after each
   confirmed fingerprint. The choice is now called "For recipients (public keys, one or more)".
+- **`pqkeep check <file.pqkf>…`:** checks encrypted files completely (all chunks, checksums and
+  archive paths, as when decrypting) without writing anything – for backup checks and monitoring.
+  Needs the passphrase or key (`--key`, `--factor-file`, `--passphrase-stdin`/`--passphrase-file`),
+  checks every file even if one fails, prints one line per file and a summary. Exit code 0 = all
+  fine, 3 = wrong key/passphrase or tampering, 1 = other error, 2 = usage; with several files the
+  first error counts. The sandbox only allows reading. Library: `files::check`.
 - **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
   file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
   "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file

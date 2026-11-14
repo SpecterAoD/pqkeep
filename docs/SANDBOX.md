@@ -22,8 +22,9 @@ Netz senden. Umgesetzt mit zwei Kernel-Mechanismen (SPEC Schritt 5a):
 | `export` | Schlüsseldatei lesen, Zielordner | wie oben |
 | `inspect` | die angezeigte Datei lesen | wie oben |
 | `encrypt` / `decrypt` | Quelle lesen (Datei oder Ordner rekursiv), `--key` bzw. jede `--to`-Datei lesen, Zielordner | wie oben |
+| `check` | Quellen und `--key` lesen – **kein** Schreibzugriff | wie oben |
 | `factor` | Zielordner von `--out` | wie oben |
-| `--factor-file` (bei `generate`, `encrypt`, `decrypt`, `sign`) | zusätzlich **nur diese eine Datei** lesen | wie oben |
+| `--factor-file` (bei `generate`, `encrypt`, `decrypt`, `check`, `sign`) | zusätzlich **nur diese eine Datei** lesen | wie oben |
 | `validate`, `passphrase`, `help`, `man`, `completions` | nichts | wie oben |
 | `serve --init-token` | Ordner der Token-Datei | wie oben |
 | `serve` (API) | **nichts** (Token-Datei und Socket werden vorher geöffnet) | nur `accept` auf dem vorhandenen Socket, keine neuen Sockets |
@@ -97,8 +98,8 @@ e.g. `Sandbox: landlock=full seccomp=full`.
 **What is allowed:** `generate` – the target directory of `--out` (create, write, rename,
 remove); `export` – read the key file plus target directory; `inspect` – read the shown file;
 `encrypt`/`decrypt` – read the source (file or directory recursively) and `--key` or each `--to` file, plus
-target directory; `factor` – the target directory of `--out`; `--factor-file` (with `generate`,
-`encrypt`, `decrypt`, `sign`) – additionally read **this one file only**; `validate`, `passphrase`, `help`, `man`, `completions` – nothing;
+target directory; `check` – read the sources and `--key`, **no** write access; `factor` – the target directory of `--out`; `--factor-file` (with `generate`,
+`encrypt`, `decrypt`, `check`, `sign`) – additionally read **this one file only**; `validate`, `passphrase`, `help`, `man`, `completions` – nothing;
 `serve --init-token` – the token file's directory; `serve` (API) – **nothing** (token file and
 socket are opened before), only `accept` on the existing socket. Always: `/dev/tty` (passphrase
 prompt) and `/dev/urandom` (randomness fallback). The target directory is writable as a whole
