@@ -89,6 +89,25 @@ fn every_file_is_checked_and_the_first_error_decides() {
     let (code, _, err) = run(d, &["check", "fehlt.pqkf"], "");
     assert_eq!(code, 1);
     assert!(err.contains("nicht gefunden"), "{err}");
+    // DE: Fehlende Quelle neben einer gültigen: die gültige wird trotzdem geprüft.
+    // EN: Missing source next to a valid one: the valid one is still checked.
+    let (code, out, err) = run(
+        d,
+        &["check", "b.pqkf", "fehlt.pqkf", "--passphrase-stdin"],
+        &p,
+    );
+    assert_eq!(code, 1, "{err}");
+    assert!(out.contains("OK: b.pqkf"), "{out}");
+    assert!(err.contains("FEHLER: fehlt.pqkf"), "{err}");
+    // DE: Nur kaputte Header: keine Abfrage, auch mit --batch Exit 1 und Zusammenfassung.
+    // EN: Only broken headers: no prompt, exit 1 and a summary even with --batch.
+    std::fs::write(d.join("kaputt2.pqkf"), b"auch kein pqkeep").unwrap();
+    let (code, out, err) = run(d, &["--batch", "check", "kaputt.pqkf", "kaputt2.pqkf"], "");
+    assert_eq!(code, 1, "{err}");
+    assert!(
+        out.contains("Geprüft: 2, in Ordnung: 0, fehlerhaft: 2"),
+        "{out}"
+    );
     // DE: Falsche Passphrase: 3. EN: Wrong passphrase: 3.
     let wrong = format!("{}\n", common::random_passphrase().as_ref().expose_str());
     assert_eq!(

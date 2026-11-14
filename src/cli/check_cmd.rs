@@ -71,9 +71,15 @@ pub fn command(lang: Lang) -> Command {
         .arg(super::factor_cmd::arg(lang))
 }
 
-/// DE: Quellen und Schlüssel (nur lesen) für die Sandbox. EN: Sources and key (read only).
+/// DE: Lesefreigaben für die Sandbox: vorhandene Quellen und der Schlüssel. Fehlende Quellen
+/// (auch tote Links) meldet `run` je Datei, statt alles abzubrechen.
+/// EN: Read permissions for the sandbox: existing sources and the key. Missing sources (also
+/// dangling links) are reported per file by `run` instead of aborting everything.
 pub fn read_paths(m: &ArgMatches) -> Vec<PathBuf> {
-    let mut all = super::files_cmd::sources(m);
+    let mut all: Vec<PathBuf> = super::files_cmd::sources(m)
+        .into_iter()
+        .filter(|p| p.exists())
+        .collect();
     all.extend(m.get_one::<PathBuf>("key").cloned());
     all
 }
@@ -128,12 +134,21 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
         _ => None,
     };
     let key = use_key(&found, key_given, lang)?;
-    let opened = super::unlock::for_decrypt(t, lang, m, key, factor_needed)?;
-    let unlock = opened.get();
+    // DE: Ist kein Header lesbar, nichts abfragen – nur die Fehler je Datei melden.
+    // EN: If no header is readable, ask for nothing – just report the per-file errors.
+    let opened = if found.iter().any(Result::is_ok) {
+        Some(super::unlock::for_decrypt(t, lang, m, key, factor_needed)?)
+    } else {
+        None
+    };
     let (mut ok, mut first_error) = (0, None);
     for (src, access) in sources.iter().zip(found) {
-        let result = access
-            .and_then(|_| files::check(src, &unlock).map_err(|e| Failure::from_error(&e, lang)));
+        let result = access.and_then(|_| {
+            let unlock = opened
+                .as_ref()
+                .ok_or_else(|| Failure::new(code::ERROR, ""))?;
+            files::check(src, &unlock.get()).map_err(|e| Failure::from_error(&e, lang))
+        });
         print_line(t, c, src, &result);
         match result {
             Ok(_) => ok += 1,
