@@ -71,13 +71,13 @@ class GateTests(unittest.TestCase):
         self.assertIsNone(self.check(event(body="/oc implement change files")))
 
     def test_trailing_newline_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\n")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\n")))
 
     def test_zero_width_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\u200b")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\u200b")))
 
     def test_control_character_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\x00")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\x00")))
 
     def test_boolean_issue_number_rejected(self):
         payload = event()
