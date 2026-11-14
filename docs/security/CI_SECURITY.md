@@ -3,7 +3,7 @@
 **DE** | [EN](#english)
 
 Bestandsaufnahme der GitHub-Actions-Umgebung von PQKeep (#180–#187): was läuft, mit welchen
-Rechten, was geprüft ist, was offen bleibt. **Stand: 14.11.2026.** Die Angaben zu den
+Rechten, was geprüft ist, was offen bleibt. **Stand: 14.11.2026 (abends aktualisiert).** Die Angaben zu den
 GitHub-Einstellungen wurden an diesem Tag über die GitHub-API gelesen (nur Namen und Regeln, keine
 Secret-Werte). Einstellungen können sich ändern – vor einem Release erneut prüfen.
 
@@ -48,41 +48,40 @@ CLI-Projekt ohne Container, Infrastruktur-Code und Webdienst.
 | Ruleset `main` | kein Löschen, kein Force-Push, lineare Historie, signierte Commits, nur Pull Request mit Squash, alle Review-Threads gelöst, 9 Pflichtprüfungen (CI auf Linux/Windows, MSRV, Limits, Binär-Härtung, cargo-deny, gitleaks); **keine** Umgehungsberechtigten | gut |
 | Ruleset Tags `v*` | kein Löschen, Ändern, Force-Push; Umgehung nur für Repository-Admins | gut (nötig, um Tags anzulegen) |
 | CODEOWNERS | Datei vorhanden, Code-Owner-Review im Ruleset **nicht** verlangt | richtig so: mit einem einzigen Maintainer würde die Pflicht jeden Merge blockieren |
-| Environment `release` | Freigabe durch den Maintainer nötig, Selbstfreigabe erlaubt; **keine** Beschränkung auf Tags/Branches | offen, siehe unten |
-| Actions-Einstellungen | alle Actions erlaubt, SHA-Pinning nicht erzwungen, Token „read“, Actions dürfen keine Reviews freigeben | offen, siehe unten |
-| Secrets | Repository: `GEMINI_API_KEY` (für den OpenCode-Versuch #176, von keinem Workflow auf `main` benutzt); Environment `release`: keine | offen, siehe unten |
+| Environment `release` | Freigabe durch den Maintainer nötig, Selbstfreigabe erlaubt; eigene Regeln für Branches/Tags eingeschaltet, Liste noch leer | offen, siehe unten |
+| Actions-Einstellungen | alle Actions erlaubt, SHA-Pinning **erzwungen**, Token „read“, Actions dürfen keine Reviews freigeben | gut |
+| Secrets | keine (Repository und Environment `release`) | gut |
 
 ## Offene Punkte
 
 Reihenfolge nach Nutzen; jeder Punkt ist eine Einstellung oder ein eigener kleiner Pull Request.
 
-1. **Environment `release` auf Tags `v*` beschränken** (Einstellung „Deployment branches and
-   tags“). Heute kann ein manueller Lauf von jedem Branch die Freigabe anfragen (#186).
-2. **`GEMINI_API_KEY` aus den Repository-Secrets entfernen**, solange #176 nicht entschieden ist;
-   bei Bedarf später als Environment-Secret mit Freigabe anlegen. Ein Repository-Secret ist für
-   jeden Workflow auf jedem Branch lesbar, den ein Schreibberechtigter anlegt (#183).
-3. **SHA-Pinning in den Actions-Einstellungen erzwingen** („Require actions to be pinned to a
-   full-length commit SHA“). Die Workflows erfüllen das bereits (#181).
-4. **`Workflow-Prüfung / workflow policy` nicht als Pflichtprüfung eintragen:** der Workflow läuft
+1. **Environment `release`: erlaubte Refs eintragen** (Einstellung „Deployment branches and tags“).
+   Die eigenen Regeln sind eingeschaltet, die Liste ist aber leer – damit darf kein Lauf den Job
+   `publish` erreichen. Eintragen: Tag `v*` (Release) und Branch `main` (Trockenlauf, siehe
+   [RELEASE.md](../RELEASE.md)); `main` ist durch das Ruleset geschützt (#186).
+2. Erledigt: `GEMINI_API_KEY` entfernt (#183), SHA-Pinning in den Actions-Einstellungen erzwungen
+   (#181).
+3. **`Workflow-Prüfung / workflow policy` nicht als Pflichtprüfung eintragen:** der Workflow läuft
    wegen des Pfadfilters nur bei Workflow-Änderungen; eine Pflichtprüfung, die nicht startet,
    blockiert jeden anderen Pull Request.
-5. **Release-Reihenfolge:** `publish` legt den Release-**Entwurf** an, bevor `verify` Manifest,
+4. **Release-Reihenfolge:** `publish` legt den Release-**Entwurf** an, bevor `verify` Manifest,
    Prüfsummen, Attestierungen und Signaturen geprüft hat. Der Entwurf ist nicht öffentlich und wird
    von Hand veröffentlicht – also erst nach grünem `verify` veröffentlichen (steht so in
    [RELEASE.md](../RELEASE.md)). Ein Umbau (erst prüfen, dann Entwurf) ist möglich, braucht aber
    einen eigenen Pull Request mit Probelauf (#186).
-6. **Downloads zur Laufzeit:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) und
+5. **Downloads zur Laufzeit:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) und
    `go install` (actionlint) holen Quellcode mit festen Versionen und Prüfsummen aus Lockfile bzw.
    Go-Prüfsummendatenbank, bauen ihn aber auf dem Runner. Kein Secret ist in diesen Jobs erreichbar;
    Restrisiko: manipulierte Prüfergebnisse (#185).
-7. **Ausgehender Netzverkehr** der Runner ist nicht beschränkt. Harden-Runner im Beobachtungsmodus
+6. **Ausgehender Netzverkehr** der Runner ist nicht beschränkt. Harden-Runner im Beobachtungsmodus
    für den Job `publish` ist eine Option, wenn dort je ein langlebiges Secret nötig wird (#185).
-8. **Externe Überwachung** (#187) gibt es nicht. Für ein Ein-Personen-Projekt genügen vorerst die
+7. **Externe Überwachung** (#187, bewusst nicht geplant) gibt es nicht. Für ein
+   Ein-Personen-Projekt genügen vorerst die
    GitHub-Benachrichtigungen zu Workflow-Läufen, Releases und Sicherheitswarnungen; ein eigener
    Überwachungsdienst wäre mehr Angriffsfläche als Nutzen.
 
-Nicht Teil von `main`: der OpenCode-Workflow (#176, #184). Er wird erst bewertet, wenn entschieden
-ist, ob er kommt.
+OpenCode (#176, #184): die Entwürfe sind geschlossen, auf `main` gibt es keinen solchen Workflow.
 
 ## Grenzen
 
@@ -109,7 +108,7 @@ ist, ob er kommt.
 ## English
 
 Inventory of PQKeep's GitHub Actions setup (#180–#187): what runs, with which permissions, what
-is checked, what remains open. **As of 2026-11-14.** GitHub settings were read through the GitHub
+is checked, what remains open. **As of 2026-11-14 (updated in the evening).** GitHub settings were read through the GitHub
 API on that day (names and rules only, no secret values). Settings can change – check again before
 a release.
 
@@ -153,41 +152,39 @@ containers, infrastructure code or a web service.
 | Ruleset `main` | no deletion, no force push, linear history, signed commits, pull request with squash only, all review threads resolved, 9 required checks (CI on Linux/Windows, MSRV, limits, binary hardening, cargo-deny, gitleaks); **no** bypass actors | good |
 | Ruleset tags `v*` | no deletion, update, force push; bypass for repository admins only | good (needed to create tags) |
 | CODEOWNERS | file present, code owner review **not** required by the ruleset | correct: with a single maintainer the requirement would block every merge |
-| Environment `release` | maintainer approval required, self-approval allowed; **no** restriction to tags/branches | open, see below |
-| Actions settings | all actions allowed, SHA pinning not enforced, token "read", Actions cannot approve reviews | open, see below |
-| Secrets | repository: `GEMINI_API_KEY` (for the OpenCode trial #176, used by no workflow on `main`); environment `release`: none | open, see below |
+| Environment `release` | maintainer approval required, self-approval allowed; custom branch/tag rules switched on, list still empty | open, see below |
+| Actions settings | all actions allowed, SHA pinning **enforced**, token "read", Actions cannot approve reviews | good |
+| Secrets | none (repository and environment `release`) | good |
 
 ### Open items
 
 Ordered by benefit; each item is a setting or its own small pull request.
 
-1. **Restrict environment `release` to tags `v*`** (setting "Deployment branches and tags").
-   Today a manual run from any branch can request approval (#186).
-2. **Remove `GEMINI_API_KEY` from the repository secrets** until #176 is decided; if needed, add
-   it later as an environment secret with approval. A repository secret is readable by any
-   workflow on any branch created by someone with write access (#183).
-3. **Enforce SHA pinning in the Actions settings** ("Require actions to be pinned to a full-length
-   commit SHA"). The workflows already comply (#181).
-4. **Do not make `Workflow-Prüfung / workflow policy` a required check:** because of its path
+1. **Environment `release`: add the allowed refs** (setting "Deployment branches and tags"). Custom
+   rules are switched on but the list is empty – so no run may reach the `publish` job. Add tag
+   `v*` (release) and branch `main` (dry run, see [RELEASE.md](../RELEASE.md)); `main` is protected
+   by the ruleset (#186).
+2. Done: `GEMINI_API_KEY` removed (#183), SHA pinning enforced in the Actions settings (#181).
+3. **Do not make `Workflow-Prüfung / workflow policy` a required check:** because of its path
    filter the workflow only runs on workflow changes; a required check that never starts blocks
    every other pull request.
-5. **Release order:** `publish` creates the release **draft** before `verify` has checked the
+4. **Release order:** `publish` creates the release **draft** before `verify` has checked the
    manifest, checksums, attestations and signatures. The draft is not public and is published by
    hand – so publish only after `verify` is green (as stated in [RELEASE.md](../RELEASE.md)).
    Reordering (verify first, then draft) is possible but needs its own pull request with a trial
    run (#186).
-6. **Runtime downloads:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) and `go install`
+5. **Runtime downloads:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) and `go install`
    (actionlint) fetch source code at fixed versions with checksums from the lockfile or the Go
    checksum database, but build it on the runner. No secret is reachable in these jobs; residual
    risk: manipulated check results (#185).
-7. **Outbound network traffic** of the runners is unrestricted. Harden-Runner in audit mode for
+6. **Outbound network traffic** of the runners is unrestricted. Harden-Runner in audit mode for
    the `publish` job is an option should a long-lived secret ever be needed there (#185).
-8. **External monitoring** (#187) does not exist. For a one-person project, GitHub's notifications
+7. **External monitoring** (#187, deliberately not planned) does not exist. For a one-person
+   project, GitHub's notifications
    for workflow runs, releases and security alerts are enough for now; a separate monitoring
    service would add more attack surface than benefit.
 
-Not part of `main`: the OpenCode workflow (#176, #184). It will be assessed once it is decided
-whether it comes at all.
+OpenCode (#176, #184): the drafts are closed; there is no such workflow on `main`.
 
 ### Limits
 
