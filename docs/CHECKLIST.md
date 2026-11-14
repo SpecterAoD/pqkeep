@@ -4,7 +4,7 @@
 
 - [ ] Plan wurde vorgelegt und freigegeben
 - [ ] Produktionsdateien ≤ 300 Zeilen, Funktionen ≤ 50, Testdateien ≤ 400; Tests nur in eigenen Dateien
-- [ ] Kommentare, Doku und Hilfetexte zweisprachig (DE/EN)
+- [ ] Kommentare, Doku und Hilfetexte zweisprachig (DE/EN); externe Beiträge: Englisch genügt, Deutsch wird nachgezogen (`needs translation`)
 - [ ] `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --locked` grün auf Linux **und** Windows
 - [ ] Keine hartcodierten Geheimnisse, kein `unwrap()`/`expect()` in Produktionscode
 - [ ] Negativ- und Grenzwerttests vorhanden

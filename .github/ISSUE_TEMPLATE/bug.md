@@ -1,16 +1,18 @@
 ---
-name: Fehler / Bug
-about: Etwas funktioniert nicht wie erwartet / Something does not work as expected
-labels: bug
+name: Bug / Fehler
+about: Something does not work as expected / Etwas funktioniert nicht wie erwartet
+title: ""
+labels: ["type:bug"]
 ---
 
-**Keine Geheimnisse, Schlüssel oder Passphrasen einfügen! / Never paste secrets, keys or passphrases!**
+**Never paste secrets, keys or passphrases! / Keine Geheimnisse, Schlüssel oder Passphrasen einfügen!**
+Security issues: please report privately, see SECURITY.md. / Sicherheitslücken bitte vertraulich melden, siehe SECURITY.md.
 
-## Beschreibung / Description
+## Description / Beschreibung
 
-## Schritte zur Reproduktion / Steps to reproduce
+## Steps to reproduce / Schritte zur Reproduktion
 
-## Erwartet / Expected
+## Expected / Erwartet
 
-## Umgebung / Environment
-OS, Version (`pqkeep --version`):
+## Environment / Umgebung
+OS, version (`pqkeep --version`), installed from (release archive, .deb, source):
