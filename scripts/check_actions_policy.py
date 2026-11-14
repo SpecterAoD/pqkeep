@@ -42,7 +42,11 @@ def audit(text: str, name: str) -> list[str]:
     if "pull_request:" in text and "secrets." in text:
         problems.append("PR-triggered workflow references repository secrets; review isolation")
     if ("pull_request:" in text and WRITE_SCOPE.search(text)
-            and "if: github.event_name != 'pull_request'" not in text\n            and not (name == "codeql.yml"\n                     and "security-events: write" in text\n                     and "contents: write" not in text\n                     and "actions: write" not in text)):
+            and "if: github.event_name != 'pull_request'" not in text
+            and not (name == "codeql.yml"
+                     and "security-events: write" in text
+                     and "contents: write" not in text
+                     and "actions: write" not in text)):
         # Job-level write can be legitimate when guarded; report for explicit review.
         problems.append("PR-triggered workflow contains write permission; review job guards")
     return [f"{name}: {problem}" for problem in problems]
