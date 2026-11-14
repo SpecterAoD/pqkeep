@@ -84,21 +84,19 @@ def main() -> int:
     if result is None:
         print("DENIED")
         return 1
-    # Live verification is mandatory for any authorization decision.
-    # No environment switch may bypass the GitHub source-of-truth check.
-    if True:
-        token = os.environ.get("GH_TOKEN")
-        if not token:
-            print("DENIED: missing read token", file=sys.stderr)
+    # Always verify the live GitHub comment before authorizing.
+    token = os.environ.get("GH_TOKEN")
+    if not token:
+        print("DENIED: missing read token", file=sys.stderr)
+        return 1
+    try:
+        current = fetch_comment(event, sys.argv[2], token)
+        if not unchanged_comment(event, current):
+            print("DENIED: comment changed", file=sys.stderr)
             return 1
-        try:
-            current = fetch_comment(event, sys.argv[2], token)
-            if not unchanged_comment(event, current):
-                print("DENIED: comment changed", file=sys.stderr)
-                return 1
-        except (ValueError, KeyError, OSError, urllib.error.URLError):
-            print("DENIED: cannot verify comment", file=sys.stderr)
-            return 1
+    except (ValueError, KeyError, OSError, urllib.error.URLError):
+        print("DENIED: cannot verify comment", file=sys.stderr)
+        return 1
     command, _ = result
     print(f"AUTHORIZED command={command} issue={event['issue']['number']}")
     return 0
