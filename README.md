@@ -61,6 +61,7 @@ pqkeep encrypt report.pdf --factor-file /media/usb/jane.factor   # passphrase + 
 pqkeep encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
 pqkeep encrypt report.pdf --to anna.pub.json --to ben.pub.json   # several recipients (up to 64)
 pqkeep decrypt folder.pqkf --key anna.key.json
+pqkeep check --key anna.key.json backups/*.pqkf    # verify completely, write nothing (exit code 0/3/1)
 pqkeep sign --key anna.key.json contract.pdf      # → contract.pdf.pqsig (ML-DSA-87 key)
 pqkeep verify --pub anna.pub.json contract.pdf    # [VERIFIED] / [INVALID]
 pqkeep help security                     # topics: passphrase, algorithms, container, files, security, verify
@@ -189,6 +190,7 @@ pqkeep encrypt bericht.pdf --factor-file /media/usb/max.factor   # Passphrase + 
 pqkeep encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
 pqkeep encrypt bericht.pdf --to anna.pub.json --to ben.pub.json  # mehrere Empfänger (bis 64)
 pqkeep decrypt Ordner.pqkf --key anna.key.json
+pqkeep check --key anna.key.json backups/*.pqkf    # vollständig prüfen, nichts schreiben (Exit-Code 0/3/1)
 pqkeep sign --key anna.key.json vertrag.pdf       # → vertrag.pdf.pqsig (ML-DSA-87-Schlüssel)
 pqkeep verify --pub anna.pub.json vertrag.pdf     # [VERIFIED] / [INVALID]
 pqkeep help security                     # Hilfethemen: passphrase, algorithms, container, files, security, verify

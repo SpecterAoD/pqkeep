@@ -46,7 +46,7 @@ rclone copy "$dir/db-$stamp.dump.pqkf" remote:backups/   # oder rsync, aws s3 cp
   Verschlüsseln direkt aus einer Pipe ist geplant (#83, nur Verschlüsseln).
 - **restic/Borg** verschlüsseln selbst (nicht post-quanten-sicher); PQKeep davor schalten, wenn die
   Backup-Dateien zusätzlich quantenfest geschützt sein sollen.
-- Mehrere Admins mit eigenem Schlüssel: geplant (U2, mehrere Empfänger, #45–#47).
+- Mehrere Admins mit eigenem Schlüssel: `--to` mehrfach (bis 64 Empfänger, Format v2).
 
 ## systemd-Timer (empfohlen)
 
@@ -97,13 +97,31 @@ PQKeep selbst läuft unter Linux zusätzlich in seiner Sandbox (Landlock, seccom
 fehlgeschlagen · `4` Passphrase zu schwach · `5` Ziel existiert · `6` keine Fenster (Kontextmenü) ·
 `7` Signatur ungültig (`verify`). Maschinenlesbare Ausgabe (`--json`): geplant (#85).
 
+## Backups prüfen (`pqkeep check`)
+
+Ein Backup ist nur so gut wie seine Wiederherstellung. `pqkeep check` prüft verschlüsselte Dateien
+**vollständig** – alle Blöcke, Prüfsummen und Archivpfade wie beim Entschlüsseln –, schreibt aber
+**nichts** (keine Ziel- und keine Temporärdateien; die Sandbox erlaubt nur Lesen). Dafür ist der
+private Schlüssel bzw. die Passphrase nötig, also auf dem Admin-Rechner, nicht auf dem Server:
+
+```sh
+pqkeep check --key backup.key.json /mnt/backups/*.pqkf
+```
+
+- Eine Zeile je Datei (`OK: …` auf stdout, `FEHLER: …` auf stderr), am Ende eine Zusammenfassung.
+  Jede Datei wird geprüft, auch wenn eine scheitert.
+- Exit-Code: 0 alles in Ordnung, 3 falscher Schlüssel bzw. falsche Passphrase **oder** Manipulation
+  (bewusst nicht unterscheidbar), 1 sonstiger Fehler (z. B. keine pqkeep-Datei, nicht lesbar), 2
+  Bedienfehler. Bei mehreren Dateien zählt der erste Fehler.
+- Ohne Geheimnis zeigt `pqkeep inspect` nur die Kopfdaten – das ist **keine** Integritätsprüfung.
+
 ## Grenzen
 
 - Kein Dienst/Daemon und keine eigene Upload-Anbindung: Die CLI-Sandbox verbietet Netzwerkzugriffe
   bewusst; Uploads erledigen bewährte Werkzeuge.
 - Release-Programme gibt es für x86_64 (Linux, Windows); andere Architekturen (z. B. ARM-Server,
   Raspberry Pi) aus dem Quelltext bauen.
-- Backups regelmäßig probeweise entschlüsseln; ein eigener Prüfbefehl ist geplant (#86).
+- Backups regelmäßig mit `pqkeep check` prüfen (siehe oben) und gelegentlich wirklich wiederherstellen.
 
 ---
 
@@ -122,7 +140,15 @@ ideally on tmpfs; encrypt with `--batch --to`; delete the plaintext dump; upload
 systemd hardening with `NoNewPrivileges`, `ProtectSystem=strict`, `ReadWritePaths`; optional
 `LoadCredential=` plus `--passphrase-file "$CREDENTIALS_DIRECTORY/…"`). restic/Borg encrypt themselves (not
 post-quantum); put PQKeep in front for quantum-resistant backup files. Encrypting from a pipe is planned
-(#83, encryption only); several admins with their own keys: U2 (#45–#47).
+(#83, encryption only); several admins with their own keys: repeated `--to` (up to 64 recipients, format v2).
+
+**Checking backups (`pqkeep check`):** checks encrypted files **completely** – all chunks, checksums and
+archive paths as when decrypting – but writes **nothing** (no target or temporary files; the sandbox only
+allows reading). It needs the private key or passphrase, so run it on the admin machine:
+`pqkeep check --key backup.key.json /mnt/backups/*.pqkf`. One line per file (`OK: …` on stdout, `ERROR: …`
+on stderr) plus a summary; every file is checked. Exit code 0 all fine, 3 wrong key/passphrase **or**
+tampering (deliberately indistinguishable), 1 other error, 2 usage; with several files the first error
+counts. `pqkeep inspect` without a secret only shows header data – **no** integrity check.
 
 **Unattended options:** `--batch` never prompts (missing input → exit code 2); `--passphrase-file <path>`
 reads one line from a regular, non-link file ≤ 4 KiB, on Linux readable by the owner only (`chmod 600`/`400`)
@@ -135,5 +161,5 @@ A passphrase on the server is weaker than recipient mode – prefer recipient mo
 passphrase, 5 target exists, 6 no windows (context menu), 7 invalid signature. `--json`: planned (#85).
 
 **Limits:** no daemon and no own upload (the CLI sandbox forbids network access by design); release
-binaries for x86_64 only – build other architectures (ARM servers, Raspberry Pi) from source; test-restore
-backups regularly (a check command is planned, #86).
+binaries for x86_64 only – build other architectures (ARM servers, Raspberry Pi) from source; check
+backups regularly with `pqkeep check` and do a real restore now and then.

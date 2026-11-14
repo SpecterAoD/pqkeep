@@ -93,6 +93,18 @@ fn u01_each_recipient_file_adds_one_read_permission() {
     assert!(access(&["pqkeep", "encrypt", s, "--to", k, "--to", text(&missing)]).is_none());
 }
 
+/// DE: #86: `check` liest Quellen, Schlüssel und Faktordatei – und darf nirgends schreiben.
+/// EN: #86: `check` reads sources, key and factor file – and may write nowhere.
+#[test]
+fn check_reads_only() {
+    let (_dir, source, key, factor) = setup();
+    let (s, k, f) = (text(&source), text(&key), text(&factor));
+    let argv = ["pqkeep", "check", s, "-k", k, "--factor-file", f];
+    let access = access(&argv).unwrap();
+    assert_eq!(access.read, [factor.clone(), source.clone(), key.clone()]);
+    assert_eq!(access.write_dirs, [] as [PathBuf; 0]);
+}
+
 #[test]
 fn u02_factor_command_writes_only_into_the_target_directory() {
     let (dir, ..) = setup();

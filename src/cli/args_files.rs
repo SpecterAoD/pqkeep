@@ -12,7 +12,7 @@ use super::text::texts;
 /// DE: Höchstzahl an Quellen je Aufruf. EN: Maximum number of sources per call.
 pub const MAX_SOURCES: usize = 1000;
 
-pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
+pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
     let t = texts(lang);
     let m = super::many_text::many_texts(lang);
     [
@@ -59,5 +59,6 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(out_optional(lang))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
             .arg(super::factor_cmd::arg(lang)),
+        super::check_cmd::command(lang),
     ]
 }

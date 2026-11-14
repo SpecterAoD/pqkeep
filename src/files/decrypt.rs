@@ -9,7 +9,7 @@
 //! encrypted for the recipient) are rejected without leaving anything behind.
 
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read};
+use std::io::{BufReader, BufWriter, Chain, Cursor, Read};
 use std::path::Path;
 
 use sha3::{Digest, Sha3_256};
@@ -35,13 +35,29 @@ use crate::{Error, Result};
 /// header, archive, path, checksum, key kind, factor file), [`Error::Unsupported`]
 /// (Version, Zugangstyp / version, slot type), [`Error::Io`] (u. a. `AlreadyExists`).
 pub fn decrypt(source: &Path, target: &Path, unlock: &Unlock<'_>) -> Result<Report> {
+    let (archive, content) = open(source, unlock)?;
+    match content {
+        Content::File => extract_file(archive, target),
+        Content::Directory => extract_dir(archive, target),
+    }
+}
+
+/// DE: Quelle nach dem Vorlesen von Magic und Version. EN: Source after pre-reading magic/version.
+pub(super) type Source = Chain<Cursor<Vec<u8>>, BufReader<File>>;
+
+/// DE: Öffnet `source`: Header lesen, Dateischlüssel entsperren, Strom vorbereiten. Gemeinsam
+/// für `decrypt` und `check`.
+/// EN: Opens `source`: read the header, unlock the file key, prepare the stream. Shared by
+/// `decrypt` and `check`.
+pub(super) fn open(source: &Path, unlock: &Unlock<'_>) -> Result<(ArchiveReader<Source>, Content)> {
     let mut file = BufReader::new(File::open(source)?);
     // DE: Magic und Version vorab lesen und dem passenden Parser wieder voranstellen.
     // EN: Read magic and version up front and put them back in front of the matching parser.
     let mut start = [0u8; MAGIC.len() + 2];
     let filled = read_full(&mut file, &mut start)?;
-    let mut reader = start[..filled].chain(file);
-    let opened = if is_v2(&start[..filled]) {
+    let is_v2 = is_v2(&start[..filled]);
+    let mut reader = Cursor::new(start[..filled].to_vec()).chain(file);
+    let opened = if is_v2 {
         let header = HeaderV2::read(&mut reader)?;
         Opened {
             file_key: decrypt_v2::unwrap_key(&header, unlock)?,
@@ -65,11 +81,7 @@ pub fn decrypt(source: &Path, target: &Path, unlock: &Unlock<'_>) -> Result<Repo
         reader,
     )?;
     drop(opened.file_key);
-    let archive = ArchiveReader::new(dec);
-    match opened.content {
-        Content::File => extract_file(archive, target),
-        Content::Directory => extract_dir(archive, target),
-    }
+    Ok((ArchiveReader::new(dec), opened.content))
 }
 
 /// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
