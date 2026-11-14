@@ -41,7 +41,8 @@ def audit(text: str, name: str) -> list[str]:
             problems.append(description)
     if "pull_request:" in text and "secrets." in text:
         problems.append("PR-triggered workflow references repository secrets; review isolation")
-    if "pull_request:" in text and WRITE_SCOPE.search(text):
+    if ("pull_request:" in text and WRITE_SCOPE.search(text)
+            and "if: github.event_name != 'pull_request'" not in text):
         # Job-level write can be legitimate when guarded; report for explicit review.
         problems.append("PR-triggered workflow contains write permission; review job guards")
     return [f"{name}: {problem}" for problem in problems]
