@@ -23,6 +23,8 @@ def validate(event: dict, repository: str) -> tuple[str, str] | None:
     if ("pull_request" in issue or type(issue.get("number")) is not int
             or issue["number"] <= 0):
         return None
+    if (type(comment.get("id")) is not int or comment["id"] <= 0):
+        return None
     if comment.get("user", {}).get("id") != OWNER_ID:
         return None
     if sender.get("id") != OWNER_ID:
@@ -46,6 +48,11 @@ def unchanged_comment(event: dict, current: dict) -> bool:
     return (
         isinstance(original.get("id"), int)
         and current.get("id") == original["id"]
+        and current.get("issue_url") == (
+            "https://api.github.com/repos/"
+            + event["repository"]["full_name"]
+            + "/issues/" + str(event["issue"]["number"])
+        )
         and current.get("user", {}).get("id") == OWNER_ID
         and current.get("body") == original.get("body")
         and current.get("created_at") == original.get("created_at")
