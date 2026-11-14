@@ -76,6 +76,18 @@ fn file_access(
     Ok(None)
 }
 
+/// DE: Passphrase-Datei (global) und Faktordatei: jeweils nur diese eine Datei, nur lesen.
+/// EN: Passphrase file (global) and factor file: each just this one file, read only.
+fn secret_files(m: &ArgMatches, lang: Lang, access: &mut CliAccess) -> CliResult {
+    if let Some(p) = super::unattended::pass_file() {
+        access.read.push(existing(p.to_path_buf(), lang)?);
+    }
+    if let Some(p) = super::factor_cmd::path(m) {
+        access.read.push(existing(p, lang)?);
+    }
+    Ok(())
+}
+
 /// DE: Freigaben für einen Befehl; `None` = Befehl richtet die Sandbox selbst ein
 /// (`serve` ohne `--init-token`).
 /// EN: Permissions for a command; `None` = the command sets up the sandbox itself
@@ -86,14 +98,7 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
         super::recipients::check_factor(m, lang)?;
     }
     let mut access = CliAccess::default();
-    // DE: Passphrase-Datei (global) immer lesbar. EN: Passphrase file (global) always readable.
-    if let Some(p) = super::unattended::pass_file() {
-        access.read.push(existing(p.to_path_buf(), lang)?);
-    }
-    // DE: Faktordatei: nur diese eine Datei, nur lesen. EN: Factor file: this one file, read only.
-    if let Some(p) = super::factor_cmd::path(m) {
-        access.read.push(existing(p, lang)?);
-    }
+    secret_files(m, lang, &mut access)?;
     let mut read = |p: Option<PathBuf>| -> CliResult {
         if let Some(p) = p {
             access.read.push(existing(p, lang)?);
@@ -111,6 +116,13 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             path_arg(m, "out")
         }
         "encrypt" | "decrypt" => file_access(name, m, lang, &mut access)?,
+        // DE/EN: `check` liest nur, schreibt nirgends / only reads, writes nowhere.
+        "check" => {
+            super::check_cmd::read_paths(m)
+                .into_iter()
+                .try_for_each(|p| read(Some(p)))?;
+            None
+        }
         "sign" => {
             read(path_arg(m, "file"))?;
             read(path_arg(m, "key"))?;

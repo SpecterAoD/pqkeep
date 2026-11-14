@@ -112,6 +112,12 @@ fn assert_rejected(key: &Key, content: Content, plaintext: &[u8], what: &str) {
     std::fs::create_dir(&work).unwrap();
     let enc = dir.path().join("evil.pqkf");
     build(key, content, plaintext, &enc);
+    // DE: `check` (#86) muss dieselben Fälle abweisen. EN: `check` (#86) must reject the same cases.
+    let checked = files::check(&enc, &Unlock::Key(&key.unlocked));
+    assert!(
+        checked.is_err(),
+        "{what}: check angenommen / check accepted"
+    );
     let target = work.join("ziel");
     let result = files::decrypt(&enc, &target, &Unlock::Key(&key.unlocked));
     assert!(result.is_err(), "{what}: angenommen / accepted");
@@ -136,6 +142,8 @@ fn control_case_is_accepted() {
     let enc = dir.path().join("ok.pqkf");
     let plain = [dir_entry("a"), file_entry("a/b.txt", b"hi", true), end(2)].concat();
     build(&key, Content::Directory, &plain, &enc);
+    let report = files::check(&enc, &Unlock::Key(&key.unlocked)).unwrap();
+    assert_eq!((report.files, report.directories, report.bytes), (1, 1, 2));
     let out = dir.path().join("ok");
     files::decrypt(&enc, &out, &Unlock::Key(&key.unlocked)).unwrap();
     assert_eq!(std::fs::read(out.join("a").join("b.txt")).unwrap(), b"hi");
