@@ -111,6 +111,34 @@ class GateTests(unittest.TestCase):
         payload["repository"]["full_name"] = "someone/other"
         self.assertIsNone(self.check(payload))
 
+    def test_markdown_fenced_command_rejected(self):
+        self.assertIsNone(self.check(event(body="```\n/oc plan Test\n```")))
+
+    def test_unicode_homoglyph_command_rejected(self):
+        self.assertIsNone(self.check(event(body="/оc plan Test")))
+
+    def test_newline_and_hidden_command_rejected(self):
+        self.assertIsNone(self.check(event(body="/oc plan Safe\n<!-- /oc implement -->")))
+
+    def test_overlong_command_rejected(self):
+        self.assertIsNone(self.check(event(body="/oc plan " + "A" * 4001)))
+
+    def test_untrusted_issue_body_does_not_authorize(self):
+        payload = event(body="Bitte prüfen")
+        payload["issue"]["body"] = "/oc plan malicious"
+        self.assertIsNone(self.check(payload))
+
+    def test_comment_id_must_be_integer(self):
+        payload = event()
+        payload["comment"]["id"] = "12345"
+        self.assertIsNone(self.check(payload))
+
+    def test_unchanged_comment_requires_issue_url(self):
+        payload = event()
+        current = dict(payload["comment"])
+        del current["issue_url"]
+        self.assertFalse(unchanged_comment(payload, current))
+
     def test_edited_event(self):
         payload = event()
         payload["action"] = "edited"
