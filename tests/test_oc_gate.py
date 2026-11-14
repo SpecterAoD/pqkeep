@@ -67,6 +67,23 @@ class GateTests(unittest.TestCase):
     def test_extra_lines(self):
         self.assertIsNone(self.check(event(body="/oc plan Test\n/oc implement X")))
 
+    def test_implement_not_yet_authorized(self):
+        self.assertIsNone(self.check(event(body="/oc implement change files")))
+
+    def test_trailing_newline_rejected(self):
+        self.assertIsNone(self.check(event(body="/oc plan Test\\n")))
+
+    def test_zero_width_rejected(self):
+        self.assertIsNone(self.check(event(body="/oc plan Test\\u200b")))
+
+    def test_control_character_rejected(self):
+        self.assertIsNone(self.check(event(body="/oc plan Test\\x00")))
+
+    def test_boolean_issue_number_rejected(self):
+        payload = event()
+        payload["issue"]["number"] = True
+        self.assertIsNone(self.check(payload))
+
     def test_pr_comment(self):
         payload = event()
         payload["issue"]["pull_request"] = {}
