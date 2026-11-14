@@ -22,7 +22,7 @@ pub(super) fn sources(m: &ArgMatches) -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
-fn source(m: &ArgMatches) -> PathBuf {
+pub(super) fn source(m: &ArgMatches) -> PathBuf {
     sources(m).into_iter().next().unwrap_or_default()
 }
 
@@ -135,7 +135,7 @@ pub fn default_decrypted(src: &Path) -> Option<PathBuf> {
     Some(src.with_file_name(new))
 }
 
-fn target(t: &Texts, m: &ArgMatches, default: Option<PathBuf>) -> CliResult<PathBuf> {
+pub(super) fn target(t: &Texts, m: &ArgMatches, default: Option<PathBuf>) -> CliResult<PathBuf> {
     m.get_one::<PathBuf>("out")
         .cloned()
         .or(default)
@@ -160,16 +160,16 @@ pub(super) fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report
     let _ = lang;
 }
 
-/// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
 /// DE: Verstecktes `--temp-tag` (vom Kontextmenü) an die Bibliothek geben.
 /// EN: Pass the hidden `--temp-tag` (from the context menu) to the library.
-fn apply_temp_tag(m: &ArgMatches, lang: Lang) -> CliResult {
+pub(super) fn apply_temp_tag(m: &ArgMatches, lang: Lang) -> CliResult {
     match m.get_one::<String>("temp-tag") {
         Some(tag) => files::set_temp_tag(tag).map_err(|e| Failure::from_error(&e, lang)),
         None => Ok(()),
     }
 }
 
+/// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     apply_temp_tag(m, lang)?;
     let all = sources(m);

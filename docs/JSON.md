@@ -2,9 +2,8 @@
 
 **DE** | [EN](#english)
 
-Für Skripte und Monitoring geben `check`, `inspect` und `verify` mit `--json` ihr Ergebnis als
-**genau ein JSON-Objekt** auf stdout aus (eine Zeile). `encrypt` und `decrypt` folgen (#85, zweiter
-Teil). Exit-Codes und Schema sind eine **stabile Schnittstelle**: Inkompatible Änderungen gibt es
+Für Skripte und Monitoring geben `encrypt`, `decrypt`, `check`, `inspect` und `verify` mit `--json`
+ihr Ergebnis als **genau ein JSON-Objekt** auf stdout aus (eine Zeile). Exit-Codes und Schema sind eine **stabile Schnittstelle**: Inkompatible Änderungen gibt es
 nur mit neuer Schema-Kennung.
 
 ## Exit-Codes
@@ -67,12 +66,29 @@ Gültig: `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (Angabe des
 vertrauenswürdig), Exit 0. Ungültig: `"valid": false`, `signer_matches` (stammt die Signatur vom
 angegebenen Schlüssel?), Exit 7. Immer zusätzlich `file`.
 
+## `encrypt --json` und `decrypt --json`
+
+```json
+{"schema":"pqkeep-json/1","command":"encrypt","ok":false,"exit_code":5,
+ "results":[{"source":"a.txt","target":"a.txt.pqkf","ok":true,"files":1,"directories":0,"bytes":6,"skipped":0},
+            {"source":"b.txt","target":"b.txt.pqkf","ok":false,"error":{"code":5,"kind":"target_exists","message":"…"}}],
+ "summary":{"total":2,"ok":1,"failed":1}}
+```
+
+- `results`: je erzeugtem Ziel `source`, `target`, `ok`, dann `files`, `directories`, `bytes`,
+  `skipped` (Anzahl übersprungener Einträge wie Symlinks – ohne Pfade) oder `error`.
+- Beim Container (`encrypt` mit mehreren Quellen und `--out`) ist `source` eine **Liste**.
+- Mehrere Einträge gibt es nur bei `encrypt --each` und `decrypt` mit mehreren Dateien; dort läuft
+  jede Datei, auch wenn eine scheitert, und `exit_code` ist der erste Fehler.
+- Scheitert der Befehl als Ganzes (eine Quelle, Container, zu schwache oder falsche Passphrase,
+  Ziel existiert bei einer Quelle), gibt es nur `error`, keine `results`.
+
 ---
 
 ## English
 
-With `--json`, `check`, `inspect` and `verify` print their result as **exactly one JSON object** on
-stdout (one line); `encrypt` and `decrypt` follow (#85, second part). Exit codes and schema are a
+With `--json`, `encrypt`, `decrypt`, `check`, `inspect` and `verify` print their result as **exactly one JSON object** on
+stdout (one line); so do `encrypt` and `decrypt`. Exit codes and schema are a
 **stable interface**: incompatible changes only come with a new schema identifier.
 
 **Exit codes:** 0 `ok`; 1 `error` (e.g. file missing, not a pqkeep file, I/O); 2 `usage` (arguments,
@@ -100,3 +116,10 @@ from encrypted archive contents – only the given files, counters and header da
 
 **`verify --json`:** valid → `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (claimed by
 the signer, not trusted), exit 0; invalid → `"valid": false`, `signer_matches`, exit 7. Always `file`.
+
+**`encrypt --json`, `decrypt --json`:** `results` per created target (`source`, `target`, `ok`, then
+`files`, `directories`, `bytes`, `skipped` – a count, no paths – or `error`) and `summary`. For a
+container (`encrypt` with several sources and `--out`) `source` is a **list**. Several entries only
+with `encrypt --each` and `decrypt` with several files; every file is processed even if one fails and
+`exit_code` is the first error. If the command fails as a whole (one source, container, weak or wrong
+passphrase, existing target with one source) there is only `error`, no `results`.
