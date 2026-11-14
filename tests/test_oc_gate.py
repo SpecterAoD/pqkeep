@@ -10,6 +10,7 @@ def event(body="/oc plan Analyse", author=77644070):
         "repository": {"full_name": "SpecterAoD/pqkeep"},
         "issue": {"number": 176, "body": "<!-- /oc implement -->"},
         "comment": {"id": 12345, "user": {"id": author}, "body": body,
+                    "issue_url": "https://api.github.com/repos/SpecterAoD/pqkeep/issues/176",
                     "created_at": "2026-11-13T10:00:00Z",
                     "updated_at": "2026-11-13T10:00:00Z"},
     }
@@ -22,6 +23,17 @@ class GateTests(unittest.TestCase):
     def test_live_comment_matches(self):
         payload = event()
         self.assertTrue(unchanged_comment(payload, payload["comment"]))
+
+    def test_live_comment_other_issue_rejected(self):
+        payload = event()
+        current = dict(payload["comment"],
+                       issue_url="https://api.github.com/repos/SpecterAoD/pqkeep/issues/177")
+        self.assertFalse(unchanged_comment(payload, current))
+
+    def test_missing_comment_id_rejected_before_model(self):
+        payload = event()
+        del payload["comment"]["id"]
+        self.assertIsNone(self.check(payload))
 
     def test_live_comment_modified(self):
         payload = event()
