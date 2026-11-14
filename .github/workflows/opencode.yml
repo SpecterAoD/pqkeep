@@ -84,8 +84,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OC_ISSUE_BODY: ${{ github.event.issue.body }}
           OC_COMMAND_BODY: ${{ github.event.comment.body }}
+          OPENCODE_CONFIG: /tmp/oc-plan-config.json
         run: |
           test -n "$GEMINI_API_KEY" || { echo 'Gemini secret missing'; exit 1; }
+          mkdir -p /tmp/oc-plan-work
+          cd /tmp/oc-plan-work
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -99,6 +102,11 @@ jobs:
               "Untrusted issue description:\n" + issue
           )
           Path("/tmp/oc-plan-prompt.txt").write_text(prompt, encoding="utf-8")
+          import json
+          policy = {"permissions": [
+              {"action": "*", "resource": "*", "effect": "deny"}
+          ], "mcp": {}}
+          Path("/tmp/oc-plan-config.json").write_text(json.dumps(policy), encoding="utf-8")
           PY
           # Do not print prompt or model output to Actions logs.
           opencode run --standalone --model google/gemini-3.8-flash \
