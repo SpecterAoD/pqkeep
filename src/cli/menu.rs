@@ -11,7 +11,7 @@
 
 use std::path::Path;
 
-use dialoguer::{Input, Select};
+use dialoguer::{Confirm, Input, Select};
 use pqkeep::security::Lang;
 
 use super::factor_ui::Ask;
@@ -24,6 +24,15 @@ fn ask(prompt: &str, allow_empty: bool) -> CliResult<String> {
         .with_prompt(prompt)
         .allow_empty(allow_empty)
         .interact_text()
+        .map_err(|_| Failure::new(code::ERROR, ""))
+}
+
+/// DE: Ja/Nein, Standard Nein. EN: Yes/no, default no.
+fn confirm(prompt: &str) -> CliResult<bool> {
+    Confirm::new()
+        .with_prompt(prompt)
+        .default(false)
+        .interact()
         .map_err(|_| Failure::new(code::ERROR, ""))
 }
 
@@ -54,13 +63,24 @@ fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> C
     let path = ask(t.menu_path, false)?;
     if encrypt {
         let to = ask(t.menu_recipient, true)?;
-        if to.is_empty() {
+        // DE: Mit Empfängern: weitere sammeln, dann optional eigene Passphrase (#47).
+        // EN: With recipients: collect more, then optionally an own passphrase (#47).
+        let with_pass = !to.is_empty() && {
+            let r = super::recipients_ui::texts(lang);
+            let all = super::recipients_ui::collect(to.clone(), || {
+                ask(r.menu_more, true).map(|p| (!p.is_empty()).then_some(p))
+            })?;
+            argv.extend(super::recipients_ui::to_args(&all));
+            confirm(r.with_pass)?
+        };
+        if with_pass {
+            argv.push(super::recipients::WITH_PASSPHRASE_FLAG.to_owned());
+        }
+        if to.is_empty() || with_pass {
             let factor = ask(f.menu_optional, true)?;
             if !factor.is_empty() {
                 argv.extend([super::factor_cmd::FLAG.to_owned(), factor]);
             }
-        } else {
-            argv.extend(["--to".to_owned(), to]);
         }
     } else {
         let extra = super::factor_ui::for_decrypt(Path::new(&path), lang, |what| match what {

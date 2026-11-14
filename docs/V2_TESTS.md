@@ -57,7 +57,8 @@ unbekannte Felder wie `factor_file` ab). Menü, geführter Ablauf und Kontextmen
 weitergegeben werden, prüfen `src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` und `src/cli/guide/mod_tests.rs`; die Fenster
 selbst werden von Hand geprüft. U01 (Teil `--to` mehrfach, #47: 2 und 64 Empfänger, fremder Schlüssel, Doppel, 65, falscher
 Schlüsseltyp, v1 bei einem Empfänger, `--with-passphrase` mit Faktordatei, `--each`, Hilfe DE/EN): `tests/cli_recipients.rs`,
-dazu `src/cli/recipients_tests.rs` und die Sandbox-Freigaben in `src/cli/access_tests.rs`.
+dazu `src/cli/recipients_tests.rs` und die Sandbox-Freigaben in `src/cli/access_tests.rs`; Menü und Kontextmenü: Sammelschleife in
+`src/cli/recipients_ui_tests.rs`, Fenster mit zwei Empfängern in `tests/cli_context_dialog.rs`.
 
 ---
 
@@ -87,4 +88,5 @@ U02 also the permission list itself in `src/cli/access_tests.rs`; U03 also `test
 `src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` and `src/cli/guide/mod_tests.rs`; the windows themselves are checked by
 hand. U01 (repeated `--to`, #47: 2 and 64 recipients, foreign key, duplicates, 65, wrong key kind, v1 for a single
 recipient, `--with-passphrase` with factor file, `--each`, help DE/EN): `tests/cli_recipients.rs`, plus
-`src/cli/recipients_tests.rs` and the sandbox permissions in `src/cli/access_tests.rs`.
+`src/cli/recipients_tests.rs` and the sandbox permissions in `src/cli/access_tests.rs`; menu and context menu: collecting loop in
+`src/cli/recipients_ui_tests.rs`, windows with two recipients in `tests/cli_context_dialog.rs`.

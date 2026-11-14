@@ -6,7 +6,7 @@
 //! editable), passphrase or recipient only once, one child process, progress with cancel, summary
 //! at the end. Retry only if nothing was written yet (too weak or mismatched passphrase).
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use super::context::utf8;
 use super::context_child::Outcome;
@@ -17,6 +17,7 @@ use super::factor_ui::{Ask, for_decrypt};
 use super::files_cmd::{default_decrypted, default_encrypted};
 use super::io::{CliResult, Failure, code};
 use super::many_text::{ManyTexts, many_texts};
+use super::recipients_ui;
 
 /// DE: Höchstzahl an Versuchen. EN: Maximum number of attempts.
 const ATTEMPTS: usize = 3;
@@ -115,8 +116,8 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     let modes: Vec<&str> = ui.s.ctx_modes.split('|').collect();
     let mode = ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)?;
     if mode == 1 {
-        let public = ui.recipient(&sources[0])?;
-        cmd.extend(["--to".into(), public, "--".into()]);
+        cmd.extend(recipients_ui::to_args(&recipients(ui, &sources[0])?));
+        cmd.push("--".into());
         cmd.extend(refs.iter().map(|r| (*r).to_owned()));
         let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
         return repeat(ui, m, || ui.plain(&args, &targets, each));
@@ -128,6 +129,20 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
     repeat(ui, m, || {
         ui.with_pass(ui.d.new_pass, true, &args, refs, &targets, each)
+    })
+}
+
+/// DE: Empfänger in Fenstern: je Fingerabdruck bestätigen, dann „weiteren hinzufügen?“ (#47).
+/// EN: Recipients in windows: confirm each fingerprint, then "add another?" (#47).
+pub(super) fn recipients(ui: &Ui<'_>, near: &Path) -> CliResult<Vec<String>> {
+    let more = recipients_ui::texts(ui.lang).more;
+    let first = ui.recipient(near)?;
+    recipients_ui::collect(first, || {
+        if ui.dlg.question(more) {
+            ui.recipient(near).map(Some)
+        } else {
+            Ok(None)
+        }
     })
 }
 

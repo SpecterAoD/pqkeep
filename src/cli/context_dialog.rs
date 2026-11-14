@@ -218,8 +218,11 @@ impl Ui<'_> {
                 self.with_pass(new_pass, true, &cmd, &[path], &targets, false)
             });
         }
-        let public = self.recipient(Path::new(path))?;
-        let cmd = ["encrypt", "--to", &public, "--out", &out, "--", path];
+        let all = super::context_dialog_many::recipients(self, Path::new(path))?;
+        let to = super::recipients_ui::to_args(&all);
+        let mut cmd = vec!["encrypt"];
+        cmd.extend(to.iter().map(String::as_str));
+        cmd.extend(["--out", &out, "--", path]);
         self.repeat(&out, || self.plain(&cmd, &targets, false))
     }
 

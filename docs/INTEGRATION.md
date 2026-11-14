@@ -116,10 +116,13 @@ Modus. `pqkeep integrate install --terminal` erzwingt den Terminal-Weg.
 
 Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) mit `pqkeep context`:
 
-- **Verschlüsseln:** Auswahl „Mit Passphrase“, „Für einen Empfänger“ oder „Mit Passphrase und
+- **Verschlüsseln:** Auswahl „Mit Passphrase“, „Für Empfänger“ oder „Mit Passphrase und
   Faktordatei“ (zweiter Faktor, siehe [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md)). Beim Empfänger wird nach
   dessen öffentlicher Schlüsseldatei gefragt (Pfad eintippen oder ins Fenster ziehen) und der
-  **Fingerabdruck zur Bestätigung** angezeigt.
+  **Fingerabdruck zur Bestätigung** angezeigt; danach „Weiteren Empfänger hinzufügen?“ (Standard
+  Nein) – bis zu 64 Empfänger, jeder mit eigenem Fingerabdruck. Mehrere Empfänger erzeugen Format v2.
+  Eine eigene Passphrase zusätzlich zu Empfängern gibt es nur im Menü und auf der Kommandozeile
+  (`--with-passphrase`).
 - **Entschlüsseln:** Der Modus wird aus der Datei erkannt; bei Empfänger-Dateien wird nach der
   eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
   sie verlangt. Weitergegeben wird nur ihr Pfad.
@@ -232,8 +235,10 @@ window. Limit: zenity/kdialog keep the passphrase briefly in their own memory, w
 zero. File names with control characters or `\ : < > " | ? *` are rejected by the archive rules.
 On Windows PowerShell/.NET keep the passphrase briefly unzeroed in their own memory.
 
-**On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase, recipient (the
-recipient's public key fingerprint is shown for confirmation) or passphrase with factor file (second factor, see
+**On right-click** a terminal (Windows: console) window opens with `pqkeep context`: choose passphrase, recipients (each
+recipient's public key fingerprint is shown for confirmation, then "Add another recipient?", default no, up to 64; several
+recipients write format v2; an own passphrase in addition to recipients only in the menu and on the command line,
+`--with-passphrase`) or passphrase with factor file (second factor, see
 [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md)); decryption detects the mode, asks
 for your key file in recipient mode and for the factor file only if the file or the key file requires it (only its path is
 passed on). The result is placed next to the source under a free name

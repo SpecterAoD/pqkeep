@@ -113,16 +113,23 @@ fn recipient_roundtrip_with_kdialog() {
     let file = e.work().join("plan.txt");
     fs::write(&file, b"Plan").unwrap();
     let public = e.work().join("anna.pub.json");
+    // DE: Auswahl, Datei, Fingerabdruck ja, kein weiterer Empfänger, Fertig-Fenster.
+    // EN: Choice, file, fingerprint yes, no further recipient, done window.
     e.answer(&[
         (0, "1\n"),
         (0, &format!("{}\n", public.display())),
         (0, ""),
+        (1, ""),
         (0, ""),
     ]);
     assert_eq!(e.context("encrypt", &file), 0);
     let calls = e.calls();
     assert!(calls[0].contains(&"--menu".to_owned()), "{calls:?}");
     assert!(calls[2].contains(&"--yesno".to_owned()));
+    assert!(
+        joined(&calls).contains("Add another recipient?"),
+        "{calls:?}"
+    );
     fs::remove_file(&file).unwrap();
     let key = e.work().join("anna.key.json");
     e.answer(&[
@@ -133,6 +140,60 @@ fn recipient_roundtrip_with_kdialog() {
     assert_eq!(e.context("decrypt", &e.work().join("plan.txt.pqkf")), 0);
     assert_eq!(fs::read(&file).unwrap(), b"Plan");
     assert!(e.calls()[1].contains(&"--password".to_owned()));
+}
+
+/// DE: U01 (#47): zwei Empfänger nacheinander bestätigen; beide öffnen die Datei.
+/// EN: U01 (#47): confirm two recipients one after another; both open the file.
+#[test]
+fn two_recipients_with_zenity() {
+    let e = Env::new("zenity");
+    let mut passes = Vec::new();
+    for name in ["anna", "ben"] {
+        let (file, pass) = common::key_file(pqkeep::crypto::KeyAlgorithm::Kem(
+            pqkeep::crypto::KemAlgorithm::MlKem768,
+        ));
+        let key = e.work().join(format!("{name}.key.json"));
+        pqkeep::envelope::save(&file, &key, pqkeep::envelope::Overwrite::No).unwrap();
+        let public = e.work().join(format!("{name}.pub.json"));
+        let part = file.public_part().unwrap();
+        pqkeep::envelope::save_public(&part, &public, pqkeep::envelope::Overwrite::No).unwrap();
+        passes.push(format!("{}\n", pass.as_ref().expose_str()));
+    }
+    let file = e.work().join("plan.txt");
+    fs::write(&file, b"Plan").unwrap();
+    let pick = |name: &str| format!("{}\n", e.work().join(name).display());
+    e.answer(&[
+        (0, "1\n"),
+        (0, &pick("anna.pub.json")),
+        (0, ""),
+        (0, ""),
+        (0, &pick("ben.pub.json")),
+        (0, ""),
+        (1, ""),
+        (0, ""),
+    ]);
+    assert_eq!(e.context("encrypt", &file), 0);
+    assert_eq!(e.calls().len(), 8, "{:?}", e.calls());
+    let enc = e.work().join("plan.txt.pqkf");
+    let inspect = ["--lang", "en", "inspect", enc.to_str().unwrap()];
+    let (_, shown, _) = common::pqkeep(&inspect, "", e.work());
+    assert_eq!(shown.matches("Recipient:").count(), 2, "{shown}");
+    for (name, pass) in ["anna", "ben"].iter().zip(&passes) {
+        let out = format!("{name}.txt");
+        let key = format!("{name}.key.json");
+        let args = [
+            "decrypt",
+            "plan.txt.pqkf",
+            "-k",
+            &key,
+            "-o",
+            &out,
+            "--passphrase-stdin",
+        ];
+        let (code, _, err) = common::pqkeep(&args, pass, e.work());
+        assert_eq!(code, 0, "{err}");
+        assert_eq!(fs::read(e.work().join(&out)).unwrap(), b"Plan");
+    }
 }
 
 #[test]
