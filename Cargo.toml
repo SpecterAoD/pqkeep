@@ -4,8 +4,28 @@ version = "0.1.0-beta.2"
 edition = "2024"
 rust-version = "1.88"
 license = "Apache-2.0"
-description = "Post-quantum key generation and storage (ML-KEM, ML-DSA, AES-256)"
+description = "Post-quantum file encryption, signatures and key storage (ML-KEM, ML-DSA, AES-256-GCM, Argon2id): CLI and library"
 repository = "https://github.com/SpecterAoD/pqkeep"
+homepage = "https://github.com/SpecterAoD/pqkeep"
+documentation = "https://docs.rs/pqkeep"
+readme = "README.md"
+keywords = ["post-quantum", "ml-kem", "ml-dsa", "encryption", "cli"]
+categories = ["cryptography", "command-line-utilities"]
+# DE: Nur was zum Bauen und für die Lizenz nötig ist (keine Tests, Skripte, Workflows).
+# EN: Only what is needed to build and for the licence (no tests, scripts, workflows).
+include = [
+    "/src/**",
+    "/data/wordlists/**",
+    "/Cargo.toml",
+    "/Cargo.lock",
+    "/LICENSE",
+    "/NOTICE",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/SECURITY.md",
+]
+# DE: Veröffentlichung auf crates.io erst nach ausdrücklicher Entscheidung (#71).
+# EN: Publishing to crates.io only after an explicit decision (#71).
 publish = false
 
 [lib]
