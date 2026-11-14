@@ -59,6 +59,40 @@ fn u02_factor_file_adds_exactly_one_read_permission() {
     assert_eq!(with.write_dirs, plain.write_dirs);
 }
 
+/// DE: U01 (#47): Jede `--to`-Datei kommt einzeln lesend hinzu, sonst nichts; fehlt eine, wird
+/// das vor der Sandbox gemeldet.
+/// EN: U01 (#47): each `--to` file is added read-only on its own, nothing else; a missing one is
+/// reported before the sandbox.
+#[test]
+fn u01_each_recipient_file_adds_one_read_permission() {
+    let (dir, source, key, factor) = setup();
+    let other = dir.path().join("b.pub.json");
+    std::fs::write(&other, b"x").unwrap();
+    let (s, k, b, f) = (text(&source), text(&key), text(&other), text(&factor));
+    let two = access(&["pqkeep", "encrypt", s, "--to", k, "--to", b]).unwrap();
+    assert_eq!(two.read, [source.clone(), key.clone(), other.clone()]);
+    assert_eq!(two.write_dirs, [dir.path().to_path_buf()]);
+    let argv = [
+        "pqkeep",
+        "encrypt",
+        s,
+        "--to",
+        k,
+        "--to",
+        b,
+        "--with-passphrase",
+        "--factor-file",
+        f,
+    ];
+    let with = access(&argv).unwrap();
+    assert_eq!(
+        with.read,
+        [factor.clone(), source.clone(), key.clone(), other.clone()]
+    );
+    let missing = dir.path().join("fehlt.pub.json");
+    assert!(access(&["pqkeep", "encrypt", s, "--to", k, "--to", text(&missing)]).is_none());
+}
+
 #[test]
 fn u02_factor_command_writes_only_into_the_target_directory() {
     let (dir, ..) = setup();

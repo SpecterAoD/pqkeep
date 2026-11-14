@@ -59,6 +59,7 @@ pqkeep encrypt report.pdf                # with a passphrase
 pqkeep factor --out /media/usb/jane.factor        # optional second factor (keep it apart, back it up)
 pqkeep encrypt report.pdf --factor-file /media/usb/jane.factor   # passphrase + factor file
 pqkeep encrypt folder --to anna.pub.json # for a recipient (ML-KEM)
+pqkeep encrypt report.pdf --to anna.pub.json --to ben.pub.json   # several recipients (up to 64)
 pqkeep decrypt folder.pqkf --key anna.key.json
 pqkeep sign --key anna.key.json contract.pdf      # → contract.pdf.pqsig (ML-DSA-87 key)
 pqkeep verify --pub anna.pub.json contract.pdf    # [VERIFIED] / [INVALID]
@@ -186,6 +187,7 @@ pqkeep encrypt bericht.pdf               # mit Passphrase
 pqkeep factor --out /media/usb/max.factor         # optionaler zweiter Faktor (getrennt aufbewahren, sichern)
 pqkeep encrypt bericht.pdf --factor-file /media/usb/max.factor   # Passphrase + Faktordatei
 pqkeep encrypt Ordner --to anna.pub.json # für eine Empfängerin (ML-KEM)
+pqkeep encrypt bericht.pdf --to anna.pub.json --to ben.pub.json  # mehrere Empfänger (bis 64)
 pqkeep decrypt Ordner.pqkf --key anna.key.json
 pqkeep sign --key anna.key.json vertrag.pdf       # → vertrag.pdf.pqsig (ML-DSA-87-Schlüssel)
 pqkeep verify --pub anna.pub.json vertrag.pdf     # [VERIFIED] / [INVALID]

@@ -3,8 +3,8 @@
 **DE** | [EN](#english)
 
 > **Freigegebener Entwurf; im Rust-Core umgesetzt. Über die Kommandozeile ist die Faktordatei nutzbar**
-> (`pqkeep factor`, `--factor-file`; Stand 13.11.2026, #41), mehrere Empfänger folgen mit #47. Ohne
-> `--factor-file` schreibt die Kommandozeile weiter nur v1
+> (`pqkeep factor`, `--factor-file`; Stand 13.11.2026, #41), mehrere Empfänger über `--to` mehrfach und
+> `--with-passphrase` (Stand 14.11.2026, #47). Ohne diese Optionen schreibt die Kommandozeile weiter nur v1
 > ([FORMAT.md](FORMAT.md), [FILE_FORMAT.md](FILE_FORMAT.md)). Ein Entwurf für U0 (#39, zweiter Faktor) und
 > U2 (#45, mehrere Empfänger) zusammen, damit es **einen** Formatwechsel gibt statt zwei.
 > TPM/FIDO2 sind ausgelagert (Recherche-Issue #89); ihre Nummern bleiben reserviert.
@@ -118,8 +118,8 @@ CLI `--to` mehrfach) mit eigenen Plänen; Testkatalog: [V2_TESTS.md](V2_TESTS.md
 ## English
 
 > **Approved draft; implemented in the Rust core. The factor file is usable from the command line**
-> (`pqkeep factor`, `--factor-file`; 2026-11-13, #41), several recipients follow with #47. Without
-> `--factor-file` the command line still writes v1 only. One draft for U0 (#39, second
+> (`pqkeep factor`, `--factor-file`; 2026-11-13, #41), several recipients through repeated `--to` and
+> `--with-passphrase` (2026-11-14, #47). Without these options the command line still writes v1 only. One draft for U0 (#39, second
 > factor) and U2 (#45, several recipients) so there is **one** format change instead of two. TPM/FIDO2 (#89)
 > moved to a research issue; their numbers stay reserved.
 

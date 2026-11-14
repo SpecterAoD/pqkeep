@@ -54,40 +54,47 @@ pub(super) fn default_for(m: &ArgMatches, default: Option<PathBuf>) -> Option<Pa
     }
 }
 
-/// DE: Eingelesener Schutz (öffentlicher Schlüssel bzw. geprüfte Passphrase, optional mit
-/// Faktordatei). EN: Read protection (public key or checked passphrase, optional factor file).
-pub(super) enum OwnedProtection {
-    Recipient(envelope::PublicKeyFile),
-    Passphrase(StrongPassphrase, KdfParams, Option<Factor>),
+/// DE: Eingelesener Schutz: geprüfte Passphrase (optional mit Faktordatei) und/oder Empfänger.
+/// EN: Read protection: checked passphrase (optional factor file) and/or recipients.
+pub(super) struct OwnedProtection {
+    passphrase: Option<(StrongPassphrase, KdfParams, Option<Factor>)>,
+    recipients: Vec<envelope::PublicKeyFile>,
 }
 
 impl OwnedProtection {
-    pub(super) fn get(&self) -> Protection<'_> {
-        match self {
-            Self::Recipient(public) => Protection::Recipient(public),
-            Self::Passphrase(passphrase, params, None) => Protection::Passphrase {
+    /// DE: Ruft `f` mit dem Schutz auf. Die Bibliothek schreibt v1, wenn ein einzelner Zugang
+    /// ohne Faktordatei genügt (Byte für Byte wie bisher), sonst v2.
+    /// EN: Calls `f` with the protection. The library writes v1 if a single slot without factor
+    /// file suffices (byte for byte as before), else v2.
+    pub(super) fn with<R>(&self, f: impl FnOnce(&Protection<'_>) -> R) -> R {
+        let recipients: Vec<&envelope::PublicKeyFile> = self.recipients.iter().collect();
+        let passphrase = self
+            .passphrase
+            .as_ref()
+            .map(|(passphrase, params, factor)| PassphraseAccess {
                 passphrase,
                 params: *params,
-            },
-            // DE: Mit Faktordatei entsteht Format v2. EN: With a factor file format v2 is written.
-            Self::Passphrase(passphrase, params, Some(factor)) => Protection::Slots {
-                passphrase: Some(PassphraseAccess {
-                    passphrase,
-                    params: *params,
-                    factor: Some(factor),
-                }),
-                recipients: &[],
-            },
-        }
+                factor: factor.as_ref(),
+            });
+        f(&Protection::Slots {
+            passphrase,
+            recipients: &recipients,
+        })
     }
 }
 
-/// DE: Empfänger laden oder neue Passphrase (zweimal) lesen und prüfen.
-/// EN: Load the recipient or read and check a new passphrase (twice).
+/// DE: Empfänger laden und/oder neue Passphrase (zweimal) lesen und prüfen. Empfänger und
+/// Faktordatei werden vor der Passphrase-Abfrage geprüft.
+/// EN: Load the recipients and/or read and check a new passphrase (twice). Recipients and factor
+/// file are checked before the passphrase prompt.
 pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<OwnedProtection> {
-    if let Some(to) = m.get_one::<PathBuf>("to") {
-        let public = envelope::load_public(to).map_err(|e| Failure::from_error(&e, lang))?;
-        return Ok(OwnedProtection::Recipient(public));
+    super::recipients::check_factor(m, lang)?;
+    let recipients = super::recipients::load(m, lang)?;
+    if !recipients.is_empty() && !m.get_flag(super::recipients::WITH_PASSPHRASE) {
+        return Ok(OwnedProtection {
+            passphrase: None,
+            recipients,
+        });
     }
     let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
         KdfProfile::Hardened
@@ -104,11 +111,10 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
         print_rejection(t, lang, &rejection);
         Failure::new(code::WEAK, "")
     })?;
-    Ok(OwnedProtection::Passphrase(
-        strong,
-        profile.params(),
-        factor,
-    ))
+    Ok(OwnedProtection {
+        passphrase: Some((strong, profile.params(), factor)),
+        recipients,
+    })
 }
 
 /// DE: Standardziel beim Verschlüsseln. EN: Default target when encrypting.
@@ -173,8 +179,9 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let src = source(m);
     let out = target(t, m, default_for(m, default_encrypted(&src)))?;
     let protection = read_protection(t, lang, m)?;
-    let report =
-        files::encrypt(&src, &out, &protection.get()).map_err(|e| Failure::from_error(&e, lang))?;
+    let report = protection
+        .with(|p| files::encrypt(&src, &out, p))
+        .map_err(|e| Failure::from_error(&e, lang))?;
     print_report(t, lang, t.msg_encrypted, &out, &report);
     Ok(())
 }

@@ -27,7 +27,7 @@ oder – bei den U-Fällen – über die Kommandozeile; `planned` = **noch nicht
 | C07 | Schlüsseldatei v2: alle Algorithmen, falscher Faktor, jedes Feld verändert, Version umgeschrieben | Seed unverändert, unabhängiger Vektor, Öffnen scheitert | #40 | core |
 | C08 | 1/2/64 Empfänger gemischter KEM-Stufen, eigener Schlüssel fehlt | jeder öffnet, klare Meldung | #46 | core |
 | C09 | Fuzzing JSON-/Binärparser v2 | keine Panik, begrenzter Speicher | #40/#46 | core |
-| U01 | CLI: `--factor-file`, Faktordatei erzeugen (`pqkeep factor`), `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | planned |
+| U01 | CLI: `--factor-file`, Faktordatei erzeugen (`pqkeep factor`), `--to` mehrfach, DE/EN-Hilfe | eindeutige Bedienung | #41/#47 | core |
 | U02 | Sandbox: Faktordatei lesbar, sonst nichts zusätzlich | Landlock-Freigaben minimal | #41 | core |
 | U03 | Geheimnisse nicht in argv/Umgebung/Logs, API lehnt v2-Optionen ab | keine Offenlegung | #41 | core |
 
@@ -55,7 +55,9 @@ wie der C07-Vektor nur öffentliche Testbytes. U01 (Teil Faktordatei: `pqkeep fa
 `tests/cli_factor.rs`; U02 zusätzlich die Freigabeliste selbst in `src/cli/access_tests.rs`; U03 zusätzlich `tests/api_generate.rs` (die API lehnt
 unbekannte Felder wie `factor_file` ab). Menü, geführter Ablauf und Kontextmenü (U01): welche Fragen gestellt und welche Argumente
 weitergegeben werden, prüfen `src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` und `src/cli/guide/mod_tests.rs`; die Fenster
-selbst werden von Hand geprüft. U01 bleibt `planned`, bis `--to` mehrfach (#47) umgesetzt ist.
+selbst werden von Hand geprüft. U01 (Teil `--to` mehrfach, #47: 2 und 64 Empfänger, fremder Schlüssel, Doppel, 65, falscher
+Schlüsseltyp, v1 bei einem Empfänger, `--with-passphrase` mit Faktordatei, `--each`, Hilfe DE/EN): `tests/cli_recipients.rs`,
+dazu `src/cli/recipients_tests.rs` und die Sandbox-Freigaben in `src/cli/access_tests.rs`.
 
 ---
 
@@ -83,4 +85,6 @@ public test bytes only. U01 (factor file part: `pqkeep factor`, `--factor-file`,
 U02 also the permission list itself in `src/cli/access_tests.rs`; U03 also `tests/api_generate.rs` (the API rejects unknown fields such as
 `factor_file`). Menu, guided flow and context menu (U01): which questions are asked and which arguments are passed on is checked in
 `src/cli/factor_ui_tests.rs`, `src/cli/guide/keygen_tests.rs` and `src/cli/guide/mod_tests.rs`; the windows themselves are checked by
-hand. U01 stays `planned` until repeated `--to` (#47) is implemented.
+hand. U01 (repeated `--to`, #47: 2 and 64 recipients, foreign key, duplicates, 65, wrong key kind, v1 for a single
+recipient, `--with-passphrase` with factor file, `--each`, help DE/EN): `tests/cli_recipients.rs`, plus
+`src/cli/recipients_tests.rs` and the sandbox permissions in `src/cli/access_tests.rs`.

@@ -49,8 +49,14 @@ fn file_access(
     access: &mut CliAccess,
 ) -> CliResult<Option<PathBuf>> {
     let sources = super::files_cmd::sources(m);
-    let key = path_arg(m, if name == "encrypt" { "to" } else { "key" });
-    for p in sources.iter().cloned().chain(key) {
+    // DE: Beim Verschlüsseln jede `--to`-Datei einzeln, sonst nur `--key`.
+    // EN: When encrypting each `--to` file on its own, otherwise only `--key`.
+    let keys = if name == "encrypt" {
+        super::recipients::paths(m)
+    } else {
+        path_arg(m, "key").into_iter().collect()
+    };
+    for p in sources.iter().cloned().chain(keys) {
         access.read.push(existing(p, lang)?);
     }
     if let Some(out) = path_arg(m, "out") {
@@ -75,6 +81,10 @@ fn file_access(
 /// EN: Permissions for a command; `None` = the command sets up the sandbox itself
 /// (`serve` without `--init-token`).
 pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<CliAccess>> {
+    // DE: Bedienfehler vor „nicht gefunden“ melden. EN: Report usage errors before "not found".
+    if name == "encrypt" {
+        super::recipients::check_factor(m, lang)?;
+    }
     let mut access = CliAccess::default();
     // DE: Passphrase-Datei (global) immer lesbar. EN: Passphrase file (global) always readable.
     if let Some(p) = super::unattended::pass_file() {

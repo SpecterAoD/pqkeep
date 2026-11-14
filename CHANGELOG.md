@@ -24,8 +24,16 @@ German release notes: see `docs/releases/`.
   stays v1. `inspect` shows v2 files and whether a factor file is required. A missing or
   superfluous `--factor-file` is reported before the passphrase prompt (exit code 2), a wrong one
   like a wrong passphrase (exit code 3). The sandbox additionally allows reading exactly this one
-  file. Several recipients per file are not available from the command line yet. **Back up the
-  factor file – without it nothing protected with it can be opened.**
+  file. **Back up the factor file – without it nothing protected with it can be opened.**
+- **Several recipients on the command line:** `--to` may be repeated (up to 64 public ML-KEM keys of
+  any level); every recipient opens the file with their own key. `--with-passphrase` adds an own
+  passphrase (optionally with `--factor-file`, which with `--to` is only allowed together with
+  `--with-passphrase`). Recipients are listed with name and fingerprint and checked before the
+  passphrase prompt: duplicates, more than 64 and non-ML-KEM keys are rejected (exit code 2). A single
+  recipient without extras still writes v1, byte for byte as before; everything else writes v2, which
+  older releases cannot open. Decrypting with a key that is not among the recipients now says so
+  clearly. The sandbox additionally allows reading exactly the given `--to` files. Menu and context
+  menu do not offer several recipients yet.
 - **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
   file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
   "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file
