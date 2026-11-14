@@ -20,14 +20,17 @@ def validate(event: dict, repository: str) -> tuple[str, str] | None:
         return None
     if repo.get("full_name") != repository or repository != "SpecterAoD/pqkeep":
         return None
-    if ("pull_request" in issue or type(issue.get("number")) is not int\n            or issue["number"] <= 0):
+    if ("pull_request" in issue or type(issue.get("number")) is not int
+            or issue["number"] <= 0):
         return None
     if comment.get("user", {}).get("id") != OWNER_ID:
         return None
     if sender.get("id") != OWNER_ID:
         return None
     body = comment.get("body")
-    if (not isinstance(body, str) or len(body) > 4000\n            or any(ord(char) < 32 and char not in "\\r\\n" for char in body)\n            or any(char in body for char in ("\\u200b", "\\u200c", "\\u200d", "\\ufeff"))):
+    if (not isinstance(body, str) or len(body) > 4000
+            or any(ord(char) < 32 and char not in "\\r\\n" for char in body)
+            or any(char in body for char in ("\\u200b", "\\u200c", "\\u200d", "\\ufeff"))):
         return None
     match = COMMAND.fullmatch(body.strip("\r\n"))
     if not match:
