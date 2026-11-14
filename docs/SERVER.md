@@ -95,7 +95,9 @@ PQKeep selbst läuft unter Linux zusätzlich in seiner Sandbox (Landlock, seccom
 
 `0` Erfolg · `1` Fehler · `2` Bedienfehler (auch `--batch` ohne Eingabe) · `3` Entschlüsselung
 fehlgeschlagen · `4` Passphrase zu schwach · `5` Ziel existiert · `6` keine Fenster (Kontextmenü) ·
-`7` Signatur ungültig (`verify`). Maschinenlesbare Ausgabe (`--json`): geplant (#85).
+`7` Signatur ungültig (`verify`). Die Exit-Codes sind eine stabile Schnittstelle. Maschinenlesbare
+Ausgabe: `--json` bei `check`, `inspect`, `verify` (Schema und Beispiele: [JSON.md](JSON.md));
+`encrypt`/`decrypt` folgen.
 
 ## Backups prüfen (`pqkeep check`)
 
@@ -158,7 +160,8 @@ reports, child processes). Windows: no permission check of the file (no ACL chec
 A passphrase on the server is weaker than recipient mode – prefer recipient mode for backups.
 
 **Exit codes:** 0 success, 1 error, 2 usage (also `--batch` without input), 3 decryption failed, 4 weak
-passphrase, 5 target exists, 6 no windows (context menu), 7 invalid signature. `--json`: planned (#85).
+passphrase, 5 target exists, 6 no windows (context menu), 7 invalid signature – a stable interface.
+`--json` for `check`, `inspect`, `verify` ([JSON.md](JSON.md)); `encrypt`/`decrypt` follow.
 
 **Limits:** no daemon and no own upload (the CLI sandbox forbids network access by design); release
 binaries for x86_64 only – build other architectures (ARM servers, Raspberry Pi) from source; check

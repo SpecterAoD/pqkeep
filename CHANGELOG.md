@@ -43,6 +43,12 @@ German release notes: see `docs/releases/`.
   checks every file even if one fails, prints one line per file and a summary. Exit code 0 = all
   fine, 3 = wrong key/passphrase or tampering, 1 = other error, 2 = usage; with several files the
   first error counts. The sandbox only allows reading. Library: `files::check`.
+- **`--json` for `check`, `inspect` and `verify`:** exactly one JSON object on stdout with the
+  stable, versioned schema `pqkeep-json/1` (`docs/JSON.md`): `schema`, `command`, `ok`, `exit_code`
+  plus per-command data; even failures produce valid JSON with `error` (`code`, stable `kind`,
+  localized `message`); only argument errors stay text (exit 2). No secrets, no archive-internal
+  paths. Exit codes 0–7 are now documented as a stable interface and listed completely in `--help`
+  (6 = no windows, 7 = invalid signature were missing). `encrypt`/`decrypt` follow.
 - **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
   file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
   "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file

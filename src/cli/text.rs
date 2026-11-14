@@ -140,10 +140,10 @@ pub fn texts(lang: Lang) -> &'static Texts {
 pub fn exit_codes(lang: Lang) -> &'static str {
     match lang {
         Lang::De => {
-            "Exit-Codes:\n  0  Erfolg\n  1  Fehler\n  2  Bedienfehler (Argumente)\n  3  Entschlüsselung fehlgeschlagen (falsche Passphrase/Schlüssel oder Manipulation)\n  4  Passphrase zu schwach\n  5  Ziel existiert bereits"
+            "Exit-Codes (stabile Schnittstelle, docs/JSON.md):\n  0  Erfolg\n  1  Fehler\n  2  Bedienfehler (Argumente, fehlende Eingabe mit --batch)\n  3  Entschlüsselung fehlgeschlagen (falsche Passphrase/Schlüssel oder Manipulation)\n  4  Passphrase zu schwach\n  5  Ziel existiert bereits\n  6  keine Fenster möglich (Kontextmenü)\n  7  Signatur ungültig (verify)"
         }
         Lang::En => {
-            "Exit codes:\n  0  success\n  1  error\n  2  usage error (arguments)\n  3  decryption failed (wrong passphrase/key or tampering)\n  4  passphrase too weak\n  5  target already exists"
+            "Exit codes (stable interface, docs/JSON.md):\n  0  success\n  1  error\n  2  usage error (arguments, missing input with --batch)\n  3  decryption failed (wrong passphrase/key or tampering)\n  4  passphrase too weak\n  5  target already exists\n  6  no windows possible (context menu)\n  7  invalid signature (verify)"
         }
     }
 }

@@ -190,7 +190,9 @@ pub fn build(lang: Lang) -> Command {
         .subcommand(super::factor_cmd::command(lang))
         .subcommands(pass_commands(lang))
         .subcommand(
-            base("inspect", t.inspect_about, t.inspect_after, lang).arg(path("file", t.arg_file)),
+            base("inspect", t.inspect_about, t.inspect_after, lang)
+                .arg(path("file", t.arg_file))
+                .arg(super::json_out::arg(lang)),
         )
         .subcommand(
             base("export", t.export_about, t.export_after, lang)

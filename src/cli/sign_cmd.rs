@@ -12,6 +12,7 @@ use clap::{ArgMatches, Command, value_parser};
 use pqkeep::envelope::{self, Overwrite, hex_encode};
 use pqkeep::security::Lang;
 use pqkeep::{Error, sign};
+use serde_json::{Map, Value, json};
 
 use super::args::{base, flag, opt, path};
 use super::io::{CliResult, Failure, code};
@@ -33,7 +34,8 @@ pub fn commands(lang: Lang) -> [Command; 2] {
         base("verify", s.verify_about, s.verify_after, lang)
             .arg(path("file", s.arg_file).required(false))
             .arg(file("pub", s.arg_pub).short('p'))
-            .arg(file("sig", s.arg_sig).short('s')),
+            .arg(file("sig", s.arg_sig).short('s'))
+            .arg(super::json_out::arg(lang)),
     ]
 }
 
@@ -85,8 +87,11 @@ pub fn sign(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-/// DE: `pqkeep verify`. EN: `pqkeep verify`.
-pub fn verify(lang: Lang, m: &ArgMatches) -> CliResult {
+/// DE: Lädt öffentlichen Schlüssel und Signatur für `verify`. EN: Loads public key and signature.
+fn verify_inputs(
+    lang: Lang,
+    m: &ArgMatches,
+) -> CliResult<(PathBuf, envelope::PublicKeyFile, sign::SignatureFile)> {
     let s = sign_texts(lang);
     if arg_path(m, "file").is_none() || arg_path(m, "pub").is_none() {
         return Err(Failure::new(code::USAGE, s.need_verify_args));
@@ -99,6 +104,41 @@ pub fn verify(lang: Lang, m: &ArgMatches) -> CliResult {
     }
     let sig_file = sig_path(m, "sig").ok_or_else(|| fail(Error::InvalidInput { field: "path" }))?;
     let signature = sign::load(&sig_file).map_err(fail)?;
+    Ok((file, public, signature))
+}
+
+/// DE: `pqkeep verify --json`: `valid`, Signierer, Zeitpunkt (`docs/JSON.md`).
+/// EN: `pqkeep verify --json`: `valid`, signer, time (`docs/JSON.md`).
+pub fn verify_json(lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Value>, u8)> {
+    let (file, public, signature) = verify_inputs(lang, m)?;
+    let mut body = Map::new();
+    body.insert("file".into(), file.to_string_lossy().into());
+    let signer = json!({ "key_id": signature.key_id_hex(), "name": public.metadata().name });
+    let exit = match sign::verify_file(&public, &signature, &file) {
+        Ok(ok) => {
+            body.insert("valid".into(), true.into());
+            body.insert("signer".into(), signer);
+            body.insert("created_utc".into(), ok.created_utc.into());
+            code::OK
+        }
+        Err(Error::InvalidSignature) => {
+            body.insert("valid".into(), false.into());
+            body.insert(
+                "signer_matches".into(),
+                (signature.key_id() == public.key_id()).into(),
+            );
+            code::INVALID
+        }
+        Err(e) => return Err(Failure::from_error(&e, lang)),
+    };
+    Ok((body, exit))
+}
+
+/// DE: `pqkeep verify`. EN: `pqkeep verify`.
+pub fn verify(lang: Lang, m: &ArgMatches) -> CliResult {
+    let s = sign_texts(lang);
+    let (file, public, signature) = verify_inputs(lang, m)?;
+    let fail = |e: Error| Failure::from_error(&e, lang);
     match sign::verify_file(&public, &signature, &file) {
         Ok(ok) => {
             println!("[VERIFIED] {}", file.display());
