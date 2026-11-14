@@ -14,7 +14,7 @@ PERMISSION = re.compile(r"(?m)^permissions:\s*(?:\{\s*\}|\n(?:[ \t]+[^\n]+\n)+)"
 TRIGGER = re.compile(r"(?m)^\s{0,2}(pull_request_target|workflow_run):")
 UNSAFE = (
     (re.compile(r"toJSON\s*\(\s*secrets\s*\)", re.I), "secret serialization"),
-    (re.compile(r"(?m)^\s*(?:curl|wget)\b[^\n]*\|\s*(?:ba)?sh\b"), "remote shell execution"),
+    (re.compile(r"(?m)^\s*(?:-\s*run:\s*)?(?:curl|wget)\b[^\n]*\|\s*(?:ba)?sh\b"), "remote shell execution"),
 )
 WRITE_SCOPE = re.compile(r"(?m)^\s*(?:contents|actions|packages|security-events|attestations|id-token):\s*write\b")
 JOB = re.compile(r"(?m)^  ([a-zA-Z][\w-]*):\s*$")
