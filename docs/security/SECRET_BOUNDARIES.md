@@ -1,6 +1,6 @@
 # Secret and token boundaries (Issue #183)
 
-Status: verified from repository YAML, **not** verified against live GitHub settings. No secret values accessed.
+Status: verified from repository YAML, **not** verified against live GitHub settings. No secret values accessed.\n\n**Implementation dependency:** Draft PR #194 (targeting feature/176-opencode-gemini) now separates `authorize` (read-only, no Gemini key) from `gemini-plan` (`permissions: {}`, no checkout, isolated working directory, deny-all OpenCode config). This is proposed code only, not active on `main`; CI and runtime secret-exposure tests are still required.
 
 | Job | Trigger | Token scope | Named secret | Risk / control |
 |---|---|---|---|---|
