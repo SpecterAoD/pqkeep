@@ -32,6 +32,23 @@ class OpenCodePolicyTests(unittest.TestCase):
         }
         self.assertEqual(allowed, {"read", "glob", "grep"})
 
+    def test_secret_job_separate_from_authorization(self):
+        workflow = pathlib.Path(".github/workflows/opencode.yml").read_text(
+            encoding="utf-8"
+        )
+        authorize = workflow.split("\n  authorize:", 1)[1].split(
+            "\n  gemini-plan:", 1
+        )[0]
+        gemini = workflow.split("\n  gemini-plan:", 1)[1].split(
+            "\n  gemini-pr-smoke:", 1
+        )[0]
+        self.assertNotIn("secrets.GEMINI_API_KEY", authorize)
+        self.assertIn("needs: authorize", gemini)
+        self.assertIn("permissions: {}", gemini)
+        self.assertNotIn("actions/checkout@", gemini)
+        self.assertIn("OPENCODE_CONFIG: /tmp/oc-plan-config.json", gemini)
+        self.assertIn('"effect": "deny"', gemini)
+
     def test_secret_file_deny_last(self):
         rules = self.config["permissions"]
         self.assertTrue(any(

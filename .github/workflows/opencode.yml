@@ -46,8 +46,7 @@ jobs:
       github.event.sender.id == 77644070 &&
       (startsWith(github.event.comment.body, '/oc plan ') ||
        startsWith(github.event.comment.body, '/oc review ') ||
-       startsWith(github.event.comment.body, '/oc explain ') ||
-       startsWith(github.event.comment.body, '/oc implement '))
+       startsWith(github.event.comment.body, '/oc explain '))
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -62,17 +61,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/oc_gate.py "$GITHUB_EVENT_PATH" "$GITHUB_REPOSITORY"
 
+
+  gemini-plan:
+    # Authorization is performed in a separate read-only job with no Gemini secret.
+    # No checkout or untrusted repository code in this secret-bearing job.
+    needs: authorize
+    if: >-
+      needs.authorize.result == 'success' &&
+      github.event_name == 'issue_comment' &&
+      github.repository == 'SpecterAoD/pqkeep' &&
+      github.event.comment.user.id == 77644070 &&
+      github.event.sender.id == 77644070 &&
+      startsWith(github.event.comment.body, '/oc plan ')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
       - name: Install OpenCode
         run: npm install --global @opencode/cli@2.2.7
       - name: Gemini plan smoke test (no GitHub write token)
-        if: startsWith(github.event.comment.body, '/oc plan ')
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OC_ISSUE_BODY: ${{ github.event.issue.body }}
           OC_COMMAND_BODY: ${{ github.event.comment.body }}
-          OPENCODE_CONFIG: ${{ github.workspace }}/.github/opencode-analysis.json
+          OPENCODE_CONFIG: /tmp/oc-plan-config.json
         run: |
           test -n "$GEMINI_API_KEY" || { echo 'Gemini secret missing'; exit 1; }
+          mkdir -p /tmp/oc-plan-work
+          cd /tmp/oc-plan-work
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -86,6 +102,11 @@ jobs:
               "Untrusted issue description:\n" + issue
           )
           Path("/tmp/oc-plan-prompt.txt").write_text(prompt, encoding="utf-8")
+          import json
+          policy = {"permissions": [
+              {"action": "*", "resource": "*", "effect": "deny"}
+          ], "mcp": {}}
+          Path("/tmp/oc-plan-config.json").write_text(json.dumps(policy), encoding="utf-8")
           PY
           # Do not print prompt or model output to Actions logs.
           opencode run --standalone --model google/gemini-3.8-flash \
