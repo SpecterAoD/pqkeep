@@ -139,13 +139,13 @@ class GateTests(unittest.TestCase):
         self.assertIsNone(self.check(event(body="/oc plan Test\u200b")))
 
     def test_unicode_direction_override_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\u202e")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\u202e")))
 
     def test_unicode_word_joiner_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\u2060")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\u2060")))
 
     def test_unicode_line_separator_rejected(self):
-        self.assertIsNone(self.check(event(body="/oc plan Test\\u2028")))
+        self.assertIsNone(self.check(event(body="/oc plan Test\u2028")))
 
     def test_control_character_rejected(self):
         self.assertIsNone(self.check(event(body="/oc plan Test\x00")))
