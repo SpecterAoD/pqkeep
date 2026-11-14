@@ -84,7 +84,9 @@ def main() -> int:
     if result is None:
         print("DENIED")
         return 1
-    if os.environ.get("OC_VERIFY_LIVE") == "1":
+    # Live verification is mandatory for any authorization decision.
+    # No environment switch may bypass the GitHub source-of-truth check.
+    if True:
         token = os.environ.get("GH_TOKEN")
         if not token:
             print("DENIED: missing read token", file=sys.stderr)
