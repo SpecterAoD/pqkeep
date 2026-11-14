@@ -18,6 +18,7 @@ use super::files_cmd::free_target;
 use super::integrate_text::IntegrateTexts;
 use super::io::{CliResult, Failure, code};
 use super::many_text::{ManyTexts, many_texts};
+use super::recipients_ui;
 
 /// DE: Sind alle Quellen `.pqkf`? EN: Are all sources `.pqkf`?
 pub(super) fn all_pqkf(sources: &[PathBuf]) -> bool {
@@ -119,19 +120,36 @@ fn select(prompt: &str, items: &[&str]) -> CliResult<usize> {
         .map_err(|_| Failure::new(code::ERROR, ""))
 }
 
+fn confirm(prompt: &str) -> CliResult<bool> {
+    Confirm::new()
+        .with_prompt(prompt)
+        .default(false)
+        .interact()
+        .map_err(|_| Failure::new(code::ERROR, ""))
+}
+
 fn recipient(s: &IntegrateTexts, lang: Lang) -> CliResult<String> {
     let public = ask_path(s.ctx_prompt_pub)?;
     child(lang, &["inspect", "--", &public])?;
-    let ok = Confirm::new()
-        .with_prompt(s.ctx_confirm)
-        .default(false)
-        .interact()
-        .map_err(|_| Failure::new(code::ERROR, ""))?;
-    if ok {
+    if confirm(s.ctx_confirm)? {
         Ok(public)
     } else {
         Err(Failure::new(code::USAGE, ""))
     }
+}
+
+/// DE: Empfänger im Terminal: je Fingerabdruck bestätigen, dann „weiteren hinzufügen?“ (#47).
+/// EN: Recipients in the terminal: confirm each fingerprint, then "add another?" (#47).
+pub(super) fn recipients(s: &IntegrateTexts, lang: Lang) -> CliResult<Vec<String>> {
+    let more = recipients_ui::texts(lang).more;
+    let first = recipient(s, lang)?;
+    recipients_ui::collect(first, || {
+        if confirm(more)? {
+            recipient(s, lang).map(Some)
+        } else {
+            Ok(None)
+        }
+    })
 }
 
 /// DE: Ablauf im Terminal für mehrere Quellen. EN: Terminal flow for several sources.
@@ -173,15 +191,13 @@ pub(super) fn terminal(
         args.extend(["--out", out.as_str()]);
     }
     let modes: Vec<&str> = s.ctx_modes.split('|').collect();
-    // DE: 1 = Empfänger, 2 = Passphrase und Faktordatei. EN: 1 = recipient, 2 = with factor file.
+    // DE: 1 = Empfänger, 2 = Passphrase und Faktordatei. EN: 1 = recipients, 2 = with factor file.
     let extra = match select(s.ctx_mode, &modes)? {
-        1 => Some(("--to", recipient(s, lang)?)),
-        2 => Some((FLAG, ask_path(ui_texts(lang).existing)?)),
-        _ => None,
+        1 => recipients_ui::to_args(&recipients(s, lang)?),
+        2 => vec![FLAG.to_owned(), ask_path(ui_texts(lang).existing)?],
+        _ => Vec::new(),
     };
-    if let Some((flag, value)) = &extra {
-        args.extend([*flag, value.as_str()]);
-    }
+    args.extend(extra.iter().map(String::as_str));
     args.push("--");
     args.extend(&refs);
     child(lang, &args)

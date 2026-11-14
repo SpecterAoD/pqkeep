@@ -9,7 +9,7 @@ use std::io::{BufRead, IsTerminal};
 use std::path::{Path, PathBuf};
 
 use clap::{Arg, ArgAction, ArgMatches, Command, value_parser};
-use dialoguer::{Confirm, Input, Select};
+use dialoguer::{Input, Select};
 use pqkeep::files;
 use pqkeep::security::Lang;
 
@@ -126,20 +126,11 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
         args.extend(["--out", &out, "--", path]);
         return child(lang, &args);
     }
-    let public = ask_path(s.ctx_prompt_pub)?;
-    child(lang, &["inspect", "--", &public])?;
-    let ok = Confirm::new()
-        .with_prompt(s.ctx_confirm)
-        .default(false)
-        .interact()
-        .map_err(|_| Failure::new(code::ERROR, ""))?;
-    if !ok {
-        return Err(Failure::new(code::USAGE, ""));
-    }
-    child(
-        lang,
-        &["encrypt", "--to", &public, "--out", &out, "--", path],
-    )
+    let to = super::recipients_ui::to_args(&super::context_many::recipients(s, lang)?);
+    let mut args = vec!["encrypt"];
+    args.extend(to.iter().map(String::as_str));
+    args.extend(["--out", &out, "--", path]);
+    child(lang, &args)
 }
 
 fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResult {

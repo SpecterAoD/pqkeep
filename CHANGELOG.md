@@ -32,8 +32,11 @@ German release notes: see `docs/releases/`.
   passphrase prompt: duplicates, more than 64 and non-ML-KEM keys are rejected (exit code 2). A single
   recipient without extras still writes v1, byte for byte as before; everything else writes v2, which
   older releases cannot open. Decrypting with a key that is not among the recipients now says so
-  clearly. The sandbox additionally allows reading exactly the given `--to` files. Menu and context
-  menu do not offer several recipients yet.
+  clearly. The sandbox additionally allows reading exactly the given `--to` files.
+- **Several recipients in the menu and the context menu:** the menu asks for further recipients
+  ("empty = done") and then whether to add an own passphrase (optionally with a factor file); the
+  context menu (terminal and windows, one or several files) asks "Add another recipient?" after each
+  confirmed fingerprint. The choice is now called "For recipients (public keys, one or more)".
 - **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
   file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
   "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file

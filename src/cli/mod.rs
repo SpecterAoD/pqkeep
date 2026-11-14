@@ -29,6 +29,7 @@ mod keys;
 mod many_text;
 mod menu;
 mod recipients;
+mod recipients_ui;
 mod sandbox;
 #[cfg(feature = "api")]
 mod serve;

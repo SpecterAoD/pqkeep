@@ -21,6 +21,9 @@ use super::io::{CliResult, Failure, code, fingerprint, localize};
 /// DE: Name des Schalters „Empfänger und eigene Passphrase“. EN: Name of the combined switch.
 pub const WITH_PASSPHRASE: &str = "with-passphrase";
 
+/// DE: Derselbe Schalter als Argument (für Menü-Kindprozesse). EN: The same switch as an argument.
+pub const WITH_PASSPHRASE_FLAG: &str = "--with-passphrase";
+
 /// DE: Hilfetext für `--with-passphrase`. EN: Help text for `--with-passphrase`.
 pub fn help(lang: Lang) -> &'static str {
     match lang {
