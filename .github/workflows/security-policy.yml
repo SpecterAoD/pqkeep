@@ -1,0 +1,28 @@
+name: Actions Security Policy
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/check_actions_policy.py'
+      - 'scripts/test_check_actions_policy.py'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/check_actions_policy.py'
+      - 'scripts/test_check_actions_policy.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Regression tests
+        run: python3 -m unittest scripts/test_check_actions_policy.py -v
+      - name: Static Actions policy
+        run: python3 scripts/check_actions_policy.py
