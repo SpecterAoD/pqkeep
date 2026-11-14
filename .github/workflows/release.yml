@@ -425,10 +425,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
-          pre=""
-          if [ "${{ needs.prepare.outputs.prerelease }}" = "true" ]; then pre="--prerelease"; fi
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag $pre \
+          pre=()
+          if [ "$IS_PRERELEASE" = "true" ]; then pre=(--prerelease); fi
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag "${pre[@]}" \
             --title "PQKeep $TAG" --notes-file "docs/releases/$TAG.md"
 
   verify:
@@ -470,8 +471,10 @@ jobs:
           done
       - name: Sigstore-Signaturen / Sigstore signatures
         working-directory: dist
+        env:
+          SIGNER_WORKFLOW_REF: ${{ github.workflow_ref }}
         run: |
-          id="https://github.com/${{ github.workflow_ref }}"
+          id="https://github.com/$SIGNER_WORKFLOW_REF"
           for f in *.tar.gz *.zip *.deb SHA256SUMS; do
             cosign verify-blob --bundle "$f.sigstore.json" \
               --certificate-identity "$id" \
