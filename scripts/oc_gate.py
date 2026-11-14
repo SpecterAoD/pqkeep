@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 
@@ -32,7 +33,8 @@ def validate(event: dict, repository: str) -> tuple[str, str] | None:
     body = comment.get("body")
     if (not isinstance(body, str) or len(body) > 4000
             or any(ord(char) < 32 and char not in "\r\n" for char in body)
-            or any(char in body for char in ("\u200b", "\u200c", "\u200d", "\ufeff"))):
+            or any(unicodedata.category(char) in ("Cf", "Cc", "Cs", "Zl", "Zp")
+                   for char in body)):
         return None
     match = COMMAND.fullmatch(body)
     if not match:
