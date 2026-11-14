@@ -1,6 +1,6 @@
 # CLAUDE.md – Arbeitsregeln für Claude Code / Rules for Claude Code
 
-Verbindliche Grundlage: [`docs/SPEC.md`](docs/SPEC.md). Fahrplan: [`docs/ROADMAP.md`](docs/ROADMAP.md). Checkliste: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
+Verbindliche Grundlage: [`docs/SPEC.md`](docs/SPEC.md) (englisch / English: [`docs/SPEC.en.md`](docs/SPEC.en.md), im selben PR mitpflegen / update in the same PR). Fahrplan: [`docs/ROADMAP.md`](docs/ROADMAP.md). Checkliste: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
 
 1. **Plan vor Code:** Pro Roadmap-Schritt zuerst einen kurzen Plan (Dateien, Crates, Tests) vorlegen und auf Freigabe warten. / Present a short plan per roadmap step and wait for approval.
 2. **Ein Schritt nach dem anderen.** Ein Schritt ist fertig, wenn `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` und `cargo test --locked` grün sind und die Definition of Done erfüllt ist.

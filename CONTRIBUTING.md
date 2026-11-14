@@ -21,7 +21,7 @@ bug reports alike. By contributing you agree that your work is licensed under th
    cargo test --locked
    ```
 3. For larger changes, describe your approach in the issue first (files, tests, risks) and wait
-   for feedback. The specification [`docs/SPEC.md`](docs/SPEC.md) is binding; its
+   for feedback. The specification ([English](docs/SPEC.en.md), [German](docs/SPEC.md)) is binding; its
    [working rules for AI-assisted development](CLAUDE.md) apply to everyone.
 
 ### Languages
@@ -82,7 +82,7 @@ beschriebene Fehlermeldungen. Mit einem Beitrag erklärst du, dass er unter der
    cargo test --locked
    ```
 3. Bei größeren Änderungen zuerst den Ansatz im Issue beschreiben (Dateien, Tests, Risiken) und
-   Rückmeldung abwarten. Die Spezifikation [`docs/SPEC.md`](docs/SPEC.md) ist verbindlich; die
+   Rückmeldung abwarten. Die Spezifikation ([Deutsch](docs/SPEC.md), [Englisch](docs/SPEC.en.md)) ist verbindlich; die
    [Arbeitsregeln für KI-gestützte Entwicklung](CLAUDE.md) gelten für alle.
 
 ### Sprachen
