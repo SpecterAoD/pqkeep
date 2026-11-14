@@ -40,4 +40,4 @@ jobs:
       - name: Install zizmor (version pinned)
         run: python3 -m pip install --user 'zizmor==1.32.0'
       - name: Audit workflows with zizmor (offline)
-        run: python3 -m zizmor --offline --format=plain .
+        run: $HOME/.local/bin/zizmor --offline --format=plain .
