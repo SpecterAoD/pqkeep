@@ -1,10 +1,20 @@
+# DE: Wöchentliche Versions-Updates; neue Versionen erst nach 7 Tagen vorschlagen (cooldown), damit
+#     kurz nach Veröffentlichung entdeckte Schadversionen nicht sofort hereinkommen.
+#     Sicherheitsupdates gelten nicht als Versions-Updates und kommen ohne Wartezeit.
+# EN: Weekly version updates; propose new versions only after 7 days (cooldown) so malicious
+#     versions found shortly after release do not come in immediately. Security updates are not
+#     version updates and arrive without waiting.
 version: 2
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
