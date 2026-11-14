@@ -1,6 +1,8 @@
 # Secret and token boundaries (Issue #183)
 
-Status: verified from repository YAML, **not** verified against live GitHub settings. No secret values accessed.\n\n**Implementation dependency:** Draft PR #194 (targeting feature/176-opencode-gemini) now separates `authorize` (read-only, no Gemini key) from `gemini-plan` (`permissions: {}`, no checkout, isolated working directory, deny-all OpenCode config). This is proposed code only, not active on `main`; CI and runtime secret-exposure tests are still required.
+Status: verified from repository YAML, **not** verified against live GitHub settings. No secret values accessed.
+
+**Implementation dependency:** Draft PR #194 (targeting feature/176-opencode-gemini) now separates `authorize` (read-only, no Gemini key) from `gemini-plan` (`permissions: {}`, no checkout, isolated working directory, deny-all OpenCode config). This is proposed code only, not active on `main`; CI and runtime secret-exposure tests are still required.
 
 | Job | Trigger | Token scope | Named secret | Risk / control |
 |---|---|---|---|---|
@@ -10,7 +12,8 @@ Status: verified from repository YAML, **not** verified against live GitHub sett
 | Release: publish | tag / dispatch; not PR | contents:write, id-token:write, attestations:write | none referenced | environment release; live protection rules unverified |
 | Release: verify | after publish | contents:read, attestations:read | none referenced | verifies released bundle, but **draft creation precedes verification** |
 | OpenCode: preflight (feature branch only) | PR paths | contents:read | none | installs npm CLI; no Gemini secret |
-| OpenCode: authorize (feature branch only) | issue_comment | contents:read | GEMINI_API_KEY in later step | live owner comment verification; npm CLI receives secret |
+| OpenCode: authorize (feature branch only) | issue_comment | contents:read | none | live owner comment verification; no model key |
+| OpenCode: gemini-plan (feature branch only) | authorized issue_comment | permissions:{} | GEMINI_API_KEY | no checkout, isolated workdir and deny-all config; npm CLI still receives key |
 | OpenCode: gemini-pr-smoke (feature branch only) | maintainer-owned PR #178 | permissions:{} | GEMINI_API_KEY | no checkout; npm CLI can still access key |
 
 ## Required security changes
