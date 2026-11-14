@@ -1,0 +1,61 @@
+# DE: Prüft die Workflows selbst (#181): eigene Regeln (scripts/check_actions_policy.py: explizite
+#     Rechte, Actions per Commit-SHA, keine gefährlichen Trigger, keine Secrets in PR-Workflows),
+#     actionlint (Syntax, Shell-Prüfung) und zizmor (Injection, Rechte, Pinning; offline). Nur
+#     Leserechte, keine Secrets. Werkzeuge mit fester Version; zizmor zusätzlich mit Prüfsummen
+#     (.github/zizmor-requirements.txt), actionlint über die Go-Prüfsummendatenbank.
+# EN: Checks the workflows themselves (#181): own rules (scripts/check_actions_policy.py: explicit
+#     permissions, actions pinned to commit SHAs, no dangerous triggers, no secrets in PR workflows),
+#     actionlint (syntax, shell checks) and zizmor (injection, permissions, pinning; offline). Read
+#     permissions only, no secrets. Tools at fixed versions; zizmor also hash-checked
+#     (.github/zizmor-requirements.txt), actionlint via the Go checksum database.
+name: Workflow-Prüfung / workflow policy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/zizmor-requirements.txt'
+      - 'scripts/check_actions_policy.py'
+      - 'scripts/test_check_actions_policy.py'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/zizmor-requirements.txt'
+      - 'scripts/check_actions_policy.py'
+      - 'scripts/test_check_actions_policy.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: Workflow-Prüfung / workflow policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Regeltests / rule tests
+        run: python3 -m unittest scripts/test_check_actions_policy.py -v
+      - name: Eigene Regeln / own rules
+        run: python3 scripts/check_actions_policy.py
+      - name: actionlint installieren / install (v1.7.7, Go-Prüfsummen / Go checksums)
+        env:
+          GOBIN: ${{ runner.temp }}/security-tools
+        run: |
+          mkdir -p "$GOBIN"
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$GOBIN/actionlint" -version
+      - name: actionlint
+        env:
+          GOBIN: ${{ runner.temp }}/security-tools
+        run: '"$GOBIN/actionlint" -color'
+      - name: zizmor installieren / install (Prüfsummen / hashes)
+        run: >-
+          python3 -m pip install --user --require-hashes --only-binary :all:
+          -r .github/zizmor-requirements.txt
+      - name: zizmor (offline)
+        run: '"$HOME/.local/bin/zizmor" --offline --format=plain .'

@@ -1,0 +1,7 @@
+# DE: zizmor für .github/workflows/security-policy.yml – feste Version mit SHA-256 der Linux-Wheels
+#     (PyPI). Update: Version und Hashes gemeinsam von https://pypi.org/project/zizmor/ übernehmen.
+# EN: zizmor for .github/workflows/security-policy.yml – fixed version with SHA-256 of the Linux
+#     wheels (PyPI). Update: take version and hashes together from https://pypi.org/project/zizmor/.
+zizmor==1.32.0 \
+    --hash=sha256:84a6acb975accc13408786a2bd274b572537ca19c933ebbc13e78f3988562071 \
+    --hash=sha256:0cdd38fca6eb34ceb567548548d706332e3535ea66894b9168c048e03207b68c

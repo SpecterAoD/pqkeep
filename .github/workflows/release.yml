@@ -67,7 +67,7 @@ jobs:
         shell: bash
         run: |
           cargo_version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
-          echo "epoch=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+          { echo "epoch=$(git log -1 --format=%ct)"; } >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
             tag="$GITHUB_REF_NAME"
             # DE: Annotierten Tag sicher holen und Signatur gegen allowed_signers prüfen.
@@ -85,14 +85,18 @@ jobs:
               echo "docs/releases/$tag.md fehlt / is missing" >&2
               exit 1
             fi
-            echo "version=$cargo_version" >> "$GITHUB_OUTPUT"
-            echo "is_tag=true" >> "$GITHUB_OUTPUT"
             case "$cargo_version" in *-*) pre=true ;; *) pre=false ;; esac
-            echo "prerelease=$pre" >> "$GITHUB_OUTPUT"
+            {
+              echo "version=$cargo_version"
+              echo "is_tag=true"
+              echo "prerelease=$pre"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "version=$cargo_version-dev.$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
-            echo "is_tag=false" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "version=$cargo_version-dev.$(git rev-parse --short=7 HEAD)"
+              echo "is_tag=false"
+              echo "prerelease=true"
+            } >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -203,13 +207,13 @@ jobs:
           #     Nachfolger-Testpaket trägt dann die Release-Version und prüft so auch diesen Weg.
           # EN: Signed tag: release version without CI suffix. Otherwise CI candidate; the
           #     successor test package then carries the release version and covers that path.
-          if [ "$IS_TAG" = "true" ]; then kind="--release"; next="--release --successor"; else kind=""; next="--release"; fi
-          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-dist --ci-sha "$GITHUB_SHA" $kind
-          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" $kind
+          if [ "$IS_TAG" = "true" ]; then kind=(--release); next=(--release --successor); else kind=(); next=(--release); fi
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-dist --ci-sha "$GITHUB_SHA" "${kind[@]}"
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" "${kind[@]}"
           cmp deb-dist/*.deb deb-repeat/*.deb
           # Nachfolger-Testpaket nur für Upgrade-/Downgrade-Prüfungen: gleiches Binary, höhere
           # Version. Wird nie veröffentlicht (Artefaktname außerhalb dist-*).
-          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-next --ci-sha "$GITHUB_SHA" $next
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-next --ci-sha "$GITHUB_SHA" "${next[@]}"
           deb=$(ls deb-dist/*.deb)
           dpkg --compare-versions "$(dpkg-deb -f "$deb" Version)" lt "$(dpkg-deb -f deb-next/*.deb Version)"
           dpkg-deb --info "$deb"
@@ -421,10 +425,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
-          pre=""
-          if [ "${{ needs.prepare.outputs.prerelease }}" = "true" ]; then pre="--prerelease"; fi
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag $pre \
+          pre=()
+          if [ "$IS_PRERELEASE" = "true" ]; then pre=(--prerelease); fi
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag "${pre[@]}" \
             --title "PQKeep $TAG" --notes-file "docs/releases/$TAG.md"
 
   verify:
@@ -466,8 +471,10 @@ jobs:
           done
       - name: Sigstore-Signaturen / Sigstore signatures
         working-directory: dist
+        env:
+          SIGNER_WORKFLOW_REF: ${{ github.workflow_ref }}
         run: |
-          id="https://github.com/${{ github.workflow_ref }}"
+          id="https://github.com/$SIGNER_WORKFLOW_REF"
           for f in *.tar.gz *.zip *.deb SHA256SUMS; do
             cosign verify-blob --bundle "$f.sigstore.json" \
               --certificate-identity "$id" \
