@@ -48,7 +48,9 @@ German release notes: see `docs/releases/`.
   plus per-command data; even failures produce valid JSON with `error` (`code`, stable `kind`,
   localized `message`); only argument errors stay text (exit 2). No secrets, no archive-internal
   paths. Exit codes 0–7 are now documented as a stable interface and listed completely in `--help`
-  (6 = no windows, 7 = invalid signature were missing). `encrypt`/`decrypt` follow.
+  (6 = no windows, 7 = invalid signature were missing). `encrypt` and `decrypt` also accept `--json`:
+  `results` per target (source, target, counters, skipped count) and `summary`; with `--each` or
+  several files to decrypt every entry is reported, the first error sets the exit code.
 - **Factor file in the menu, the guided flows and the context menu:** new menu item "Create factor
   file"; encrypting with a passphrase asks for an optional factor file (context menu: third choice
   "With passphrase and factor file"); decrypting asks for it exactly when the file or your key file

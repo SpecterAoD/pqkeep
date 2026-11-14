@@ -118,11 +118,15 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
     tally.finish()
 }
 
-/// DE: Mehrere `.pqkf` mit derselben Passphrase bzw. demselben Schlüssel entschlüsseln.
-/// EN: Decrypt several `.pqkf` with the same passphrase or the same key.
-pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> CliResult {
+/// DE: Mehrere `.pqkf`: alle gleich geschützt? Dann Passphrase bzw. Schlüssel einmal einlesen.
+/// EN: Several `.pqkf`: all protected alike? Then read the passphrase or key once.
+pub(super) fn open_many(
+    t: &Texts,
+    lang: Lang,
+    m: &ArgMatches,
+    sources: &[PathBuf],
+) -> CliResult<super::unlock::Opened> {
     let s = many_texts(lang);
-    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     if m.get_one::<PathBuf>("out").is_some() {
         return Err(Failure::new(code::USAGE, s.no_out));
     }
@@ -130,15 +134,21 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
     let mut use_key = None;
     for src in sources {
         let wanted = super::unlock::Access::read(src)
-            .map_err(fail)?
+            .map_err(|e| Failure::from_error(&e, lang))?
             .use_key(key_given);
         if *use_key.get_or_insert(wanted) != wanted {
             return Err(Failure::new(code::USAGE, s.mixed));
         }
     }
-    let opened = super::unlock::for_decrypt(t, lang, m, use_key == Some(true), None)?;
+    super::unlock::for_decrypt(t, lang, m, use_key == Some(true), None)
+}
+
+/// DE: Mehrere `.pqkf` mit derselben Passphrase bzw. demselben Schlüssel entschlüsseln.
+/// EN: Decrypt several `.pqkf` with the same passphrase or the same key.
+pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> CliResult {
+    let opened = open_many(t, lang, m, sources)?;
     let unlock = opened.get();
-    let mut tally = Tally::new(s, m, sources.len());
+    let mut tally = Tally::new(many_texts(lang), m, sources.len());
     for src in sources {
         tally.begin();
         let Some(out) = default_for(m, default_decrypted(src)) else {

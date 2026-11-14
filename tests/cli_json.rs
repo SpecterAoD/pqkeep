@@ -183,14 +183,14 @@ fn help_lists_json_and_all_exit_codes() {
             ],
         ),
     ] {
-        for cmd in ["check", "inspect", "verify"] {
+        for cmd in ["check", "inspect", "verify", "encrypt", "decrypt"] {
             let (_, out, _) = common::pqkeep(&["--lang", lang, cmd, "--help"], "", dir.path());
             for word in words {
                 assert!(out.contains(word), "{cmd} {word}: {out}");
             }
         }
     }
-    // DE: Noch ohne `--json` (folgt in PR 2): Bedienfehler. EN: Not yet (PR 2): usage error.
-    let (code, ..) = common::pqkeep(&["encrypt", "x", "--json"], "", dir.path());
+    // DE: Befehle ohne `--json`: Bedienfehler. EN: Commands without `--json`: usage error.
+    let (code, ..) = common::pqkeep(&["generate", "--json"], "", dir.path());
     assert_eq!(code, 2);
 }

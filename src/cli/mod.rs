@@ -19,6 +19,7 @@ mod dialog_text;
 mod factor_cmd;
 mod factor_ui;
 mod files_cmd;
+mod files_json;
 mod files_many;
 mod guide;
 mod help;
@@ -112,6 +113,8 @@ fn print_hardening(t: &Texts, report: HardeningReport) {
 /// DE: Befehle mit `--json` (#85, `docs/JSON.md`). EN: Commands with `--json`.
 fn dispatch_json(t: &Texts, lang: Lang, name: &str, m: &ArgMatches) -> CliResult {
     match name {
+        "encrypt" => json_out::run(name, || files_json::encrypt(t, lang, m)),
+        "decrypt" => json_out::run(name, || files_json::decrypt(t, lang, m)),
         "check" => json_out::run(name, || check_cmd::json(t, lang, m)),
         "inspect" => json_out::run(name, || inspect_json::run(lang, m)),
         "verify" => json_out::run(name, || sign_cmd::verify_json(lang, m)),
