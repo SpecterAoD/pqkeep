@@ -1,6 +1,10 @@
 """Authorization regression tests for issue #176."""
+import json
+import os
+import tempfile
 import unittest
-from scripts.oc_gate import validate, unchanged_comment
+from unittest.mock import patch
+from scripts.oc_gate import validate, unchanged_comment, main
 
 
 def event(body="/oc plan Analyse", author=77644070):
@@ -19,6 +23,52 @@ def event(body="/oc plan Analyse", author=77644070):
 class GateTests(unittest.TestCase):
     def check(self, payload):
         return validate(payload, "SpecterAoD/pqkeep")
+
+    def run_gate(self, payload, token=None, current=None):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
+                                         encoding="utf-8") as source:
+            json.dump(payload, source)
+            source.flush()
+            environment = {"GH_TOKEN": token} if token else {}
+            with patch("sys.argv", ["oc_gate.py", source.name,
+                                    "SpecterAoD/pqkeep"]):
+                with patch.dict(os.environ, environment, clear=True):
+                    with patch("scripts.oc_gate.fetch_comment",
+                               return_value=current) as fetch:
+                        result = main()
+                        return result, fetch.call_count
+
+    def test_main_requires_live_token(self):
+        result, fetches = self.run_gate(event())
+        self.assertEqual(result, 1)
+        self.assertEqual(fetches, 0)
+
+    def test_main_denies_changed_live_comment(self):
+        payload = event()
+        changed = dict(payload["comment"], body="/oc plan modified")
+        result, fetches = self.run_gate(payload, "synthetic-read-token", changed)
+        self.assertEqual((result, fetches), (1, 1))
+
+    def test_main_authorizes_only_matching_live_comment(self):
+        payload = event()
+        result, fetches = self.run_gate(payload, "synthetic-read-token",
+                                        payload["comment"])
+        self.assertEqual((result, fetches), (0, 1))
+
+    def test_main_denies_api_failure(self):
+        payload = event()
+        with patch("scripts.oc_gate.fetch_comment",
+                   side_effect=OSError("synthetic API outage")):
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
+                                             encoding="utf-8") as source:
+                json.dump(payload, source)
+                source.flush()
+                with patch("sys.argv", ["oc_gate.py", source.name,
+                                        "SpecterAoD/pqkeep"]):
+                    with patch.dict(os.environ,
+                                    {"GH_TOKEN": "synthetic-read-token"},
+                                    clear=True):
+                        self.assertEqual(main(), 1)
 
     def test_live_comment_matches(self):
         payload = event()
