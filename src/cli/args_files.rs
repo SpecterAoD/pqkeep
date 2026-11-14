@@ -1,11 +1,12 @@
 //! DE: Argumente der Datei-Befehle `encrypt` und `decrypt` (eine oder mehrere Quellen).
 //! EN: Arguments of the file commands `encrypt` and `decrypt` (one or more sources).
 
-use clap::{Command, value_parser};
+use clap::{ArgAction, Command, value_parser};
 use pqkeep::security::Lang;
 use std::path::PathBuf;
 
 use super::args::{base, flag, opt, out_optional, path, profile};
+use super::recipients;
 use super::text::texts;
 
 /// DE: Höchstzahl an Quellen je Aufruf. EN: Maximum number of sources per call.
@@ -21,14 +22,23 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 2] {
             .arg(flag("rename", m.arg_rename))
             .arg(opt("temp-tag", "").hide(true))
             .arg(flag("progress", "").hide(true))
-            .arg(opt("to", t.arg_to).value_parser(value_parser!(PathBuf)))
+            // DE: Mehrfach möglich (#47); Anzahl, Typ und Doppel prüft `recipients.rs`.
+            // EN: May be repeated (#47); count, kind and duplicates are checked in `recipients.rs`.
+            .arg(
+                opt("to", t.arg_to)
+                    .value_parser(value_parser!(PathBuf))
+                    .action(ArgAction::Append),
+            )
+            .arg(flag(recipients::WITH_PASSPHRASE, recipients::help(lang)).requires("to"))
             .arg(profile(lang))
             .arg(out_optional(lang))
             .arg(super::args::min_bits(lang))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
-            // DE: Die Faktordatei ergänzt die Passphrase, nicht den Empfängerschlüssel.
-            // EN: The factor file complements the passphrase, not the recipient key.
-            .arg(super::factor_cmd::arg(lang).conflicts_with("to"))
+            // DE: Die Faktordatei ergänzt die Passphrase, nicht den Empfängerschlüssel; mit `--to`
+            //     nur zusammen mit `--with-passphrase` (Prüfung vor der Passphrase-Abfrage).
+            // EN: The factor file complements the passphrase, not the recipient key; with `--to`
+            //     only together with `--with-passphrase` (checked before the passphrase prompt).
+            .arg(super::factor_cmd::arg(lang))
             // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
             // EN: Internal for the context menu: read and compare two lines.
             .arg(

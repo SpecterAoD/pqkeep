@@ -33,6 +33,7 @@ pub use decrypt::decrypt;
 pub use encrypt::{encrypt, encrypt_many};
 pub use format::{Content, FileHeader, HeaderMode};
 pub use format_v2::{HeaderV2, Slot};
+pub use slot_v2::MAX_RECIPIENTS;
 pub use walk::{SkipReason, Skipped};
 
 use crate::Result;

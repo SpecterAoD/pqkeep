@@ -77,6 +77,7 @@ impl Failure {
             }
             Error::Io(kind) => format!("Ein-/Ausgabefehler ({kind}) / I/O error ({kind})"),
             Error::InvalidInput { field } => super::factor_cmd::message(field)
+                .or_else(|| super::recipients::message(field))
                 .map_or_else(|| err.to_string(), str::to_owned),
             other => other.to_string(),
         };

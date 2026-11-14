@@ -96,7 +96,8 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
             .ok_or_else(|| Failure::new(code::USAGE, s.need_out))?;
         let protection = read_protection(t, lang, m)?;
         let list: Vec<&Path> = sources.iter().map(PathBuf::as_path).collect();
-        let report = files::encrypt_many(&list, out, &protection.get())
+        let report = protection
+            .with(|p| files::encrypt_many(&list, out, p))
             .map_err(|e| Failure::from_error(&e, lang))?;
         print_report(t, lang, t.msg_encrypted, out, &report);
         return Ok(());
@@ -109,7 +110,9 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
             tally.missing_target(src);
             continue;
         };
-        let r = files::encrypt(src, &out, &protection.get()).map(|r| (t.msg_encrypted, r));
+        let r = protection
+            .with(|p| files::encrypt(src, &out, p))
+            .map(|r| (t.msg_encrypted, r));
         tally.record(t, lang, src, &out, r);
     }
     tally.finish()

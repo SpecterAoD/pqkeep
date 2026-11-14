@@ -21,7 +21,7 @@ Netz senden. Umgesetzt mit zwei Kernel-Mechanismen (SPEC Schritt 5a):
 | `generate` | Zielordner von `--out` (anlegen, schreiben, umbenennen, entfernen) | Dateiaufrufe, Threads; kein Netzwerk |
 | `export` | Schlüsseldatei lesen, Zielordner | wie oben |
 | `inspect` | die angezeigte Datei lesen | wie oben |
-| `encrypt` / `decrypt` | Quelle lesen (Datei oder Ordner rekursiv), `--to`/`--key` lesen, Zielordner | wie oben |
+| `encrypt` / `decrypt` | Quelle lesen (Datei oder Ordner rekursiv), `--key` bzw. jede `--to`-Datei lesen, Zielordner | wie oben |
 | `factor` | Zielordner von `--out` | wie oben |
 | `--factor-file` (bei `generate`, `encrypt`, `decrypt`, `sign`) | zusätzlich **nur diese eine Datei** lesen | wie oben |
 | `validate`, `passphrase`, `help`, `man`, `completions` | nichts | wie oben |
@@ -96,7 +96,7 @@ e.g. `Sandbox: landlock=full seccomp=full`.
 
 **What is allowed:** `generate` – the target directory of `--out` (create, write, rename,
 remove); `export` – read the key file plus target directory; `inspect` – read the shown file;
-`encrypt`/`decrypt` – read the source (file or directory recursively) and `--to`/`--key`, plus
+`encrypt`/`decrypt` – read the source (file or directory recursively) and `--key` or each `--to` file, plus
 target directory; `factor` – the target directory of `--out`; `--factor-file` (with `generate`,
 `encrypt`, `decrypt`, `sign`) – additionally read **this one file only**; `validate`, `passphrase`, `help`, `man`, `completions` – nothing;
 `serve --init-token` – the token file's directory; `serve` (API) – **nothing** (token file and
