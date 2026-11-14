@@ -163,7 +163,7 @@ pub fn inspect(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     Ok(())
 }
 
-fn is_encrypted_file(path: &Path) -> bool {
+pub(super) fn is_encrypted_file(path: &Path) -> bool {
     let mut magic = [0u8; 8];
     std::fs::File::open(path)
         .and_then(|mut f| std::io::Read::read_exact(&mut f, &mut magic))

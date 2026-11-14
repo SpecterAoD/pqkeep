@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 use clap::{ArgMatches, Command, value_parser};
 use pqkeep::files;
 use pqkeep::security::Lang;
+use serde_json::{Map, Value, json};
 
 use super::args::{base, flag, opt, path};
 use super::args_files::MAX_SOURCES;
@@ -69,6 +70,7 @@ pub fn command(lang: Lang) -> Command {
         )
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
         .arg(super::factor_cmd::arg(lang))
+        .arg(super::json_out::arg(lang))
 }
 
 /// DE: Lesefreigaben für die Sandbox: vorhandene Quellen und der Schlüssel. Fehlende Quellen
@@ -120,9 +122,65 @@ fn print_line(t: &Texts, c: &CheckTexts, src: &Path, result: &Result<files::Repo
     }
 }
 
+/// DE: Ergebnis je Quelle. EN: Result per source.
+type Checked = Vec<(PathBuf, Result<files::Report, Failure>)>;
+
+/// DE: Erster Fehlercode (0 = alles in Ordnung). EN: First error code (0 = all fine).
+fn exit_code(all: &Checked) -> u8 {
+    all.iter()
+        .find_map(|(_, r)| r.as_ref().err().map(|f| f.code))
+        .unwrap_or(code::OK)
+}
+
 /// DE: `pqkeep check`. EN: `pqkeep check`.
 pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let c = check_texts(lang);
+    let all = check_all(t, lang, m)?;
+    for (src, result) in &all {
+        print_line(t, c, src, result);
+    }
+    let ok = all.iter().filter(|(_, r)| r.is_ok()).count();
+    let n = all.len();
+    let summary = c
+        .summary
+        .replace("{n}", &n.to_string())
+        .replace("{ok}", &ok.to_string())
+        .replace("{bad}", &(n - ok).to_string());
+    println!("{summary}");
+    match exit_code(&all) {
+        code::OK => Ok(()),
+        exit => Err(Failure::new(exit, "")),
+    }
+}
+
+/// DE: `pqkeep check --json`: Ergebnisse je Datei und Zusammenfassung (`docs/JSON.md`).
+/// EN: `pqkeep check --json`: results per file and summary (`docs/JSON.md`).
+pub fn json(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Value>, u8)> {
+    let all = check_all(t, lang, m)?;
+    let results: Vec<Value> = all
+        .iter()
+        .map(|(src, r)| {
+            let source = src.to_string_lossy();
+            match r {
+                Ok(r) => json!({ "source": source, "ok": true, "files": r.files,
+                    "directories": r.directories, "bytes": r.bytes }),
+                Err(f) => json!({ "source": source, "ok": false,
+                    "error": super::json_out::error(f) }),
+            }
+        })
+        .collect();
+    let ok = all.iter().filter(|(_, r)| r.is_ok()).count();
+    let mut body = Map::new();
+    body.insert("results".into(), results.into());
+    body.insert(
+        "summary".into(),
+        json!({ "total": all.len(), "ok": ok, "failed": all.len() - ok }),
+    );
+    Ok((body, exit_code(&all)))
+}
+
+/// DE: Entsperrt einmal und prüft jede Quelle. EN: Unlocks once and checks every source.
+fn check_all(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<Checked> {
     let sources = super::files_cmd::sources(m);
     let found = accesses(&sources, lang);
     let key_given = m.get_one::<PathBuf>("key").is_some();
@@ -141,29 +199,15 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     } else {
         None
     };
-    let (mut ok, mut first_error) = (0, None);
-    for (src, access) in sources.iter().zip(found) {
+    let mut all = Vec::with_capacity(sources.len());
+    for (src, access) in sources.into_iter().zip(found) {
         let result = access.and_then(|_| {
             let unlock = opened
                 .as_ref()
                 .ok_or_else(|| Failure::new(code::ERROR, ""))?;
-            files::check(src, &unlock.get()).map_err(|e| Failure::from_error(&e, lang))
+            files::check(&src, &unlock.get()).map_err(|e| Failure::from_error(&e, lang))
         });
-        print_line(t, c, src, &result);
-        match result {
-            Ok(_) => ok += 1,
-            Err(f) => {
-                first_error.get_or_insert(f.code);
-            }
-        }
+        all.push((src, result));
     }
-    drop(opened);
-    let n = sources.len();
-    let summary = c
-        .summary
-        .replace("{n}", &n.to_string())
-        .replace("{ok}", &ok.to_string())
-        .replace("{bad}", &(n - ok).to_string());
-    println!("{summary}");
-    first_error.map_or(Ok(()), |code| Err(Failure::new(code, "")))
+    Ok(all)
 }

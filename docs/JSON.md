@@ -1,0 +1,102 @@
+# Maschinenlesbare Ausgabe (`--json`) und Exit-Codes / Machine-readable output and exit codes
+
+**DE** | [EN](#english)
+
+Für Skripte und Monitoring geben `check`, `inspect` und `verify` mit `--json` ihr Ergebnis als
+**genau ein JSON-Objekt** auf stdout aus (eine Zeile). `encrypt` und `decrypt` folgen (#85, zweiter
+Teil). Exit-Codes und Schema sind eine **stabile Schnittstelle**: Inkompatible Änderungen gibt es
+nur mit neuer Schema-Kennung.
+
+## Exit-Codes
+
+| Code | `kind` | Bedeutung |
+|---|---|---|
+| 0 | `ok` | Erfolg |
+| 1 | `error` | Fehler (z. B. Datei fehlt, keine pqkeep-Datei, Ein-/Ausgabefehler) |
+| 2 | `usage` | Bedienfehler (Argumente, fehlende Eingabe mit `--batch`, Faktordatei fehlt/überflüssig) |
+| 3 | `decrypt_failed` | Entschlüsselung fehlgeschlagen: falsche Passphrase/Schlüssel/Faktordatei **oder** Manipulation (bewusst nicht unterscheidbar) |
+| 4 | `weak_passphrase` | Passphrase zu schwach |
+| 5 | `target_exists` | Ziel existiert bereits |
+| 6 | `no_windows` | keine Fenster möglich (Kontextmenü) |
+| 7 | `invalid_signature` | Signatur ungültig (`verify`) |
+
+## Gemeinsame Hülle (Schema `pqkeep-json/1`)
+
+```json
+{"schema":"pqkeep-json/1","command":"check","ok":true,"exit_code":0, …}
+```
+
+- `schema`, `command`, `ok` (`true` genau bei Exit-Code 0), `exit_code` (gleich dem echten Exit-Code).
+- Scheitert ein Befehl als Ganzes (z. B. Schlüsseldatei fehlt), steht dort zusätzlich
+  `"error": {"code": 1, "kind": "error", "message": "…"}`. `code`/`kind` sind stabil, nur
+  `message` folgt `--lang`.
+- **Ausnahme:** Fehler in den Argumenten selbst (unbekannte Option, fehlender Pfad) meldet der
+  Parser als Text auf stderr, Exit-Code 2 – ohne JSON.
+- Die Passphrase-Abfrage läuft weiter über das Terminal (bzw. `--passphrase-stdin`,
+  `--passphrase-file`); stdout enthält nur das JSON.
+- Feldreihenfolge ist nicht festgelegt; unbekannte Felder bitte ignorieren (neue Felder können
+  hinzukommen, ohne dass sich die Schema-Kennung ändert).
+- **Keine Geheimnisse** und keine Pfade aus dem Inhalt verschlüsselter Archive – nur die angegebenen
+  Dateien, Zähler und Kopfdaten.
+
+## `check --json`
+
+```json
+{"schema":"pqkeep-json/1","command":"check","ok":false,"exit_code":3,
+ "results":[{"source":"a.pqkf","ok":true,"files":1,"directories":0,"bytes":5},
+            {"source":"b.pqkf","ok":false,"error":{"code":3,"kind":"decrypt_failed","message":"…"}}],
+ "summary":{"total":2,"ok":1,"failed":1}}
+```
+
+`exit_code` ist der erste Fehler der Liste (wie ohne `--json`).
+
+## `inspect --json`
+
+- Öffentlicher Schlüssel: `type: "public_key"`, `algorithm`, `key_id`, `created_utc`, `metadata`
+  (`name`, `organization`, `company`, `department`, `account_type`; fehlende Werte `null`).
+- Schlüsseldatei: `type: "key_file"`, dieselben Felder plus `kdf` (`memory_kib`, `iterations`,
+  `parallelism`), `factor_required`, `warnings` (Texte nach `--lang`).
+- Verschlüsselte Datei: `type: "encrypted_file"`, `format_version` (1 oder 2), `content`
+  (`file`/`directory`), `slots`: je Zugang `{"kind":"passphrase","kdf":{…},"factor_required":…}`
+  oder `{"kind":"recipient","algorithm":"ML-KEM-768","recipient_id":"…"}`.
+- Immer zusätzlich `file` (der angegebene Pfad).
+
+## `verify --json`
+
+Gültig: `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (Angabe des Signierers, nicht
+vertrauenswürdig), Exit 0. Ungültig: `"valid": false`, `signer_matches` (stammt die Signatur vom
+angegebenen Schlüssel?), Exit 7. Immer zusätzlich `file`.
+
+---
+
+## English
+
+With `--json`, `check`, `inspect` and `verify` print their result as **exactly one JSON object** on
+stdout (one line); `encrypt` and `decrypt` follow (#85, second part). Exit codes and schema are a
+**stable interface**: incompatible changes only come with a new schema identifier.
+
+**Exit codes:** 0 `ok`; 1 `error` (e.g. file missing, not a pqkeep file, I/O); 2 `usage` (arguments,
+missing input with `--batch`, factor file missing/superfluous); 3 `decrypt_failed` (wrong
+passphrase/key/factor file **or** tampering, deliberately indistinguishable); 4 `weak_passphrase`;
+5 `target_exists`; 6 `no_windows` (context menu); 7 `invalid_signature` (`verify`).
+
+**Envelope (schema `pqkeep-json/1`):** `schema`, `command`, `ok` (`true` exactly for exit code 0),
+`exit_code` (equal to the real exit code). If a command fails as a whole, there is also
+`"error": {"code", "kind", "message"}`; `code`/`kind` are stable, only `message` follows `--lang`.
+**Exception:** errors in the arguments themselves are reported by the parser as text on stderr with
+exit code 2, without JSON. The passphrase prompt still uses the terminal (or `--passphrase-stdin`,
+`--passphrase-file`); stdout contains only the JSON. Field order is not fixed; please ignore unknown
+fields (new fields may be added without changing the schema identifier). **No secrets** and no paths
+from encrypted archive contents – only the given files, counters and header data.
+
+**`check --json`:** `results` (per source: `source`, `ok`, then `files`, `directories`, `bytes` or
+`error`) and `summary` (`total`, `ok`, `failed`); `exit_code` is the first error of the list.
+
+**`inspect --json`:** public key (`type: "public_key"`, `algorithm`, `key_id`, `created_utc`,
+`metadata` with `null` for missing values); key file (`type: "key_file"`, same fields plus `kdf`,
+`factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version`, `content`,
+`slots` with `kind` `passphrase` – `kdf`, `factor_required` – or `recipient` – `algorithm`,
+`recipient_id`). Always `file` as well.
+
+**`verify --json`:** valid → `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (claimed by
+the signer, not trusted), exit 0; invalid → `"valid": false`, `signer_matches`, exit 7. Always `file`.

@@ -22,10 +22,12 @@ mod files_cmd;
 mod files_many;
 mod guide;
 mod help;
+mod inspect_json;
 mod inspect_v2;
 mod integrate;
 mod integrate_text;
 mod io;
+mod json_out;
 mod keys;
 mod many_text;
 mod menu;
@@ -107,6 +109,16 @@ fn print_hardening(t: &Texts, report: HardeningReport) {
     );
 }
 
+/// DE: Befehle mit `--json` (#85, `docs/JSON.md`). EN: Commands with `--json`.
+fn dispatch_json(t: &Texts, lang: Lang, name: &str, m: &ArgMatches) -> CliResult {
+    match name {
+        "check" => json_out::run(name, || check_cmd::json(t, lang, m)),
+        "inspect" => json_out::run(name, || inspect_json::run(lang, m)),
+        "verify" => json_out::run(name, || sign_cmd::verify_json(lang, m)),
+        _ => Err(Failure::new(code::USAGE, "")),
+    }
+}
+
 /// DE: Führt den geparsten Befehl aus. EN: Runs the parsed command.
 fn dispatch(
     t: &Texts,
@@ -115,6 +127,11 @@ fn dispatch(
     sandboxed: bool,
     verbose: bool,
 ) -> CliResult {
+    if let Some((name, m)) = matches.subcommand()
+        && json_out::wanted(m)
+    {
+        return dispatch_json(t, lang, name, m);
+    }
     match matches.subcommand() {
         Some(("generate", m)) => keys::generate(t, lang, m),
         Some(("factor", m)) => factor_cmd::create(lang, m),
@@ -174,10 +191,12 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
     }
     // DE: Sandbox nach dem Parsen, vor jeder Eingabe und jedem Dateizugriff.
     // EN: Sandbox after parsing, before any input and any file access.
-    if let Some((name, m)) = matches.subcommand()
-        && let Some(access) = access::for_command(name, m, lang)?
-    {
-        sandbox::enable(&Profile::Cli(access), sandboxed, verbose, lang)?;
+    if let Some((name, m)) = matches.subcommand() {
+        // DE: Mit `--json` auch frühe Fehler als JSON. EN: With `--json` early errors as JSON too.
+        let early = |f| json_out::early(name, m, f);
+        if let Some(access) = access::for_command(name, m, lang).map_err(early)? {
+            sandbox::enable(&Profile::Cli(access), sandboxed, verbose, lang).map_err(early)?;
+        }
     }
     dispatch(t, lang, &matches, sandboxed, verbose)
 }
