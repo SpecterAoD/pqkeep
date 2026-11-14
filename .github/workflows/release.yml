@@ -209,7 +209,7 @@ jobs:
           #     successor test package then carries the release version and covers that path.
           if [ "$IS_TAG" = "true" ]; then kind=(--release); next=(--release --successor); else kind=(); next=(--release); fi
           python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-dist --ci-sha "$GITHUB_SHA" "${kind[@]}"
-          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" $kind
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" "${kind[@]}"
           cmp deb-dist/*.deb deb-repeat/*.deb
           # Nachfolger-Testpaket nur für Upgrade-/Downgrade-Prüfungen: gleiches Binary, höhere
           # Version. Wird nie veröffentlicht (Artefaktname außerhalb dist-*).
