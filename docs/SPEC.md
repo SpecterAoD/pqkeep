@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.12: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.13: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -14,6 +14,7 @@
 > Änderung v2.10 (09.11.2026, freigegeben von SpecterAoD): geführte Abläufe in der CLI (Schlüssel erstellen, Signieren, Prüfen) – im Menü oder wenn `generate`/`sign`/`verify` im Terminal ohne Pflichtangaben aufgerufen werden; nie ohne Terminal oder mit `--batch`. Sie fragen nur ab, zeigen die entsprechenden Befehle und starten diese als eigene Prozesse mit voller Sandbox (keine zweite Logik, keine Geheimnisse im Ablauf-Prozess).
 > Änderung v2.11 (10.11.2026, freigegeben von SpecterAoD mit dem Plan zu #92): Kontextmenü auch für Thunar (Xfce) über die gemeinsame Datei `~/.config/Thunar/uca.xml` – nur eigene Blöcke mit festen Kennungen, fremde Aktionen bleiben Byte für Byte erhalten, strenge Aufbauprüfung ohne XML-Crate, Sicherung vor dem Schreiben, Prüfsumme je Block (Manifest Version 2).
 > Änderung v2.12 (15.11.2026, freigegeben von SpecterAoD mit dem Projektplan „Community und Struktur“): englische Übersetzung `docs/SPEC.en.md`, gemeinsam gepflegt; externe Beiträge dürfen nur Englisch sein, die deutsche Fassung wird nachgezogen (`CONTRIBUTING.md`).
+> Änderung v2.13 (16.11.2026, freigegeben von SpecterAoD): Ausnahme von 5c für Bilder der Dokumentation unter `docs/images/` (PNG, JPEG, WebP, höchstens 500 KB je Datei, Signatur passend zur Endung; geprüft von `scripts/check_limits.sh`).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -135,8 +136,8 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 
 - **Lizenz (festgelegt):** **Apache License 2.0** (OSI-anerkannt, enthält eine Patentklausel, passend für Kryptografie). Datei `LICENSE` (Volltext) und `NOTICE` im Repo-Root, `license = "Apache-2.0"` in `Cargo.toml`. Alle Abhängigkeiten müssen mit Apache-2.0 kompatibel sein (Allowlist in `deny.toml`, z. B. Apache-2.0, MIT, BSD-2/3-Clause, ISC, Unicode-3.0; GPL/AGPL-Abhängigkeiten sind ausgeschlossen).
 - **Ausnahme (freigegeben 07.11.2026):** Die EFF-Wortlisten (Daten, keine Software) stehen unter **CC BY 4.0** (keine OSI-Lizenz). Sie werden als Datendateien unter `data/wordlists/` mit Namensnennung in `NOTICE` mitgeliefert. Alle übrigen Wortlisten stehen unter OSI-Lizenzen (MIT, BSD-3-Clause). Listen mit „nicht kommerziell“-Klauseln (z. B. CC BY-NC) bleiben ausgeschlossen.
-- **Kein proprietärer Code:** Weder im eigenen Code noch in Abhängigkeiten, Vendor-Verzeichnissen, Binärblobs oder eingebetteten Ressourcen. Keine vorkompilierten Binärdateien im Repo.
-- **Automatische Prüfung:** `cargo deny` mit Lizenz-Allowlist (nur OSI-anerkannte, kompatible Lizenzen), Verbot unbekannter Registries/Git-Quellen und Prüfung auf Crates ohne Lizenzangabe. Zusätzlich Check, dass keine Binärdateien eingecheckt sind.
+- **Kein proprietärer Code:** Weder im eigenen Code noch in Abhängigkeiten, Vendor-Verzeichnissen, Binärblobs oder eingebetteten Ressourcen. Keine vorkompilierten Binärdateien im Repo. **Ausnahme (v2.13):** eigene Bilder der Dokumentation unter `docs/images/` (PNG, JPEG, WebP, höchstens 500 KB je Datei), lizenziert wie das Projekt.
+- **Automatische Prüfung:** `cargo deny` mit Lizenz-Allowlist (nur OSI-anerkannte, kompatible Lizenzen), Verbot unbekannter Registries/Git-Quellen und Prüfung auf Crates ohne Lizenzangabe. Zusätzlich Check, dass keine Binärdateien eingecheckt sind (außer den Bildern unter `docs/images/`, deren Endung, Größe und Dateisignatur geprüft werden).
 - **Beiträge:** `CONTRIBUTING.md` (DE/EN) mit Hinweis, dass eingereichter Code unter derselben Lizenz steht und keinen proprietären Code enthalten darf.
 - **Dokumentation:** Lizenz und Hinweis zur Code-Signierung in der zweisprachigen README.
 

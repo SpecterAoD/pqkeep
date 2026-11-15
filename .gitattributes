@@ -1,2 +1,7 @@
 # DE: Einheitlich LF, auch unter Windows. EN: Always LF, also on Windows.
 * text=auto eol=lf
+# DE: Bilder der Doku sind binär (keine Zeilenende-Umwandlung). EN: Documentation images are binary.
+docs/images/*.png binary
+docs/images/*.jpg binary
+docs/images/*.jpeg binary
+docs/images/*.webp binary
