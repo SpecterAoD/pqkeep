@@ -36,7 +36,7 @@ bricht das Verpacken ab. Mit SignPath wären beide zu signieren.
 5. Fehlgeschlagen: Entwurf löschen, Ursache beheben, Tag löschen (`git push --delete origin <tag>`,
    `git tag -d <tag>`) und neu erstellen – nur solange nichts veröffentlicht wurde.
 
-## Artefakte und Manifest (Issue #93, Phase 6)
+## Artefakte und Manifest
 
 Ein Release besteht aus genau fünf Nutzartefakten, je mit eigener CycloneDX-SBOM:
 
@@ -69,10 +69,7 @@ CycloneDX-Attestation.
   `serialNumber` und den Eigenschaften `pqkeep:debian:package`, `…:version`,
   `…:architecture`, `…:binary-sha256`.
 - **Builds:** beide Linux-Ziele nativ (`ubuntu-22.04`, `ubuntu-22.04-arm`), glibc-Symbole bis
-  2.35; getestete Distributionen und Grenzen: [Testmatrix](issue-93-testmatrix.md).
-
-Berichte der Phasen: [2](issue-93-phase2.md), [3](issue-93-phase3.md), [4](issue-93-phase4.md),
-[5](issue-93-phase5.md), [6](issue-93-phase6.md).
+  2.35; getestete Distributionen und Grenzen: [Paket-Tests](PACKAGE_TESTS.md).
 
 ## Windows-Signatur (SignPath)
 
@@ -121,6 +118,4 @@ identifier (e.g. `0.1.0~beta.2-1`), otherwise the CI scheme `…~ci.<UTC time>.<
 release file name follows the archive scheme because GitHub replaces `~` in asset names. The
 package SBOM is derived from the archive SBOM of the same architecture, with its own
 `serialNumber` and `pqkeep:debian:*` properties. Both Linux targets build natively with glibc
-symbols capped at 2.35; tested distributions and limits: [test matrix](issue-93-testmatrix.md).
-Phase reports (German): [2](issue-93-phase2.md), [3](issue-93-phase3.md),
-[4](issue-93-phase4.md), [5](issue-93-phase5.md), [6](issue-93-phase6.md).
+symbols capped at 2.35; tested distributions and limits: [package tests](PACKAGE_TESTS.md).
