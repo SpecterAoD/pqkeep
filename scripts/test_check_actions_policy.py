@@ -82,6 +82,29 @@ class WorkflowPolicyTests(unittest.TestCase):
         for path in files:
             self.assertEqual([], audit(path.read_text(encoding="utf-8"), path.name), path.name)
 
+    def test_download_needs_checksum(self):
+        # DE: Download ohne Prüfung wird gemeldet. EN: Unverified download is reported.
+        get = "      - run: curl -sSfL -o tool.tgz https://example.invalid/tool.tgz\n"
+        self.check(BASE + get, "download without checksum")
+        self.check(BASE + get.replace("curl -sSfL -o", "wget -O"), "download without checksum")
+        # DE: Umleitung und Pipe sind auch Downloads. EN: Redirection and pipes are downloads too.
+        self.check(BASE + "      - run: curl -sSfL https://example.invalid/t > t.tgz\n", "download without checksum")
+        self.check(BASE + "      - run: curl -sSfL https://example.invalid/t | tar -xz\n", "download without checksum")
+        # DE: Prüfung im selben Schritt (auch mehrzeilig mit Fortsetzung). EN: Check in the same step.
+        ok = BASE + ("      - run: |\n          curl -sSfL -o tool.tgz \\\n            https://example.invalid/tool.tgz\n"
+                     "          echo \"$SUM  tool.tgz\" | sha256sum -c -\n")
+        self.assertEqual([], audit(ok, "test.yml"))
+
+    def test_checksum_must_be_in_the_same_step(self):
+        # DE: Prüfung in einem anderen Schritt, Schein-Prüfung oder Kommentar zählt nicht.
+        # EN: A check in another step, a fake check or a comment does not count.
+        get = BASE + "      - run: curl -sSfL -o tool.tgz https://example.invalid/tool.tgz\n"
+        self.check(get + "      - run: echo \"$SUM  tool.tgz\" | sha256sum -c -\n", "download without checksum")
+        self.check(get + "      - run: sha256sum tool.tgz\n", "download without checksum")
+        commented = BASE + ("      - run: |\n          # sha256sum -c is done elsewhere\n"
+                            "          curl -sSfL -o t.tgz https://example.invalid/t\n")
+        self.check(commented, "download without checksum")
+
     def test_local_action(self):
         self.assertEqual([], audit(BASE.replace(PIN, "./.github/actions/test"), "test.yml"))
 

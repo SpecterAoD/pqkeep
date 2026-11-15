@@ -1,0 +1,26 @@
+# DE: Dependency Review (#185): zeigt je Pull Request neue oder geänderte Abhängigkeiten
+#     (Cargo.lock, Actions) mit bekannten Schwachstellen und bricht ab Schweregrad „moderate“ ab.
+#     Ergänzt cargo-deny (Lizenzen, Quellen, Advisories des ganzen Baums), ersetzt es nicht.
+#     Nur Leserechte, kein Checkout, keine Secrets.
+# EN: Dependency Review (#185): shows new or changed dependencies per pull request (Cargo.lock,
+#     actions) with known vulnerabilities and fails from severity "moderate". Complements
+#     cargo-deny (licences, sources, advisories of the whole tree), does not replace it. Read
+#     permissions only, no checkout, no secrets.
+name: Abhängigkeits-Prüfung / dependency review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Abhängigkeits-Prüfung / dependency review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: never
