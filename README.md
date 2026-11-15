@@ -6,6 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/SpecterAoD/pqkeep?include_prereleases&label=release)](https://github.com/SpecterAoD/pqkeep/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SpecterAoD/pqkeep/badge)](https://scorecard.dev/viewer/?uri=github.com/SpecterAoD/pqkeep)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16717/badge)](https://www.bestpractices.dev/projects/16717)
 
 [English](#english) | [Deutsch](#deutsch)
 
@@ -121,7 +122,8 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
   (Argon2); property-based tests for parsers; fuzzing.
 - Container and file formats authenticate their full header; strict parsing, downgrade checks.
 - Supply chain: locked dependencies, `cargo-deny` and RustSec checks in CI, weekly audit, signed
-  commits, CI on Linux and Windows, hardened workflows
+  commits, CI on Linux and Windows, hardened workflows, OpenSSF Scorecard and
+  [OpenSSF Best Practices badge](https://www.bestpractices.dev/projects/16717) (passing)
   ([`docs/security/CI_SECURITY.md`](docs/security/CI_SECURITY.md)).
 - Threat model: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) · Sandbox:
   [`docs/SANDBOX.md`](docs/SANDBOX.md) · Report a vulnerability: [`SECURITY.md`](SECURITY.md)
@@ -320,7 +322,8 @@ siehe [`docs/SERVER.md`](docs/SERVER.md)).
 - Container- und Dateiformate authentisieren ihren gesamten Header; strenges Parsen,
   Downgrade-Prüfungen.
 - Lieferkette: feste Abhängigkeiten, `cargo-deny`- und RustSec-Prüfung in der CI, wöchentliches
-  Audit, signierte Commits, CI unter Linux und Windows, gehärtete Workflows
+  Audit, signierte Commits, CI unter Linux und Windows, gehärtete Workflows, OpenSSF Scorecard und
+  [OpenSSF-Best-Practices-Badge](https://www.bestpractices.dev/projects/16717) (Stufe passing)
   ([`docs/security/CI_SECURITY.md`](docs/security/CI_SECURITY.md)).
 - Bedrohungsmodell: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) · Sandbox:
   [`docs/SANDBOX.md`](docs/SANDBOX.md) · Sicherheitslücke melden: [`SECURITY.md`](SECURITY.md)
