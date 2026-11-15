@@ -2,7 +2,9 @@
 
 Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
 
-**Stand / status (08.11.2026):** Schritte 0–7 abgeschlossen, erste Beta [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) veröffentlicht; SignPath vorerst abgelehnt (erneute Bewerbung später); als Nächstes die Updates unten. / Steps 0–7 done, first beta published; SignPath declined for now (will reapply later); next: the updates below.
+**Stand / status (15.11.2026):** Schritte 0–7 abgeschlossen, Betas [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) und [`v0.1.0-beta.2`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2) veröffentlicht; U0, U1 (ohne Absender-Signatur in `.pqkf`), U2 und U4 umgesetzt. / Steps 0–7 done, two betas published; U0, U1 (except the sender signature in `.pqkf`), U2 and U4 implemented.
+
+**Aktuelle Planung / current planning:** [Meilensteine M0–M7 / milestones](https://github.com/SpecterAoD/pqkeep/milestones) und [Project-Board](https://github.com/users/SpecterAoD/projects/1). Diese Datei zeigt den bisherigen Weg. / This file shows the way so far.
 
 | Schritt | Inhalt | Ergebnis |
 |---|---|---|
@@ -19,7 +21,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9, Issues mit Label `update`)
+## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9)
 
 | Update | Inhalt | Issues |
 |---|---|---|
@@ -28,11 +30,11 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) – Format v2: [V2_DRAFT.md](V2_DRAFT.md); Core, Kommandozeile (`--to` mehrfach, `--with-passphrase`), Menü und Kontextmenü umgesetzt | #45–#47 |
 | U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |
 | U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog; U4-1 Linux, U4-2 Windows und U4-3 Fenster unter Linux und Windows, U4-4 Mehrfachauswahl sowie U4-5 Thunar umgesetzt ([INTEGRATION.md](INTEGRATION.md)) | #51–#53, #72, #92 |
-| GUI | Optionale moderne grafische Oberfläche, rein in Rust, ohne Web-Technik und Netzwerk; Sicherheit vorab neu bewerten (SPEC-Änderung nötig) | #58–#65 (Label `gui`) |
+| GUI | Optionale moderne grafische Oberfläche, rein in Rust, ohne Web-Technik und Netzwerk; Sicherheit vorab neu bewerten (SPEC-Änderung nötig) | #58–#65 (Meilenstein M3) |
 | – | Spiegel-Modus für Ordner | #54 |
 | – | Diceware-Generator mit gemeinfreier Wortliste | #55 |
 | – | Hybrid-Verfahren (X25519 + ML-KEM) neu bewerten | #56 |
-| iOS | iOS-App (ferne Zukunft): Machbarkeit, Architektur, Bedrohungsmodell | #66–#67 (Label `zukunft`) |
+| iOS | iOS-App (ferne Zukunft): Machbarkeit, Architektur, Bedrohungsmodell | #66 (Meilenstein M7) |
 
 ## Offene Punkte außerhalb des Codes
 

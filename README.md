@@ -175,6 +175,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Topic | Document |
 |---|---|
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
+| Debian package tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Cryptography | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
 | Key file format | [`docs/FORMAT.md`](docs/FORMAT.md) |
 | File encryption format | [`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md) |
@@ -371,6 +372,7 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 | Thema | Dokument |
 |---|---|
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
+| Debian-Paket-Tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Kryptografie | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
 | Format der Schlüsseldatei | [`docs/FORMAT.md`](docs/FORMAT.md) |
 | Format verschlüsselter Dateien | [`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md) |

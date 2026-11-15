@@ -67,7 +67,7 @@ Second public beta. **Not audited, not FIPS 140 validated – do not use for sec
 - **Debian packages** (`.deb`) for amd64 and arm64: program, German and English man pages, shell
   completions and licence texts; no maintainer scripts, services or changes to user files. Tested in
   native containers on Debian 12/13 and Ubuntu 22.04/24.04/26.04 (install, upgrade, downgrade,
-  removal, purge, rejected packages) – see `docs/INSTALL.md` and `docs/issue-93-testmatrix.md`.
+  removal, purge, rejected packages) – see `docs/INSTALL.md` and `docs/PACKAGE_TESTS.md`.
 - Release pipeline: all five artifacts (Linux AMD64/ARM64, Windows, Debian amd64/arm64) carry a
   checksum, build provenance and SBOM attestations and a Sigstore signature; a fixed artifact manifest
   rejects missing, additional, duplicate or wrongly assigned files – see `docs/RELEASE.md`.

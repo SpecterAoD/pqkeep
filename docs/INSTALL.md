@@ -22,7 +22,7 @@ Paket ausgewiesenen Bibliotheken. Beide Builds laufen nativ auf Ubuntu 22.04;
 sowie Ubuntu 22.04, 24.04 und 26.04 in nativen Testcontainern beider Architekturen:
 Installation, Reinstall, Upgrade, Downgrade, Entfernung, Purge und abgewiesene Pakete.
 Umfang, Grenzen und nicht nachgewiesene Fälle stehen in der
-[Testmatrix](issue-93-testmatrix.md). Andere Distributionen (z. B. Linux Mint,
+[Paket-Tests](PACKAGE_TESTS.md). Andere Distributionen (z. B. Linux Mint,
 Raspberry Pi OS, Kali) sind nicht geprüft. Die Pakete sind
 eigenständig: Ein AMD64-Paket lässt sich nicht als ARM64-Paket verwenden und umgekehrt;
 32-Bit-ARM (`armhf`) wird nicht unterstützt.
@@ -108,7 +108,7 @@ libraries declared in its metadata. Both builds run natively on Ubuntu 22.04;
 `dpkg-shlibdeps` calculates the actual dependencies. Checks cover Debian 12 and 13 and
 Ubuntu 22.04, 24.04 and 26.04 in native test containers of both architectures: install,
 reinstall, upgrade, downgrade, removal, purge and rejected packages. Scope, limits and
-cases without evidence are listed in the [test matrix](issue-93-testmatrix.md). Other
+cases without evidence are listed in the [package tests](PACKAGE_TESTS.md). Other
 distributions (e.g. Linux Mint, Raspberry Pi OS, Kali) are not tested. The packages are
 independent: an AMD64
 package cannot be used as an ARM64 package or vice versa; 32-bit ARM (`armhf`) is not

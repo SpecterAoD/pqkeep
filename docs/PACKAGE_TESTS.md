@@ -1,6 +1,8 @@
-# Issue #93 – Testmatrix der Debian-Pakete / Debian package test matrix
+# Debian-Paket-Tests / Debian package tests
 
-Stand: 12.11.2026 (Phase 5; Verweis auf die Release-Pakete aus Phase 6 ergänzt). Geprüft
+**DE** | [EN](#english)
+
+Stand: 12.11.2026. Geprüft
 werden die CI-Kandidaten `pqkeep_<Version>_amd64.deb` und `pqkeep_<Version>_arm64.deb`; die
 Release-Pakete `pqkeep-<Version>-<Architektur>.deb` sind dieselben Dateien unter anderem Namen.
 
@@ -51,8 +53,7 @@ wenn ein veröffentlichtes `.deb` existiert.
 
 ### Nicht nachgewiesen
 
-Diese Punkte aus dem Implementierungsplan (Abschnitt 6) sind bewusst offen und werden später
-mit eigenen Test-VMs nachgeholt. Bis dahin macht PQKeep dazu keine Aussage:
+Diese Punkte sind bewusst offen und werden später mit eigenen Test-VMs nachgeholt (#163). Bis dahin macht PQKeep dazu keine Aussage:
 
 - **Platzmangel** während der Installation und ein **echter Abbruch** mitten im dpkg-Lauf
   (z. B. Prozessende, Stromausfall). Geprüft ist nur der definierte Zwischenzustand
@@ -64,6 +65,10 @@ mit eigenen Test-VMs nachgeholt. Bis dahin macht PQKeep dazu keine Aussage:
 - Andere Distributionen (Linux Mint, Raspberry Pi OS, Kali u. a.) und 32-Bit-ARM (`armhf`).
 
 ## English
+
+As of 2026-11-12. Tested are the CI candidates `pqkeep_<version>_amd64.deb` and
+`pqkeep_<version>_arm64.deb`; the release packages `pqkeep-<version>-<architecture>.deb` are the
+same files under a different name.
 
 ### Target systems
 
@@ -101,8 +106,7 @@ for upgrading from a published predecessor; that requires a published `.deb`.
 
 ### Without evidence
 
-These items from the implementation plan (section 6) are deliberately open and will be covered
-later with dedicated test VMs. Until then PQKeep makes no statement about them:
+These items are deliberately open and will be covered later with dedicated test VMs (#163). Until then PQKeep makes no statement about them:
 
 - **Out of disk space** during installation and a **real abort** in the middle of a dpkg run
   (e.g. process kill, power loss). Only the defined intermediate state "unpacked, not
