@@ -15,7 +15,8 @@ bug reports alike. By contributing you agree that your work is licensed under th
    [help wanted](https://github.com/SpecterAoD/pqkeep/labels/help%20wanted) or the
    [milestones](https://github.com/SpecterAoD/pqkeep/milestones) for the bigger picture. Leave a
    short comment before you start so that work is not done twice.
-2. Build and test (Rust ≥ 1.88):
+2. Build and test (Rust ≥ 1.88; details, selective tests, sandbox pitfalls and all CI checks:
+   [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md); questions: [Discussions](https://github.com/SpecterAoD/pqkeep/discussions)):
    ```
    cargo build --locked
    cargo test --locked
@@ -78,7 +79,8 @@ beschriebene Fehlermeldungen. Mit einem Beitrag erklärst du, dass er unter der
    [help wanted](https://github.com/SpecterAoD/pqkeep/labels/help%20wanted) oder die
    [Meilensteine](https://github.com/SpecterAoD/pqkeep/milestones) für den Überblick. Vor dem
    Start kurz im Issue kommentieren, damit nichts doppelt gemacht wird.
-2. Bauen und testen (Rust ≥ 1.88):
+2. Bauen und testen (Rust ≥ 1.88; Einzelheiten, gezielte Tests, Sandbox-Fallen und alle CI-Prüfungen:
+   [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md); Fragen: [Discussions](https://github.com/SpecterAoD/pqkeep/discussions)):
    ```
    cargo build --locked
    cargo test --locked
