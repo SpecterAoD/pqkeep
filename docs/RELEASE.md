@@ -50,7 +50,9 @@ Ein Release besteht aus genau fünf Nutzartefakten, je mit eigener CycloneDX-SBO
 
 Dazu kommen `SHA256SUMS` (alle zehn Dateien) und je ein Sigstore-Bundle (`.sigstore.json`) für
 die fünf Artefakte und `SHA256SUMS`. Jedes Artefakt erhält eine Build-Provenance- und eine
-CycloneDX-Attestation.
+CycloneDX-Attestation; die Provenance liegt zusätzlich als `pqkeep-<Version>.intoto.jsonl` im
+Release (Sigstore-Bundle, offline prüfbar mit `gh attestation verify <datei> --bundle …`; der Job
+„Prüfung“ prüft sie gegen jedes Artefakt).
 
 - **Manifest:** `scripts/release_manifest.py` enthält die Liste fest. Der Job
   „Artefaktmanifest“ (läuft auch in PRs, ohne Rechte) prüft die Build-Artefakte `dist-*`:
@@ -102,11 +104,13 @@ without a console window). Both Windows programs pass the hardening check; packa
 **Windows signing (SignPath):** only after approval by the SignPath Foundation – add the signing
 step before packaging, credentials only as secrets of the `release` environment.
 
-**Artifacts and manifest (issue #93, phase 6):** a release consists of exactly five user
+**Artifacts and manifest:** a release consists of exactly five user
 artifacts, each with its own CycloneDX SBOM (file names: see the table above): Linux AMD64 and
 ARM64 archives, the Windows ZIP, and Debian packages for amd64 and arm64. `SHA256SUMS` covers
 all ten files; the five artifacts and `SHA256SUMS` each get a Sigstore bundle, and every
-artifact gets a build provenance and a CycloneDX attestation. `scripts/release_manifest.py`
+artifact gets a build provenance and a CycloneDX attestation; the provenance is also attached as
+`pqkeep-<version>.intoto.jsonl` (Sigstore bundle, verifiable offline with
+`gh attestation verify <file> --bundle …`; the "verification" job checks it against every artifact). `scripts/release_manifest.py`
 holds the fixed list. The "artifact manifest" job (also in PRs, without permissions) rejects
 missing, additional, duplicate or wrongly assigned files and checks the assignment: SBOM ↔
 target and commit, package ↔ architecture, program in the package ↔ program in the archive of
