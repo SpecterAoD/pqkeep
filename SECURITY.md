@@ -7,7 +7,8 @@
 ### Reporting a vulnerability
 
 Please **do not** open a public issue. Use GitHub's private reporting:
-**Security → Report a vulnerability** in this repository. Helpful details:
+**[Report a vulnerability](https://github.com/SpecterAoD/pqkeep/security/advisories/new)** (Security → Report a vulnerability in this repository).
+Published advisories: <https://github.com/SpecterAoD/pqkeep/security/advisories>. Helpful details:
 
 - affected version or commit, platform (Windows/Linux) and how PQKeep was used;
 - steps to reproduce or a proof of concept (no real secrets, please);
@@ -49,8 +50,9 @@ and FIPS 204 but are not FIPS 140 validated. `zeroize` and memory locking are be
 
 ## Deutsch
 
-**Sicherheitslücken bitte nicht als öffentliches Issue melden**, sondern über **Security → Report
-a vulnerability** in diesem Repository (private Meldung). Hilfreich: betroffene Version/Commit,
+**Sicherheitslücken bitte nicht als öffentliches Issue melden**, sondern über **[Report a vulnerability](https://github.com/SpecterAoD/pqkeep/security/advisories/new)**
+(Security → Report a vulnerability in diesem Repository, private Meldung). Veröffentlichte
+Hinweise: <https://github.com/SpecterAoD/pqkeep/security/advisories>. Hilfreich: betroffene Version/Commit,
 Plattform, Schritte zur Reproduktion (ohne echte Geheimnisse), Einschätzung der Auswirkung.
 
 Ziele (keine Garantie, ein Maintainer in der Freizeit): Eingangsbestätigung innerhalb von 7 Tagen,
