@@ -1,11 +1,11 @@
-# MASTER PROJECT SPECIFICATION v2.12: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.13: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.12. Both versions are maintained together; every change to one is made to the other in the
+> 2.13. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.12. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.13. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
@@ -20,6 +20,7 @@
 > Change v2.10 (2026-11-09, approved by SpecterAoD): guided flows in the CLI (create key, sign, verify) – in the menu or when `generate`/`sign`/`verify` are called in a terminal without required input; never without a terminal or with `--batch`. They only ask, show the corresponding commands and start them as separate processes with the full sandbox (no second logic, no secrets in the flow process).
 > Change v2.11 (2026-11-10, approved by SpecterAoD with the plan for #92): context menu also for Thunar (Xfce) via the shared file `~/.config/Thunar/uca.xml` – only own blocks with fixed identifiers, foreign actions stay byte for byte, strict structure check without an XML crate, backup before writing, checksum per block (manifest version 2).
 > Change v2.12 (2026-11-15, approved by SpecterAoD with the "community and structure" project plan): English translation `docs/SPEC.en.md`, maintained together; external contributions may be English only, the German version follows (`CONTRIBUTING.md`).
+> Change v2.13 (2026-11-16, approved by SpecterAoD): exception from 5c for documentation images below `docs/images/` (PNG, JPEG, WebP, at most 500 KB per file, signature matching the extension; checked by `scripts/check_limits.sh`).
 
 > Working instruction for Claude Code. This specification is binding. In case of contradictions or gaps: do not guess, ask briefly.
 
@@ -141,8 +142,8 @@ All published artefacts (release, beta, release candidate) must be signed and ve
 
 - **Licence (fixed):** **Apache License 2.0** (OSI-approved, contains a patent clause, suitable for cryptography). File `LICENSE` (full text) and `NOTICE` in the repo root, `license = "Apache-2.0"` in `Cargo.toml`. All dependencies must be compatible with Apache-2.0 (allowlist in `deny.toml`, e.g. Apache-2.0, MIT, BSD-2/3-Clause, ISC, Unicode-3.0; GPL/AGPL dependencies are excluded).
 - **Exception (approved 2026-11-07):** The EFF word lists (data, not software) are licensed under **CC BY 4.0** (not an OSI licence). They are shipped as data files under `data/wordlists/` with attribution in `NOTICE`. All other word lists are under OSI licences (MIT, BSD-3-Clause). Lists with "non-commercial" clauses (e.g. CC BY-NC) remain excluded.
-- **No proprietary code:** Neither in own code nor in dependencies, vendor directories, binary blobs or embedded resources. No precompiled binaries in the repo.
-- **Automatic check:** `cargo deny` with a licence allowlist (only OSI-approved, compatible licences), ban on unknown registries/Git sources and check for crates without a licence. Additionally a check that no binary files are committed.
+- **No proprietary code:** Neither in own code nor in dependencies, vendor directories, binary blobs or embedded resources. No precompiled binaries in the repo. **Exception (v2.13):** own documentation images below `docs/images/` (PNG, JPEG, WebP, at most 500 KB per file), licensed like the project.
+- **Automatic check:** `cargo deny` with a licence allowlist (only OSI-approved, compatible licences), ban on unknown registries/Git sources and check for crates without a licence. Additionally a check that no binary files are committed (except the images below `docs/images/`, whose extension, size and file signature are checked).
 - **Contributions:** `CONTRIBUTING.md` (DE/EN) stating that submitted code is under the same licence and must not contain proprietary code.
 - **Documentation:** Licence and code signing notice in the bilingual README.
 

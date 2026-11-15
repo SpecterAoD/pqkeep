@@ -406,3 +406,15 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 - [Code signing policy](CODE_SIGNING_POLICY.md)
 - Datenschutz: Das Programm überträgt keine Informationen an andere Systeme, außer auf
   ausdrücklichen Wunsch der Person, die es nutzt, installiert oder betreibt.
+
+---
+
+<div align="center">
+
+**Developed by SpecterAoD · Entwickelt von SpecterAoD**
+
+<a href="https://github.com/SpecterAoD">
+  <img src="docs/images/specteraod-banner.jpg" alt="SpecterAoD – developer logo / Entwicklerlogo" width="600" />
+</a>
+
+</div>
