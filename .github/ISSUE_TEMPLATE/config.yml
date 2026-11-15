@@ -3,3 +3,6 @@ contact_links:
   - name: Sicherheitslücke melden / Report a vulnerability
     url: https://github.com/SpecterAoD/pqkeep/security/advisories/new
     about: Bitte nicht als öffentliches Issue melden. / Please do not report publicly.
+  - name: Frage / Question
+    url: https://github.com/SpecterAoD/pqkeep/discussions/categories/q-a
+    about: Fragen zu Nutzung oder Entwicklung bitte in den Discussions. / Please ask questions about using or developing PQKeep in Discussions.
