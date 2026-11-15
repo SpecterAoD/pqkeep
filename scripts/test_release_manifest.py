@@ -71,6 +71,7 @@ def bundle(root: Path) -> Path:
     (dist / rm.SUMS).write_text(sums)
     for name in [*rm.names(VERSION, ("archive", "deb")), rm.SUMS]:
         (dist / (name + ".sigstore.json")).write_text('{"bundle": "%s"}' % name)
+    (dist / rm.provenance(VERSION)).write_text('{"dsseEnvelope": {}}\n')
     return dist
 
 
@@ -137,13 +138,15 @@ class ManifestTest(unittest.TestCase):
 
     def test_verify_accepts_complete_bundle_only(self):
         dist = bundle(self.root)
-        self.assertEqual(len(list(dist.iterdir())), 17)
+        self.assertEqual(len(list(dist.iterdir())), 18)
         self.assertEqual(rm.main(["verify", str(dist), VERSION]), 0)
         deb, sums = dist / f"{BASE}arm64.deb", dist / rm.SUMS
         original, text = deb.read_bytes(), sums.read_text()
         changes = {
             "zusätzliche Datei": lambda: (dist / "extra").write_text("x"),
             "fehlendes Bundle": lambda: (dist / (deb.name + ".sigstore.json")).unlink(),
+            "fehlende Provenance": lambda: (dist / rm.provenance(VERSION)).unlink(),
+            "Provenance kein JSON": lambda: (dist / rm.provenance(VERSION)).write_text("x"),
             "verändertes Paket": lambda: deb.write_bytes(original + b"x"),
             "Prüfsummenzeile fehlt": lambda: sums.write_text("".join(text.splitlines(True)[1:])),
             "Prüfsummenzeile zusätzlich": lambda: sums.write_text(text + "0" * 64 + "  extra\n"),

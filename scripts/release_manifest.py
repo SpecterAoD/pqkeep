@@ -13,8 +13,8 @@ Aufruf / usage:
         DE: Build-Artefakte (ein Ordner je Ziel) prüfen und nach <dist> übernehmen.
         EN: check the build artifacts (one directory per target) and copy them to <dist>.
     python3 scripts/release_manifest.py verify <dist> <version>
-        DE: fertiges Bündel mit SHA256SUMS und Sigstore-Bundles prüfen.
-        EN: check the finished bundle with SHA256SUMS and Sigstore bundles.
+        DE: fertiges Bündel mit SHA256SUMS, Sigstore-Bundles und Provenance-Datei prüfen.
+        EN: check the finished bundle with SHA256SUMS, Sigstore bundles and provenance file.
 """
 
 import hashlib
@@ -30,6 +30,12 @@ from release_deb_check import TARGETS, check_package
 
 WINDOWS = "x86_64-pc-windows-msvc"
 SUMS = "SHA256SUMS"
+
+
+def provenance(version: str) -> str:
+    """DE: Build-Provenance aller Artefakte als Release-Anhang (Sigstore-Bundle, für Scorecard u. a.).
+    EN: Build provenance of all artifacts as a release asset (Sigstore bundle, e.g. for Scorecard)."""
+    return f"pqkeep-{version}.intoto.jsonl"
 
 
 def manifest(version: str) -> dict[str, dict[str, str]]:
@@ -121,10 +127,12 @@ def collect(downloads: Path, dist: Path, version: str, commit: str) -> None:
 
 
 def verify(dist: Path, version: str) -> None:
-    """Fertiges Bündel: genau Manifest, SHA256SUMS und je ein Sigstore-Bundle."""
+    """Fertiges Bündel: genau Manifest, SHA256SUMS, je ein Sigstore-Bundle und die Provenance."""
     artifacts, listed = names(version, ("archive", "deb")), names(version, ("archive", "deb", "sbom", "deb-sbom"))
     bundles = {n + ".sigstore.json" for n in artifacts | {SUMS}}
-    listing(dist, listed | bundles | {SUMS}, "Release-Bündel")
+    listing(dist, listed | bundles | {SUMS, provenance(version)}, "Release-Bündel")
+    if not regular(dist / provenance(version)).strip().startswith(b"{"):
+        raise ValueError("Provenance ist kein JSON-Bundle")
     lines = regular(dist / SUMS).decode().splitlines()
     sums = dict(reversed(line.split("  ", 1)) for line in lines if "  " in line)
     if len(sums) != len(lines) or set(sums) != listed:
@@ -135,7 +143,7 @@ def verify(dist: Path, version: str) -> None:
             raise ValueError(f"Prüfsumme weicht ab: {name}")
     if len(set(sums.values())) != len(sums):
         raise ValueError("Doppelter Inhalt im Release-Bündel")
-    print(f"Release-Bündel vollständig / release bundle complete: {len(listed | bundles) + 1} Dateien / files")
+    print(f"Release-Bündel vollständig / release bundle complete: {len(listed | bundles) + 2} Dateien / files")
 
 
 def main(argv: list[str]) -> int:
