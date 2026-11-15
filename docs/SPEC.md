@@ -1,4 +1,6 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.11: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.12: PQKeep (Core, CLI & API)
+
+> **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -11,6 +13,7 @@
 > Änderung v2.9 (09.11.2026, freigegeben von SpecterAoD): Mindeststärke neuer Passphrasen von 80 auf **128 Bit** angehoben (auch unter idealisiertem Grover-Angriff ohne Argon2-Schutz rechnerisch ≥ 64 Bit), wählbar bis 256 Bit (`--min-bits`); Generator standardmäßig 32 Zeichen, mindestens 24; Kurzform `pqkeep passphrase <länge>`. Bestehende Dateien bleiben lesbar (Prüfung nur beim Erstellen).
 > Änderung v2.10 (09.11.2026, freigegeben von SpecterAoD): geführte Abläufe in der CLI (Schlüssel erstellen, Signieren, Prüfen) – im Menü oder wenn `generate`/`sign`/`verify` im Terminal ohne Pflichtangaben aufgerufen werden; nie ohne Terminal oder mit `--batch`. Sie fragen nur ab, zeigen die entsprechenden Befehle und starten diese als eigene Prozesse mit voller Sandbox (keine zweite Logik, keine Geheimnisse im Ablauf-Prozess).
 > Änderung v2.11 (10.11.2026, freigegeben von SpecterAoD mit dem Plan zu #92): Kontextmenü auch für Thunar (Xfce) über die gemeinsame Datei `~/.config/Thunar/uca.xml` – nur eigene Blöcke mit festen Kennungen, fremde Aktionen bleiben Byte für Byte erhalten, strenge Aufbauprüfung ohne XML-Crate, Sicherung vor dem Schreiben, Prüfsumme je Block (Manifest Version 2).
+> Änderung v2.12 (15.11.2026, freigegeben von SpecterAoD mit dem Projektplan „Community und Struktur“): englische Übersetzung `docs/SPEC.en.md`, gemeinsam gepflegt; externe Beiträge dürfen nur Englisch sein, die deutsche Fassung wird nachgezogen (`CONTRIBUTING.md`).
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -33,7 +36,7 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
   - Testdateien: max. **400 Zeilen**, ein Testthema pro Datei.
   - Wird eine Datei zu groß, in Untermodule aufteilen (z. B. `crypto/kem.rs`, `crypto/dsa.rs`, `crypto/kdf.rs`, `crypto/aead.rs`). Ein CI-Skript prüft alle Limits automatisch und lässt den Build bei Verstoß scheitern.
 - **Tests grundsätzlich in eigenen Dateien:** Kein `#[cfg(test)] mod tests { ... }` mit Inhalt in Produktionsdateien. Tests der öffentlichen API liegen in `tests/*.rs`. Tests interner Funktionen liegen in einer eigenen Datei neben dem Modul (z. B. `src/crypto/kdf_tests.rs`), eingebunden nur per `#[cfg(test)] mod kdf_tests;` (eine Zeile). Das CI-Skript prüft, dass Produktionsdateien keine Testfunktionen (`#[test]`) enthalten.
-- **Zweisprachigkeit:** Dokumentation, READMEs, Doc-Kommentare und Inline-Kommentare auf Deutsch **und** Englisch. Format: `// DE: ...` gefolgt von `// EN: ...`. Fehlermeldungen für Endnutzer (CLI) zweisprachig oder per `--lang de|en` wählbar.
+- **Zweisprachigkeit:** Dokumentation, READMEs, Doc-Kommentare und Inline-Kommentare auf Deutsch **und** Englisch. Format: `// DE: ...` gefolgt von `// EN: ...`. Fehlermeldungen für Endnutzer (CLI) zweisprachig oder per `--lang de|en` wählbar. (Externe Beiträge dürfen nur Englisch sein; siehe `CONTRIBUTING.md`.)
 - **Architektur:** Bibliothek (`lib.rs`) als Core, darauf aufbauend ein Binary (`main.rs`) mit CLI und API-Server. CLI und API nutzen ausschließlich die Core-API, keine duplizierte Kryptologik.
 - **Fokus:** Zuerst Core, dann CLI, dann API. GUI ist ausdrücklich **nicht** Teil dieses Projekts (Non-Goal).
 - **Begriff:** „Passkey“ in dieser Spezifikation meint eine **Passphrase** (Geheimnis des Nutzers), nicht WebAuthn/FIDO2-Passkeys. Im Code und in der Doku konsequent `passphrase` verwenden, um Verwechslungen zu vermeiden.

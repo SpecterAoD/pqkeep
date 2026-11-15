@@ -139,7 +139,8 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
 
 PQKeep is developed by a single maintainer with the help of an AI coding assistant (Claude by
 Anthropic), which writes most of the code and documentation under the maintainer's direction.
-Every change follows the written specification ([`docs/SPEC.md`](docs/SPEC.md), German), is
+Every change follows the written specification ([`docs/SPEC.en.md`](docs/SPEC.en.md); German original
+[`docs/SPEC.md`](docs/SPEC.md)), is
 planned and approved by the maintainer before implementation, goes through a pull request with CI
 on Linux and Windows (formatting, lints, tests, known-answer tests, dependency audit) and is
 merged only by the maintainer. AI-assisted commits carry a `Co-Authored-By` trailer. AI
@@ -335,7 +336,8 @@ siehe [`docs/SERVER.md`](docs/SERVER.md)).
 
 PQKeep wird von einem Maintainer mit Hilfe eines KI-Assistenten (Claude von Anthropic)
 entwickelt, der den Großteil von Code und Dokumentation nach Vorgabe des Maintainers schreibt.
-Jede Änderung folgt der Spezifikation ([`docs/SPEC.md`](docs/SPEC.md)), wird vorher geplant und
+Jede Änderung folgt der Spezifikation ([`docs/SPEC.md`](docs/SPEC.md), englisch
+[`docs/SPEC.en.md`](docs/SPEC.en.md)), wird vorher geplant und
 freigegeben, läuft per Pull Request durch die CI unter Linux und Windows (Formatierung, Lints,
 Tests, Known-Answer-Tests, Abhängigkeitsprüfung) und wird nur vom Maintainer gemergt.
 KI-gestützte Commits tragen einen `Co-Authored-By`-Vermerk. Das ersetzt kein unabhängiges
