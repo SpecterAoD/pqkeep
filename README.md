@@ -174,6 +174,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 
 | Topic | Document |
 |---|---|
+| Architecture (for contributors) | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
 | Debian package tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Cryptography | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
@@ -371,6 +372,7 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 
 | Thema | Dokument |
 |---|---|
+| Architektur (für Mitwirkende) | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
 | Debian-Paket-Tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Kryptografie | [`docs/CRYPTO.md`](docs/CRYPTO.md) |

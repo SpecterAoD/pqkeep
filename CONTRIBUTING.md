@@ -24,6 +24,8 @@ bug reports alike. By contributing you agree that your work is licensed under th
    for feedback. The specification ([English](docs/SPEC.en.md), [German](docs/SPEC.md)) is binding; its
    [working rules for AI-assisted development](CLAUDE.md) apply to everyone.
 
+Code map: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ### Languages
 
 PQKeep is bilingual: documentation, comments and help texts exist in **English and German**, and
@@ -84,6 +86,8 @@ beschriebene Fehlermeldungen. Mit einem Beitrag erklärst du, dass er unter der
 3. Bei größeren Änderungen zuerst den Ansatz im Issue beschreiben (Dateien, Tests, Risiken) und
    Rückmeldung abwarten. Die Spezifikation ([Deutsch](docs/SPEC.md), [Englisch](docs/SPEC.en.md)) ist verbindlich; die
    [Arbeitsregeln für KI-gestützte Entwicklung](CLAUDE.md) gelten für alle.
+
+Wegweiser durch den Code: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ### Sprachen
 
