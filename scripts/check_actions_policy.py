@@ -2,13 +2,15 @@
 """DE: Eigene, strenge Regeln für die Workflow-Dateien (#181), nur Standardbibliothek, kein
 YAML-Parser: explizite `permissions` oben, Actions per vollständigem Commit-SHA, keine
 `pull_request_target`/`workflow_run`-Trigger, keine serialisierten Secrets, kein `curl | sh`,
+keine Downloads ohne Prüfsumme,
 keine Secrets und keine Schreibrechte in PR-Workflows (Ausnahme: CodeQL-Upload). Ergänzt
 actionlint und zizmor, ersetzt sie nicht. Aufruf: `python3 scripts/check_actions_policy.py`
 (Exit 1 bei Funden).
 
 EN: Own strict rules for the workflow files (#181), standard library only, no YAML parser:
 explicit top-level `permissions`, actions pinned to full commit SHAs, no
-`pull_request_target`/`workflow_run` triggers, no serialized secrets, no `curl | sh`, no secrets
+`pull_request_target`/`workflow_run` triggers, no serialized secrets, no `curl | sh`, no downloads
+without a checksum, no secrets
 and no write permissions in PR workflows (exception: CodeQL upload). Complements actionlint and
 zizmor, does not replace them. Usage: `python3 scripts/check_actions_policy.py` (exit 1 on
 findings).
@@ -34,6 +36,9 @@ UNSAFE = (
     (re.compile(r"(?m)^\s*(?:-\s*run:\s*)?(?:curl|wget)\b[^\n]*\|\s*(?:ba)?sh\b"), "remote shell execution"),
 )
 SECRET_EXPR = re.compile(r"\$\{\{[^}]*\bsecrets\s*[.\[]")
+# DE: Heruntergeladene Dateien brauchen eine Prüfsumme (#185). EN: Downloads need a checksum (#185).
+DOWNLOAD = re.compile(r"(?m)^[^#\n]*\b(?:curl|wget)\b[^\n]*(?:\s-[a-zA-Z]*[oO]\b|--output\b|--remote-name\b)")
+CHECKSUM = re.compile(r"sha256sum\s+(?:-c|--check)\b|--require-hashes\b|shasum\s+-a\s*256\s+-c\b")
 WRITE_SCOPE = re.compile(r"(?m)^\s*(?:permissions:\s*write-all\b|[a-z-]+:\s*write\b)")
 CODEQL_SCOPE = re.compile(r"(?m)^\s*security-events:\s*write\b")
 
@@ -85,6 +90,8 @@ def audit(text: str, name: str) -> list[str]:
     for pattern, description in UNSAFE:
         if pattern.search(text):
             problems.append(description)
+    if DOWNLOAD.search(text) and not CHECKSUM.search(text):
+        problems.append("download without checksum verification")
     if "pull_request" in triggers:
         # DE: Nur echte Ausdrücke, nicht das Wort in Kommentaren. EN: Real expressions only.
         if SECRET_EXPR.search(text):

@@ -2,15 +2,16 @@
 
 **DE** | [EN](#english)
 
-Bestandsaufnahme der GitHub-Actions-Umgebung von PQKeep (#180–#187): was läuft, mit welchen
-Rechten, was geprüft ist, was offen bleibt. **Stand: 14.11.2026 (abends aktualisiert).** Die Angaben zu den
-GitHub-Einstellungen wurden an diesem Tag über die GitHub-API gelesen (nur Namen und Regeln, keine
-Secret-Werte). Einstellungen können sich ändern – vor einem Release erneut prüfen.
+Bestandsaufnahme der GitHub-Actions-Umgebung von PQKeep: was läuft, mit welchen Rechten, was
+geprüft ist, welche Restrisiken bleiben. **Stand: 15.11.2026.** Die Angaben zu den
+GitHub-Einstellungen wurden über die GitHub-API gelesen (nur Namen und Regeln, keine Secret-Werte).
+Einstellungen können sich ändern – vor einem Release erneut prüfen.
 
 ## Workflows und Rechte
 
 Alle Workflows setzen oben `permissions: contents: read`; Standardrecht des Tokens im Repository
-ist ebenfalls „read“. Alle Actions sind auf vollständige Commit-SHAs gepinnt.
+ist ebenfalls „read“. Alle Actions sind auf vollständige Commit-SHAs gepinnt (in den Einstellungen
+erzwungen).
 
 | Workflow | Auslöser | Zusätzliche Rechte | Secrets |
 |---|---|---|---|
@@ -19,69 +20,74 @@ ist ebenfalls „read“. Alle Actions sind auf vollständige Commit-SHAs gepinn
 | `fuzz.yml` | wöchentlich, manuell, Pull Request (Pfadfilter) | keine | keine |
 | `audit.yml` | wöchentlich, manuell | keine | keine |
 | `security-policy.yml` | Push/Pull Request bei Workflow-Änderungen, manuell | keine | keine |
+| `dependency-review.yml` | Pull Request | keine | keine |
+| `scorecard.yml` | Push auf `main`, wöchentlich, Änderung am Branch-Schutz, manuell – **nie** Pull Request | Job: `security-events: write`, `id-token: write`, `actions: read` | keine |
 | `release.yml` | Tag `v*`, manuell, Pull Request (Pfadfilter, ohne `publish`) | nur Job `publish`: `contents: write`, `id-token: write`, `attestations: write`; `verify`: `attestations: read` | keine (Signatur schlüssellos über OIDC) |
 
 Pull Requests aus Forks laufen mit Lesetoken und ohne Secrets. Code aus einem Pull Request
 (Build-Skripte, Tests) gilt als nicht vertrauenswürdig; deshalb gibt es keine
-`pull_request_target`- oder `workflow_run`-Auslöser.
+`pull_request_target`- oder `workflow_run`-Auslöser, und Workflows mit Schreibrechten laufen nicht
+für Pull Requests.
 
 ## Automatische Prüfungen
 
 | Prüfung | Wo | Zweck |
 |---|---|---|
-| Eigene Regeln (`scripts/check_actions_policy.py`) | `security-policy.yml` | explizite Rechte, SHA-Pinning, keine gefährlichen Auslöser, keine Secrets/Schreibrechte in PR-Workflows, kein `curl \| sh` |
-| actionlint, zizmor (offline) | `security-policy.yml` | Syntax, Shell-Fehler, Injection über `${{ }}`, Rechte |
+| Eigene Regeln (`scripts/check_actions_policy.py`) | `security-policy.yml` | explizite Rechte, SHA-Pinning, keine gefährlichen Auslöser, keine Secrets/Schreibrechte in PR-Workflows, kein `curl \| sh`, keine Downloads ohne Prüfsumme |
+| actionlint, zizmor (offline, mit Prüfsummen installiert) | `security-policy.yml` | Syntax, Shell-Fehler, Injection über `${{ }}`, Rechte |
+| Dependency Review | `dependency-review.yml` | neue/geänderte Abhängigkeiten je PR mit bekannten Schwachstellen (ab „moderate“) |
+| OpenSSF Scorecard | `scorecard.yml` | Messgröße für die Lieferkette; Ergebnis öffentlich und als Kennzeichen in der README |
 | CodeQL (Rust, Python, Actions) | `codeql.yml` | statische Analyse |
 | gitleaks (Archiv mit SHA-256 geprüft) | `ci.yml` | Geheimnisse in der Historie |
-| cargo-deny, wöchentliches Advisory-Audit | `ci.yml`, `audit.yml` | Lizenzen, Quellen, bekannte Schwachstellen |
+| cargo-deny, wöchentliches Advisory-Audit | `ci.yml`, `audit.yml` | Lizenzen, Quellen, bekannte Schwachstellen im ganzen Baum |
 | Dependabot (wöchentlich, 7 Tage Wartezeit), Sicherheitsupdates | `.github/dependabot.yml` | Aktualität von Crates und Actions |
 | Secret Scanning mit Push Protection | GitHub-Einstellung | Geheimnisse beim Push abweisen |
 
-Bewusst **nicht** eingesetzt (Begründung in #180/#181/#185): Trivy, GitGuardian, SonarCloud,
-Semgrep, Checkov/KICS, ZAP, Renovate – sie doppeln vorhandene Prüfungen oder passen nicht zu einem
-CLI-Projekt ohne Container, Infrastruktur-Code und Webdienst.
+Bewusst **nicht** eingesetzt: Trivy, GitGuardian, SonarCloud, Semgrep, Checkov/KICS, ZAP, Renovate –
+sie doppeln vorhandene Prüfungen oder passen nicht zu einem CLI-Projekt ohne Container,
+Infrastruktur-Code und Webdienst.
 
-## GitHub-Einstellungen (gelesen am 14.11.2026)
+## Downloads und Abfluss von Daten
+
+**Was zur Laufzeit geladen wird:** Actions (per Commit-SHA), gitleaks (Archiv mit fester
+SHA-256), zizmor (`pip --require-hashes`), actionlint (`go install` mit fester Version, geprüft über
+die Go-Prüfsummendatenbank), cargo-deny und cargo-cyclonedx (`cargo install --locked` mit fester
+Version), Rust-Abhängigkeiten (`Cargo.lock`, `--locked`). Der eigene Prüfer meldet jeden Download
+mit `curl`/`wget` ohne `sha256sum -c` bzw. `--require-hashes`.
+
+**Abflusswege** aus einem kompromittierten Job: HTTP(S) und DNS ins Internet, Artefakte, Caches,
+Protokolle. GitHub-gehostete Runner sind **nicht** netzwerkisoliert. Begrenzung bei PQKeep: Es gibt
+keine Secrets, die abfließen könnten; Schreibrechte und OIDC gibt es nur in `publish` (hinter dem
+Environment `release`) und `scorecard`, beide ohne Code aus Pull Requests. Was ein manipuliertes
+Werkzeug erreichen könnte, sind falsche Prüfergebnisse – nicht Schlüssel oder Signaturrechte
+anderer Jobs.
+
+**Harden-Runner (Egress-Allowlist): vorerst nicht eingesetzt.** Er wäre selbst eine fremde Action
+mit weitgehendem Zugriff auf den Runner, und ohne Secrets ist der Nutzen gering. Neu bewerten, falls
+`publish` je ein langlebiges Secret braucht (z. B. eine SignPath-Anbindung, #88).
+
+## GitHub-Einstellungen (gelesen am 15.11.2026)
 
 | Bereich | Ist | Bewertung |
 |---|---|---|
 | Ruleset `main` | kein Löschen, kein Force-Push, lineare Historie, signierte Commits, nur Pull Request mit Squash, alle Review-Threads gelöst, 9 Pflichtprüfungen (CI auf Linux/Windows, MSRV, Limits, Binär-Härtung, cargo-deny, gitleaks); **keine** Umgehungsberechtigten | gut |
 | Ruleset Tags `v*` | kein Löschen, Ändern, Force-Push; Umgehung nur für Repository-Admins | gut (nötig, um Tags anzulegen) |
 | CODEOWNERS | Datei vorhanden, Code-Owner-Review im Ruleset **nicht** verlangt | richtig so: mit einem einzigen Maintainer würde die Pflicht jeden Merge blockieren |
-| Environment `release` | Freigabe durch den Maintainer nötig, Selbstfreigabe erlaubt; eigene Regeln für Branches/Tags eingeschaltet, Liste noch leer | offen, siehe unten |
+| Environment `release` | Freigabe durch den Maintainer nötig; erlaubte Refs nur Tag `v*` und Branch `main` (Trockenlauf) | gut |
 | Actions-Einstellungen | alle Actions erlaubt, SHA-Pinning **erzwungen**, Token „read“, Actions dürfen keine Reviews freigeben | gut |
 | Secrets | keine (Repository und Environment `release`) | gut |
 
 ## Offene Punkte
 
-Reihenfolge nach Nutzen; jeder Punkt ist eine Einstellung oder ein eigener kleiner Pull Request.
-
-1. **Environment `release`: erlaubte Refs eintragen** (Einstellung „Deployment branches and tags“).
-   Die eigenen Regeln sind eingeschaltet, die Liste ist aber leer – damit darf kein Lauf den Job
-   `publish` erreichen. Eintragen: Tag `v*` (Release) und Branch `main` (Trockenlauf, siehe
-   [RELEASE.md](../RELEASE.md)); `main` ist durch das Ruleset geschützt (#186).
-2. Erledigt: `GEMINI_API_KEY` entfernt (#183), SHA-Pinning in den Actions-Einstellungen erzwungen
-   (#181).
-3. **`Workflow-Prüfung / workflow policy` nicht als Pflichtprüfung eintragen:** der Workflow läuft
-   wegen des Pfadfilters nur bei Workflow-Änderungen; eine Pflichtprüfung, die nicht startet,
-   blockiert jeden anderen Pull Request.
-4. **Release-Reihenfolge:** `publish` legt den Release-**Entwurf** an, bevor `verify` Manifest,
-   Prüfsummen, Attestierungen und Signaturen geprüft hat. Der Entwurf ist nicht öffentlich und wird
-   von Hand veröffentlicht – also erst nach grünem `verify` veröffentlichen (steht so in
-   [RELEASE.md](../RELEASE.md)). Ein Umbau (erst prüfen, dann Entwurf) ist möglich, braucht aber
-   einen eigenen Pull Request mit Probelauf (#186).
-5. **Downloads zur Laufzeit:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) und
-   `go install` (actionlint) holen Quellcode mit festen Versionen und Prüfsummen aus Lockfile bzw.
-   Go-Prüfsummendatenbank, bauen ihn aber auf dem Runner. Kein Secret ist in diesen Jobs erreichbar;
-   Restrisiko: manipulierte Prüfergebnisse (#185).
-6. **Ausgehender Netzverkehr** der Runner ist nicht beschränkt. Harden-Runner im Beobachtungsmodus
-   für den Job `publish` ist eine Option, wenn dort je ein langlebiges Secret nötig wird (#185).
-7. **Externe Überwachung** (#187, bewusst nicht geplant) gibt es nicht. Für ein
-   Ein-Personen-Projekt genügen vorerst die
-   GitHub-Benachrichtigungen zu Workflow-Läufen, Releases und Sicherheitswarnungen; ein eigener
-   Überwachungsdienst wäre mehr Angriffsfläche als Nutzen.
-
-OpenCode (#176, #184): die Entwürfe sind geschlossen, auf `main` gibt es keinen solchen Workflow.
+1. **Release-Reihenfolge (#186):** `publish` legt den Release-**Entwurf** an, bevor `verify`
+   Manifest, Prüfsummen, Attestierungen und Signaturen geprüft hat. Der Entwurf ist nicht öffentlich
+   und wird erst nach grünem `verify` von Hand veröffentlicht ([RELEASE.md](../RELEASE.md)). Ein
+   Umbau braucht einen eigenen Pull Request mit Probelauf.
+2. **Nicht als Pflichtprüfung eintragen:** `Workflow-Prüfung / workflow policy` (läuft nur bei
+   Workflow-Änderungen) – eine Pflichtprüfung, die nicht startet, blockiert jeden anderen PR.
+   Dependency Review kann Pflichtprüfung werden, sobald sie sich einige Wochen bewährt hat.
+3. **Externe Überwachung** gibt es bewusst nicht; für ein Ein-Personen-Projekt genügen die
+   GitHub-Benachrichtigungen zu Workflow-Läufen, Releases und Sicherheitswarnungen.
 
 ## Grenzen
 
@@ -107,15 +113,14 @@ OpenCode (#176, #184): die Entwürfe sind geschlossen, auf `main` gibt es keinen
 
 ## English
 
-Inventory of PQKeep's GitHub Actions setup (#180–#187): what runs, with which permissions, what
-is checked, what remains open. **As of 2026-11-14 (updated in the evening).** GitHub settings were read through the GitHub
-API on that day (names and rules only, no secret values). Settings can change – check again before
-a release.
+Inventory of PQKeep's GitHub Actions setup: what runs, with which permissions, what is checked,
+which residual risks remain. **As of 2026-11-15.** GitHub settings were read through the GitHub
+API (names and rules only, no secret values). Settings can change – check again before a release.
 
 ### Workflows and permissions
 
 Every workflow sets top-level `permissions: contents: read`; the repository's default token
-permission is "read" as well. All actions are pinned to full commit SHAs.
+permission is "read" as well. All actions are pinned to full commit SHAs (enforced in the settings).
 
 | Workflow | Trigger | Extra permissions | Secrets |
 |---|---|---|---|
@@ -124,67 +129,72 @@ permission is "read" as well. All actions are pinned to full commit SHAs.
 | `fuzz.yml` | weekly, manual, pull request (path filter) | none | none |
 | `audit.yml` | weekly, manual | none | none |
 | `security-policy.yml` | push/pull request on workflow changes, manual | none | none |
+| `dependency-review.yml` | pull request | none | none |
+| `scorecard.yml` | push to `main`, weekly, branch protection change, manual – **never** pull requests | job: `security-events: write`, `id-token: write`, `actions: read` | none |
 | `release.yml` | tag `v*`, manual, pull request (path filter, without `publish`) | job `publish` only: `contents: write`, `id-token: write`, `attestations: write`; `verify`: `attestations: read` | none (keyless signing via OIDC) |
 
 Pull requests from forks run with a read token and without secrets. Code from a pull request
-(build scripts, tests) is untrusted; hence no `pull_request_target` or `workflow_run` triggers.
+(build scripts, tests) is untrusted; hence no `pull_request_target` or `workflow_run` triggers, and
+workflows with write permissions do not run for pull requests.
 
 ### Automatic checks
 
 | Check | Where | Purpose |
 |---|---|---|
-| Own rules (`scripts/check_actions_policy.py`) | `security-policy.yml` | explicit permissions, SHA pinning, no dangerous triggers, no secrets/write permissions in PR workflows, no `curl \| sh` |
-| actionlint, zizmor (offline) | `security-policy.yml` | syntax, shell errors, injection via `${{ }}`, permissions |
+| Own rules (`scripts/check_actions_policy.py`) | `security-policy.yml` | explicit permissions, SHA pinning, no dangerous triggers, no secrets/write permissions in PR workflows, no `curl \| sh`, no downloads without a checksum |
+| actionlint, zizmor (offline, installed with hashes) | `security-policy.yml` | syntax, shell errors, injection via `${{ }}`, permissions |
+| Dependency Review | `dependency-review.yml` | new/changed dependencies per PR with known vulnerabilities (from "moderate") |
+| OpenSSF Scorecard | `scorecard.yml` | measure for the supply chain; result public and as a README badge |
 | CodeQL (Rust, Python, Actions) | `codeql.yml` | static analysis |
 | gitleaks (archive verified by SHA-256) | `ci.yml` | secrets in history |
-| cargo-deny, weekly advisory audit | `ci.yml`, `audit.yml` | licences, sources, known vulnerabilities |
+| cargo-deny, weekly advisory audit | `ci.yml`, `audit.yml` | licences, sources, known vulnerabilities in the whole tree |
 | Dependabot (weekly, 7-day cooldown), security updates | `.github/dependabot.yml` | current crates and actions |
 | Secret scanning with push protection | GitHub setting | reject secrets on push |
 
-Deliberately **not** used (reasons in #180/#181/#185): Trivy, GitGuardian, SonarCloud, Semgrep,
-Checkov/KICS, ZAP, Renovate – they duplicate existing checks or do not fit a CLI project without
-containers, infrastructure code or a web service.
+Deliberately **not** used: Trivy, GitGuardian, SonarCloud, Semgrep, Checkov/KICS, ZAP, Renovate –
+they duplicate existing checks or do not fit a CLI project without containers, infrastructure code
+or a web service.
 
-### GitHub settings (read on 2026-11-14)
+### Downloads and data exfiltration
+
+**Downloaded at runtime:** actions (by commit SHA), gitleaks (archive with fixed SHA-256), zizmor
+(`pip --require-hashes`), actionlint (`go install` at a fixed version, verified through the Go
+checksum database), cargo-deny and cargo-cyclonedx (`cargo install --locked` at fixed versions),
+Rust dependencies (`Cargo.lock`, `--locked`). The own checker reports every `curl`/`wget` download
+without `sha256sum -c` or `--require-hashes`.
+
+**Exfiltration paths** from a compromised job: HTTP(S) and DNS to the internet, artefacts, caches,
+logs. GitHub-hosted runners are **not** network-isolated. Limitation in PQKeep: there are no
+secrets that could leak; write permissions and OIDC exist only in `publish` (behind the `release`
+environment) and `scorecard`, neither running code from pull requests. A manipulated tool could
+produce wrong check results – not obtain keys or other jobs' signing rights.
+
+**Harden-Runner (egress allowlist): not used for now.** It would itself be a third-party action with
+broad access to the runner, and without secrets the benefit is small. Reassess if `publish` ever
+needs a long-lived secret (e.g. a SignPath integration, #88).
+
+### GitHub settings (read on 2026-11-15)
 
 | Area | Current | Assessment |
 |---|---|---|
 | Ruleset `main` | no deletion, no force push, linear history, signed commits, pull request with squash only, all review threads resolved, 9 required checks (CI on Linux/Windows, MSRV, limits, binary hardening, cargo-deny, gitleaks); **no** bypass actors | good |
 | Ruleset tags `v*` | no deletion, update, force push; bypass for repository admins only | good (needed to create tags) |
 | CODEOWNERS | file present, code owner review **not** required by the ruleset | correct: with a single maintainer the requirement would block every merge |
-| Environment `release` | maintainer approval required, self-approval allowed; custom branch/tag rules switched on, list still empty | open, see below |
+| Environment `release` | maintainer approval required; allowed refs only tag `v*` and branch `main` (dry run) | good |
 | Actions settings | all actions allowed, SHA pinning **enforced**, token "read", Actions cannot approve reviews | good |
 | Secrets | none (repository and environment `release`) | good |
 
 ### Open items
 
-Ordered by benefit; each item is a setting or its own small pull request.
-
-1. **Environment `release`: add the allowed refs** (setting "Deployment branches and tags"). Custom
-   rules are switched on but the list is empty – so no run may reach the `publish` job. Add tag
-   `v*` (release) and branch `main` (dry run, see [RELEASE.md](../RELEASE.md)); `main` is protected
-   by the ruleset (#186).
-2. Done: `GEMINI_API_KEY` removed (#183), SHA pinning enforced in the Actions settings (#181).
-3. **Do not make `Workflow-Prüfung / workflow policy` a required check:** because of its path
-   filter the workflow only runs on workflow changes; a required check that never starts blocks
-   every other pull request.
-4. **Release order:** `publish` creates the release **draft** before `verify` has checked the
-   manifest, checksums, attestations and signatures. The draft is not public and is published by
-   hand – so publish only after `verify` is green (as stated in [RELEASE.md](../RELEASE.md)).
-   Reordering (verify first, then draft) is possible but needs its own pull request with a trial
-   run (#186).
-5. **Runtime downloads:** `cargo install --locked` (cargo-deny, cargo-cyclonedx) and `go install`
-   (actionlint) fetch source code at fixed versions with checksums from the lockfile or the Go
-   checksum database, but build it on the runner. No secret is reachable in these jobs; residual
-   risk: manipulated check results (#185).
-6. **Outbound network traffic** of the runners is unrestricted. Harden-Runner in audit mode for
-   the `publish` job is an option should a long-lived secret ever be needed there (#185).
-7. **External monitoring** (#187, deliberately not planned) does not exist. For a one-person
-   project, GitHub's notifications
-   for workflow runs, releases and security alerts are enough for now; a separate monitoring
-   service would add more attack surface than benefit.
-
-OpenCode (#176, #184): the drafts are closed; there is no such workflow on `main`.
+1. **Release order (#186):** `publish` creates the release **draft** before `verify` has checked
+   the manifest, checksums, attestations and signatures. The draft is not public and is published by
+   hand only after `verify` is green ([RELEASE.md](../RELEASE.md)). Reordering needs its own pull
+   request with a trial run.
+2. **Do not make required:** `Workflow-Prüfung / workflow policy` (runs only on workflow changes) –
+   a required check that never starts blocks every other PR. Dependency Review can become required
+   once it has proven itself for a few weeks.
+3. **External monitoring** deliberately does not exist; for a one-person project GitHub's
+   notifications for workflow runs, releases and security alerts are enough.
 
 ### Limits
 

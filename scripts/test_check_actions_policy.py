@@ -82,6 +82,16 @@ class WorkflowPolicyTests(unittest.TestCase):
         for path in files:
             self.assertEqual([], audit(path.read_text(encoding="utf-8"), path.name), path.name)
 
+    def test_download_needs_checksum(self):
+        # DE: Download ohne Prüfung wird gemeldet, mit sha256sum -c nicht. EN: Unverified download is reported.
+        get = BASE + "      - run: curl -sSfL -o tool.tgz https://example.invalid/tool.tgz\n"
+        self.check(get, "download without checksum")
+        self.check(get.replace("curl -sSfL -o", "wget -O"), "download without checksum")
+        ok = get + "      - run: echo \"$SUM  tool.tgz\" | sha256sum -c -\n"
+        self.assertEqual([], audit(ok, "test.yml"))
+        # DE: Ein falscher „Prüf“-Befehl zählt nicht. EN: A fake check does not count.
+        self.check(get + "      - run: sha256sum tool.tgz\n", "download without checksum")
+
     def test_local_action(self):
         self.assertEqual([], audit(BASE.replace(PIN, "./.github/actions/test"), "test.yml"))
 
