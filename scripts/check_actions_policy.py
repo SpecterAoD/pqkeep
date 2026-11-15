@@ -36,8 +36,12 @@ UNSAFE = (
     (re.compile(r"(?m)^\s*(?:-\s*run:\s*)?(?:curl|wget)\b[^\n]*\|\s*(?:ba)?sh\b"), "remote shell execution"),
 )
 SECRET_EXPR = re.compile(r"\$\{\{[^}]*\bsecrets\s*[.\[]")
-# DE: Heruntergeladene Dateien brauchen eine Prüfsumme (#185). EN: Downloads need a checksum (#185).
-DOWNLOAD = re.compile(r"(?m)^[^#\n]*\b(?:curl|wget)\b[^\n]*(?:\s-[a-zA-Z]*[oO]\b|--output\b|--remote-name\b)")
+# DE: Heruntergeladene Dateien brauchen eine Prüfsumme im selben `run`-Schritt (#185): Ausgabe per
+#     Option, Umleitung oder Pipe zählt als Download; Kommentare zählen nicht als Prüfung.
+# EN: Downloads need a checksum in the same `run` step (#185): output via option, redirection or
+#     pipe counts as a download; comments do not count as a check.
+RUN_KEY = re.compile(r"^(\s*)(?:-\s+)?run:\s*(.*)$")
+DOWNLOAD = re.compile(r"\b(?:curl|wget)\b[^\n]*(?:\s-[a-zA-Z]*[oO]\b|--output\b|--remote-name\b|>|\|)")
 CHECKSUM = re.compile(r"sha256sum\s+(?:-c|--check)\b|--require-hashes\b|shasum\s+-a\s*256\s+-c\b")
 WRITE_SCOPE = re.compile(r"(?m)^\s*(?:permissions:\s*write-all\b|[a-z-]+:\s*write\b)")
 CODEQL_SCOPE = re.compile(r"(?m)^\s*security-events:\s*write\b")
@@ -69,6 +73,29 @@ def unguarded_writes(text: str, name: str) -> list[str]:
     return found
 
 
+def run_steps(text: str) -> list[str]:
+    """DE: Befehle je `run`-Schritt, ohne Kommentarzeilen, Fortsetzungszeilen (`\\`) verbunden.
+    EN: Commands per `run` step, without comment lines, continuation lines (`\\`) joined."""
+    lines, steps, i = text.split("\n"), [], 0
+    while i < len(lines):
+        match = RUN_KEY.match(lines[i])
+        i += 1
+        if not match:
+            continue
+        indent, rest = len(match.group(1)), match.group(2).strip()
+        body = []
+        if rest in ("", "|", "|-", "|+", ">", ">-", ">+"):
+            while i < len(lines) and (not lines[i].strip()
+                                      or len(lines[i]) - len(lines[i].lstrip()) > indent):
+                body.append(lines[i])
+                i += 1
+        else:
+            body.append(rest.strip("'\""))
+        code = "\n".join(line for line in body if not line.strip().startswith("#"))
+        steps.append(re.sub(r"\\\n\s*", " ", code))
+    return steps
+
+
 def audit(text: str, name: str) -> list[str]:
     """DE: Funde einer Workflow-Datei (leer = in Ordnung). EN: Findings of one workflow file."""
     problems: list[str] = []
@@ -90,8 +117,9 @@ def audit(text: str, name: str) -> list[str]:
     for pattern, description in UNSAFE:
         if pattern.search(text):
             problems.append(description)
-    if DOWNLOAD.search(text) and not CHECKSUM.search(text):
-        problems.append("download without checksum verification")
+    for step in run_steps(text):
+        if DOWNLOAD.search(step) and not CHECKSUM.search(step):
+            problems.append("download without checksum verification")
     if "pull_request" in triggers:
         # DE: Nur echte Ausdrücke, nicht das Wort in Kommentaren. EN: Real expressions only.
         if SECRET_EXPR.search(text):
