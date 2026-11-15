@@ -9,7 +9,7 @@
 
 mod common;
 
-const COMMANDS: [&str; 10] = [
+const COMMANDS: &[&str] = &[
     "generate",
     "validate",
     "passphrase",
@@ -17,6 +17,14 @@ const COMMANDS: [&str; 10] = [
     "export",
     "encrypt",
     "decrypt",
+    "sign",
+    "verify",
+    "factor",
+    "check",
+    "integrate",
+    "context",
+    #[cfg(feature = "api")]
+    "serve",
     "help",
     "completions",
     "man",
@@ -55,10 +63,19 @@ fn every_command_has_localised_help_with_example() {
         ("en", "Example", "Usage:", "Exit codes"),
     ] {
         for cmd in COMMANDS {
-            let (code, out, _) = run(&["--lang", lang, cmd, "--help"]);
-            assert_eq!(code, 0, "{lang} {cmd}");
-            for needle in [example, heading, exit] {
-                assert!(out.contains(needle), "{lang} {cmd}: {needle}");
+            for flag in ["--help", "-h"] {
+                let (code, out, _) = run(&["--lang", lang, cmd, flag]);
+                assert_eq!(code, 0, "{lang} {cmd} {flag}");
+                for needle in [example, heading, exit] {
+                    assert!(out.contains(needle), "{lang} {cmd} {flag}: {needle}");
+                }
+                let codes = out.split_once(exit).unwrap().1;
+                for value in 0..=7 {
+                    assert!(
+                        codes.contains(&format!("  {value}  ")),
+                        "{lang} {cmd} {flag}: exit code {value}"
+                    );
+                }
             }
         }
     }
@@ -76,8 +93,41 @@ fn every_topic_in_both_languages() {
         assert!(de.contains("Beispiel") && en.contains("Example"), "{topic}");
         assert_ne!(de, en, "{topic}");
     }
-    let (code, _, _) = run(&["help", "unbekannt"]);
-    assert_eq!(code, 2);
+    for lang in ["de", "en"] {
+        let (code, _, _) = run(&["--lang", lang, "help", "unbekannt"]);
+        assert_eq!(code, 2, "{lang}");
+    }
+}
+
+#[test]
+fn command_list_matches_root_help() {
+    for lang in ["de", "en"] {
+        let (code, out, _) = run(&["--lang", lang, "--help"]);
+        assert_eq!(code, 0, "{lang}");
+        // DE: Clap nennt diesen Abschnitt in beiden Sprachen "Commands:". Nur Namen
+        //     vergleichen, unabhängig von Beschreibungen, Reihenfolge und Spaltenbreite.
+        // EN: Clap calls this section "Commands:" in both languages. Compare names
+        //     only, independently of descriptions, order and column width.
+        let mut lines = out.lines().skip_while(|line| *line != "Commands:");
+        assert_eq!(lines.next(), Some("Commands:"), "{lang}");
+        let mut actual: Vec<_> = lines
+            .take_while(|line| !line.trim().is_empty())
+            .filter_map(|line| line.split_whitespace().next())
+            .collect();
+        let mut expected = COMMANDS.to_vec();
+        actual.sort_unstable();
+        expected.sort_unstable();
+        assert_eq!(actual, expected, "{lang}: command coverage");
+    }
+}
+
+#[cfg(not(feature = "api"))]
+#[test]
+fn serve_is_unavailable_without_api() {
+    for lang in ["de", "en"] {
+        let (code, _, _) = run(&["--lang", lang, "serve", "--help"]);
+        assert_eq!(code, 2, "{lang}");
+    }
 }
 
 #[test]
@@ -122,7 +172,9 @@ fn completions_and_man_page() {
 
 #[test]
 fn usage_error_has_localised_prefix() {
-    let (code, _, err) = run(&["--lang", "de", "unbekannt"]);
-    assert_eq!(code, 2);
-    assert!(err.contains("Bedienfehler"));
+    for (lang, prefix) in [("de", "Bedienfehler"), ("en", "Usage error")] {
+        let (code, _, err) = run(&["--lang", lang, "unbekannt"]);
+        assert_eq!(code, 2, "{lang}");
+        assert!(err.contains(prefix), "{lang}: {prefix}");
+    }
 }
