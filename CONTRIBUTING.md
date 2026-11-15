@@ -53,6 +53,8 @@ both are maintained as equals.
   `--no-default-features`), `cargo test --locked`, `scripts/check_limits.sh` and `cargo deny check`
   must pass. The CI runs all of them.
 - No `unsafe`, no `unwrap()`/`expect()` in production code.
+- **Test policy:** new or changed functionality comes with tests in the same pull request – success
+  cases plus negative and boundary cases (Definition of Done in [`docs/CHECKLIST.md`](docs/CHECKLIST.md)).
 - Never commit secrets, keys or encrypted container files; tests create them at runtime.
 - Justify new dependencies (maintenance, licence, advisories).
 - Report vulnerabilities privately, see [`SECURITY.md`](SECURITY.md).
@@ -116,6 +118,8 @@ Englisch**, beide werden gleichwertig gepflegt.
   `--no-default-features`), `cargo test --locked`, `scripts/check_limits.sh` und
   `cargo deny check` müssen grün sein; die CI prüft alles.
 - Kein `unsafe`, kein `unwrap()`/`expect()` im Produktionscode.
+- **Testpflicht:** Neue oder geänderte Funktionen kommen mit Tests im selben Pull Request –
+  Erfolgsfälle sowie Negativ- und Grenzfälle (Definition of Done in [`docs/CHECKLIST.md`](docs/CHECKLIST.md)).
 - Niemals Geheimnisse, Schlüssel oder Container-Dateien einchecken; Tests erzeugen sie zur
   Laufzeit.
 - Neue Abhängigkeiten begründen (Wartung, Lizenz, Advisories).
