@@ -7,6 +7,13 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **Security QA baseline (#151):** versioned bilingual attack catalogue with separate execution
+  evidence, offline reference/contract validation and existing CI integration. Two replay tests
+  characterize readable old valid v1/v2 containers; no freshness or anti-replay protection added.
+  Native Linux/Windows CI also executes the no-default-feature suite on one runner per OS.
+  **DE:** Versionierter DE/EN-Angriffskatalog mit getrennten Nachweisen, Offline-Verweisprüfung und
+  bestehender CI. Zwei Tests belegen lesbare alte gültige v1/v2-Dateien; kein neuer Frische-/Replay-
+  Schutz. Native Linux-/Windows-CI führt die No-default-Suite je einmal pro Betriebssystem aus.
 - Core groundwork for the planned file format v2 (factor file, several recipients; `docs/V2_DRAFT.md`):
   key derivation with domain separation (Argon2id with the factor file as secret, HKDF-SHA3-256),
   reading/creating factor files (exactly 32 bytes, regular files only, Linux: mode `0600`, too open
