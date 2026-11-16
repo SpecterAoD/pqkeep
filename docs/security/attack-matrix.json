@@ -1260,8 +1260,8 @@
         "en": "The format has no freshness register. Accepting replay is characterized behavior, not anti-replay protection."
       },
       "implementation_state": "implemented",
-      "coverage_status": "missing",
-      "automation": "automatable",
+      "coverage_status": "covered",
+      "automation": "automated",
       "platforms": [
         "linux-x86_64",
         "linux-arm64",
@@ -1286,7 +1286,7 @@
           "path": "tests/files_replay.rs",
           "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
           "kind": "rust-integration",
-          "stage": "planned"
+          "stage": "existing"
         }
       ],
       "ci_refs": [
@@ -1313,14 +1313,8 @@
         "B1-windows-x86_64",
         "B1-linux-arm64"
       ],
-      "gap": {
-        "de": "Dedizierter Replay-Verhaltenstest folgt im Testcommit.",
-        "en": "Dedicated replay characterization follows in the test commit."
-      },
-      "next_evidence": {
-        "de": "Testcommit und realen Lauf verknüpfen.",
-        "en": "Link the test commit and actual execution."
-      },
+      "gap": null,
+      "next_evidence": null,
       "retired": false,
       "replacement": null
     },
@@ -1377,7 +1371,7 @@
           "path": "tests/files_replay.rs",
           "symbol": "v2_old_copy_remains_readable_after_newer_container",
           "kind": "rust-integration",
-          "stage": "planned"
+          "stage": "existing"
         }
       ],
       "ci_refs": [

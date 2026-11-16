@@ -58,6 +58,17 @@ jobs:
       # EN: The pure CLI without API/network code must stay buildable.
       - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
       - run: cargo test --locked
+      # DE: Laufzeit ohne API auf je einer nativen Linux-/Windows-Plattform (#151).
+      # EN: Runtime without API on one native Linux/Windows platform each (#151).
+      - name: Tests ohne API / tests without API
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
+        run: cargo test --locked --no-default-features
+      - name: Angriffsmatrix / attack matrix
+        shell: bash
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/check_attack_matrix.py
+          "$py" -m unittest discover -s scripts -p 'test_attack_matrix.py' -v
       # DE: Beispiele nativ testen; fehlende Werkzeuge dürfen hier nicht übersprungen werden.
       # EN: Test examples natively; missing tools must not be skipped here.
       - name: Backup-Monitoring (Linux / Bash)
