@@ -2,6 +2,11 @@
 
 **DE** | [EN](#english)
 
+DE: Übergreifende Angriffs-/Plattformnachweise und offene Grenzen: [QA-Matrix](security/ATTACK_TEST_MATRIX.md).
+Die V/C/U-IDs bleiben hier maßgeblich; kein dokumentierter Fall gilt allein deshalb als ausgeführt.
+EN: Cross-cutting attack/platform evidence and open boundaries: [QA matrix](security/ATTACK_TEST_MATRIX.md).
+V/C/U IDs remain authoritative here; documenting a case does not establish execution.
+
 Zu [V2_DRAFT.md](V2_DRAFT.md). `reference` = ausführbare Python-Referenz in `scripts/test_v2_*.py`
 (läuft in der CI auf Linux und Windows); `core` = im Rust-Core umgesetzt und in `tests/*.rs` geprüft
 oder – bei den U-Fällen – über die Kommandozeile; `planned` = **noch nicht umgesetzt**, gehört zum genannten Folge-Issue. Referenztests prüfen Kodierung und Regeln, nicht die Sicherheit einer Rust-Umsetzung.

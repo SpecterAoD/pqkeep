@@ -1,0 +1,3329 @@
+{
+  "schema_version": 1,
+  "baseline_version": "1.0.0",
+  "matrix_version": "1.0.0",
+  "evidence": [
+    {
+      "id": "B1-linux-x86_64",
+      "source_commit": "4e34468d5dafacdaed994b9e29def2afa53be72a",
+      "observed_utc": "2026-11-16T19:14:45Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43879233746,
+      "job_id": 133340343377,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43879233746/job/133340343377",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-CRY-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_ciphertext_and_tag_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_nonce_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_aad_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_wrap.rs",
+              "symbol": "wrong_recipient_key_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "wrong_passphrase_and_key_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_wrong_secrets_fail_uniformly",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-003",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_sigver_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "argon2id_reference_vectors_via_public_api",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_decaps_wycheproof_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c01_argon2id_with_secret_and_domain",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c02_independent_wrap_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_kat.rs",
+              "symbol": "c02_independent_file_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2_kat.rs",
+              "symbol": "c07_independent_key_file_unlocks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_argon2id_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_vector_detects_changed_inputs",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "hkdf_sha3_reference_value",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "every_input_matters",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_passphrase_slot_vectors",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_recipient_slot_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "recipient_inputs_all_matter",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-004",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "boundary_values_accepted",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "out_of_bounds_rejected_before_derivation",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "kdf_bounds_enforced_on_read",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-005",
+          "test_refs": [
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "swapped_and_removed_chunks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "truncated_and_appended",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "exact_multiple_cannot_be_cut_at_boundary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-006",
+          "test_refs": [
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "nonces_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "random_salts_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_protect.rs",
+              "symbol": "fresh_salt_nonce_and_ciphertext_each_time",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-007",
+          "test_refs": [
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "unchanged_input_verifies",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "any_change_to_the_file_is_detected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "flipped_signature_bytes_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "signed_timestamp_cannot_be_changed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_and_size_fields_are_bound",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_swapped_to_other_file_with_matching_fields_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "wrong_public_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "key_id_swapped_to_other_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_key_types_cannot_sign",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_public_key_types_cannot_verify",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "fixed_fields_are_enforced",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "encodings_are_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "structure_is_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "oversized_input_is_rejected_before_parsing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "missing_files_report_io_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_roundtrip.rs",
+              "symbol": "sha3_512_known_answers",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-001",
+          "test_refs": [
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "unknown_and_missing_fields",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "wrong_types_and_overflow",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "size_limit_and_garbage",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "duplicate_keys_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_text_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_bytes_never_panic",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "mutated_valid_container_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-002",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_truncation_at_every_position",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_numbers_and_lengths_up_to_maximum",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_read_budget_on_endless_input",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-003",
+          "test_refs": [
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "every_header_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "stream_tampering",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_every_header_and_wrap_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_stream_bytes_truncation_and_appending",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_proptest.rs",
+              "symbol": "mutated_file_never_panics_or_leaks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-004",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_removed_slots_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_swapped_slots_and_wraps_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v05_wrap_aad_binds_header_and_index",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v06_stream_aad_binds_every_wrap",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-005",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_downgrade_and_unknown_versions_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c07_versions_cannot_be_rewritten_into_each_other",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_single_slot_without_factor_stays_v1",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c06_version_1_is_unchanged_and_factor_is_never_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-008",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_versions_do_not_mix",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "path_traversal_and_absolute_paths",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "duplicates_and_conflicts",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "forbidden_paths",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "length_and_depth_limits",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-002",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "symlink_as_source_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_many.rs",
+              "symbol": "selected_symlink_is_skipped_and_reported",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "links_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-004",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_io.rs",
+              "symbol": "no_overwrite_without_consent",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "create_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-005",
+          "test_refs": [
+            {
+              "path": "tests/envelope_io.rs",
+              "symbol": "mode_0600_and_permission_warning",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "open_permissions_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_token.rs",
+              "symbol": "token_file_is_private",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "open_permissions_and_conflicts_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-007",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "missing_source_and_target_directory",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_keeps_content_until_dropped",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "shared_page_stays_locked_until_last_release",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "empty_range_locks_nothing",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "range_over_page_boundary_locks_both_pages",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-003",
+          "test_refs": [
+            {
+              "path": "tests/hardening_memlock.rs",
+              "symbol": "secrets_are_locked_and_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-004",
+          "test_refs": [
+            {
+              "path": "tests/hardening_process.rs",
+              "symbol": "harden_process_applies_and_is_idempotent",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-ISO-002",
+          "test_refs": [
+            {
+              "path": "tests/sandbox_cli.rs",
+              "symbol": "network_and_exec_kill_the_process",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sandbox_api.rs",
+              "symbol": "network_and_processes_kill_or_fail",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sandbox_api.rs",
+              "symbol": "allowed_work_runs_inside_the_sandbox",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-ISO-004",
+          "test_refs": [
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "own_temp_needs_our_tag_and_pattern",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "clean_temps_removes_only_own_leftovers",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "tag_goes_right_after_the_command",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "single_file_content_rules",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-002",
+          "test_refs": [
+            {
+              "path": "tests/cli_context_dialog_many.rs",
+              "symbol": "cancel_midway_leaves_no_temporary_files",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "clean_temps_removes_only_own_leftovers",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-004",
+          "test_refs": [
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v1_file_and_directory_pass_and_nothing_is_written",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "every_tampered_or_truncated_file_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v2_factor_and_several_recipients",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "all_fine_gives_exit_0_and_writes_nothing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "every_file_is_checked_and_the_first_error_decides",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "key_files_factor_and_mixed_selections",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "runs_sandboxed_and_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-001",
+          "test_refs": [
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "validate_requires_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "malformed_requests_get_generic_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "oversized_body_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "lockout_after_failed_tokens_even_with_correct_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "generates_key_that_unlocks_with_the_passphrase",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-002",
+          "test_refs": [
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "insufficient_budget_is_503_with_retry_after",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "budget_limits_parallel_runs_and_is_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "rate_limit_per_client",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "slow_headers_are_cut_off",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "excess_connections_are_closed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-003",
+          "test_refs": [
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "check_reports_each_file_and_the_summary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "inspect_keys_and_encrypted_files",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "verify_valid_and_invalid",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "help_lists_json_and_all_exit_codes",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "encrypt_and_decrypt_single_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "each_and_many_report_per_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "container_lists_all_sources",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "weak_passphrase_has_a_message",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_command_creates_and_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_file_with_passphrase_and_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_is_never_silently_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_key_file_with_factor_decrypts_and_signs",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_several_files_with_one_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_invalid_factor_files_are_rejected_with_clear_messages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_factor_content_never_appears_in_output",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "encrypt_and_decrypt_with_passphrase_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "key_generation_and_recipient_decrypt_unattended",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "open_permissions_and_conflicts_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "batch_never_prompts",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "sign_uses_the_global_passphrase_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "context_menu_refuses_batch_mode",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "messages_are_bilingual_and_non_empty",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "invalid_input_shows_field_name_only",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_error_does_not_leak_path",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_conversion_keeps_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Historischer main-Lauf. Nur sichtbare erfolgreiche Tests; cfg-/interne Auslassungen sind keine bestandenen Assertions.",
+        "en": "Historical main run. Only visible successful tests; cfg/internal skips are not passed assertions."
+      }
+    },
+    {
+      "id": "B1-windows-x86_64",
+      "source_commit": "4e34468d5dafacdaed994b9e29def2afa53be72a",
+      "observed_utc": "2026-11-16T19:15:20Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43879233746,
+      "job_id": 133340343466,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43879233746/job/133340343466",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-CRY-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_ciphertext_and_tag_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_nonce_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_aad_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_wrap.rs",
+              "symbol": "wrong_recipient_key_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "wrong_passphrase_and_key_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_wrong_secrets_fail_uniformly",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-003",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_sigver_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "argon2id_reference_vectors_via_public_api",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_decaps_wycheproof_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c01_argon2id_with_secret_and_domain",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c02_independent_wrap_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_kat.rs",
+              "symbol": "c02_independent_file_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2_kat.rs",
+              "symbol": "c07_independent_key_file_unlocks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_argon2id_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_vector_detects_changed_inputs",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "hkdf_sha3_reference_value",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "every_input_matters",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_passphrase_slot_vectors",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_recipient_slot_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "recipient_inputs_all_matter",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-004",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "boundary_values_accepted",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "out_of_bounds_rejected_before_derivation",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "kdf_bounds_enforced_on_read",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-005",
+          "test_refs": [
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "swapped_and_removed_chunks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "truncated_and_appended",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "exact_multiple_cannot_be_cut_at_boundary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-006",
+          "test_refs": [
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "nonces_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "random_salts_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_protect.rs",
+              "symbol": "fresh_salt_nonce_and_ciphertext_each_time",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-007",
+          "test_refs": [
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "unchanged_input_verifies",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "any_change_to_the_file_is_detected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "flipped_signature_bytes_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "signed_timestamp_cannot_be_changed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_and_size_fields_are_bound",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_swapped_to_other_file_with_matching_fields_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "wrong_public_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "key_id_swapped_to_other_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_key_types_cannot_sign",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_public_key_types_cannot_verify",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "fixed_fields_are_enforced",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "encodings_are_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "structure_is_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "oversized_input_is_rejected_before_parsing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "missing_files_report_io_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_roundtrip.rs",
+              "symbol": "sha3_512_known_answers",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-001",
+          "test_refs": [
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "unknown_and_missing_fields",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "wrong_types_and_overflow",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "size_limit_and_garbage",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "duplicate_keys_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_text_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_bytes_never_panic",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "mutated_valid_container_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-002",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_truncation_at_every_position",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_numbers_and_lengths_up_to_maximum",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_read_budget_on_endless_input",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-003",
+          "test_refs": [
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "every_header_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "stream_tampering",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_every_header_and_wrap_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_stream_bytes_truncation_and_appending",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_proptest.rs",
+              "symbol": "mutated_file_never_panics_or_leaks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-004",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_removed_slots_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_swapped_slots_and_wraps_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v05_wrap_aad_binds_header_and_index",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v06_stream_aad_binds_every_wrap",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-005",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_downgrade_and_unknown_versions_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c07_versions_cannot_be_rewritten_into_each_other",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_single_slot_without_factor_stays_v1",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c06_version_1_is_unchanged_and_factor_is_never_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-008",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_versions_do_not_mix",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "path_traversal_and_absolute_paths",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "duplicates_and_conflicts",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "forbidden_paths",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "length_and_depth_limits",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-004",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_io.rs",
+              "symbol": "no_overwrite_without_consent",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "create_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-007",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "missing_source_and_target_directory",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_keeps_content_until_dropped",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "shared_page_stays_locked_until_last_release",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "empty_range_locks_nothing",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "range_over_page_boundary_locks_both_pages",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-003",
+          "test_refs": [
+            {
+              "path": "tests/hardening_memlock.rs",
+              "symbol": "secrets_are_locked_and_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-ISO-004",
+          "test_refs": [
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "own_temp_needs_our_tag_and_pattern",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "clean_temps_removes_only_own_leftovers",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "tag_goes_right_after_the_command",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "single_file_content_rules",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-004",
+          "test_refs": [
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v1_file_and_directory_pass_and_nothing_is_written",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "every_tampered_or_truncated_file_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v2_factor_and_several_recipients",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "all_fine_gives_exit_0_and_writes_nothing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "every_file_is_checked_and_the_first_error_decides",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "key_files_factor_and_mixed_selections",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "runs_sandboxed_and_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-001",
+          "test_refs": [
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "validate_requires_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "malformed_requests_get_generic_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "oversized_body_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "lockout_after_failed_tokens_even_with_correct_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "generates_key_that_unlocks_with_the_passphrase",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-002",
+          "test_refs": [
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "insufficient_budget_is_503_with_retry_after",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "budget_limits_parallel_runs_and_is_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "rate_limit_per_client",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "slow_headers_are_cut_off",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "excess_connections_are_closed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-003",
+          "test_refs": [
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "check_reports_each_file_and_the_summary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "inspect_keys_and_encrypted_files",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "verify_valid_and_invalid",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "help_lists_json_and_all_exit_codes",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "encrypt_and_decrypt_single_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "each_and_many_report_per_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "container_lists_all_sources",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "weak_passphrase_has_a_message",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_command_creates_and_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_file_with_passphrase_and_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_is_never_silently_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_key_file_with_factor_decrypts_and_signs",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_several_files_with_one_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_invalid_factor_files_are_rejected_with_clear_messages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_factor_content_never_appears_in_output",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "messages_are_bilingual_and_non_empty",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "invalid_input_shows_field_name_only",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_error_does_not_leak_path",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_conversion_keeps_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Historischer main-Lauf. Nur sichtbare erfolgreiche Tests; cfg-/interne Auslassungen sind keine bestandenen Assertions.",
+        "en": "Historical main run. Only visible successful tests; cfg/internal skips are not passed assertions."
+      }
+    },
+    {
+      "id": "B1-linux-arm64",
+      "source_commit": "4e34468d5dafacdaed994b9e29def2afa53be72a",
+      "observed_utc": "2026-11-16T19:14:47Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43879233746,
+      "job_id": 133340343287,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43879233746/job/133340343287",
+      "platform": "linux-arm64",
+      "runner": "ubuntu-22.04-arm",
+      "features": "default",
+      "environment": {
+        "kernel": "6.8.0-1070-azure",
+        "page_size": 4096,
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-CRY-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_ciphertext_and_tag_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_nonce_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_tamper.rs",
+              "symbol": "every_aad_byte",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_wrap.rs",
+              "symbol": "wrong_recipient_key_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "wrong_passphrase_and_key_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_wrong_secrets_fail_uniformly",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-003",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_keygen_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_dsa_sigver_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "argon2id_reference_vectors_via_public_api",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kat.rs",
+              "symbol": "ml_kem_decaps_wycheproof_vectors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c01_argon2id_with_secret_and_domain",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "c02_independent_wrap_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_kat.rs",
+              "symbol": "c02_independent_file_opens",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2_kat.rs",
+              "symbol": "c07_independent_key_file_unlocks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_argon2id_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/kdf_tests.rs",
+              "symbol": "rfc9106_vector_detects_changed_inputs",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "hkdf_sha3_reference_value",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/wrap_tests.rs",
+              "symbol": "every_input_matters",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_passphrase_slot_vectors",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "v07_recipient_slot_vector",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/v2_tests.rs",
+              "symbol": "recipient_inputs_all_matter",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-004",
+          "test_refs": [
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "boundary_values_accepted",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_kdf.rs",
+              "symbol": "out_of_bounds_rejected_before_derivation",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "kdf_bounds_enforced_on_read",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_v2_kat.rs",
+              "symbol": "bounds_are_checked_before_deriving",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-005",
+          "test_refs": [
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "swapped_and_removed_chunks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "truncated_and_appended",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream.rs",
+              "symbol": "exact_multiple_cannot_be_cut_at_boundary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-006",
+          "test_refs": [
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "nonces_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_nonce.rs",
+              "symbol": "random_salts_are_unique",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_protect.rs",
+              "symbol": "fresh_salt_nonce_and_ciphertext_each_time",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-CRY-007",
+          "test_refs": [
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "unchanged_input_verifies",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "any_change_to_the_file_is_detected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "flipped_signature_bytes_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "signed_timestamp_cannot_be_changed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_and_size_fields_are_bound",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "hash_swapped_to_other_file_with_matching_fields_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "wrong_public_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_tamper.rs",
+              "symbol": "key_id_swapped_to_other_key_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_key_types_cannot_sign",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "other_public_key_types_cannot_verify",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "fixed_fields_are_enforced",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "encodings_are_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "structure_is_strict",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "oversized_input_is_rejected_before_parsing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_reject.rs",
+              "symbol": "missing_files_report_io_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sign_roundtrip.rs",
+              "symbol": "sha3_512_known_answers",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-001",
+          "test_refs": [
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "unknown_and_missing_fields",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "wrong_types_and_overflow",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "size_limit_and_garbage",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_reject.rs",
+              "symbol": "duplicate_keys_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_text_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "arbitrary_bytes_never_panic",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_proptest.rs",
+              "symbol": "mutated_valid_container_never_panics",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-002",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_truncation_at_every_position",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_numbers_and_lengths_up_to_maximum",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_read_budget_on_endless_input",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-003",
+          "test_refs": [
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "every_header_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_tamper_keys.rs",
+              "symbol": "stream_tampering",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_every_header_and_wrap_byte_matters",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_stream_bytes_truncation_and_appending",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_proptest.rs",
+              "symbol": "mutated_file_never_panics_or_leaks",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-004",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_removed_slots_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_tamper.rs",
+              "symbol": "c04_swapped_slots_and_wraps_do_not_open",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v05_wrap_aad_binds_header_and_index",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_v2_header.rs",
+              "symbol": "v06_stream_aad_binds_every_wrap",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-005",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_downgrade_and_unknown_versions_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c07_versions_cannot_be_rewritten_into_each_other",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_roundtrip.rs",
+              "symbol": "c06_single_slot_without_factor_stays_v1",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_v2.rs",
+              "symbol": "c06_version_1_is_unchanged_and_factor_is_never_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-008",
+          "test_refs": [
+            {
+              "path": "tests/files_v2_header_limits.rs",
+              "symbol": "c05_versions_do_not_mix",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "path_traversal_and_absolute_paths",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "duplicates_and_conflicts",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "forbidden_paths",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/paths_tests.rs",
+              "symbol": "length_and_depth_limits",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-002",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "symlink_as_source_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_many.rs",
+              "symbol": "selected_symlink_is_skipped_and_reported",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "links_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-004",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/envelope_io.rs",
+              "symbol": "no_overwrite_without_consent",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "create_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-005",
+          "test_refs": [
+            {
+              "path": "tests/envelope_io.rs",
+              "symbol": "mode_0600_and_permission_warning",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_factor.rs",
+              "symbol": "open_permissions_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_token.rs",
+              "symbol": "token_file_is_private",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "open_permissions_and_conflicts_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-007",
+          "test_refs": [
+            {
+              "path": "tests/files_output.rs",
+              "symbol": "missing_source_and_target_directory",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-001",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-002",
+          "test_refs": [
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_types_are_zeroize_on_drop",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "zeroize_clears_slice",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_zeroize_empties_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_zeroize.rs",
+              "symbol": "secret_bytes_keeps_content_until_dropped",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "shared_page_stays_locked_until_last_release",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "empty_range_locks_nothing",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/hardening/memlock_tests.rs",
+              "symbol": "range_over_page_boundary_locks_both_pages",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-003",
+          "test_refs": [
+            {
+              "path": "tests/hardening_memlock.rs",
+              "symbol": "secrets_are_locked_and_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-MEM-004",
+          "test_refs": [
+            {
+              "path": "tests/hardening_process.rs",
+              "symbol": "harden_process_applies_and_is_idempotent",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-ISO-002",
+          "test_refs": [
+            {
+              "path": "tests/sandbox_cli.rs",
+              "symbol": "network_and_exec_kill_the_process",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sandbox_api.rs",
+              "symbol": "network_and_processes_kill_or_fail",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/sandbox_api.rs",
+              "symbol": "allowed_work_runs_inside_the_sandbox",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-ISO-004",
+          "test_refs": [
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "own_temp_needs_our_tag_and_pattern",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "clean_temps_removes_only_own_leftovers",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "tag_goes_right_after_the_command",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-001",
+          "test_refs": [
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "structural_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_malicious.rs",
+              "symbol": "single_file_content_rules",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-002",
+          "test_refs": [
+            {
+              "path": "tests/cli_context_dialog_many.rs",
+              "symbol": "cancel_midway_leaves_no_temporary_files",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "clean_temps_removes_only_own_leftovers",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-004",
+          "test_refs": [
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v1_file_and_directory_pass_and_nothing_is_written",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "every_tampered_or_truncated_file_fails",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_check.rs",
+              "symbol": "v2_factor_and_several_recipients",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "all_fine_gives_exit_0_and_writes_nothing",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "every_file_is_checked_and_the_first_error_decides",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "key_files_factor_and_mixed_selections",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_check.rs",
+              "symbol": "runs_sandboxed_and_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-001",
+          "test_refs": [
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "validate_requires_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "malformed_requests_get_generic_errors",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "oversized_body_is_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "lockout_after_failed_tokens_even_with_correct_token",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "generates_key_that_unlocks_with_the_passphrase",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-002",
+          "test_refs": [
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "insufficient_budget_is_503_with_retry_after",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_generate.rs",
+              "symbol": "budget_limits_parallel_runs_and_is_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_http.rs",
+              "symbol": "rate_limit_per_client",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "slow_headers_are_cut_off",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/api_server.rs",
+              "symbol": "excess_connections_are_closed",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-003",
+          "test_refs": [
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "check_reports_each_file_and_the_summary",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "inspect_keys_and_encrypted_files",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "verify_valid_and_invalid",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json.rs",
+              "symbol": "help_lists_json_and_all_exit_codes",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "encrypt_and_decrypt_single_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "each_and_many_report_per_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "container_lists_all_sources",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_json_files.rs",
+              "symbol": "weak_passphrase_has_a_message",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_command_creates_and_never_overwrites",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_file_with_passphrase_and_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_factor_is_never_silently_ignored",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_key_file_with_factor_decrypts_and_signs",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_several_files_with_one_factor",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u01_help_in_both_languages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_invalid_factor_files_are_rejected_with_clear_messages",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_factor.rs",
+              "symbol": "u03_factor_content_never_appears_in_output",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "encrypt_and_decrypt_with_passphrase_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "key_generation_and_recipient_decrypt_unattended",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "open_permissions_and_conflicts_are_rejected",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "batch_never_prompts",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "sign_uses_the_global_passphrase_file",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/cli_unattended.rs",
+              "symbol": "context_menu_refuses_batch_mode",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "messages_are_bilingual_and_non_empty",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "invalid_input_shows_field_name_only",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_error_does_not_leak_path",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/error_messages.rs",
+              "symbol": "io_conversion_keeps_kind",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-002",
+          "test_refs": [
+            {
+              "path": "tests/hardening_memlock.rs",
+              "symbol": "secrets_are_locked_and_released",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Historischer main-Lauf. Nur sichtbare erfolgreiche Tests; cfg-/interne Auslassungen sind keine bestandenen Assertions.",
+        "en": "Historical main run. Only visible successful tests; cfg/internal skips are not passed assertions."
+      }
+    },
+    {
+      "id": "B2-pqkf_header_v2",
+      "source_commit": "a52353d062db29ae9d56721a65e9d99ffad1499f",
+      "observed_utc": "2026-11-16T14:00:00Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43667929295,
+      "job_id": 132671372790,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43667929295/job/132671372790",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "nightly-2026-11-01; cargo-fuzz 0.13.2"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-009",
+          "test_refs": [
+            {
+              "path": "fuzz/fuzz_targets/pqkf_header_v2.rs",
+              "symbol": "fuzz_target!",
+              "kind": "fuzz",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Historische 601-s-Kampagne; kein aktueller Lauf. Maxinput und RSS sind begrenzt, kein vollständiger Beweis.",
+        "en": "Historical 601-second campaign, not a current run. Bounded max input and RSS, not exhaustive proof."
+      }
+    },
+    {
+      "id": "B2-stream_tamper",
+      "source_commit": "a52353d062db29ae9d56721a65e9d99ffad1499f",
+      "observed_utc": "2026-11-16T14:00:00Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43667929295,
+      "job_id": 132671372787,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43667929295/job/132671372787",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "nightly-2026-11-01; cargo-fuzz 0.13.2"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-009",
+          "test_refs": [
+            {
+              "path": "fuzz/fuzz_targets/stream_tamper.rs",
+              "symbol": "fuzz_target!",
+              "kind": "fuzz",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Historische 601-s-Kampagne; kein aktueller Lauf. Maxinput und RSS sind begrenzt, kein vollständiger Beweis.",
+        "en": "Historical 601-second campaign, not a current run. Bounded max input and RSS, not exhaustive proof."
+      }
+    }
+  ]
+}

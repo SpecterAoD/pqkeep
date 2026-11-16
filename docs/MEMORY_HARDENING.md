@@ -63,8 +63,11 @@ Festplattenverschlüsselung nutzen.
 
 Der Release-Build beendet sich bei einer Panik sofort, ohne Stack-Unwinding. Das verkleinert die
 Angriffsfläche und verhindert, dass Programmteile nach einem Fehler weiterlaufen. **Nachteil:**
-Destruktoren laufen dann nicht, Geheimnisse werden also nicht genullt. Der Speicher geht direkt an
-das Betriebssystem zurück; da Core Dumps gesperrt sind, entsteht keine Kopie auf der Platte.
+Destruktoren laufen dann nicht, Geheimnisse werden also nicht genullt. Der Speicher geht an das
+Betriebssystem zurück. Auf Linux sind Core Dumps nur bei erfolgreicher Prozesshärtung gesperrt;
+Windows-WER, Swap und Ruhezustand sind dadurch nicht abgesichert. Auch temporärer Klartext kann
+bei Abort/SIGKILL zurückbleiben. Die [Angriffsmatrix](security/ATTACK_TEST_MATRIX.md) erfasst diese
+Grenzen; normale Cleanup-Tests beweisen keine Crash-/OOM-Recovery.
 Tests laufen weiterhin mit Unwinding (Testprofil).
 
 ## 5. Binär-Härtung
@@ -103,7 +106,10 @@ for Linux process settings).
    character copies, generator buffers, exact-size NFKC buffer). The compiler may still copy values to
    registers or the stack; this cannot be fully prevented in safe Rust.
 4. **Panic = abort (release):** no unwinding; destructors do not run, so secrets are not zeroed, but
-   memory returns to the OS and core dumps are disabled. Tests still unwind.
+   memory returns to the OS. Linux core dumps are suppressed only if process hardening succeeded;
+   this does not protect Windows WER, swap or hibernation. Temporary plaintext may remain after
+   abort/SIGKILL. The [attack matrix](security/ATTACK_TEST_MATRIX.md) records these limits;
+   ordinary cleanup tests do not prove crash/OOM recovery. Tests still unwind.
 5. **Binary hardening:** CI checks the release binary for PIE, full RELRO and NX stack (Linux) and
    ASLR, DEP and Control Flow Guard (Windows). `strip` mostly reduces size; for open source it hardly
    hinders reverse engineering.
