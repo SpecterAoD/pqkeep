@@ -24,6 +24,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
 - [x] [#222](https://github.com/SpecterAoD/pqkeep/issues/222): Hilfetests für alle CLI-Unterbefehle auf Deutsch und Englisch, mit und ohne API-Feature; `serve` nur mit API. / Help tests for every CLI subcommand in German and English, with and without the API feature; `serve` only with API. ([PR #243](https://github.com/SpecterAoD/pqkeep/pull/243), 15.11.2026)
+- [x] [#224](https://github.com/SpecterAoD/pqkeep/issues/224): Sichere Backup-Monitoring-Beispiele für `pqkeep check --json` mit Bash/jq und PowerShell, DE/EN-Dokumentation und nativen Linux-/Windows-Tests. / Secure backup monitoring examples for `pqkeep check --json` using Bash/jq and PowerShell, bilingual documentation and native Linux/Windows tests. ([PR #245](https://github.com/SpecterAoD/pqkeep/pull/245), 16.11.2026)
 
 ## Geplante Updates nach der ersten Beta (Details: SPEC Abschnitt 9)
 
