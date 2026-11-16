@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.0.0",
-  "reviewed_source_commit": "4e34468d5dafacdaed994b9e29def2afa53be72a",
+  "matrix_version": "1.0.1",
+  "reviewed_source_commit": "e735edb83559214c85d5de491f267a4a659f93fe",
   "cases": [
     {
       "id": "QA1-CRY-001",
@@ -12,7 +12,7 @@
       ],
       "scenario": {
         "de": "Chiffrat/Tag/Nonce/AAD kippen",
-        "en": "bit flip"
+        "en": "Flip ciphertext, tag, nonce or associated-data bits."
       },
       "expected_behavior": {
         "de": "Authentifizierung scheitert, kein Secret zurück",
@@ -96,7 +96,7 @@
       ],
       "scenario": {
         "de": "Falsche Passphrase, Faktor, Empfänger",
-        "en": "wrong credentials"
+        "en": "Supply a wrong passphrase, factor file or recipient key."
       },
       "expected_behavior": {
         "de": "Decrypt-Fehler bzw. öffentliche Typ/Empfängerfehler; kein Ziel",
@@ -180,7 +180,7 @@
       ],
       "scenario": {
         "de": "Falsche Primitive/Verdrahtung",
-        "en": "primitive or wiring error"
+        "en": "Use the wrong cryptographic primitive or wire its inputs incorrectly."
       },
       "expected_behavior": {
         "de": "Vergleich mit unabhängigen, bezeichneten Vektoren",
@@ -347,7 +347,7 @@
       ],
       "scenario": {
         "de": "KDF unter Minimum/über Maximum",
-        "en": "KDF bounds"
+        "en": "Supply KDF parameters below minimum or above maximum."
       },
       "expected_behavior": {
         "de": "Ablehnen vor Ableitung",
@@ -437,7 +437,7 @@
       ],
       "scenario": {
         "de": "Blocktausch, Kürzen, Anhängen",
-        "en": "stream reorder/truncate/append"
+        "en": "Reorder, truncate or append encrypted stream chunks."
       },
       "expected_behavior": {
         "de": "Ungültiger Strom scheitert; Veröffentlichung separat in FMT-003 geprüft.",
@@ -520,7 +520,7 @@
       ],
       "scenario": {
         "de": "RNG/Nonce-Wiederholung",
-        "en": "repetition"
+        "en": "Repeat OS randomness, salts or nonces."
       },
       "expected_behavior": {
         "de": "Neue Zufallswerte; Stichproben sind kein Kollisionsbeweis",
@@ -610,7 +610,7 @@
       ],
       "scenario": {
         "de": "Signatur/Datei/Schlüssel manipuliert",
-        "en": "forged signature"
+        "en": "Modify a signature, signed file or verification key."
       },
       "expected_behavior": {
         "de": "Ungültig; Fingerabdruck bleibt externe Vertrauensfrage",
@@ -773,7 +773,7 @@
       ],
       "scenario": {
         "de": "JSON-Garbage, unbekannte/doppelte Felder, große Länge",
-        "en": "malformed JSON"
+        "en": "Supply malformed JSON, unknown/duplicate fields or excessive input lengths."
       },
       "expected_behavior": {
         "de": "Begrenzter Parser, Fehler ohne Panik",
@@ -882,7 +882,7 @@
       ],
       "scenario": {
         "de": "v2 Header gekürzt, Längen bis u32::MAX",
-        "en": "truncation and lengths"
+        "en": "Truncate a v2 header or supply lengths up to u32::MAX."
       },
       "expected_behavior": {
         "de": "Lesebudget einhalten, ungültig oder kanonisch",
@@ -969,7 +969,7 @@
       ],
       "scenario": {
         "de": "v1/v2 Manipulation, falscher Endblock",
-        "en": "tampering"
+        "en": "Modify v1/v2 headers or encrypted data, including the final chunk."
       },
       "expected_behavior": {
         "de": "Fehler, kein veröffentlichtes Ziel, normale Fehlerreste entfernt",
@@ -1072,7 +1072,7 @@
       ],
       "scenario": {
         "de": "v2 Zugang/Hülle entfernen oder tauschen",
-        "en": "remove/reorder slots"
+        "en": "Remove or reorder v2 access slots and key wraps."
       },
       "expected_behavior": {
         "de": "Ablehnen; keine Ausgabe",
@@ -1167,7 +1167,7 @@
       ],
       "scenario": {
         "de": "Versionsbyte umschreiben, Faktor entfernen",
-        "en": "version relabelling"
+        "en": "Relabel the format version or remove the factor flag."
       },
       "expected_behavior": {
         "de": "Unbekanntes ablehnen; v1↔v2-Umetikettieren öffnet nicht",
@@ -1249,7 +1249,7 @@
       ],
       "scenario": {
         "de": "Alte gültige Datei erneut einspielen",
-        "en": "whole-file replay"
+        "en": "Replay an unchanged old valid container."
       },
       "expected_behavior": {
         "de": "Aktuell akzeptierbar bei gültigem Schlüssel und freiem Ziel; kein Frischenachweis. Bestehende Ziele erhalten",
@@ -1311,7 +1311,13 @@
       "evidence_refs": [
         "B1-linux-x86_64",
         "B1-windows-x86_64",
-        "B1-linux-arm64"
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
       ],
       "gap": null,
       "next_evidence": null,
@@ -1328,7 +1334,7 @@
       ],
       "scenario": {
         "de": "Alte gültige v1-Datei statt späterer v2-Datei",
-        "en": "rollback to valid v1"
+        "en": "Substitute an old valid v1 file for a later v2 file."
       },
       "expected_behavior": {
         "de": "v1 bleibt lesbar; keine globale Versionspolitik",
@@ -1396,7 +1402,13 @@
       "evidence_refs": [
         "B1-linux-x86_64",
         "B1-windows-x86_64",
-        "B1-linux-arm64"
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
       ],
       "gap": {
         "de": "v1 bleibt absichtlich unterstützt; kein globaler Mindestversionszustand.",
@@ -1419,7 +1431,7 @@
       ],
       "scenario": {
         "de": "Alte veröffentlichte Leser mit neuer v2-Datei",
-        "en": "released v1 readers vs v2"
+        "en": "Give a new v2 file to a released older v1 reader."
       },
       "expected_behavior": {
         "de": "Ablehnung laut Dokumentation, exakter alter Binary-Lauf fehlt",
@@ -1486,7 +1498,7 @@
       ],
       "scenario": {
         "de": "Fuzz-Garbage und große Header",
-        "en": "arbitrary fuzz input"
+        "en": "Fuzz parsers with arbitrary malformed input and large headers."
       },
       "expected_behavior": {
         "de": "Keine Panik und Einhaltung der Zielinvarianten innerhalb des begrenzten Laufbudgets.",
@@ -1602,7 +1614,7 @@
       ],
       "scenario": {
         "de": "Traversal, absolute Pfade, Windows-Namen",
-        "en": "malicious paths"
+        "en": "Use path traversal, absolute paths or reserved Windows names."
       },
       "expected_behavior": {
         "de": "Ablehnen; nichts außerhalb Ziel",
@@ -1699,7 +1711,7 @@
       ],
       "scenario": {
         "de": "Statischer Source-/Faktor-Symlink",
-        "en": "static symlink"
+        "en": "Supply a static source-file or factor-file symlink."
       },
       "expected_behavior": {
         "de": "Überspringen oder ablehnen gemäß Schnittstelle",
@@ -1782,7 +1794,7 @@
       ],
       "scenario": {
         "de": "Windows Reparse/Junction/Symlink-Angriffe",
-        "en": "reparse attacks"
+        "en": "Use Windows reparse points, junctions or symlinks to redirect file access."
       },
       "expected_behavior": {
         "de": "Keine Umleitung auf fremde Daten; Nachweis ausstehend",
@@ -1836,7 +1848,7 @@
       ],
       "scenario": {
         "de": "Bestehendes Ziel überschreiben",
-        "en": "overwrite existing target"
+        "en": "Attempt to overwrite an existing output target."
       },
       "expected_behavior": {
         "de": "Statische Ziele erhalten; Schlüssel nur mit explizitem Overwrite",
@@ -1921,7 +1933,7 @@
       ],
       "scenario": {
         "de": "Zu offene Unix-Rechte",
-        "en": "loose Unix permissions"
+        "en": "Load or create sensitive files with overly permissive Unix modes."
       },
       "expected_behavior": {
         "de": "0600/0700; Warnung beim Schlüssel, Fehler beim Faktor/Passphrase",
@@ -2010,7 +2022,7 @@
       ],
       "scenario": {
         "de": "Offene Windows-ACL, fremder Benutzer",
-        "en": "permissive ACL, other user"
+        "en": "Access sensitive files through permissive Windows ACLs or another user account."
       },
       "expected_behavior": {
         "de": "Gewünschte Ablehnung nicht implementiert; ACL-Vererbung dokumentieren",
@@ -2064,7 +2076,7 @@
       ],
       "scenario": {
         "de": "Rechteentzug/Read-only/ENOSPC während Schreiben",
-        "en": "denied writes or disk full"
+        "en": "Revoke permissions, use a read-only filesystem or exhaust disk space during writes."
       },
       "expected_behavior": {
         "de": "Fehler, alte Daten erhalten; konkrete Zeitpunkte noch offen",
@@ -2132,7 +2144,7 @@
       ],
       "scenario": {
         "de": "Source-Austausch/gleichzeitige Zielanlage/FAT-Fallback",
-        "en": "races"
+        "en": "Replace a source file between check/open, race target publication or use the FAT fallback."
       },
       "expected_behavior": {
         "de": "Bekannte Grenze, kein universeller Schutz; spätere deterministische Prüfung",
@@ -2189,7 +2201,7 @@
       ],
       "scenario": {
         "de": "Secret im Debug/Clone oder ungenullter expliziter Puffer",
-        "en": "accidental secret exposure"
+        "en": "Expose a secret through Debug/Clone or leave an explicitly wiped buffer uncleared."
       },
       "expected_behavior": {
         "de": "SecretBytes ohne Debug/Clone; explizites Nullen",
@@ -2281,7 +2293,7 @@
       ],
       "scenario": {
         "de": "Secret-Kopien nach Drop/Cancel/Panic, Argon2/FFI",
-        "en": "lifetime copies"
+        "en": "Retain secret copies after Drop, cancellation or panic, including Argon2/FFI buffers."
       },
       "expected_behavior": {
         "de": "Best effort benennen; keine Garantie für Register/FFI/Abort",
@@ -2397,7 +2409,7 @@
       ],
       "scenario": {
         "de": "Swap/fehlgeschlagenes mlock",
-        "en": "lock failure"
+        "en": "Observe swapped secrets or force memory locking to fail."
       },
       "expected_behavior": {
         "de": "Lock/Release nachweisen; Fehlschlag gezählt, Weiterlauf dokumentiert",
@@ -2483,7 +2495,7 @@
       ],
       "scenario": {
         "de": "Linux Core Dump",
-        "en": "dumpable process"
+        "en": "Obtain a Linux core dump from a dumpable process."
       },
       "expected_behavior": {
         "de": "RLIMIT_CORE=0, NotDumpable gesetzt; kein vollständiger Crash-Test",
@@ -2554,7 +2566,7 @@
       ],
       "scenario": {
         "de": "Windows WER/Minidump, Hibernation",
-        "en": "dump exposure"
+        "en": "Obtain Windows WER/minidump or hibernation images."
       },
       "expected_behavior": {
         "de": "Grenze dokumentieren, gesonderte VM-Prüfung; aktuell nicht durchgeführt",
@@ -2608,7 +2620,7 @@
       ],
       "scenario": {
         "de": "Echter Allocator-/OS-OOM",
-        "en": "actual exhaustion"
+        "en": "Trigger actual allocator or operating-system out-of-memory failure."
       },
       "expected_behavior": {
         "de": "Kein Datenverlust als Prüfziel, Verhalten nicht belegt",
@@ -2662,7 +2674,7 @@
       ],
       "scenario": {
         "de": "Datei außerhalb Freigabe",
-        "en": "file outside allowlist"
+        "en": "Access a file outside the Linux sandbox allowlist."
       },
       "expected_behavior": {
         "de": "Bei aktivem Landlock verweigern; ohne Unterstützung Warnung",
@@ -2740,7 +2752,7 @@
       ],
       "scenario": {
         "de": "Netzwerk/exec/spawn",
-        "en": "forbidden syscalls"
+        "en": "Attempt forbidden network connections, exec or process spawning."
       },
       "expected_behavior": {
         "de": "SIGSYS bzw. erwarteter Spawn-Fehler; erlaubte Arbeit weiter möglich",
@@ -2821,7 +2833,7 @@
       ],
       "scenario": {
         "de": "Windows-Äquivalent zur Sandbox",
-        "en": "equivalent sandbox"
+        "en": "Attempt an equivalent sandbox escape on Windows."
       },
       "expected_behavior": {
         "de": "Nicht implementiert; keine Linux-Garantie übertragen",
@@ -2873,7 +2885,7 @@
       ],
       "scenario": {
         "de": "Geerbte Handles, Cross-User-Speicher-/Prozesszugriff",
-        "en": "inherited handles, cross-user access"
+        "en": "Inherit secret-bearing handles or access another user/process memory."
       },
       "expected_behavior": {
         "de": "Kein zusätzlicher Secret-Zugriff als Ziel; umfassender Nachweis offen",
@@ -2949,7 +2961,7 @@
       ],
       "scenario": {
         "de": "Unberechtigter Client eines künftigen IPC-Daemons",
-        "en": "future IPC client"
+        "en": "Access the planned future IPC daemon as an unauthorized client."
       },
       "expected_behavior": {
         "de": "Aktuell kein Prüfgegenstand; REST-API separat",
@@ -3004,7 +3016,7 @@
       ],
       "scenario": {
         "de": "Beschädigtes authentifiziertes Archiv, Prüfsumme/Ende falsch",
-        "en": "bad archive"
+        "en": "Provide an authenticated but malformed archive, checksum or end marker."
       },
       "expected_behavior": {
         "de": "Fehler, kein Ziel, kein Fremdpfad",
@@ -3082,7 +3094,7 @@
       ],
       "scenario": {
         "de": "Benutzer bricht Mehrfachaktion ab",
-        "en": "user cancellation"
+        "en": "Cancel a multi-file operation from the user interface."
       },
       "expected_behavior": {
         "de": "Eigene Reste entfernen, fremde Temp-Datei erhalten",
@@ -3165,7 +3177,7 @@
       ],
       "scenario": {
         "de": "SIGKILL, Panic-Abort, Stromausfall vor/nach Publish",
-        "en": "crash points"
+        "en": "Kill or abort the process, or lose power before/after output publication."
       },
       "expected_behavior": {
         "de": "Alte Daten erhalten; temporären Klartext und dauerhaften Publish getrennt bewerten",
@@ -3219,7 +3231,7 @@
       ],
       "scenario": {
         "de": "Manipuliertes Backup beim Prüfen",
-        "en": "corrupted backup check"
+        "en": "Check a damaged or manipulated encrypted backup."
       },
       "expected_behavior": {
         "de": "Fehler und keine Ausgabedateien; kein Frischenachweis",
@@ -3327,7 +3339,7 @@
       ],
       "scenario": {
         "de": "Fehlende/falsche Auth, ungültiger Body",
-        "en": "bad auth/input"
+        "en": "Submit missing/wrong API authentication or malformed request bodies."
       },
       "expected_behavior": {
         "de": "401/Lockout, generische 400/413-Antworten, keine Echo-Secrets.",
@@ -3422,7 +3434,7 @@
       ],
       "scenario": {
         "de": "Parallelflut, Budgetmangel, Slow Headers",
-        "en": "resource attacks"
+        "en": "Flood concurrent requests, exhaust KDF admission budget or send slow headers."
       },
       "expected_behavior": {
         "de": "503/Retry-After, begrenzte Verbindungen/Rate/Timeouts.",
@@ -3517,7 +3529,7 @@
       ],
       "scenario": {
         "de": "Ungültige CLI-Eingaben, falscher Schlüssel, Secret in Ausgabe",
-        "en": "bad input or output leakage"
+        "en": "Supply invalid CLI input or wrong keys, or expose input secrets in output."
       },
       "expected_behavior": {
         "de": "Fehlercodes, batch ohne Prompt, keine Eingabe-Secrets",
@@ -3746,15 +3758,15 @@
       ],
       "scenario": {
         "de": "API ohne Feature versehentlich verfügbar",
-        "en": "API-disabled regression"
+        "en": "Accidentally expose serve/API functionality in a build without the API feature."
       },
       "expected_behavior": {
         "de": "Ohne Feature kein serve/API; Laufzeitregression ausführen",
         "en": "runtime regression without API"
       },
       "boundary": {
-        "de": "Historische CI kompilierte nur No-default; neue Runtime-Nachweise separat verknüpfen.",
-        "en": "Historical CI only compiled no-default; link new runtime evidence separately."
+        "de": "Native No-default-Runtime wird auf Linux x86_64 und Windows x86_64 geprüft; Ubuntu 22.04/ARM64 bleiben bei Clippy-Kompilierung.",
+        "en": "Native no-default runtime is checked on Linux x86_64 and Windows x86_64; Ubuntu 22.04/ARM64 retain clippy compilation only."
       },
       "implementation_state": "implemented",
       "coverage_status": "partial",
@@ -3796,14 +3808,17 @@
         151
       ],
       "v2_ids": [],
-      "evidence_refs": [],
+      "evidence_refs": [
+        "PR251-ubuntu-latest-no-default",
+        "PR251-windows-latest-no-default"
+      ],
       "gap": {
-        "de": "Historische CI kompilierte nur No-default; neue Runtime-Nachweise separat verknüpfen.",
-        "en": "Historical CI only compiled no-default; link new runtime evidence separately."
+        "de": "Kein zusätzlicher No-default-Runtime-Lauf auf Ubuntu 22.04/ARM64; ausdrücklich außerhalb dieser CI-Erweiterung.",
+        "en": "No additional no-default runtime run on Ubuntu 22.04/ARM64; explicitly outside this CI expansion."
       },
       "next_evidence": {
-        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
-        "en": "Review the missing variant in the linked issue; no production change in #151."
+        "de": "Bei später geänderter Plattformstrategie eigenen Lauf vorsehen; aktuelle nativen Linux-/Windows-Nachweise separat erfassen.",
+        "en": "Add a separate run if platform policy changes later; record current native Linux/Windows evidence separately."
       },
       "retired": false,
       "replacement": null
@@ -3816,7 +3831,7 @@
       ],
       "scenario": {
         "de": "Native Plattformregression",
-        "en": "native regressions"
+        "en": "Introduce a native Linux x86_64/ARM64 or Windows x86_64 regression."
       },
       "expected_behavior": {
         "de": "Native Tests Linux x86_64/ARM64 und Windows x86_64; OS-Ausnahmen sichtbar.",
@@ -3872,7 +3887,13 @@
       "evidence_refs": [
         "B1-linux-x86_64",
         "B1-windows-x86_64",
-        "B1-linux-arm64"
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
       ],
       "gap": null,
       "next_evidence": null,
@@ -3887,7 +3908,7 @@
       ],
       "scenario": {
         "de": "Größere ARM64-Seiten",
-        "en": "larger ARM pages"
+        "en": "Run memory locking on ARM64 kernels with larger pages."
       },
       "expected_behavior": {
         "de": "Seitengröße beachten; 64-KiB-VM-Nachweis fehlt",
@@ -3948,7 +3969,7 @@
       ],
       "scenario": {
         "de": "Windows-ARM64-Ausführung",
-        "en": "Windows ARM64 execution"
+        "en": "Run natively on Windows ARM64."
       },
       "expected_behavior": {
         "de": "Keine Unterstützung/Abnahme behaupten; eigenes künftiges Plattformvorhaben",
@@ -3999,7 +4020,7 @@
       ],
       "scenario": {
         "de": "Fehlende Release-Härtung",
-        "en": "missing binary protections"
+        "en": "Build release binaries without expected hardening flags."
       },
       "expected_behavior": {
         "de": "PIE/RELRO/NX bzw. ASLR/DEP/CFG prüfen",

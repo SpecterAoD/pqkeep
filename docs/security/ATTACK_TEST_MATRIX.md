@@ -141,6 +141,18 @@ reach every allowed large header. These are gaps, not guarantees introduced by t
 
 ### Rollback
 
+**Implementation evidence (2026-11-16):** [CI 43947063245](https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245)
+passed all ten jobs on checkout `c817c4464fc668238394231ca97028e3cba42019`, byte-identical to
+signed branch `e735edb83559214c85d5de491f267a4a659f93fe` before this reporting-only update.
+Linux default: 526 tests on each runner; no-default: 491 on Ubuntu latest. Windows: 462/429.
+The 25 validator tests pass; Windows skips the Unix-only symlink fixture. Added no-default steps
+took 96 s (Linux) and 148 s (Windows); catalogue steps <1 s on Linux, 4 s on Windows.
+Local checks passed, including both Rust feature suites and all 105 Python tests without skips.
+Practical revert of the two implementation commits in a separate worktree produced the exact
+recorded base tree; fmt/limits/smoke and re-check/decrypt passed, generated key/archive hashes
+unchanged. No production data, merge or deployment. Baseline 1.0.1 links exact new assertions;
+the subsequent reporting commit does not alter product, test or workflow code.
+
 Revert the isolated implementation PR through a signed, reviewed PR; validate affected references
 and CI, especially if later work depends on the catalogue. No key/archive migration is needed.
 A practical pre-merge check uses a separate temporary worktree, reverses only #151 changes,
@@ -265,6 +277,18 @@ ARM64 nur 4-KiB-Seiten belegt; 64 KiB benötigt Sonderprüfung. Windows ARM64 ke
 64-KiB-Header-Fuzzinput erreicht nicht jeden zulässigen Header. Der Katalog führt diese Grenzen offen.
 
 ### Rückweg
+
+**Umsetzungsnachweise (16.11.2026):** [CI 43947063245](https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245)
+mit zehn grünen Jobs auf Checkout `c817c4464fc668238394231ca97028e3cba42019`, bytegleich zum
+signierten Branch `e735edb83559214c85d5de491f267a4a659f93fe` vor diesem Berichtsupdate.
+Linux Default je 526 Tests; No-default Ubuntu latest 491; Windows 462/429.
+25 Validator-Tests bestanden; Windows überspringt die Unix-Symlink-Probe. Zusätzliche No-default-
+Schritte: 96 s Linux, 148 s Windows; Katalogschritte <1 s Linux, 4 s Windows.
+Lokal alle Checks bestanden, einschließlich beider Rust-Featuresuiten und 105 Python-Tests ohne
+Auslassungen. Praktische Rücknahme der zwei Implementierungscommits im eigenen Arbeitsbaum ergibt
+exakt die dokumentierte Basis; fmt/Limits/Smoke sowie erneutes Prüfen/Entschlüsseln bestanden,
+erzeugte Schlüssel-/Archivhashes unverändert. Keine Produktivdaten, kein Merge/Deployment.
+Baseline 1.0.1 verknüpft konkrete neue Assertions; folgender Berichtscommit ohne Code-/Test-/CI-Änderung.
 
 Isolierten Implementierungs-PR über signierten, geprüften Revert-PR zurücknehmen, Referenzen und CI
 prüfen, insbesondere bei späteren abhängigen Änderungen. Keine Schlüssel-/Archivmigration.

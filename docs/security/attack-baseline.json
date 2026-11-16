@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "baseline_version": "1.0.0",
-  "matrix_version": "1.0.0",
+  "baseline_version": "1.0.1",
+  "matrix_version": "1.0.1",
   "evidence": [
     {
       "id": "B1-linux-x86_64",
@@ -3256,7 +3256,7 @@
     {
       "id": "B2-pqkf_header_v2",
       "source_commit": "a52353d062db29ae9d56721a65e9d99ffad1499f",
-      "observed_utc": "2026-11-16T14:00:00Z",
+      "observed_utc": "2026-11-16T20:18:38Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 43667929295,
@@ -3285,14 +3285,14 @@
         }
       ],
       "limits": {
-        "de": "Historische 601-s-Kampagne; kein aktueller Lauf. Maxinput und RSS sind begrenzt, kein vollständiger Beweis.",
-        "en": "Historical 601-second campaign, not a current run. Bounded max input and RSS, not exhaustive proof."
+        "de": "Historische Kampagne: Seed 1114546174, 46305799 Durchläufe in 601 s, max_total_time=600, rss_limit_mb=4096, max_len=65536. Kein aktueller Lauf und kein vollständiger Beweis.",
+        "en": "Historical campaign: seed 1114546174, 46305799 executions in 601 s, max_total_time=600, rss_limit_mb=4096, max_len=65536. Not a current run or exhaustive proof."
       }
     },
     {
       "id": "B2-stream_tamper",
       "source_commit": "a52353d062db29ae9d56721a65e9d99ffad1499f",
-      "observed_utc": "2026-11-16T14:00:00Z",
+      "observed_utc": "2026-11-16T20:18:38Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 43667929295,
@@ -3321,8 +3321,378 @@
         }
       ],
       "limits": {
-        "de": "Historische 601-s-Kampagne; kein aktueller Lauf. Maxinput und RSS sind begrenzt, kein vollständiger Beweis.",
-        "en": "Historical 601-second campaign, not a current run. Bounded max input and RSS, not exhaustive proof."
+        "de": "Historische Kampagne: Seed 2289759468, 898195 Durchläufe in 601 s, max_total_time=600, rss_limit_mb=4096, max_len=270000. Kein aktueller Lauf und kein vollständiger Beweis.",
+        "en": "Historical campaign: seed 2289759468, 898195 executions in 601 s, max_total_time=600, rss_limit_mb=4096, max_len=270000. Not a current run or exhaustive proof."
+      }
+    },
+    {
+      "id": "PR251-ubuntu-latest-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:26Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414413,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414413",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 526 Rust-Tests mit default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 526 Rust tests reported with default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "PR251-ubuntu-latest-no-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:26Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414413,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414413",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "no-default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-004",
+          "test_refs": [
+            {
+              "path": "tests/cli_help.rs",
+              "symbol": "serve_is_unavailable_without_api",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 491 Rust-Tests mit no-default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 491 Rust tests reported with no-default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "PR251-ubuntu-22.04-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:26Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414241,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414241",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-22.04",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 526 Rust-Tests mit default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 526 Rust tests reported with default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "PR251-ubuntu-22.04-arm-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:26Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414207,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414207",
+      "platform": "linux-arm64",
+      "runner": "ubuntu-22.04-arm",
+      "features": "default",
+      "environment": {
+        "kernel": "6.8.0-1070-azure",
+        "page_size": 4096,
+        "toolchain": "rustc 1.99.1"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 526 Rust-Tests mit default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 526 Rust tests reported with default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "PR251-windows-latest-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:27Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414447,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414447",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 462 Rust-Tests mit default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 462 Rust tests reported with default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "PR251-windows-latest-no-default",
+      "source_commit": "c817c4464fc668238394231ca97028e3cba42019",
+      "observed_utc": "2026-11-16T20:22:27Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 43947063245,
+      "job_id": 133579414447,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/43947063245/job/133579414447",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "no-default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FMT-006",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FMT-007",
+          "test_refs": [
+            {
+              "path": "tests/files_replay.rs",
+              "symbol": "v2_old_copy_remains_readable_after_newer_container",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-API-004",
+          "test_refs": [
+            {
+              "path": "tests/cli_help.rs",
+              "symbol": "serve_is_unavailable_without_api",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-PLT-001",
+          "test_refs": [
+            {
+              "path": "tests/binary_smoke.rs",
+              "symbol": "version_and_no_args",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "de": "Run 43947063245 erfolgreich; 429 Rust-Tests mit no-default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
+        "en": "Run 43947063245 passed; 429 Rust tests reported with no-default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
       }
     }
   ]
