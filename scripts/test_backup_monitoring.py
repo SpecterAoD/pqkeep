@@ -70,7 +70,7 @@ class MonitoringTests(unittest.TestCase):
                     json.dumps(good).replace('true', 'tr\0ue'), json.dumps(good) + '\0',
                     json.dumps(good) + '\n' + json.dumps(good)]:
             for code in [0, 2, 3, 127]:
-                with self.subTest(raw=raw[:10], code=code):
+                with self.subTest(raw=repr(raw), code=code):
                     output = self.check(raw, code, code or 1)
                     self.assertIn('JSON', output)
         self.assertIn('JSON', self.check(good, 3, 3))

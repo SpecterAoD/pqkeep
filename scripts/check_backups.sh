@@ -34,6 +34,13 @@ else
 fi
 failure=$status
 (( failure != 0 )) || failure=1
+# DE: jq 1.6 akzeptiert ein nachgestelltes NUL-Byte; unabhängig vom Parser ablehnen.
+# EN: jq 1.6 accepts a trailing NUL byte; reject it independently of the parser.
+# shellcheck disable=SC2034 # DE/EN: Nur den Lesestatus nutzen / use only the read status.
+if IFS= read -r -d '' json_prefix < "$report_file"; then
+    fail "FEHLER / ERROR: ungültiges JSON / invalid JSON (pqkeep=$status)" "$failure"
+fi
+unset json_prefix
 sources=$(jq -cn --args '$ARGS.positional' -- "$@") || fail 'FEHLER / ERROR: jq' "$failure"
 
 # DE: Nur validierte Felder ausgeben, niemals Rohdaten oder Parserfehler.
