@@ -21,17 +21,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## In Progress / In Bearbeitung
-
-- [ ] [#151](https://github.com/SpecterAoD/pqkeep/issues/151): QA-1: Versioned attack test matrix and baseline / Versionierte Angriffstest-Matrix und Baseline
-  - Status: In Progress / In Bearbeitung
-  - Priority / Priorität: P2; Milestone / Meilenstein: M2
-  - Dependencies / Abhängigkeiten: [#97](https://github.com/SpecterAoD/pqkeep/issues/97) completed / abgeschlossen
-  - Follow-ups / Folgeschritte: [#152](https://github.com/SpecterAoD/pqkeep/issues/152), [#153](https://github.com/SpecterAoD/pqkeep/issues/153), [#154](https://github.com/SpecterAoD/pqkeep/issues/154)
-  - Implementation: Plan approval pending / Umsetzung: Planfreigabe ausstehend
-
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
+- [x] [#151](https://github.com/SpecterAoD/pqkeep/issues/151): QA-1: Versioned attack test matrix and baseline / Versionierte Angriffstest-Matrix und Baseline. ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251), 16.11.2026)
+  - Status: Completed / Abgeschlossen; Priority / Priorität: P2; Milestone / Meilenstein: M2.
+  - 47 versioned DE/EN cases, offline validation and native Linux/Windows CI; evidence and limits: [attack matrix](security/ATTACK_TEST_MATRIX.md), [baseline](security/attack-baseline.json), [verified CI](https://github.com/SpecterAoD/pqkeep/actions/runs/43949469492). / 47 versionierte DE/EN-Fälle, Offline-Validierung und native Linux-/Windows-CI; Nachweise und Grenzen in Matrix und Baseline.
+  - Dependencies / Abhängigkeiten: [#97](https://github.com/SpecterAoD/pqkeep/issues/97) completed / abgeschlossen. Follow-ups / Folgeschritte: [#152](https://github.com/SpecterAoD/pqkeep/issues/152), [#153](https://github.com/SpecterAoD/pqkeep/issues/153), [#154](https://github.com/SpecterAoD/pqkeep/issues/154) remain open / bleiben offen.
+  - Catalogue completed; documented crash/OOM/race, Windows and replay limitations remain. / Katalog abgeschlossen; dokumentierte Crash-/OOM-/Race-, Windows- und Replay-Grenzen bleiben bestehen.
 - [x] [#222](https://github.com/SpecterAoD/pqkeep/issues/222): Hilfetests für alle CLI-Unterbefehle auf Deutsch und Englisch, mit und ohne API-Feature; `serve` nur mit API. / Help tests for every CLI subcommand in German and English, with and without the API feature; `serve` only with API. ([PR #243](https://github.com/SpecterAoD/pqkeep/pull/243), 15.11.2026)
 - [x] [#224](https://github.com/SpecterAoD/pqkeep/issues/224): Sichere Backup-Monitoring-Beispiele für `pqkeep check --json` mit Bash/jq und PowerShell, DE/EN-Dokumentation und nativen Linux-/Windows-Tests. / Secure backup monitoring examples for `pqkeep check --json` using Bash/jq and PowerShell, bilingual documentation and native Linux/Windows tests. ([PR #245](https://github.com/SpecterAoD/pqkeep/pull/245), 16.11.2026)
 
