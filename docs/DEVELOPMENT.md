@@ -22,9 +22,12 @@ cargo fmt --all --check
 cargo clippy --all-targets --locked -- -D warnings
 cargo clippy --all-targets --no-default-features --locked -- -D warnings
 cargo test --locked
+cargo test --locked --no-default-features
 bash scripts/check_limits.sh
 python3 -m unittest discover -s scripts -p 'test_*.py'
 cargo deny check                     # needs: cargo install --locked cargo-deny
+python3 scripts/check_attack_matrix.py --summary
+python3 -m unittest discover -s scripts -p 'test_attack_matrix.py' -v
 ```
 
 Clippy runs with `pedantic` warnings; `unwrap`, `expect`, `panic`, `todo`, `dbg!` are denied in
@@ -35,6 +38,12 @@ production code (allowed in tests). Functions over 50 code lines fail via clippy
 [`docs/security/CI_SECURITY.md`](security/CI_SECURITY.md).
 
 ### Run tests selectively
+
+The [attack catalogue and baseline](security/ATTACK_TEST_MATRIX.md) record scoped assertions and
+actual execution separately. Update case/test/CI references together; new execution records need
+the tested commit, platform/features and run/job/attempt. The validator is offline and does not
+execute stored commands. CI runs it on all four platforms; no-default runtime tests run on Ubuntu
+latest and Windows latest, while Ubuntu 22.04/ARM64 additionally compile no-default with clippy.
 
 ```
 cargo test --locked --test cli_files            # one integration test file
@@ -115,9 +124,12 @@ cargo fmt --all --check
 cargo clippy --all-targets --locked -- -D warnings
 cargo clippy --all-targets --no-default-features --locked -- -D warnings
 cargo test --locked
+cargo test --locked --no-default-features
 bash scripts/check_limits.sh
 python3 -m unittest discover -s scripts -p 'test_*.py'
 cargo deny check                     # vorher: cargo install --locked cargo-deny
+python3 scripts/check_attack_matrix.py --summary
+python3 -m unittest discover -s scripts -p 'test_attack_matrix.py' -v
 ```
 
 Clippy läuft mit `pedantic`-Warnungen; `unwrap`, `expect`, `panic`, `todo`, `dbg!` sind im
@@ -128,6 +140,12 @@ Produktionscode verboten (in Tests erlaubt). Funktionen über 50 Codezeilen sche
 [`docs/security/CI_SECURITY.md`](security/CI_SECURITY.md).
 
 ### Tests gezielt ausführen
+
+[Angriffskatalog und Baseline](security/ATTACK_TEST_MATRIX.md) trennen Assertions und Ausführung.
+Fall-/Test-/CI-Verweise gemeinsam pflegen; Nachweise benötigen Quell-SHA, Plattform/Features und
+Run/Job/Attempt. Der Validator arbeitet offline und führt keine gespeicherten Kommandos aus.
+Die CI prüft ihn auf vier Plattformen; No-default-Runtime läuft auf Ubuntu latest und Windows latest,
+Ubuntu 22.04/ARM64 kompilieren No-default zusätzlich mit Clippy.
 
 ```
 cargo test --locked --test cli_files            # eine Integrationstest-Datei

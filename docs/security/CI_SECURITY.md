@@ -77,6 +77,17 @@ mit weitgehendem Zugriff auf den Runner, und ohne Secrets ist der Nutzen gering.
 | Actions-Einstellungen | alle Actions erlaubt, SHA-Pinning **erzwungen**, Token „read“, Actions dürfen keine Reviews freigeben | gut |
 | Secrets | keine (Repository und Environment `release`) | gut |
 
+## Angriffskatalog (#151)
+
+Die [versionierte Matrix und Baseline](ATTACK_TEST_MATRIX.md) trennen Testabdeckung und Ausführung.
+`ci.yml:test` prüft Datenvertrag, lokale Test-/Workflow-Verweise und Validator-Negativtests offline
+auf Linux x86_64/ARM64 und Windows x86_64. Zwei neue Replay-Tests laufen in der bestehenden
+Rust-Suite; sie belegen akzeptierte gültige alte Dateien, keine Frischegarantie. Zusätzlich läuft
+die No-default-Rust-Suite je einmal auf Ubuntu latest und Windows latest. Ubuntu 22.04/ARM64
+behalten No-default-Clippy ohne weiteren Runtime-Lauf. Keine neuen Jobs/Pflichtchecks oder Rechte.
+Fuzzing bleibt pfadgefiltert/historisch referenziert; cfg-/Landlock-/root-Auslassungen sind keine
+bestandenen Assertions. Nachweis-SHAs und tatsächliche Plattformgrenzen stehen im Katalog.
+
 ## Offene Punkte
 
 1. **Release-Reihenfolge (#186):** `publish` legt den Release-**Entwurf** an, bevor `verify`
@@ -183,6 +194,17 @@ needs a long-lived secret (e.g. a SignPath integration, #88).
 | Environment `release` | maintainer approval required; allowed refs only tag `v*` and branch `main` (dry run) | good |
 | Actions settings | all actions allowed, SHA pinning **enforced**, token "read", Actions cannot approve reviews | good |
 | Secrets | none (repository and environment `release`) | good |
+
+### Attack catalogue (#151)
+
+The [versioned matrix and baseline](ATTACK_TEST_MATRIX.md) separate coverage from execution.
+`ci.yml:test` checks the data contract, local test/workflow references and validator rejection tests
+offline on Linux x86_64/ARM64 and Windows x86_64. Two replay tests run in the existing Rust suite:
+they characterize accepted old valid files, not freshness. The no-default Rust suite additionally
+runs once on Ubuntu latest and Windows latest; Ubuntu 22.04/ARM64 retain no-default clippy without
+another runtime run. No new jobs, required checks or privileges. Fuzzing remains path-filtered and
+historically referenced; cfg/Landlock/root skips are not passing assertions. Recorded source SHAs
+and actual platform limitations remain explicit in the catalogue.
 
 ### Open items
 

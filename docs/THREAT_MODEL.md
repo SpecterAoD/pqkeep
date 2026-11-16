@@ -29,6 +29,18 @@
 | Geheimnisse in Swap/Core Dumps | Speichersperre, Core-Dump-Sperre (Linux), sofortiges Nullen (best effort, siehe `MEMORY_HARDENING.md`) |
 | Lieferkette | Gesperrte Abhängigkeiten, `cargo deny`, wöchentliches Audit, signierte Commits/Releases |
 
+## Nachweise und Grenzen (#151)
+
+Die [Angriffstest-Matrix](security/ATTACK_TEST_MATRIX.md) trennt implementiert, abgedeckt und
+tatsächlich ausgeführt. Gültige alte Schlüsseldateien und `.pqkf` bleiben lesbar: kein Replay-
+Register, kein vertrauenswürdiger Frischezähler und kein globaler Mindestversionszustand. Frische
+Nonces verhindern kein Replay der gesamten Datei. Versionsumschreiben/KDF-Absenken/Slot-Manipulation
+werden separat geprüft; v1 bleibt unterstützt. Neuverschlüsselung widerruft keine alten Kopien.
+Normales Fehler-Cleanup beweist keine Crash-/OOM-/Stromausfall-Recovery: bei Abort/SIGKILL läuft
+Drop nicht, temporärer Klartext kann bleiben. Windows ohne Sandbox/eigene ACL-Prüfung; Landlock-
+und mlock-Best-effort-Ausnahmen gelten weiterhin. Source-/Publish-/FAT-Rennen siehe FILE_FORMAT.md
+und FORMAT.md. STREAM-Puffer sind begrenzt, Source-/Pfadlisten und Argon2 benötigen weiteren Speicher.
+
 ## Sichtbar trotz Verschlüsselung
 
 - Schlüsseldatei: Metadaten (Name, Organisation …), öffentlicher Schlüssel, Algorithmus, Zeitpunkt.
@@ -52,6 +64,16 @@
 ---
 
 ## English
+
+**Evidence and boundaries (#151):** the [attack matrix](security/ATTACK_TEST_MATRIX.md) separates
+implementation, coverage and execution. Old valid key files and `.pqkf` remain readable: no replay
+register, trusted freshness counter or global minimum-version state. Fresh nonces do not prevent
+whole-file replay. Version relabelling, reduced KDF parameters and slot tampering are checked
+separately; v1 remains supported. Re-encryption cannot revoke old copies. Ordinary error cleanup
+does not prove crash/OOM/power-loss recovery: abort/SIGKILL skips Drop and temporary plaintext may
+remain. Windows lacks an equivalent sandbox/dedicated ACL validation; Landlock/mlock best-effort
+exceptions remain. See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races. STREAM buffers
+are bounded, but source/path bookkeeping and Argon2 require additional memory.
 
 **Goals:** confidentiality and integrity of stored private keys against offline attackers who obtain
 the key file, and of encrypted files/directories (`.pqkf`), also against future quantum computers.

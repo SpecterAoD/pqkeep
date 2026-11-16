@@ -1,0 +1,4087 @@
+{
+  "schema_version": 1,
+  "matrix_version": "1.0.1",
+  "reviewed_source_commit": "e735edb83559214c85d5de491f267a4a659f93fe",
+  "cases": [
+    {
+      "id": "QA1-CRY-001",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/aead.rs",
+        "src/crypto/protect.rs"
+      ],
+      "scenario": {
+        "de": "Chiffrat/Tag/Nonce/AAD kippen",
+        "en": "Flip ciphertext, tag, nonce or associated-data bits."
+      },
+      "expected_behavior": {
+        "de": "Authentifizierung scheitert, kein Secret zurück",
+        "en": "authentication fails, no secret returned"
+      },
+      "boundary": {
+        "de": "Einzelne AEAD-Eingaben, kein allgemeiner Seitenkanalnachweis.",
+        "en": "Individual AEAD inputs; not a general side-channel proof."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_tamper.rs",
+          "symbol": "every_ciphertext_and_tag_byte",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_tamper.rs",
+          "symbol": "every_nonce_byte",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_tamper.rs",
+          "symbol": "every_aad_byte",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-002",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/wrap.rs",
+        "src/files/decrypt_v2.rs"
+      ],
+      "scenario": {
+        "de": "Falsche Passphrase, Faktor, Empfänger",
+        "en": "Supply a wrong passphrase, factor file or recipient key."
+      },
+      "expected_behavior": {
+        "de": "Decrypt-Fehler bzw. öffentliche Typ/Empfängerfehler; kein Ziel",
+        "en": "no output; public prechecks may differ"
+      },
+      "boundary": {
+        "de": "Öffentliche Empfänger-/Schlüsselart-Prüfungen haben eigene Fehler; Geheimnisfehler sind generisch.",
+        "en": "Public recipient/key-kind prechecks have distinct errors; secret failures are generic."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_wrap.rs",
+          "symbol": "wrong_recipient_key_fails",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_tamper_keys.rs",
+          "symbol": "wrong_passphrase_and_key_kind",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_roundtrip.rs",
+          "symbol": "c06_wrong_secrets_fail_uniformly",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-003",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/mod.rs",
+        "src/crypto/v2.rs"
+      ],
+      "scenario": {
+        "de": "Falsche Primitive/Verdrahtung",
+        "en": "Use the wrong cryptographic primitive or wire its inputs incorrectly."
+      },
+      "expected_behavior": {
+        "de": "Vergleich mit unabhängigen, bezeichneten Vektoren",
+        "en": "compare independent named vectors"
+      },
+      "boundary": {
+        "de": "Vektorauszüge, keine FIPS-140-Validierung und kein externes Audit.",
+        "en": "Selected vectors, not FIPS 140 validation or an external audit."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_kat.rs",
+          "symbol": "ml_kem_keygen_vectors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_kat.rs",
+          "symbol": "ml_dsa_keygen_vectors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_kat.rs",
+          "symbol": "ml_dsa_sigver_vectors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_kat.rs",
+          "symbol": "argon2id_reference_vectors_via_public_api",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_kat.rs",
+          "symbol": "ml_kem_decaps_wycheproof_vectors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_v2_kat.rs",
+          "symbol": "c01_argon2id_with_secret_and_domain",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_v2_kat.rs",
+          "symbol": "c02_independent_wrap_opens",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_v2_kat.rs",
+          "symbol": "bounds_are_checked_before_deriving",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_kat.rs",
+          "symbol": "c02_independent_file_opens",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_v2_kat.rs",
+          "symbol": "c07_independent_key_file_unlocks",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/kdf_tests.rs",
+          "symbol": "rfc9106_argon2id_vector",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/kdf_tests.rs",
+          "symbol": "rfc9106_vector_detects_changed_inputs",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/wrap_tests.rs",
+          "symbol": "hkdf_sha3_reference_value",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/wrap_tests.rs",
+          "symbol": "every_input_matters",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/v2_tests.rs",
+          "symbol": "v07_passphrase_slot_vectors",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/v2_tests.rs",
+          "symbol": "v07_recipient_slot_vector",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/v2_tests.rs",
+          "symbol": "recipient_inputs_all_matter",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-004",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/kdf.rs"
+      ],
+      "scenario": {
+        "de": "KDF unter Minimum/über Maximum",
+        "en": "Supply KDF parameters below minimum or above maximum."
+      },
+      "expected_behavior": {
+        "de": "Ablehnen vor Ableitung",
+        "en": "reject before derivation"
+      },
+      "boundary": {
+        "de": "Prüft Parametergrenzen, keinen echten Allocator-OOM.",
+        "en": "Checks parameter bounds, not actual allocator OOM."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_kdf.rs",
+          "symbol": "boundary_values_accepted",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_kdf.rs",
+          "symbol": "out_of_bounds_rejected_before_derivation",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_reject.rs",
+          "symbol": "kdf_bounds_enforced_on_read",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_v2_kat.rs",
+          "symbol": "bounds_are_checked_before_deriving",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-005",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/stream.rs",
+        "src/crypto/stream_io.rs"
+      ],
+      "scenario": {
+        "de": "Blocktausch, Kürzen, Anhängen",
+        "en": "Reorder, truncate or append encrypted stream chunks."
+      },
+      "expected_behavior": {
+        "de": "Ungültiger Strom scheitert; Veröffentlichung separat in FMT-003 geprüft.",
+        "en": "Invalid streams fail; publication is checked separately in FMT-003."
+      },
+      "boundary": {
+        "de": "Die Primitive kann schon verifizierte Blöcke liefern; erst die Datei-API verhindert Veröffentlichung vor Vollprüfung.",
+        "en": "The primitive may emit authenticated prefix chunks; only the file API delays publication until full verification."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_stream.rs",
+          "symbol": "swapped_and_removed_chunks",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream.rs",
+          "symbol": "truncated_and_appended",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream.rs",
+          "symbol": "exact_multiple_cannot_be_cut_at_boundary",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-006",
+      "category": "Crypto",
+      "component_paths": [
+        "src/crypto/rng.rs"
+      ],
+      "scenario": {
+        "de": "RNG/Nonce-Wiederholung",
+        "en": "Repeat OS randomness, salts or nonces."
+      },
+      "expected_behavior": {
+        "de": "Neue Zufallswerte; Stichproben sind kein Kollisionsbeweis",
+        "en": "fresh values; samples not proof"
+      },
+      "boundary": {
+        "de": "Stichproben belegen beobachtete Unterschiede, keine mathematische Kollisionsfreiheit.",
+        "en": "Samples show observed differences, not mathematical collision freedom."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_nonce.rs",
+          "symbol": "nonces_are_unique",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_nonce.rs",
+          "symbol": "random_salts_are_unique",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_protect.rs",
+          "symbol": "fresh_salt_nonce_and_ciphertext_each_time",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Stichproben belegen beobachtete Unterschiede, keine mathematische Kollisionsfreiheit.",
+        "en": "Samples show observed differences, not mathematical collision freedom."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-CRY-007",
+      "category": "Crypto",
+      "component_paths": [
+        "src/sign/mod.rs",
+        "src/crypto/dsa.rs"
+      ],
+      "scenario": {
+        "de": "Signatur/Datei/Schlüssel manipuliert",
+        "en": "Modify a signature, signed file or verification key."
+      },
+      "expected_behavior": {
+        "de": "Ungültig; Fingerabdruck bleibt externe Vertrauensfrage",
+        "en": "invalid; identity requires out-of-band trust"
+      },
+      "boundary": {
+        "de": "Signatur belegt Schlüsselbesitz, keine Identität oder Frische ohne externe Vertrauensquelle.",
+        "en": "A signature demonstrates key possession, not identity or freshness without external trust."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "unchanged_input_verifies",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "any_change_to_the_file_is_detected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "flipped_signature_bytes_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "signed_timestamp_cannot_be_changed",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "hash_and_size_fields_are_bound",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "hash_swapped_to_other_file_with_matching_fields_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "wrong_public_key_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_tamper.rs",
+          "symbol": "key_id_swapped_to_other_key_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "other_key_types_cannot_sign",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "other_public_key_types_cannot_verify",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "fixed_fields_are_enforced",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "encodings_are_strict",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "structure_is_strict",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "oversized_input_is_rejected_before_parsing",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_reject.rs",
+          "symbol": "missing_files_report_io_errors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sign_roundtrip.rs",
+          "symbol": "sha3_512_known_answers",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-001",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "JSON-Garbage, unbekannte/doppelte Felder, große Länge",
+        "en": "Supply malformed JSON, unknown/duplicate fields or excessive input lengths."
+      },
+      "expected_behavior": {
+        "de": "Begrenzter Parser, Fehler ohne Panik",
+        "en": "bounded parser, no panic"
+      },
+      "boundary": {
+        "de": "Property-Tests parsen; mutierte Schlüsseldateien werden nicht allgemein entsperrt.",
+        "en": "Property tests parse; mutated key files are not generally unlocked."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/envelope_reject.rs",
+          "symbol": "unknown_and_missing_fields",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_reject.rs",
+          "symbol": "wrong_types_and_overflow",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_reject.rs",
+          "symbol": "size_limit_and_garbage",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_reject.rs",
+          "symbol": "duplicate_keys_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_proptest.rs",
+          "symbol": "arbitrary_text_never_panics",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_proptest.rs",
+          "symbol": "arbitrary_bytes_never_panic",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_proptest.rs",
+          "symbol": "mutated_valid_container_never_panics",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-002",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "v2 Header gekürzt, Längen bis u32::MAX",
+        "en": "Truncate a v2 header or supply lengths up to u32::MAX."
+      },
+      "expected_behavior": {
+        "de": "Lesebudget einhalten, ungültig oder kanonisch",
+        "en": "bounded read, reject or canonical parse"
+      },
+      "boundary": {
+        "de": "Deterministischer Lesebudgettest; Fuzz-Maxinput ist kleiner als das maximal zulässige Headerbudget.",
+        "en": "Deterministic read-budget test; fuzz max input is below the allowed header budget."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_v2_header_limits.rs",
+          "symbol": "c05_truncation_at_every_position",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_header_limits.rs",
+          "symbol": "c05_numbers_and_lengths_up_to_maximum",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_header_limits.rs",
+          "symbol": "c05_read_budget_on_endless_input",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [
+        "C05"
+      ],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-003",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "v1/v2 Manipulation, falscher Endblock",
+        "en": "Modify v1/v2 headers or encrypted data, including the final chunk."
+      },
+      "expected_behavior": {
+        "de": "Fehler, kein veröffentlichtes Ziel, normale Fehlerreste entfernt",
+        "en": "error, no published output, ordinary cleanup"
+      },
+      "boundary": {
+        "de": "v1-Decrypt testet jedes siebte Headerbyte; check jedes Byte einer kleinen v1-Datei. v2 je Zugang teils Stichproben.",
+        "en": "v1 decrypt samples every seventh header byte; check mutates every byte of a small v1 file. v2 coverage varies by access path."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_tamper_keys.rs",
+          "symbol": "every_header_byte_matters",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_tamper_keys.rs",
+          "symbol": "stream_tampering",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_tamper.rs",
+          "symbol": "c04_every_header_and_wrap_byte_matters",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_tamper.rs",
+          "symbol": "c04_stream_bytes_truncation_and_appending",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_proptest.rs",
+          "symbol": "mutated_file_never_panics_or_leaks",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "v1-Decrypt testet jedes siebte Headerbyte; check jedes Byte einer kleinen v1-Datei. v2 je Zugang teils Stichproben.",
+        "en": "v1 decrypt samples every seventh header byte; check mutates every byte of a small v1 file. v2 coverage varies by access path."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-004",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "v2 Zugang/Hülle entfernen oder tauschen",
+        "en": "Remove or reorder v2 access slots and key wraps."
+      },
+      "expected_behavior": {
+        "de": "Ablehnen; keine Ausgabe",
+        "en": "reject, no output"
+      },
+      "boundary": {
+        "de": "Belegt gebundene Zugangsliste, keinen Widerruf alter vollständiger Kopien.",
+        "en": "Establishes slot-list binding, not revocation of old complete copies."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_v2_tamper.rs",
+          "symbol": "c04_removed_slots_do_not_open",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_tamper.rs",
+          "symbol": "c04_swapped_slots_and_wraps_do_not_open",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_header.rs",
+          "symbol": "v05_wrap_aad_binds_header_and_index",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_v2_header.rs",
+          "symbol": "v06_stream_aad_binds_every_wrap",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [
+        "C04",
+        "V05",
+        "V06"
+      ],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-005",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "Versionsbyte umschreiben, Faktor entfernen",
+        "en": "Relabel the format version or remove the factor flag."
+      },
+      "expected_behavior": {
+        "de": "Unbekanntes ablehnen; v1↔v2-Umetikettieren öffnet nicht",
+        "en": "reject relabelling and unknown versions"
+      },
+      "boundary": {
+        "de": "Versionen umschreiben ist Manipulation; gültige alte Dateien sind ein eigener Fall.",
+        "en": "Relabelling versions is tampering; valid old files are a separate case."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_v2_roundtrip.rs",
+          "symbol": "c06_downgrade_and_unknown_versions_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_v2.rs",
+          "symbol": "c07_versions_cannot_be_rewritten_into_each_other",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [
+        "C06",
+        "C07"
+      ],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-006",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "Alte gültige Datei erneut einspielen",
+        "en": "Replay an unchanged old valid container."
+      },
+      "expected_behavior": {
+        "de": "Aktuell akzeptierbar bei gültigem Schlüssel und freiem Ziel; kein Frischenachweis. Bestehende Ziele erhalten",
+        "en": "currently accepted; no freshness; preserve existing targets"
+      },
+      "boundary": {
+        "de": "Das Format hat kein Frischeregister. Akzeptanz des Replays ist charakterisiertes Verhalten, kein Anti-Replay-Schutz.",
+        "en": "The format has no freshness register. Accepting replay is characterized behavior, not anti-replay protection."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_output.rs",
+          "symbol": "never_overwrites",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_replay.rs",
+          "symbol": "v1_valid_container_can_be_replayed_to_distinct_targets",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-007",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "Alte gültige v1-Datei statt späterer v2-Datei",
+        "en": "Substitute an old valid v1 file for a later v2 file."
+      },
+      "expected_behavior": {
+        "de": "v1 bleibt lesbar; keine globale Versionspolitik",
+        "en": "v1 remains readable, no global version floor"
+      },
+      "boundary": {
+        "de": "v1 bleibt absichtlich unterstützt; kein globaler Mindestversionszustand.",
+        "en": "v1 remains intentionally supported; no global minimum-version state."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_v2_roundtrip.rs",
+          "symbol": "c06_single_slot_without_factor_stays_v1",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_v2.rs",
+          "symbol": "c06_version_1_is_unchanged_and_factor_is_never_ignored",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_replay.rs",
+          "symbol": "v2_old_copy_remains_readable_after_newer_container",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
+      ],
+      "gap": {
+        "de": "v1 bleibt absichtlich unterstützt; kein globaler Mindestversionszustand.",
+        "en": "v1 remains intentionally supported; no global minimum-version state."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-008",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "Alte veröffentlichte Leser mit neuer v2-Datei",
+        "en": "Give a new v2 file to a released older v1 reader."
+      },
+      "expected_behavior": {
+        "de": "Ablehnung laut Dokumentation, exakter alter Binary-Lauf fehlt",
+        "en": "documented rejection, old-binary run missing"
+      },
+      "boundary": {
+        "de": "Aktuelle Parser sind keine veröffentlichten alten Binaries; kein Altbinary-Lauf.",
+        "en": "Current parsers are not released older binaries; no old-binary execution."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_v2_header_limits.rs",
+          "symbol": "c05_versions_do_not_mix",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [],
+      "priority": "P2",
+      "issues": [
+        151,
+        154
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Aktuelle Parser sind keine veröffentlichten alten Binaries; kein Altbinary-Lauf.",
+        "en": "Current parsers are not released older binaries; no old-binary execution."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-009",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format.rs",
+        "src/files/format_v2.rs",
+        "src/envelope/parse.rs"
+      ],
+      "scenario": {
+        "de": "Fuzz-Garbage und große Header",
+        "en": "Fuzz parsers with arbitrary malformed input and large headers."
+      },
+      "expected_behavior": {
+        "de": "Keine Panik und Einhaltung der Zielinvarianten innerhalb des begrenzten Laufbudgets.",
+        "en": "No panic and target invariants hold within the bounded campaign."
+      },
+      "boundary": {
+        "de": "Nur Linux x86_64; acht historische Kampagnen. 64-KiB-Maxinput für Header erreicht nicht jeden zulässigen Header.",
+        "en": "Linux x86_64 only; eight historical campaigns. The 64-KiB header input ceiling cannot reach every allowed header."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "fuzz/fuzz_targets/keyfile_parse.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/public_key_parse.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/pqkf_header.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/pqkf_header_v2.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/archive_paths.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/stream_tamper.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/passphrase.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/api_requests.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/fuzz.yml",
+          "job": "fuzz",
+          "matrix_filter": [
+            "ubuntu-latest"
+          ],
+          "gate": "optional",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        151,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B2-pqkf_header_v2",
+        "B2-stream_tamper"
+      ],
+      "gap": {
+        "de": "Nur Linux x86_64; acht historische Kampagnen. 64-KiB-Maxinput für Header erreicht nicht jeden zulässigen Header.",
+        "en": "Linux x86_64 only; eight historical campaigns. The 64-KiB header input ceiling cannot reach every allowed header."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-001",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Traversal, absolute Pfade, Windows-Namen",
+        "en": "Use path traversal, absolute paths or reserved Windows names."
+      },
+      "expected_behavior": {
+        "de": "Ablehnen; nichts außerhalb Ziel",
+        "en": "reject, no outside writes"
+      },
+      "boundary": {
+        "de": "Kontrollierte authentifizierte Archive und PathSet-Grenzen, kein Beweis gegen jedes Dateisystem-Rennen.",
+        "en": "Controlled authenticated archives and path limits, not proof against every filesystem race."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_malicious.rs",
+          "symbol": "path_traversal_and_absolute_paths",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_malicious.rs",
+          "symbol": "duplicates_and_conflicts",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_malicious.rs",
+          "symbol": "structural_errors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/paths_tests.rs",
+          "symbol": "forbidden_paths",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/paths_tests.rs",
+          "symbol": "length_and_depth_limits",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-002",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Statischer Source-/Faktor-Symlink",
+        "en": "Supply a static source-file or factor-file symlink."
+      },
+      "expected_behavior": {
+        "de": "Überspringen oder ablehnen gemäß Schnittstelle",
+        "en": "skip or reject per API"
+      },
+      "boundary": {
+        "de": "Statische Links; kein Austausch zwischen Prüfung und Öffnen. Tests Unix-only.",
+        "en": "Static links; not replacement between check and open. Unix-only tests."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_output.rs",
+          "symbol": "symlink_as_source_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_many.rs",
+          "symbol": "selected_symlink_is_skipped_and_reported",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_factor.rs",
+          "symbol": "links_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-003",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Windows Reparse/Junction/Symlink-Angriffe",
+        "en": "Use Windows reparse points, junctions or symlinks to redirect file access."
+      },
+      "expected_behavior": {
+        "de": "Keine Umleitung auf fremde Daten; Nachweis ausstehend",
+        "en": "no unsafe redirection; evidence pending"
+      },
+      "boundary": {
+        "de": "Keine vollständige native Reparse-/Junction-/Cross-User-Matrix vorhanden.",
+        "en": "No full native reparse/junction/cross-user matrix exists."
+      },
+      "implementation_state": "not-implemented",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        151,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Keine vollständige native Reparse-/Junction-/Cross-User-Matrix vorhanden.",
+        "en": "No full native reparse/junction/cross-user matrix exists."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-004",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Bestehendes Ziel überschreiben",
+        "en": "Attempt to overwrite an existing output target."
+      },
+      "expected_behavior": {
+        "de": "Statische Ziele erhalten; Schlüssel nur mit explizitem Overwrite",
+        "en": "preserve static targets, explicit key overwrite only"
+      },
+      "boundary": {
+        "de": "Vorhandene statische Ziele; Hardlink-Fallback und Verzeichnis-Publish haben dokumentierte Rennen.",
+        "en": "Existing static targets; hardlink fallback and directory publication have documented races."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_output.rs",
+          "symbol": "never_overwrites",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/envelope_io.rs",
+          "symbol": "no_overwrite_without_consent",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_factor.rs",
+          "symbol": "create_never_overwrites",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-005",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Zu offene Unix-Rechte",
+        "en": "Load or create sensitive files with overly permissive Unix modes."
+      },
+      "expected_behavior": {
+        "de": "0600/0700; Warnung beim Schlüssel, Fehler beim Faktor/Passphrase",
+        "en": "warn vs reject according to contract"
+      },
+      "boundary": {
+        "de": "Schlüsseldatei warnt bei offenem Modus; Faktor und Passphrase-Datei lehnen ab. Keine Windows-ACL-Aussage.",
+        "en": "Key files warn for loose modes; factor and passphrase files reject them. No Windows ACL claim."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/envelope_io.rs",
+          "symbol": "mode_0600_and_permission_warning",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_factor.rs",
+          "symbol": "open_permissions_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_token.rs",
+          "symbol": "token_file_is_private",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "open_permissions_and_conflicts_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-006",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Offene Windows-ACL, fremder Benutzer",
+        "en": "Access sensitive files through permissive Windows ACLs or another user account."
+      },
+      "expected_behavior": {
+        "de": "Gewünschte Ablehnung nicht implementiert; ACL-Vererbung dokumentieren",
+        "en": "desired rejection not implemented; inherited ACL"
+      },
+      "boundary": {
+        "de": "Windows erbt Verzeichnis-ACLs, keine eigene ACL-Prüfung implementiert (#129).",
+        "en": "Windows inherits directory ACLs; no dedicated ACL validation implemented (#129)."
+      },
+      "implementation_state": "not-implemented",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        129,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Windows erbt Verzeichnis-ACLs, keine eigene ACL-Prüfung implementiert (#129).",
+        "en": "Windows inherits directory ACLs; no dedicated ACL validation implemented (#129)."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-007",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Rechteentzug/Read-only/ENOSPC während Schreiben",
+        "en": "Revoke permissions, use a read-only filesystem or exhaust disk space during writes."
+      },
+      "expected_behavior": {
+        "de": "Fehler, alte Daten erhalten; konkrete Zeitpunkte noch offen",
+        "en": "preserve old data; write-point evidence pending"
+      },
+      "boundary": {
+        "de": "Fehlendes Verzeichnis ist kein Rechteentzug oder simulierter voller Datenträger.",
+        "en": "A missing directory is not permission revocation or a simulated full disk."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_output.rs",
+          "symbol": "missing_source_and_target_directory",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        151,
+        152,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Fehlendes Verzeichnis ist kein Rechteentzug oder simulierter voller Datenträger.",
+        "en": "A missing directory is not permission revocation or a simulated full disk."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-008",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/files/output.rs",
+        "src/files/paths.rs"
+      ],
+      "scenario": {
+        "de": "Source-Austausch/gleichzeitige Zielanlage/FAT-Fallback",
+        "en": "Replace a source file between check/open, race target publication or use the FAT fallback."
+      },
+      "expected_behavior": {
+        "de": "Bekannte Grenze, kein universeller Schutz; spätere deterministische Prüfung",
+        "en": "known boundary, future deterministic checks"
+      },
+      "boundary": {
+        "de": "Dokumentierte TOCTOU-/Publish-/FAT-Grenzen; keine deterministische Race-Prüfung.",
+        "en": "Documented TOCTOU/publication/FAT boundaries; no deterministic race test."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        151,
+        152,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Dokumentierte TOCTOU-/Publish-/FAT-Grenzen; keine deterministische Race-Prüfung.",
+        "en": "Documented TOCTOU/publication/FAT boundaries; no deterministic race test."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-001",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Secret im Debug/Clone oder ungenullter expliziter Puffer",
+        "en": "Expose a secret through Debug/Clone or leave an explicitly wiped buffer uncleared."
+      },
+      "expected_behavior": {
+        "de": "SecretBytes ohne Debug/Clone; explizites Nullen",
+        "en": "no Debug/Clone, explicit zeroing"
+      },
+      "boundary": {
+        "de": "Typ- und explizite Pufferprüfung; kein Lesen freigegebenen Speichers, keine vollständige Lebensdauergarantie.",
+        "en": "Type and explicit-buffer checks; no read of freed memory or full lifetime guarantee."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "secret_types_are_zeroize_on_drop",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "zeroize_clears_slice",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "secret_bytes_zeroize_empties_content",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/secret.rs",
+          "symbol": "SecretBytes",
+          "kind": "doctest",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        148
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-002",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Secret-Kopien nach Drop/Cancel/Panic, Argon2/FFI",
+        "en": "Retain secret copies after Drop, cancellation or panic, including Argon2/FFI buffers."
+      },
+      "expected_behavior": {
+        "de": "Best effort benennen; keine Garantie für Register/FFI/Abort",
+        "en": "no full wipe guarantee"
+      },
+      "boundary": {
+        "de": "Compiler-/Crate-/FFI-Kopien und Abort ohne Drop nicht vollständig nachweisbar.",
+        "en": "Compiler/crate/FFI copies and abort without Drop are not fully proven."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "secret_types_are_zeroize_on_drop",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "zeroize_clears_slice",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "secret_bytes_zeroize_empties_content",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_zeroize.rs",
+          "symbol": "secret_bytes_keeps_content_until_dropped",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/hardening/memlock_tests.rs",
+          "symbol": "shared_page_stays_locked_until_last_release",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/hardening/memlock_tests.rs",
+          "symbol": "empty_range_locks_nothing",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/hardening/memlock_tests.rs",
+          "symbol": "range_over_page_boundary_locks_both_pages",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        147,
+        148
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Compiler-/Crate-/FFI-Kopien und Abort ohne Drop nicht vollständig nachweisbar.",
+        "en": "Compiler/crate/FFI copies and abort without Drop are not fully proven."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-003",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Swap/fehlgeschlagenes mlock",
+        "en": "Observe swapped secrets or force memory locking to fail."
+      },
+      "expected_behavior": {
+        "de": "Lock/Release nachweisen; Fehlschlag gezählt, Weiterlauf dokumentiert",
+        "en": "lock/release, recorded best-effort failure"
+      },
+      "boundary": {
+        "de": "mlock-Fehler erlauben Weiterlauf und werden gezählt; Limit-Test kehrt als root zurück.",
+        "en": "Lock failures allow continued execution and are counted; the limit test returns early as root."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/hardening_memlock.rs",
+          "symbol": "secrets_are_locked_and_released",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/hardening_memlock_limit.rs",
+          "symbol": "locking_failure_is_tolerated_and_reported",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        147,
+        148
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "mlock-Fehler erlauben Weiterlauf und werden gezählt; Limit-Test kehrt als root zurück.",
+        "en": "Lock failures allow continued execution and are counted; the limit test returns early as root."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-004",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Linux Core Dump",
+        "en": "Obtain a Linux core dump from a dumpable process."
+      },
+      "expected_behavior": {
+        "de": "RLIMIT_CORE=0, NotDumpable gesetzt; kein vollständiger Crash-Test",
+        "en": "settings verified, no full crash test"
+      },
+      "boundary": {
+        "de": "Linux-Einstellungen geprüft, kein realer Dump-/Debugger-Angriff und keine Garantie gegen Admin.",
+        "en": "Linux settings checked, not a real dump/debugger attack or protection from administrators."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/hardening_process.rs",
+          "symbol": "harden_process_applies_and_is_idempotent",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        149
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-005",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Windows WER/Minidump, Hibernation",
+        "en": "Obtain Windows WER/minidump or hibernation images."
+      },
+      "expected_behavior": {
+        "de": "Grenze dokumentieren, gesonderte VM-Prüfung; aktuell nicht durchgeführt",
+        "en": "document limitation; controlled VM validation pending"
+      },
+      "boundary": {
+        "de": "WER nicht zuverlässig vom Programm abgeschaltet; manuelle VM-Prüfung nicht ausgeführt.",
+        "en": "WER cannot reliably be disabled by the application; manual VM inspection not performed."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "manual",
+      "automation": "manual",
+      "platforms": [
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        147,
+        149
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "WER nicht zuverlässig vom Programm abgeschaltet; manuelle VM-Prüfung nicht ausgeführt.",
+        "en": "WER cannot reliably be disabled by the application; manual VM inspection not performed."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-MEM-006",
+      "category": "Memory",
+      "component_paths": [
+        "src/crypto/secret.rs",
+        "src/hardening/mod.rs",
+        "src/hardening/memlock.rs"
+      ],
+      "scenario": {
+        "de": "Echter Allocator-/OS-OOM",
+        "en": "Trigger actual allocator or operating-system out-of-memory failure."
+      },
+      "expected_behavior": {
+        "de": "Kein Datenverlust als Prüfziel, Verhalten nicht belegt",
+        "en": "data preservation target, unproven"
+      },
+      "boundary": {
+        "de": "KDF-Budget ist Prävention, kein echter OS-/Allocator-OOM-Nachweis.",
+        "en": "KDF budgeting is prevention, not actual OS/allocator OOM evidence."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        147,
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "KDF-Budget ist Prävention, kein echter OS-/Allocator-OOM-Nachweis.",
+        "en": "KDF budgeting is prevention, not actual OS/allocator OOM evidence."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-ISO-001",
+      "category": "Isolation",
+      "component_paths": [
+        "src/hardening/sandbox/mod.rs"
+      ],
+      "scenario": {
+        "de": "Datei außerhalb Freigabe",
+        "en": "Access a file outside the Linux sandbox allowlist."
+      },
+      "expected_behavior": {
+        "de": "Bei aktivem Landlock verweigern; ohne Unterstützung Warnung",
+        "en": "deny when active; warn if unsupported"
+      },
+      "boundary": {
+        "de": "Ohne Landlock werden Teilproben übersprungen; grüne Tests allein belegen keine aktive Pfadisolation.",
+        "en": "Without Landlock some probes are skipped; green tests alone do not establish active path isolation."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/sandbox_cli.rs",
+          "symbol": "other_paths_are_denied",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sandbox_api.rs",
+          "symbol": "file_access_is_denied",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Ohne Landlock werden Teilproben übersprungen; grüne Tests allein belegen keine aktive Pfadisolation.",
+        "en": "Without Landlock some probes are skipped; green tests alone do not establish active path isolation."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-ISO-002",
+      "category": "Isolation",
+      "component_paths": [
+        "src/hardening/sandbox/mod.rs"
+      ],
+      "scenario": {
+        "de": "Netzwerk/exec/spawn",
+        "en": "Attempt forbidden network connections, exec or process spawning."
+      },
+      "expected_behavior": {
+        "de": "SIGSYS bzw. erwarteter Spawn-Fehler; erlaubte Arbeit weiter möglich",
+        "en": "kill or expected error, normal work works"
+      },
+      "boundary": {
+        "de": "Seccomp nur Linux x86_64/aarch64; einzelne syscall-Proben, kein vollständiger Escape-Beweis.",
+        "en": "Seccomp on Linux x86_64/aarch64 only; individual syscall probes, not complete escape-proofness."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/sandbox_cli.rs",
+          "symbol": "network_and_exec_kill_the_process",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sandbox_api.rs",
+          "symbol": "network_and_processes_kill_or_fail",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/sandbox_api.rs",
+          "symbol": "allowed_work_runs_inside_the_sandbox",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-ISO-003",
+      "category": "Isolation",
+      "component_paths": [
+        "src/hardening/sandbox/mod.rs"
+      ],
+      "scenario": {
+        "de": "Windows-Äquivalent zur Sandbox",
+        "en": "Attempt an equivalent sandbox escape on Windows."
+      },
+      "expected_behavior": {
+        "de": "Nicht implementiert; keine Linux-Garantie übertragen",
+        "en": "unavailable; no Linux guarantee transferred"
+      },
+      "boundary": {
+        "de": "Windows meldet unsupported; keine Sandbox implementiert.",
+        "en": "Windows reports unsupported; no sandbox implemented."
+      },
+      "implementation_state": "not-implemented",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        151,
+        150
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Windows meldet unsupported; keine Sandbox implementiert.",
+        "en": "Windows reports unsupported; no sandbox implemented."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-ISO-004",
+      "category": "Isolation",
+      "component_paths": [
+        "src/hardening/sandbox/mod.rs"
+      ],
+      "scenario": {
+        "de": "Geerbte Handles, Cross-User-Speicher-/Prozesszugriff",
+        "en": "Inherit secret-bearing handles or access another user/process memory."
+      },
+      "expected_behavior": {
+        "de": "Kein zusätzlicher Secret-Zugriff als Ziel; umfassender Nachweis offen",
+        "en": "isolation target, full evidence missing"
+      },
+      "boundary": {
+        "de": "Bestehende Kindprozess-Tests prüfen Argumente/Cleanup, keine vollständigen Handle-/Cross-User-Grenzen.",
+        "en": "Existing child-process tests check arguments/cleanup, not full inherited-handle/cross-user boundaries."
+      },
+      "implementation_state": "not-implemented",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "own_temp_needs_our_tag_and_pattern",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "clean_temps_removes_only_own_leftovers",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "tag_goes_right_after_the_command",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        150
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Bestehende Kindprozess-Tests prüfen Argumente/Cleanup, keine vollständigen Handle-/Cross-User-Grenzen.",
+        "en": "Existing child-process tests check arguments/cleanup, not full inherited-handle/cross-user boundaries."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-ISO-005",
+      "category": "Isolation",
+      "component_paths": [
+        "src/hardening/sandbox/mod.rs"
+      ],
+      "scenario": {
+        "de": "Unberechtigter Client eines künftigen IPC-Daemons",
+        "en": "Access the planned future IPC daemon as an unauthorized client."
+      },
+      "expected_behavior": {
+        "de": "Aktuell kein Prüfgegenstand; REST-API separat",
+        "en": "not current functionality; REST separate"
+      },
+      "boundary": {
+        "de": "Der geplante IPC-Daemon existiert noch nicht. Die vorhandene REST-API ist separat erfasst.",
+        "en": "The planned IPC daemon does not exist yet. The existing REST API is covered separately."
+      },
+      "implementation_state": "not-applicable",
+      "coverage_status": "not-applicable",
+      "automation": "not-applicable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P2",
+      "issues": [
+        150,
+        153
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Der geplante IPC-Daemon existiert noch nicht. Die vorhandene REST-API ist separat erfasst.",
+        "en": "The planned IPC daemon does not exist yet. The existing REST API is covered separately."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-001",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/output.rs",
+        "src/cli/context_child.rs"
+      ],
+      "scenario": {
+        "de": "Beschädigtes authentifiziertes Archiv, Prüfsumme/Ende falsch",
+        "en": "Provide an authenticated but malformed archive, checksum or end marker."
+      },
+      "expected_behavior": {
+        "de": "Fehler, kein Ziel, kein Fremdpfad",
+        "en": "reject, no output or outside write"
+      },
+      "boundary": {
+        "de": "Normale Fehler-Rückkehr/Cleanup; Abort und Stromausfall sind separate offene Fälle.",
+        "en": "Ordinary error return/cleanup; abort and power loss are separate open cases."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_malicious.rs",
+          "symbol": "structural_errors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_malicious.rs",
+          "symbol": "single_file_content_rules",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-002",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/output.rs",
+        "src/cli/context_child.rs"
+      ],
+      "scenario": {
+        "de": "Benutzer bricht Mehrfachaktion ab",
+        "en": "Cancel a multi-file operation from the user interface."
+      },
+      "expected_behavior": {
+        "de": "Eigene Reste entfernen, fremde Temp-Datei erhalten",
+        "en": "cleanup own, preserve foreign temporary file"
+      },
+      "boundary": {
+        "de": "Zeitbasierter Abbruch unter Linux, kein deterministischer Schreibpunkt; Helper auch Windows.",
+        "en": "Timed cancellation on Linux, not a deterministic write-point failure; helper also on Windows."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/cli_context_dialog_many.rs",
+          "symbol": "cancel_midway_leaves_no_temporary_files",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "clean_temps_removes_only_own_leftovers",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Zeitbasierter Abbruch unter Linux, kein deterministischer Schreibpunkt; Helper auch Windows.",
+        "en": "Timed cancellation on Linux, not a deterministic write-point failure; helper also on Windows."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-003",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/output.rs",
+        "src/cli/context_child.rs"
+      ],
+      "scenario": {
+        "de": "SIGKILL, Panic-Abort, Stromausfall vor/nach Publish",
+        "en": "Kill or abort the process, or lose power before/after output publication."
+      },
+      "expected_behavior": {
+        "de": "Alte Daten erhalten; temporären Klartext und dauerhaften Publish getrennt bewerten",
+        "en": "separate preservation, residual plaintext, durability"
+      },
+      "boundary": {
+        "de": "Drop läuft bei SIGKILL/Abort nicht; temporärer Klartext kann bleiben, Dauerhaftigkeit ist nicht bewiesen.",
+        "en": "Drop does not run on SIGKILL/abort; temporary plaintext may remain and durability is unproven."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "missing",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P1",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Drop läuft bei SIGKILL/Abort nicht; temporärer Klartext kann bleiben, Dauerhaftigkeit ist nicht bewiesen.",
+        "en": "Drop does not run on SIGKILL/abort; temporary plaintext may remain and durability is unproven."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-004",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/output.rs",
+        "src/cli/context_child.rs"
+      ],
+      "scenario": {
+        "de": "Manipuliertes Backup beim Prüfen",
+        "en": "Check a damaged or manipulated encrypted backup."
+      },
+      "expected_behavior": {
+        "de": "Fehler und keine Ausgabedateien; kein Frischenachweis",
+        "en": "error, no output; no freshness guarantee"
+      },
+      "boundary": {
+        "de": "check prüft Integrität, nicht Aktualität/Frische; Listing-Assertions sind kein Audit aller Syscalls.",
+        "en": "check validates integrity, not freshness; listing assertions do not audit all syscalls."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_check.rs",
+          "symbol": "v1_file_and_directory_pass_and_nothing_is_written",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_check.rs",
+          "symbol": "every_tampered_or_truncated_file_fails",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_check.rs",
+          "symbol": "v2_factor_and_several_recipients",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_check.rs",
+          "symbol": "all_fine_gives_exit_0_and_writes_nothing",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_check.rs",
+          "symbol": "every_file_is_checked_and_the_first_error_decides",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_check.rs",
+          "symbol": "key_files_factor_and_mixed_selections",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_check.rs",
+          "symbol": "runs_sandboxed_and_help_in_both_languages",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-API-001",
+      "category": "CLI/API",
+      "component_paths": [
+        "src/cli/mod.rs",
+        "src/api/mod.rs"
+      ],
+      "scenario": {
+        "de": "Fehlende/falsche Auth, ungültiger Body",
+        "en": "Submit missing/wrong API authentication or malformed request bodies."
+      },
+      "expected_behavior": {
+        "de": "401/Lockout, generische 400/413-Antworten, keine Echo-Secrets.",
+        "en": "401/lockout, generic 400/413 responses, no echoed secrets."
+      },
+      "boundary": {
+        "de": "Nur mit api-Feature; einzelne Auth-/Schema-/Leak-Assertions, keine vollständige Speicheranalyse.",
+        "en": "With api feature only; scoped auth/schema/leak assertions, not a full memory analysis."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "api"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/api_http.rs",
+          "symbol": "validate_requires_token",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_http.rs",
+          "symbol": "malformed_requests_get_generic_errors",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_http.rs",
+          "symbol": "oversized_body_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_http.rs",
+          "symbol": "lockout_after_failed_tokens_even_with_correct_token",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_generate.rs",
+          "symbol": "generates_key_that_unlocks_with_the_passphrase",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-API-002",
+      "category": "CLI/API",
+      "component_paths": [
+        "src/cli/mod.rs",
+        "src/api/mod.rs"
+      ],
+      "scenario": {
+        "de": "Parallelflut, Budgetmangel, Slow Headers",
+        "en": "Flood concurrent requests, exhaust KDF admission budget or send slow headers."
+      },
+      "expected_behavior": {
+        "de": "503/Retry-After, begrenzte Verbindungen/Rate/Timeouts.",
+        "en": "503/Retry-After, bounded connections/rate/timeouts."
+      },
+      "boundary": {
+        "de": "HTTP-/Budgetlimits; kein Allocator-OOM und keine unbegrenzte Lastsimulation.",
+        "en": "HTTP/budget limits, not allocator OOM or unlimited load simulation."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "api"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/api_generate.rs",
+          "symbol": "insufficient_budget_is_503_with_retry_after",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_generate.rs",
+          "symbol": "budget_limits_parallel_runs_and_is_released",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_http.rs",
+          "symbol": "rate_limit_per_client",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_server.rs",
+          "symbol": "slow_headers_are_cut_off",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/api_server.rs",
+          "symbol": "excess_connections_are_closed",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-API-003",
+      "category": "CLI/API",
+      "component_paths": [
+        "src/cli/mod.rs",
+        "src/api/mod.rs"
+      ],
+      "scenario": {
+        "de": "Ungültige CLI-Eingaben, falscher Schlüssel, Secret in Ausgabe",
+        "en": "Supply invalid CLI input or wrong keys, or expose input secrets in output."
+      },
+      "expected_behavior": {
+        "de": "Fehlercodes, batch ohne Prompt, keine Eingabe-Secrets",
+        "en": "exit codes, no batch prompts, no echoed input secrets"
+      },
+      "boundary": {
+        "de": "Endliche CLI-Fehler-/Ausgabevarianten; unattended ist Unix-only, keine vollständige Secret-Pfadanalyse.",
+        "en": "Finite CLI error/output variants; unattended is Unix-only, not a complete secret-path analysis."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/cli_json.rs",
+          "symbol": "check_reports_each_file_and_the_summary",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json.rs",
+          "symbol": "inspect_keys_and_encrypted_files",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json.rs",
+          "symbol": "verify_valid_and_invalid",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json.rs",
+          "symbol": "help_lists_json_and_all_exit_codes",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json_files.rs",
+          "symbol": "encrypt_and_decrypt_single_file",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json_files.rs",
+          "symbol": "each_and_many_report_per_file",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json_files.rs",
+          "symbol": "container_lists_all_sources",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_json_files.rs",
+          "symbol": "weak_passphrase_has_a_message",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_factor_command_creates_and_never_overwrites",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_file_with_passphrase_and_factor",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_factor_is_never_silently_ignored",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_key_file_with_factor_decrypts_and_signs",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_several_files_with_one_factor",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u01_help_in_both_languages",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u03_invalid_factor_files_are_rejected_with_clear_messages",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_factor.rs",
+          "symbol": "u03_factor_content_never_appears_in_output",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "encrypt_and_decrypt_with_passphrase_file",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "key_generation_and_recipient_decrypt_unattended",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "open_permissions_and_conflicts_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "batch_never_prompts",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "sign_uses_the_global_passphrase_file",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_unattended.rs",
+          "symbol": "context_menu_refuses_batch_mode",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/error_messages.rs",
+          "symbol": "messages_are_bilingual_and_non_empty",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/error_messages.rs",
+          "symbol": "invalid_input_shows_field_name_only",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/error_messages.rs",
+          "symbol": "io_error_does_not_leak_path",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/error_messages.rs",
+          "symbol": "io_conversion_keeps_kind",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        147
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Endliche CLI-Fehler-/Ausgabevarianten; unattended ist Unix-only, keine vollständige Secret-Pfadanalyse.",
+        "en": "Finite CLI error/output variants; unattended is Unix-only, not a complete secret-path analysis."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-API-004",
+      "category": "CLI/API",
+      "component_paths": [
+        "src/cli/mod.rs",
+        "src/api/mod.rs"
+      ],
+      "scenario": {
+        "de": "API ohne Feature versehentlich verfügbar",
+        "en": "Accidentally expose serve/API functionality in a build without the API feature."
+      },
+      "expected_behavior": {
+        "de": "Ohne Feature kein serve/API; Laufzeitregression ausführen",
+        "en": "runtime regression without API"
+      },
+      "boundary": {
+        "de": "Native No-default-Runtime wird auf Linux x86_64 und Windows x86_64 geprüft; Ubuntu 22.04/ARM64 bleiben bei Clippy-Kompilierung.",
+        "en": "Native no-default runtime is checked on Linux x86_64 and Windows x86_64; Ubuntu 22.04/ARM64 retain clippy compilation only."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automatable",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/cli_help.rs",
+          "symbol": "serve_is_unavailable_without_api",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "PR251-ubuntu-latest-no-default",
+        "PR251-windows-latest-no-default"
+      ],
+      "gap": {
+        "de": "Kein zusätzlicher No-default-Runtime-Lauf auf Ubuntu 22.04/ARM64; ausdrücklich außerhalb dieser CI-Erweiterung.",
+        "en": "No additional no-default runtime run on Ubuntu 22.04/ARM64; explicitly outside this CI expansion."
+      },
+      "next_evidence": {
+        "de": "Bei später geänderter Plattformstrategie eigenen Lauf vorsehen; aktuelle nativen Linux-/Windows-Nachweise separat erfassen.",
+        "en": "Add a separate run if platform policy changes later; record current native Linux/Windows evidence separately."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-PLT-001",
+      "category": "Platforms",
+      "component_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "scenario": {
+        "de": "Native Plattformregression",
+        "en": "Introduce a native Linux x86_64/ARM64 or Windows x86_64 regression."
+      },
+      "expected_behavior": {
+        "de": "Native Tests Linux x86_64/ARM64 und Windows x86_64; OS-Ausnahmen sichtbar.",
+        "en": "Native tests on Linux x86_64/ARM64 and Windows x86_64; explicit OS exclusions."
+      },
+      "boundary": {
+        "de": "Testanzahlen enthalten Probe-Einstiege und zählen cfg-/interne Auslassungen nicht.",
+        "en": "Test counts include probe entry points and do not count cfg/internal skips."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/binary_smoke.rs",
+          "symbol": "version_and_no_args",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-x86_64",
+        "B1-windows-x86_64",
+        "B1-linux-arm64",
+        "PR251-ubuntu-latest-default",
+        "PR251-ubuntu-latest-no-default",
+        "PR251-ubuntu-22.04-default",
+        "PR251-ubuntu-22.04-arm-default",
+        "PR251-windows-latest-default",
+        "PR251-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-PLT-002",
+      "category": "Platforms",
+      "component_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "scenario": {
+        "de": "Größere ARM64-Seiten",
+        "en": "Run memory locking on ARM64 kernels with larger pages."
+      },
+      "expected_behavior": {
+        "de": "Seitengröße beachten; 64-KiB-VM-Nachweis fehlt",
+        "en": "page-aware, 64-KiB proof missing"
+      },
+      "boundary": {
+        "de": "Native ARM64-CI bisher nur 4096-Byte-Seiten; 64-KiB-VM-Nachweis fehlt.",
+        "en": "Native ARM64 CI has only used 4096-byte pages; 64-KiB VM evidence missing."
+      },
+      "implementation_state": "documented-only",
+      "coverage_status": "manual",
+      "automation": "manual",
+      "platforms": [
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/hardening_memlock.rs",
+          "symbol": "secrets_are_locked_and_released",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [],
+      "priority": "P2",
+      "issues": [
+        151,
+        147
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B1-linux-arm64"
+      ],
+      "gap": {
+        "de": "Native ARM64-CI bisher nur 4096-Byte-Seiten; 64-KiB-VM-Nachweis fehlt.",
+        "en": "Native ARM64 CI has only used 4096-byte pages; 64-KiB VM evidence missing."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-PLT-003",
+      "category": "Platforms",
+      "component_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "scenario": {
+        "de": "Windows-ARM64-Ausführung",
+        "en": "Run natively on Windows ARM64."
+      },
+      "expected_behavior": {
+        "de": "Keine Unterstützung/Abnahme behaupten; eigenes künftiges Plattformvorhaben",
+        "en": "no current support claim"
+      },
+      "boundary": {
+        "de": "Windows ARM64 ist kein aktuelles CI-/Releaseziel; keine native Unterstützung behauptet.",
+        "en": "Windows ARM64 is not a current CI/release target; no native support claimed."
+      },
+      "implementation_state": "not-applicable",
+      "coverage_status": "not-applicable",
+      "automation": "not-applicable",
+      "platforms": [
+        "windows-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [],
+      "ci_refs": [],
+      "priority": "P3",
+      "issues": [
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Windows ARM64 ist kein aktuelles CI-/Releaseziel; keine native Unterstützung behauptet.",
+        "en": "Windows ARM64 is not a current CI/release target; no native support claimed."
+      },
+      "next_evidence": {
+        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
+        "en": "Review the missing variant in the linked issue; no production change in #151."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-PLT-004",
+      "category": "Platforms",
+      "component_paths": [
+        ".github/workflows/ci.yml"
+      ],
+      "scenario": {
+        "de": "Fehlende Release-Härtung",
+        "en": "Build release binaries without expected hardening flags."
+      },
+      "expected_behavior": {
+        "de": "PIE/RELRO/NX bzw. ASLR/DEP/CFG prüfen",
+        "en": "inspect binary flags"
+      },
+      "boundary": {
+        "de": "Statische Binärmerkmale, kein vollständiger Exploit-/Reproduzierbarkeitsnachweis.",
+        "en": "Static binary properties, not a complete exploit or reproducibility proof."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "scripts/test_check_binary.py",
+          "symbol": "test_pe",
+          "kind": "python",
+          "stage": "existing"
+        },
+        {
+          "path": "scripts/test_check_binary.py",
+          "symbol": "test_elf",
+          "kind": "python",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "binary",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        151,
+        154
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    }
+  ]
+}
