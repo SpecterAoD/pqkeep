@@ -8,6 +8,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SpecterAoD/pqkeep/badge)](https://scorecard.dev/viewer/?uri=github.com/SpecterAoD/pqkeep)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16717/badge)](https://www.bestpractices.dev/projects/16717)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors)](https://github.com/sponsors/SpecterAoD)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/specteraod)
 
 [English](#english) | [Deutsch](#deutsch)
 
@@ -206,7 +207,8 @@ so Windows SmartScreen may warn when it is started for the first time.
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md) · Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - [Code signing policy](CODE_SIGNING_POLICY.md)
 - **Support:** if PQKeep is useful to you, you can buy the developer a coffee via
-  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD). Entirely optional – feedback, bug reports
+  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD) or [Ko-fi](https://ko-fi.com/specteraod)
+  (no GitHub account needed). Entirely optional – feedback, bug reports
   and contributions help just as much.
 - Privacy: this program will not transfer any information to other networked systems unless
   specifically requested by the user or the person installing or operating it.
@@ -409,7 +411,8 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 - Mitwirken: [`CONTRIBUTING.md`](CONTRIBUTING.md) · Verhaltenskodex: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - [Code signing policy](CODE_SIGNING_POLICY.md)
 - **Unterstützung:** Wenn dir PQKeep nützt, kannst du dem Entwickler über
-  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD) einen Kaffee spendieren. Ganz freiwillig –
+  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD) oder [Ko-fi](https://ko-fi.com/specteraod)
+  (ohne GitHub-Konto) einen Kaffee spendieren. Ganz freiwillig –
   Rückmeldungen, Fehlerberichte und Beiträge helfen genauso.
 - Datenschutz: Das Programm überträgt keine Informationen an andere Systeme, außer auf
   ausdrücklichen Wunsch der Person, die es nutzt, installiert oder betreibt.
