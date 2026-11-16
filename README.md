@@ -204,6 +204,9 @@ so Windows SmartScreen may warn when it is started for the first time.
 - License: [Apache License 2.0](LICENSE)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md) · Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - [Code signing policy](CODE_SIGNING_POLICY.md)
+- **Support:** if PQKeep is useful to you, you can buy the developer a coffee via
+  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD). Entirely optional – feedback, bug reports
+  and contributions help just as much.
 - Privacy: this program will not transfer any information to other networked systems unless
   specifically requested by the user or the person installing or operating it.
 
@@ -404,6 +407,9 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 - Lizenz: [Apache License 2.0](LICENSE)
 - Mitwirken: [`CONTRIBUTING.md`](CONTRIBUTING.md) · Verhaltenskodex: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - [Code signing policy](CODE_SIGNING_POLICY.md)
+- **Unterstützung:** Wenn dir PQKeep nützt, kannst du dem Entwickler über
+  [GitHub Sponsors](https://github.com/sponsors/SpecterAoD) einen Kaffee spendieren. Ganz freiwillig –
+  Rückmeldungen, Fehlerberichte und Beiträge helfen genauso.
 - Datenschutz: Das Programm überträgt keine Informationen an andere Systeme, außer auf
   ausdrücklichen Wunsch der Person, die es nutzt, installiert oder betreibt.
 
