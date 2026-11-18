@@ -2,7 +2,7 @@
 
 **DE** | [EN](#english)
 
-Stand: 12.11.2026. Geprüft
+Stand: 18.11.2026. Geprüft
 werden die CI-Kandidaten `pqkeep_<Version>_amd64.deb` und `pqkeep_<Version>_arm64.deb`; die
 Release-Pakete `pqkeep-<Version>-<Architektur>.deb` sind dieselben Dateien unter anderem Namen.
 
@@ -51,22 +51,42 @@ Upgrade und Downgrade verwenden zwei gekennzeichnete Testrevisionen desselben Bu
 **kein** Nachweis für ein Upgrade von einer veröffentlichten Vorgängerversion; den gibt es erst,
 wenn ein veröffentlichtes `.deb` existiert.
 
+### In echten VMs geprüft (18.11.2026, #163)
+
+Kandidat `pqkeep_0.1.0~beta.2-1~ci.20261115150230.73b6556ba289_amd64.deb` in VMs mit dem
+**Kernel der jeweiligen Distribution** (offizielle Cloud-Images, KVM, je 1,5 GB RAM; vor jedem
+Fall frischer Snapshot). Nutzerdaten (Schlüssel, öffentlicher Schlüssel, Klartext, je eine mit
+Passphrase und für einen Empfänger verschlüsselte Datei) entstanden **vor** der Installation;
+nach jedem Schritt wurden Hashes geprüft und beide Dateien entschlüsselt. Werkzeug:
+Testumgebung des Maintainers (`pkgtest.py`), Ergebnisse je Lauf protokolliert.
+
+| Fall | Debian 12 (6.1) | Debian 13 (6.12) | Ubuntu 24.04 (6.8) |
+|---|---|---|---|
+| Installation, `dpkg --verify`, Ver-/Entschlüsseln, `check` | ✓ | ✓ | ✓ |
+| Sandbox auf dem Distributionskernel | `landlock=partial seccomp=full` | `landlock=full seccomp=full` | `landlock=partial seccomp=full` |
+| Platz voll (auch root-Vorrat) | dpkg bricht ab, Paket nicht installiert | dpkg bricht ab, Paket nicht installiert | dpkg bricht ab (auch Statusdatenbank nicht schreibbar), Paket nicht installiert |
+| Echter Abbruch (VM hart aus nach 0,4 / 1,5 / 3 s) | 3× nicht installiert | 1× nicht installiert, 2× „half-installed“ | 3× nicht installiert |
+
+- **Nutzerdaten:** in allen 17 Läufen unverändert (Hashes gleich, beide Dateien entschlüsselbar).
+- **Wiederherstellung:** nach Platz schaffen bzw. Neustart immer mit
+  `sudo dpkg --configure -a` und erneutem `sudo dpkg -i <paket>`; danach installiert,
+  `dpkg --audit` und `dpkg --verify` ohne Befund.
+- `landlock=partial` ist bei Kerneln vor 6.12 erwartet (Signal-/Socket-Bereiche erst ab 6.12,
+  siehe [SANDBOX.md](SANDBOX.md)).
+- Die Abbruch-Zeitpunkte treffen den dpkg-Lauf nicht gezielt; ein Abbruch im Schreiben der
+  Statusdatenbank selbst ist damit wahrscheinlich, aber nicht sicher abgedeckt.
+
 ### Nicht nachgewiesen
 
-Diese Punkte sind bewusst offen und werden später mit eigenen Test-VMs nachgeholt (#163). Bis dahin macht PQKeep dazu keine Aussage:
-
-- **Platzmangel** während der Installation und ein **echter Abbruch** mitten im dpkg-Lauf
-  (z. B. Prozessende, Stromausfall). Geprüft ist nur der definierte Zwischenzustand
-  „entpackt, nicht konfiguriert“.
-- **Kernel der Zieldistribution**: Seccomp, Landlock und memlock sind nur mit dem Kernel der
-  GitHub-Runner (Ubuntu 22.04) nativ geprüft, nicht mit den Kerneln von Debian 12/13 und
-  Ubuntu 24.04/26.04.
 - **ARM64 mit 64-KiB-Seiten**: keine Testumgebung vorhanden.
+- **memlock** auf den Distributionskerneln: Die Sandbox ist geprüft, die Zahl gesperrter Seiten
+  wurde in den VMs nicht gemessen (nur in der CI auf dem Runner-Kernel).
+- Ubuntu 22.04 und 26.04 nur in Containern (Kernel des Runners), nicht in VMs.
 - Andere Distributionen (Linux Mint, Raspberry Pi OS, Kali u. a.) und 32-Bit-ARM (`armhf`).
 
 ## English
 
-As of 2026-11-12. Tested are the CI candidates `pqkeep_<version>_amd64.deb` and
+As of 2026-11-18. Tested are the CI candidates `pqkeep_<version>_amd64.deb` and
 `pqkeep_<version>_arm64.deb`; the release packages `pqkeep-<version>-<architecture>.deb` are the
 same files under a different name.
 
@@ -104,15 +124,34 @@ runs as an unprivileged user; package management happens only in the disposable 
 Upgrade and downgrade use two marked test revisions of the same build. This is **not** evidence
 for upgrading from a published predecessor; that requires a published `.deb`.
 
+### Checked in real VMs (2026-11-18, #163)
+
+Candidate `pqkeep_0.1.0~beta.2-1~ci.20261115150230.73b6556ba289_amd64.deb` in VMs running **each
+distribution's own kernel** (official cloud images, KVM, 1.5 GB RAM each; fresh snapshot before
+every case). User data (key, public key, plaintext, one file encrypted with a passphrase and one
+for a recipient) was created **before** installation; after every step hashes were checked and
+both files decrypted. Tool: the maintainer's test environment (`pkgtest.py`), results logged per
+run.
+
+| Case | Debian 12 (6.1) | Debian 13 (6.12) | Ubuntu 24.04 (6.8) |
+|---|---|---|---|
+| Install, `dpkg --verify`, encrypt/decrypt, `check` | ✓ | ✓ | ✓ |
+| Sandbox on the distribution kernel | `landlock=partial seccomp=full` | `landlock=full seccomp=full` | `landlock=partial seccomp=full` |
+| Disk full (incl. root reserve) | dpkg aborts, package not installed | dpkg aborts, package not installed | dpkg aborts (status database not writable either), package not installed |
+| Real abort (VM powered off after 0.4 / 1.5 / 3 s) | 3× not installed | 1× not installed, 2× "half-installed" | 3× not installed |
+
+- **User data:** unchanged in all 17 runs (same hashes, both files decryptable).
+- **Recovery:** after freeing space or rebooting, always with `sudo dpkg --configure -a` and
+  `sudo dpkg -i <package>` again; afterwards installed, `dpkg --audit` and `dpkg --verify` clean.
+- `landlock=partial` is expected on kernels before 6.12 (signal/socket scopes only from 6.12, see
+  [SANDBOX.md](SANDBOX.md)).
+- The abort times do not target the dpkg run precisely; an abort while writing the status
+  database itself is likely but not certainly covered.
+
 ### Without evidence
 
-These items are deliberately open and will be covered later with dedicated test VMs (#163). Until then PQKeep makes no statement about them:
-
-- **Out of disk space** during installation and a **real abort** in the middle of a dpkg run
-  (e.g. process kill, power loss). Only the defined intermediate state "unpacked, not
-  configured" is tested.
-- **Target distribution kernels**: seccomp, Landlock and memlock are natively tested only with
-  the GitHub runners' kernel (Ubuntu 22.04), not with the kernels of Debian 12/13 and
-  Ubuntu 24.04/26.04.
 - **ARM64 with 64 KiB pages**: no test environment available.
+- **memlock** on the distribution kernels: the sandbox is checked, the number of locked pages was
+  not measured in the VMs (only in CI on the runner kernel).
+- Ubuntu 22.04 and 26.04 only in containers (runner kernel), not in VMs.
 - Other distributions (Linux Mint, Raspberry Pi OS, Kali and others) and 32-bit ARM (`armhf`).
