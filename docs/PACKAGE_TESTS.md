@@ -76,13 +76,29 @@ Testumgebung des Maintainers (`pkgtest.py`), Ergebnisse je Lauf protokolliert.
 - Die Abbruch-Zeitpunkte treffen den dpkg-Lauf nicht gezielt; ein Abbruch im Schreiben der
   Statusdatenbank selbst ist damit wahrscheinlich, aber nicht sicher abgedeckt.
 
+### ARM64 auf echter Hardware (18.11.2026, #163)
+
+Archiv `pqkeep-0.1.0-beta.2-dev.73b6556-aarch64-unknown-linux-gnu.tar.gz` (gleicher Build wie
+oben, **ohne Paketinstallation**, nur in `/tmp` entpackt) auf einem Raspberry Pi 3 B mit Kali
+Linux (rolling, Kernel 6.12, glibc 2.43, 4-KiB-Seiten):
+
+- Die auf amd64 erzeugten Nutzerdaten (siehe oben) ließen sich entschlüsseln (Passphrase und
+  Empfänger), `check` und ein neuer Ver-/Entschlüsselungs-Durchlauf liefen fehlerfrei.
+- Sandbox: Der Kernel des Raspberry Pi bietet kein Landlock; PQKeep warnt und läuft mit
+  Seccomp weiter (wie in [SANDBOX.md](SANDBOX.md) beschrieben).
+
 ### Nicht nachgewiesen
 
-- **ARM64 mit 64-KiB-Seiten**: keine Testumgebung vorhanden.
+- **ARM64 mit 64-KiB-Seiten**: keine Hardware vorhanden. Ein voll emulierter Versuch (QEMU ohne
+  Hardware-Beschleunigung, Ubuntu 24.04 mit 64-KiB-Kernel) startete auf der Test-Hardware
+  nicht bis zur Anmeldung und ist kein Nachweis.
+- **Debian-Paket auf ARM64-Hardware**: nur in nativen Containern (siehe oben) geprüft, auf dem
+  Raspberry Pi nur das Archiv ohne Installation.
 - **memlock** auf den Distributionskerneln: Die Sandbox ist geprüft, die Zahl gesperrter Seiten
   wurde in den VMs nicht gemessen (nur in der CI auf dem Runner-Kernel).
 - Ubuntu 22.04 und 26.04 nur in Containern (Kernel des Runners), nicht in VMs.
-- Andere Distributionen (Linux Mint, Raspberry Pi OS, Kali u. a.) und 32-Bit-ARM (`armhf`).
+- Andere Distributionen (Linux Mint, Raspberry Pi OS u. a.; Kali nur wie oben ohne Paket) und
+  32-Bit-ARM (`armhf`).
 
 ## English
 
@@ -148,10 +164,26 @@ run.
 - The abort times do not target the dpkg run precisely; an abort while writing the status
   database itself is likely but not certainly covered.
 
+### ARM64 on real hardware (2026-11-18, #163)
+
+Archive `pqkeep-0.1.0-beta.2-dev.73b6556-aarch64-unknown-linux-gnu.tar.gz` (same build as above,
+**no package installation**, only unpacked in `/tmp`) on a Raspberry Pi 3 B running Kali Linux
+(rolling, kernel 6.12, glibc 2.43, 4 KiB pages):
+
+- The user data created on amd64 (see above) decrypted (passphrase and recipient); `check` and a
+  new encrypt/decrypt round trip ran without errors.
+- Sandbox: the Raspberry Pi kernel offers no Landlock; PQKeep warns and continues with seccomp
+  (as described in [SANDBOX.md](SANDBOX.md)).
+
 ### Without evidence
 
-- **ARM64 with 64 KiB pages**: no test environment available.
+- **ARM64 with 64 KiB pages**: no hardware available. A fully emulated attempt (QEMU without
+  hardware acceleration, Ubuntu 24.04 with a 64 KiB kernel) did not boot to a login on the test
+  hardware and is not evidence.
+- **Debian package on ARM64 hardware**: checked only in native containers (see above); on the
+  Raspberry Pi only the archive, without installation.
 - **memlock** on the distribution kernels: the sandbox is checked, the number of locked pages was
   not measured in the VMs (only in CI on the runner kernel).
 - Ubuntu 22.04 and 26.04 only in containers (runner kernel), not in VMs.
-- Other distributions (Linux Mint, Raspberry Pi OS, Kali and others) and 32-bit ARM (`armhf`).
+- Other distributions (Linux Mint, Raspberry Pi OS and others; Kali only as above, without the
+  package) and 32-bit ARM (`armhf`).
