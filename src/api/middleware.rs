@@ -1,10 +1,10 @@
-//! DE: Schutzschichten: Rate-Limit (alle Routen), Token-Prüfung mit Sperre
-//! (geschützte Routen) und Sicherheits-Header (alle Antworten).
+//! DE: Schutzschichten: Browser-Sperre und `Host`-Prüfung (alle Routen), Rate-Limit (alle
+//! Routen), Token-Prüfung mit Sperre (geschützte Routen) und Sicherheits-Header (alle Antworten).
 //! Hinter einem Reverse Proxy sehen alle Anfragen wie eine Adresse aus; Header wie
 //! `X-Forwarded-For` werden bewusst nicht ausgewertet (fälschbar).
 //!
-//! EN: Protection layers: rate limit (all routes), token check with lockout
-//! (protected routes) and security headers (all responses).
+//! EN: Protection layers: browser block and `Host` check (all routes), rate limit (all
+//! routes), token check with lockout (protected routes) and security headers (all responses).
 //! Behind a reverse proxy all requests look like one address; headers such as
 //! `X-Forwarded-For` are deliberately ignored (spoofable).
 
@@ -25,6 +25,29 @@ fn client_ip(req: &Request) -> IpAddr {
     req.extensions()
         .get::<ConnectInfo<SocketAddr>>()
         .map_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED), |c| c.0.ip())
+}
+
+/// DE: Browser-Anfragen (`Origin` oder `Sec-Fetch-Site`) und fremde `Host`-Werte abweisen
+/// (#253): Eine Webseite soll die lokale API weder erreichen noch Fehlversuche auslösen können.
+/// EN: Reject browser requests (`Origin` or `Sec-Fetch-Site`) and foreign `Host` values
+/// (#253): a web page must neither reach the local API nor trigger failed attempts.
+pub async fn browser_guard(
+    State(state): State<Arc<AppState>>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let headers = req.headers();
+    if headers.contains_key(header::ORIGIN) || headers.contains_key("sec-fetch-site") {
+        return ApiError::Forbidden.into_response();
+    }
+    if let (Some(allowed), Some(host)) = (&state.limits().allowed_hosts, headers.get(header::HOST))
+    {
+        let host = host.to_str().unwrap_or_default();
+        if !allowed.iter().any(|a| a.eq_ignore_ascii_case(host)) {
+            return ApiError::Forbidden.into_response();
+        }
+    }
+    next.run(req).await
 }
 
 /// DE: Rate-Limit je Client. EN: Rate limit per client.
@@ -52,7 +75,9 @@ pub async fn auth(State(state): State<Arc<AppState>>, req: Request, next: Next) 
             state.guard.record_success(ip);
             next.run(req).await
         }
-        _ => {
+        // DE: Ohne Token kein Rateversuch – nicht zählen (#253). EN: No token, no guess – not counted.
+        None => ApiError::Unauthorized.into_response(),
+        Some(_) => {
             state.guard.record_failure(ip);
             ApiError::Unauthorized.into_response()
         }

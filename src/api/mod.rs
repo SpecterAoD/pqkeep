@@ -3,14 +3,15 @@
 //! Härtung: Bind standardmäßig nur auf 127.0.0.1 (Prüfung in der CLI), Token nur als
 //! Hash gespeichert, Rate-Limit und Sperre je Client, Größen- und Zeitlimits,
 //! Speicherbudget für Argon2, generische Fehler, keine Inhalts-Logs,
-//! Sicherheits-Header, kein CORS. TLS ist nicht eingebaut (Reverse Proxy).
+//! Sicherheits-Header, kein CORS, Browser-Anfragen und fremde `Host`-Werte abgewiesen (#253).
+//! TLS ist nicht eingebaut (Reverse Proxy).
 //!
 //! EN: REST API (feature `api`, on by default). Endpoints: `GET /v1/health` (no
 //! authentication), `POST /v1/validate` and `POST /v1/generate` (token); see `docs/API.md`.
 //! Hardening: bind to 127.0.0.1 only by default (checked in the CLI), token stored as
 //! hash only, per-client rate limit and lockout, size and time limits, memory budget
-//! for Argon2, generic errors, no content logs, security headers, no CORS. TLS is not
-//! built in (reverse proxy).
+//! for Argon2, generic errors, no content logs, security headers, no CORS, browser requests
+//! and foreign `Host` values rejected (#253). TLS is not built in (reverse proxy).
 
 mod generate;
 mod guard;
@@ -61,6 +62,22 @@ pub struct Limits {
     /// EN: Memory budget of all concurrent Argon2 runs in MiB (1024 = four standard
     /// or one hardened run). If insufficient, the API answers 503 immediately.
     pub kdf_budget_mib: u32,
+    /// DE: Erlaubte `Host`-Werte (Schutz vor DNS-Rebinding); `None` = jeder (nur mit
+    /// `--allow-remote`). Anfragen ohne `Host` werden angenommen.
+    /// EN: Allowed `Host` values (protection against DNS rebinding); `None` = any (only
+    /// with `--allow-remote`). Requests without `Host` are accepted.
+    pub allowed_hosts: Option<Vec<String>>,
+}
+
+impl Limits {
+    /// DE: Erlaubte `Host`-Werte für einen lokalen Port. EN: Allowed `Host` values for a local port.
+    #[must_use]
+    pub fn loopback_hosts(port: u16) -> Vec<String> {
+        ["127.0.0.1", "localhost", "[::1]"]
+            .iter()
+            .map(|h| format!("{h}:{port}"))
+            .collect()
+    }
 }
 
 impl Default for Limits {
@@ -75,6 +92,7 @@ impl Default for Limits {
             request_timeout: Duration::from_secs(30),
             header_timeout: Duration::from_secs(10),
             kdf_budget_mib: 1024,
+            allowed_hosts: None,
         }
     }
 }
@@ -127,6 +145,10 @@ pub fn router(state: Arc<AppState>) -> Router {
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::browser_guard,
         ))
         .layer(axum::middleware::map_response(middleware::security_headers))
         .with_state(state)

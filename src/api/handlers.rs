@@ -23,6 +23,8 @@ pub enum ApiError {
     BadRequest,
     /// 401
     Unauthorized,
+    /// DE: 403 – Browser-Anfrage oder fremder `Host`. EN: 403 – browser request or foreign `Host`.
+    Forbidden,
     /// 404
     NotFound,
     /// 405
@@ -44,6 +46,7 @@ impl ApiError {
         match self {
             Self::BadRequest => (StatusCode::BAD_REQUEST, "bad_request"),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized"),
+            Self::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::MethodNotAllowed => (StatusCode::METHOD_NOT_ALLOWED, "method_not_allowed"),
             Self::PayloadTooLarge => (StatusCode::PAYLOAD_TOO_LARGE, "payload_too_large"),
