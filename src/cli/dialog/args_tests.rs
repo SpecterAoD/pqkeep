@@ -93,7 +93,15 @@ fn new_password_asks_twice_with_newline_separator() {
 
 #[test]
 fn password_and_progress() {
-    assert!(z(&Request::Password { text: "x" }).contains(&"--password".to_owned()));
+    // DE: zenity zeigt den Text und verdeckt die Eingabe; Enter bestätigt (#256).
+    // EN: zenity shows the text and hides the input; Enter confirms (#256).
+    let zp = z(&Request::Password {
+        text: "Passphrase der Datei",
+    });
+    assert_eq!(
+        &zp[1..],
+        ["--entry", "--hide-text", "--text=Passphrase der Datei"]
+    );
     assert_eq!(
         &k(&Request::Password { text: "x" })[2..],
         ["--password", "x"]

@@ -7,12 +7,25 @@ use std::io::{BufRead, IsTerminal};
 use std::path::Path;
 use std::process::ExitCode;
 
+use dialoguer::theme::Theme;
 use dialoguer::{Confirm, Password};
 use pqkeep::Error;
 use pqkeep::security::{Lang, Passphrase};
 use zeroize::Zeroize;
 
 use super::text::Texts;
+
+/// DE: Wie das Standard-Design von dialoguer, aber mit lokalisiertem „Fehler:“ statt festem
+/// englischem „error:“ (#256).
+/// EN: Like dialoguer's default theme, but with a localised "Error:" instead of a fixed
+/// English "error:" (#256).
+struct LocalTheme(&'static str);
+
+impl Theme for LocalTheme {
+    fn format_error(&self, f: &mut dyn std::fmt::Write, err: &str) -> std::fmt::Result {
+        write!(f, "{}: {err}", self.0)
+    }
+}
 
 /// DE: Exit-Codes (siehe Hilfe). EN: Exit codes (see help).
 pub mod code {
@@ -139,7 +152,8 @@ pub fn read_passphrase_as(
         if !std::io::stdin().is_terminal() {
             return Err(Failure::new(code::USAGE, t.msg_no_tty));
         }
-        let mut prompt = Password::new().with_prompt(prompt_text);
+        let theme = LocalTheme(t.msg_error);
+        let mut prompt = Password::with_theme(&theme).with_prompt(prompt_text);
         if confirm {
             prompt = prompt.with_confirmation(t.prompt_confirm, t.prompt_mismatch);
         }
@@ -236,3 +250,7 @@ pub fn finish(result: CliResult, t: &Texts) -> ExitCode {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "io_tests.rs"]
+mod io_tests;

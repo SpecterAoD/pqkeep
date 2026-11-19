@@ -22,6 +22,17 @@ German release notes: see `docs/releases/`.
   `bericht.txt (2).pqkf`).
 - **Error message for an existing target** no longer suggests `--force`, which `encrypt`/`decrypt`
   do not have; it names `-o/--out` and `--rename` (#256).
+- **Passphrase window says what it is for** (#256): on Linux with zenity the window showed only the
+  generic "Password:"; it now shows "Passphrase of the encrypted file" or "Passphrase of your own
+  key file" with hidden input, and Enter confirms. **DE:** Das Passphrase-Fenster nennt, wofür
+  die Passphrase gebraucht wird.
+- **Interrupted `pqkeep integrate install`** (#256): the list of own files is now saved after every
+  written file, so an interruption (e.g. closed output) no longer leaves own context menu files
+  that later count as foreign and that neither `install` nor `uninstall` would touch.
+  **DE:** Abgebrochenes `integrate install` hinterlässt keine „fremden“ eigenen Dateien mehr.
+- Small things (#256): the passphrase confirmation in the terminal prints a localised "Fehler:" /
+  "Error:" instead of a fixed English "error:"; the Thunar backup name marks its UTC time with a
+  `Z` (`uca.xml.pqkeep-bak_2026-11-19_1353Z`).
 
 ### Added
 - **Security QA baseline (#151):** versioned bilingual attack catalogue with separate execution

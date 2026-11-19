@@ -108,7 +108,10 @@ fn zenity(title: &str, req: &Request<'_>) -> Vec<String> {
         Request::Info { text } => a.extend([q("--info"), nm(), t(text)]),
         Request::Warning { text } => a.extend([q("--warning"), nm(), t(text)]),
         Request::Error { text } => a.extend([q("--error"), nm(), t(text)]),
-        Request::Password { .. } => a.push("--password".to_owned()),
+        // DE: `--password` zeigt keinen Text; verdeckte Texteingabe nennt, wofür, und Enter
+        // bestätigt (#256).
+        // EN: `--password` shows no text; hidden text entry says what for, and Enter confirms (#256).
+        Request::Password { text } => a.extend([q("--entry"), q("--hide-text"), t(text)]),
         Request::NewPassword {
             text,
             first,
