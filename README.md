@@ -12,7 +12,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-> **Status: beta (`v0.1.0-beta.2`) – not audited, not FIPS 140 validated.**
+> **Status: beta (`v0.1.0-beta.3`) – not audited, not FIPS 140 validated.**
 > File formats and options may still change before 1.0. Please do not use PQKeep to protect
 > secrets you cannot afford to lose. See [Status and limitations](#status-and-limitations).
 
@@ -72,11 +72,11 @@ today's common public-key encryption ("harvest now, decrypt later").
   passphrase with **Argon2id**.
 - **File and directory encryption** (`.pqkf`): passphrase mode or recipient mode (ML-KEM-768, up to
   64 recipients), streaming AEAD, safe extraction rules, no partial output.
-- **Optional second factor** (after beta.2): a factor file (`pqkeep factor`, `--factor-file`; also in
+- **Optional second factor** (since beta.3): a factor file (`pqkeep factor`, `--factor-file`; also in
   the menu and the context menu) in addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
-- **Backup checks** (after beta.2): `pqkeep check` verifies encrypted files completely without
+- **Backup checks** (since beta.3): `pqkeep check` verifies encrypted files completely without
   writing anything; `--json` for scripts and monitoring ([`docs/JSON.md`](docs/JSON.md)).
 - **Passphrases:** strength check with reasons (Unicode NFKC, patterns, word lists), generator.
 - **Interfaces:** CLI with interactive menu and bilingual help (English/German); right-click menu
@@ -132,7 +132,7 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
 
 ### Status and limitations
 
-- **Development status:** second beta (`v0.1.0-beta.2`), active development. Formats and options
+- **Development status:** third beta (`v0.1.0-beta.3`), active development. Formats and options
   may change before 1.0. Changes: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit status:** no external security audit has been performed. An independent review is
   planned before 1.0.
@@ -273,12 +273,12 @@ sammeln, später entschlüsseln“).
 - **Datei- und Ordnerverschlüsselung** (`.pqkf`): Passphrase-Modus oder Empfänger-Modus
   (ML-KEM-768, bis zu 64 Empfänger), Streaming-AEAD, sichere Entpackregeln, keine halbfertigen
   Ausgaben.
-- **Optionaler zweiter Faktor** (nach beta.2): eine Faktordatei (`pqkeep factor`, `--factor-file`;
+- **Optionaler zweiter Faktor** (seit beta.3): eine Faktordatei (`pqkeep factor`, `--factor-file`;
   auch im Menü und im Kontextmenü) zusätzlich zur Passphrase – siehe
   [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
 - **Signaturen:** `sign`/`verify` mit ML-DSA-87 über den SHA3-512 der Datei (abgesetzte `.pqsig`;
   keine eIDAS-Signatur).
-- **Backup-Prüfung** (nach beta.2): `pqkeep check` prüft verschlüsselte Dateien vollständig, ohne
+- **Backup-Prüfung** (seit beta.3): `pqkeep check` prüft verschlüsselte Dateien vollständig, ohne
   etwas zu schreiben; `--json` für Skripte und Monitoring ([`docs/JSON.md`](docs/JSON.md)).
 - **Passphrasen:** Stärkeprüfung mit Begründung (Unicode NFKC, Muster, Wortlisten), Generator.
 - **Bedienung:** CLI mit interaktivem Menü und zweisprachiger Hilfe (Deutsch/Englisch);
@@ -336,7 +336,7 @@ siehe [`docs/SERVER.md`](docs/SERVER.md)).
 
 ### Stand und Grenzen
 
-- **Entwicklungsstand:** zweite Beta (`v0.1.0-beta.2`), aktive Entwicklung. Formate und Optionen
+- **Entwicklungsstand:** dritte Beta (`v0.1.0-beta.3`), aktive Entwicklung. Formate und Optionen
   können sich bis 1.0 ändern. Änderungen: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit:** Es gab noch kein externes Sicherheitsaudit; eine unabhängige Prüfung ist vor 1.0
   geplant.

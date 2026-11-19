@@ -6,6 +6,19 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] – 2026-11-19
+
+Third public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
+
+### Known limitations
+- No external audit; cryptographic crates are 0.x versions.
+- Files and key files written with a factor file or for several recipients use format v2;
+  beta.1 and beta.2 cannot open them. Everything else is still written as v1.
+- Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
+  The new windows and context menu flows were **not hand-tested on Windows** (#259).
+- ARM64 with 64 KiB pages is untested (#163).
+- See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
+
 ### Security
 - **REST API (`pqkeep serve`): a web page could lock the local user out** (#253). Requests without an
   `Authorization` header counted as failed token attempts, so any page in the browser could send a
@@ -179,5 +192,6 @@ First public beta. **Not audited, not FIPS 140 validated – do not use for secr
 - Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
 - See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
 
+[0.1.0-beta.3]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1
