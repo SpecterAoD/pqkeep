@@ -103,12 +103,19 @@ fn serve_answers_health_on_loopback() {
         );
     }
     let addr = line.trim().rsplit("http://").next().unwrap().to_owned();
-    let mut s = TcpStream::connect(&addr).unwrap();
-    s.write_all(b"GET /v1/health HTTP/1.1\r\nHost: x\r\n\r\n")
-        .unwrap();
-    let mut response = String::new();
-    s.read_to_string(&mut response).unwrap();
+    let get = |host: &str| {
+        let mut s = TcpStream::connect(&addr).unwrap();
+        s.write_all(format!("GET /v1/health HTTP/1.1\r\nHost: {host}\r\n\r\n").as_bytes())
+            .unwrap();
+        let mut response = String::new();
+        s.read_to_string(&mut response).unwrap();
+        response
+    };
+    let ok = get(&addr);
+    // DE: Fremder Host (DNS-Rebinding) wird abgewiesen (#253). EN: Foreign Host is rejected.
+    let foreign = get("attacker.example");
     child.kill().unwrap();
     let _ = child.wait();
-    assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+    assert!(ok.starts_with("HTTP/1.1 200"), "{ok}");
+    assert!(foreign.starts_with("HTTP/1.1 403"), "{foreign}");
 }

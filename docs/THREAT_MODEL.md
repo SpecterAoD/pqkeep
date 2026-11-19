@@ -23,6 +23,7 @@
 | Fehlerhafte/bösartige Eingaben (CLI, API) | Validierung, Größen- und Längengrenzen, Property-Tests „keine Panik“ |
 | Ressourcenerschöpfung über die API | Body ≤ 64 KiB, Header-Timeout 10 s, Gesamt-Timeout 30 s, kein Keep-Alive, max. 64 Verbindungen, Rate-Limit je Client, Speicherbudget für Argon2 (sonst 503); keine Dateiverschlüsselung über die API (`API.md`) |
 | Unbefugter API-Zugriff, Token-Raten | Standard nur 127.0.0.1, 256-Bit-Token nur als Hash gespeichert, Vergleich in konstanter Zeit, Sperre nach 5 Fehlversuchen; Netzwerkzugriff nur hinter Reverse Proxy mit TLS |
+| Webseite im Browser spricht die lokale API an (Aussperren, DNS-Rebinding, #253) | Browser-Anfragen (`Origin`/`Sec-Fetch-Site`) → 403, ohne `--allow-remote` nur lokale `Host`-Werte, Anfragen ohne Token zählen nicht zur Sperre |
 | Rückschlüsse aus der Antwortzeit von `/v1/validate` | Jede Antwort wird auf eine feste Mindestdauer aufgefüllt |
 | Ausnutzen einer Lücke in pqkeep oder einer Bibliothek (Parser) | Sandbox unter Linux: Landlock (nur genannte Pfade, API gar keine) und Seccomp (kein `execve`/`fork`/`ptrace`, kein Netzwerk in der CLI, keine neuen Sockets in der API), Menü-Aktionen als eigene Prozesse (`SANDBOX.md`) |
 | Passphrase im Kontextmenü (Fenster-Modus) | Weg nur per Pipe vom Passwortfenster in den Kindprozess mit Sandbox, nie über Argumente/Umgebung; Grenze: zenity/kdialog bzw. PowerShell/.NET halten sie kurz ungenullt im eigenen Speicher (`INTEGRATION.md`) |
@@ -85,7 +86,7 @@ recipient mode (strict path rules, no symlinks/devices, limits, temporary output
 no overwriting); malformed CLI/API input (validation, limits, property tests); API resource
 exhaustion (body ≤ 64 KiB, header/overall timeouts, no keep-alive, connection cap, per-client rate
 limit, Argon2 memory budget → 503; no file encryption via API); unauthorised API access (loopback by
-default, 256-bit token stored as hash, constant-time comparison, lockout after 5 failures, TLS via reverse
+default, 256-bit token stored as hash, constant-time comparison, lockout after 5 failures; browser requests and foreign `Host` values rejected so a web page cannot use the local API or lock the user out, #253; TLS via reverse
 proxy); timing of `/v1/validate` (padded to a fixed minimum duration); exploitation of a bug in pqkeep or a library (Linux sandbox: Landlock limits paths – none for the
 API – and seccomp forbids `execve`/`fork`/`ptrace`, network in the CLI and new sockets in the API; menu
 actions run as separate processes, see `SANDBOX.md`); the context menu passphrase in window mode (only

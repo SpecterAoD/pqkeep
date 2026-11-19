@@ -43,7 +43,7 @@ fn start(dir: &Path, extra: &[&str]) -> (Child, String, Vec<String>) {
 fn post(addr: &str, path: &str, token: &str, body: &str) -> String {
     let mut s = TcpStream::connect(addr).unwrap();
     let request = format!(
-        "POST {path} HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer {token}\r\n\
+        "POST {path} HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {token}\r\n\
          Content-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
         body.len()
     );
