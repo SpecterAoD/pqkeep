@@ -127,7 +127,8 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
   sie verlangt. Weitergegeben wird nur ihr Pfad.
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
-  (`bericht (2).txt`); überschrieben wird nie.
+  (`bericht (2).txt`, verschlüsselt `bericht (2).txt.pqkf` – die Endung bleibt beim
+  Entschlüsseln erhalten); überschrieben wird nie.
 - Die Passphrase wird verdeckt im Terminal eingegeben – in einem eigenen Prozess mit voller Sandbox,
   wie im Menü. Unter Linux gibt es dafür auch kleine Fenster (siehe oben).
 
@@ -242,7 +243,7 @@ recipients write format v2; an own passphrase in addition to recipients only in 
 [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md)); decryption detects the mode, asks
 for your key file in recipient mode and for the factor file only if the file or the key file requires it (only its path is
 passed on). The result is placed next to the source under a free name
-(`report (2).txt`) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
+(`report (2).txt`, encrypted `report (2).txt.pqkf` – the extension survives decryption) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
 sandboxed process (on Linux also via small windows, see above).
 
 **Several files:** Linux: Nemo (`Selection=notnone`), Nautilus, Dolphin and Thunar (`%F`) pass all selected
