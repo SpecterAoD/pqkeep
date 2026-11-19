@@ -84,12 +84,21 @@ pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
     let listener = std::net::TcpListener::bind(addr).map_err(io_err)?;
     listener.set_nonblocking(true).map_err(io_err)?;
     sandbox::enable(&Profile::Api, sandboxed, m.get_flag("verbose"), lang)?;
-    run(listener, hash, lang)
+    // DE: Ohne --allow-remote nur lokale Host-Werte annehmen (DNS-Rebinding, #253).
+    // EN: Without --allow-remote accept only local Host values (DNS rebinding, #253).
+    let port = listener.local_addr().map_err(io_err)?.port();
+    let hosts = (!m.get_flag("allow-remote")).then(|| Limits::loopback_hosts(port));
+    run(listener, hash, hosts, lang)
 }
 
 /// DE: Startet die Laufzeit und bedient Anfragen bis Strg+C.
 /// EN: Starts the runtime and serves requests until Ctrl+C.
-fn run(listener: std::net::TcpListener, hash: TokenHash, lang: Lang) -> CliResult {
+fn run(
+    listener: std::net::TcpListener,
+    hash: TokenHash,
+    allowed_hosts: Option<Vec<String>>,
+    lang: Lang,
+) -> CliResult {
     let s = serve_texts(lang);
     let io_err = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -100,7 +109,11 @@ fn run(listener: std::net::TcpListener, hash: TokenHash, lang: Lang) -> CliResul
         let listener = tokio::net::TcpListener::from_std(listener).map_err(io_err)?;
         let local = listener.local_addr().map_err(io_err)?;
         eprintln!("{} http://{local}", s.msg_listening);
-        let state = AppState::new(hash, Limits::default());
+        let limits = Limits {
+            allowed_hosts,
+            ..Limits::default()
+        };
+        let state = AppState::new(hash, limits);
         let shutdown = async {
             let _ = tokio::signal::ctrl_c().await;
         };

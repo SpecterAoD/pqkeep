@@ -6,6 +6,14 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Security
+- **REST API (`pqkeep serve`): a web page could lock the local user out** (#253). Requests without an
+  `Authorization` header counted as failed token attempts, so any page in the browser could send a
+  few cross-origin requests to `127.0.0.1:8787` and block the correct token for 15 minutes (no data
+  access). Now requests without a token are not counted, browser requests (`Origin` or
+  `Sec-Fetch-Site` header) are rejected with 403, and without `--allow-remote` only local `Host`
+  values are accepted (DNS rebinding). Found with the test cases added to #151.
+
 ### Added
 - **Security QA baseline (#151):** versioned bilingual attack catalogue with separate execution
   evidence, offline reference/contract validation and existing CI integration. Two replay tests

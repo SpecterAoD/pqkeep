@@ -26,6 +26,9 @@ pqkeep serve --token-file api.token --bind 127.0.0.1:9000
 - Tokens aus Umgebungsvariablen werden bewusst nicht unterstützt (landen leicht in Logs und
   Prozesslisten).
 - Jede Anfrage außer `/v1/health` braucht `Authorization: Bearer <Token>`.
+- Die API ist für Skripte und Programme gedacht, nicht für Browser: Anfragen mit `Origin`- oder
+  `Sec-Fetch-Site`-Header werden mit 403 abgewiesen, ohne `--allow-remote` auch fremde `Host`-Werte
+  (Schutz vor DNS-Rebinding). So kann eine Webseite die lokale API weder nutzen noch Sie aussperren.
 - Beenden mit Strg+C.
 
 ### Zugriff über das Netz
@@ -117,6 +120,7 @@ Fehler sind bewusst generisch: `{"error":"<code>"}`, nie mit Eingabedaten.
 |---|---|---|
 | 400 | `bad_request` | Ungültiges JSON, unbekannte/fehlende Felder, ungültige Werte |
 | 401 | `unauthorized` | Token fehlt oder falsch (`WWW-Authenticate: Bearer`) |
+| 403 | `forbidden` | Browser-Anfrage (`Origin`/`Sec-Fetch-Site`) oder fremder `Host` |
 | 404 | `not_found` | Unbekannter Pfad |
 | 405 | `method_not_allowed` | Falsche Methode |
 | 413 | `payload_too_large` | Body > 64 KiB |
@@ -136,7 +140,7 @@ Fehler sind bewusst generisch: `{"error":"<code>"}`, nie mit Eingabedaten.
 | Anfragen je Verbindung | 1 (kein Keep-Alive) |
 | Gleichzeitige Verbindungen | 64 (weitere werden sofort geschlossen) |
 | Rate-Limit | 60 Anfragen/Minute je Client (IPv6: je /64-Netz) |
-| Sperre | 15 min nach 5 falschen Tokens |
+| Sperre | 15 min nach 5 falschen Tokens; Anfragen **ohne** Token zählen nicht |
 | Argon2-Speicherbudget | 1024 MiB gesamt: 4 × `standard` oder 1 × `hardened` gleichzeitig, sonst sofort 503 |
 | Sandbox (Linux) | Nach dem Binden: kein Dateizugriff (Landlock), keine neuen Sockets, kein `execve`/`fork`/`ptrace` (Seccomp); `--no-sandbox` nur zur Fehlersuche (mit Warnung) |
 | Antwort-Header | `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`; kein CORS |
@@ -165,7 +169,10 @@ pure CLI without network code.
 `--force` replaces an existing file and invalidates the old token. Then
 `pqkeep serve --token-file api.token [--bind 127.0.0.1:9000]`. Every request except
 `/v1/health` needs `Authorization: Bearer <token>`. Tokens from environment variables are
-deliberately unsupported. Stop with Ctrl+C.
+deliberately unsupported. Stop with Ctrl+C. The API is meant for scripts and programs, not
+browsers: requests with an `Origin` or `Sec-Fetch-Site` header get 403, and without
+`--allow-remote` so do foreign `Host` values (DNS rebinding) – a web page can neither use the
+local API nor lock you out.
 
 **Network access:** non-loopback addresses require `--allow-remote` and print a warning. **No
 built-in TLS** – put a reverse proxy with TLS in front and keep the API on `127.0.0.1`. Behind a
@@ -188,12 +195,12 @@ proxy all requests share one address, so rate limit and lockout apply to all of 
   "reasons"}`.
 
 **Errors** are generic `{"error":"<code>"}` without input data; status codes and codes as in the
-table above (400 `bad_request`, 401 `unauthorized`, 404, 405, 413, 415, 422, 429
+table above (400 `bad_request`, 401 `unauthorized`, 403 `forbidden`, 404, 405, 413, 415, 422, 429
 `too_many_requests`, 500 `internal`, 503 `busy` with `Retry-After: 5`).
 
 **Limits:** body 64 KiB; header read 10 s; 30 s per connection; one request per connection; 64
 concurrent connections (more are closed immediately); 60 requests/minute per client (IPv6 per
-/64); lockout for 15 min after 5 wrong tokens; Argon2 memory budget 1024 MiB in total (4 ×
+/64); lockout for 15 min after 5 wrong tokens (requests without a token do not count); Argon2 memory budget 1024 MiB in total (4 ×
 `standard` or 1 × `hardened` at a time, otherwise 503 immediately); security headers as listed
 above; no CORS. Sandbox (Linux): after binding no file access (Landlock), no new sockets, no
 `execve`/`fork`/`ptrace` (seccomp); `--no-sandbox` only for troubleshooting (with a warning).
