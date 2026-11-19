@@ -66,7 +66,7 @@ impl Failure {
         };
         let text = match err {
             Error::Io(ErrorKind::AlreadyExists) => {
-                "Ziel existiert bereits (--force zum Ersetzen) / target already exists (use --force to replace)"
+                "Ziel existiert bereits, nichts überschrieben – anderes Ziel mit -o/--out, bei encrypt/decrypt auch --rename / target already exists, nothing overwritten – choose another target with -o/--out, for encrypt/decrypt also --rename"
                     .to_owned()
             }
             Error::Io(ErrorKind::NotFound) => {

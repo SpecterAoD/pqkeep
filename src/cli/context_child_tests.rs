@@ -9,7 +9,7 @@ const RND: &str = "0123456789abcdef";
 fn own_temp_needs_our_tag_and_pattern() {
     let ours = |name: &str| own_temp(name, "bericht.pdf.pqkf", TAG);
     assert!(ours(&format!(".bericht.pdf.pqkf.tmp-{TAG}{RND}")));
-    assert!(ours(&format!(".bericht.pdf (3).pqkf.tmp-{TAG}{RND}")));
+    assert!(ours(&format!(".bericht (3).pdf.pqkf.tmp-{TAG}{RND}")));
     assert!(own_temp(
         &format!(".Ordner (2).tmp-{TAG}{RND}"),
         "Ordner",
@@ -22,7 +22,7 @@ fn own_temp_needs_our_tag_and_pattern() {
         format!(".bericht.pdf.pqkf.tmp-{TAG}{}", &RND[..15]),
         format!(".bericht.pdf.pqkf.tmp-{TAG}{}", RND.to_uppercase()),
         format!(".anders.pdf.pqkf.tmp-{TAG}{RND}"),
-        format!(".bericht.pdf (100).pqkf.tmp-{TAG}{RND}"),
+        format!(".bericht (100).pdf.pqkf.tmp-{TAG}{RND}"),
         ".bericht.pdf.pqkf".to_owned(),
     ] {
         assert!(!ours(&other), "{other}");
@@ -45,7 +45,7 @@ fn clean_temps_removes_only_own_leftovers() {
     }
     std::fs::write(dir.path().join(format!(".a.txt.pqkf.tmp-{TAG}{RND}")), b"x").unwrap();
     std::fs::write(
-        dir.path().join(format!(".a.txt (2).pqkf.tmp-{TAG}{RND}")),
+        dir.path().join(format!(".a (2).txt.pqkf.tmp-{TAG}{RND}")),
         b"x",
     )
     .unwrap();
