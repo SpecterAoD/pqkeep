@@ -98,49 +98,70 @@ fn install(s: &IntegrateTexts, data: &Path, mpath: &Path, opts: &Options, lang: 
     manifest.binary.clone_from(&bin);
     (if dialog { "dialog" } else { "terminal" }).clone_into(&mut manifest.mode);
     println!("{}: {}", s.lbl_mode, mode_label(s, &manifest.mode));
+    // DE: Liste nach jeder geschriebenen Datei speichern, vor der Ausgabe – ein Abbruch (z. B.
+    // geschlossene Ausgabe) hinterlässt keine eigene Datei, die danach als fremd gilt (#256).
+    // EN: Save the list after every written file, before printing – an interruption (e.g. a
+    // closed output) leaves no own file that would afterwards count as foreign (#256).
     for t in &targets {
-        apply(s, t, &mut manifest, opts.dry_run, lang)?;
+        let shown = apply(s, t, &mut manifest, opts.dry_run, lang)?;
+        persist(mpath, &mut manifest, opts.dry_run, lang)?;
+        if let Some(msg) = shown {
+            println!("{msg}: {}", t.path.display());
+        }
     }
     if let Some(u) = &uca {
         thunar::install(s, u, &mut manifest, opts.dry_run, lang)?;
+        persist(mpath, &mut manifest, opts.dry_run, lang)?;
     }
-    manifest.version = manifest.current_version();
-    if opts.dry_run {
-        println!("{}", s.msg_dry);
-        return Ok(());
-    }
-    let json =
-        serde_json::to_string_pretty(&manifest).map_err(|_| Failure::new(code::ERROR, ""))?;
-    write_atomic(mpath, &(json + "\n"), 0o644).map_err(io_fail(lang))?;
-    println!("{}", s.msg_restart);
+    println!(
+        "{}",
+        if opts.dry_run {
+            s.msg_dry
+        } else {
+            s.msg_restart
+        }
+    );
     Ok(())
 }
 
-/// DE: Schreibt eine Datei, sofern sie fehlt oder eine unveränderte eigene ist.
-/// EN: Writes a file if it is missing or an unchanged own one.
+/// DE: Speichert die Liste (nicht bei `--dry-run`). EN: Saves the list (not with `--dry-run`).
+fn persist(mpath: &Path, manifest: &mut Manifest, dry: bool, lang: Lang) -> CliResult {
+    manifest.version = manifest.current_version();
+    if dry {
+        return Ok(());
+    }
+    let json =
+        serde_json::to_string_pretty(&*manifest).map_err(|_| Failure::new(code::ERROR, ""))?;
+    write_atomic(mpath, &(json + "\n"), 0o644).map_err(io_fail(lang))
+}
+
+/// DE: Schreibt eine Datei, sofern sie fehlt oder eine unveränderte eigene ist; liefert die
+/// Meldung zum Ausgeben (`None`: fremde Datei, schon auf Stderr gemeldet).
+/// EN: Writes a file if it is missing or an unchanged own one; returns the message to print
+/// (`None`: foreign file, already reported on stderr).
 fn apply(
     s: &IntegrateTexts,
     t: &Target,
     manifest: &mut Manifest,
     dry: bool,
     lang: Lang,
-) -> CliResult {
+) -> CliResult<Option<&'static str>> {
     let wanted = digest(t.content.as_bytes());
     let current = fs::read(&t.path).ok().map(|d| digest(&d));
     let st = state(manifest, &t.path).map_err(io_fail(lang))?;
     if current.as_deref() == Some(wanted.as_str()) {
         manifest.record(&t.path, wanted);
-        println!("{}: {}", s.msg_unchanged, t.path.display());
-    } else if st == FileState::Foreign {
-        eprintln!("{}: {}", s.msg_foreign, t.path.display());
-    } else {
-        if !dry {
-            write_atomic(&t.path, &t.content, t.mode).map_err(io_fail(lang))?;
-        }
-        manifest.record(&t.path, wanted);
-        println!("{}: {}", s.msg_written, t.path.display());
+        return Ok(Some(s.msg_unchanged));
     }
-    Ok(())
+    if st == FileState::Foreign {
+        eprintln!("{}: {}", s.msg_foreign, t.path.display());
+        return Ok(None);
+    }
+    if !dry {
+        write_atomic(&t.path, &t.content, t.mode).map_err(io_fail(lang))?;
+    }
+    manifest.record(&t.path, wanted);
+    Ok(Some(s.msg_written))
 }
 
 fn uninstall(s: &IntegrateTexts, mpath: &Path, opts: &Options, lang: Lang) -> CliResult {

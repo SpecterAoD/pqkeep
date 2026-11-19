@@ -126,8 +126,10 @@ fn load_valid(
     Ok(doc.map(Some).ok_or(()))
 }
 
-/// DE: UTC-Zeitstempel `JJJJ-MM-TT_HHMM` (Tage → Datum nach Howard Hinnant).
-/// EN: UTC time stamp `YYYY-MM-DD_HHMM` (days → date after Howard Hinnant).
+/// DE: UTC-Zeitstempel `JJJJ-MM-TT_HHMMZ` (Tage → Datum nach Howard Hinnant). Das `Z` kennzeichnet
+/// UTC – die Ortszeit bräuchte `unsafe` (#256).
+/// EN: UTC time stamp `YYYY-MM-DD_HHMMZ` (days → date after Howard Hinnant). The `Z` marks UTC –
+/// local time would need `unsafe` (#256).
 pub(super) fn stamp(secs: u64) -> String {
     let (days, rest) = (secs / 86_400, secs % 86_400);
     let z = days + 719_468;
@@ -138,7 +140,7 @@ pub(super) fn stamp(secs: u64) -> String {
     let (day, month) = (doy - (153 * mp + 2) / 5 + 1, (mp + 2) % 12 + 1);
     let year = yoe + era * 400 + u64::from(month <= 2);
     format!(
-        "{year:04}-{month:02}-{day:02}_{:02}{:02}",
+        "{year:04}-{month:02}-{day:02}_{:02}{:02}Z",
         rest / 3_600,
         rest % 3_600 / 60
     )

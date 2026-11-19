@@ -46,7 +46,7 @@ Aktionen. `integrate` geht deshalb besonders vorsichtig vor:
   *Bearbeiten → Benutzerdefinierte Aktionen* einmal etwas ändern und speichern – Thunar schreibt die
   Datei dann im erwarteten Aufbau.
 - **Sicherung:** Vor jedem Schreiben in eine vorhandene Datei entsteht daneben
-  `uca.xml.pqkeep-bak_JJJJ-MM-TT_HHMM` (UTC, bei mehreren in derselben Minute mit `-2`, `-3` …). Rechte der Datei bleiben erhalten.
+  `uca.xml.pqkeep-bak_JJJJ-MM-TT_HHMMZ` (UTC, erkennbar am `Z`; bei mehreren in derselben Minute mit `-2`, `-3` …). Rechte der Datei bleiben erhalten.
 - Fehlt die Datei, dient wie bei Thunar die Vorgabe des Systems (`/etc/xdg/Thunar/uca.xml`, z. B.
   „Terminal hier öffnen“) als Ausgangspunkt – sonst gingen diese Einträge verloren.
 - `uninstall` entfernt nur die beiden unveränderten eigenen Blöcke; die Datei selbst bleibt.
@@ -199,7 +199,7 @@ checksum in `pqkeep/integration.json` (version 2). A block you edited in Thunar,
 with the same id, stays ("Not touched"). Only the layout Thunar itself writes is accepted (one
 `<actions>` frame, non-nested `<action>` blocks, no comments, DOCTYPE or CDATA, at most 1 MiB, UTF-8);
 otherwise nothing is changed – edit and save the custom actions in Thunar once, then try again.
-Before writing to an existing file a backup `uca.xml.pqkeep-bak_YYYY-MM-DD_HHMM` (UTC; `-2`, `-3` … within the same minute) is created next
+Before writing to an existing file a backup `uca.xml.pqkeep-bak_YYYY-MM-DD_HHMMZ` (UTC, marked by the `Z`; `-2`, `-3` … within the same minute) is created next
 to it; the file mode is kept. If the file is missing, the system default (`/etc/xdg/Thunar/uca.xml`)
 is the starting point, as in Thunar. `uninstall` removes only the two unchanged own blocks; the file
 stays. **Restart Thunar** (`thunar -q`); editing actions in an old running Thunar overwrites
