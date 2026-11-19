@@ -26,22 +26,32 @@ pub(super) fn source(m: &ArgMatches) -> PathBuf {
     sources(m).into_iter().next().unwrap_or_default()
 }
 
+/// DE: Nummerierter Name: `name (n).ext`; bei `.pqkf` vor der inneren Endung (`a (2).txt.pqkf`),
+/// damit die entschlüsselte Datei ihre Endung behält (#256).
+/// EN: Numbered name: `name (n).ext`; for `.pqkf` before the inner extension (`a (2).txt.pqkf`),
+/// so the decrypted file keeps its extension (#256).
+pub(super) fn numbered(name: &str, n: u32) -> String {
+    fn split(s: &str) -> Option<(&str, &str)> {
+        s.rsplit_once('.').filter(|(stem, _)| !stem.is_empty())
+    }
+    if let Some((inner_stem, inner_ext)) = name.strip_suffix(".pqkf").and_then(split) {
+        return format!("{inner_stem} ({n}).{inner_ext}.pqkf");
+    }
+    match split(name) {
+        Some((stem, ext)) => format!("{stem} ({n}).{ext}"),
+        None => format!("{name} ({n})"),
+    }
+}
+
 /// DE: Freier Name neben dem Ziel: `name.ext`, sonst `name (2).ext` … `name (99).ext`.
 /// EN: Free name next to the target: `name.ext`, else `name (2).ext` … `name (99).ext`.
 pub fn free_target(target: &Path) -> Option<PathBuf> {
     if !target.exists() {
         return Some(target.to_path_buf());
     }
-    let stem = target.file_stem()?.to_str()?;
-    let ext = target.extension().and_then(|e| e.to_str());
+    let name = target.file_name()?.to_str()?;
     (2..100)
-        .map(|n| {
-            let name = match ext {
-                Some(e) => format!("{stem} ({n}).{e}"),
-                None => format!("{stem} ({n})"),
-            };
-            target.with_file_name(name)
-        })
+        .map(|n| target.with_file_name(numbered(name, n)))
         .find(|p| !p.exists())
 }
 

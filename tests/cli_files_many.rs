@@ -71,20 +71,30 @@ fn each_with_rename_and_decrypt_many() {
     ];
     let (code, _, err) = run(dir.path(), &enc, &p);
     assert_eq!(code, 0, "{err}");
-    assert!(dir.path().join("a.txt (2).pqkf").is_file());
+    // DE: Nummer vor der inneren Endung (#256). EN: Number before the inner extension (#256).
+    assert!(dir.path().join("a (2).txt.pqkf").is_file());
     fs::remove_file(dir.path().join("a.txt")).unwrap();
     fs::remove_file(dir.path().join("-b.txt")).unwrap();
     let dec = [
         "decrypt",
         "--passphrase-stdin",
         "--",
-        "a.txt (2).pqkf",
+        "a (2).txt.pqkf",
         "-b.txt.pqkf",
     ];
     let (code, out, err) = run(dir.path(), &dec, &p);
     assert_eq!(code, 0, "{out}{err}");
-    assert_eq!(fs::read(dir.path().join("a.txt (2)")).unwrap(), b"a.txt");
+    assert_eq!(fs::read(dir.path().join("a (2).txt")).unwrap(), b"a.txt");
     assert_eq!(fs::read(dir.path().join("-b.txt")).unwrap(), b"-b.txt");
+    // DE: Vorhandenes Ziel: Meldung nennt nur echte Optionen (#256).
+    // EN: Existing target: message names real options only (#256).
+    let again = ["decrypt", "--passphrase-stdin", "--", "-b.txt.pqkf"];
+    let (code, _, err) = run(dir.path(), &again, &p);
+    assert_eq!(code, 5, "{err}");
+    assert!(
+        err.contains("--rename") && !err.contains("--force"),
+        "{err}"
+    );
 }
 
 #[test]

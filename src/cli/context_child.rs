@@ -201,11 +201,7 @@ pub(super) fn own_temp(name: &str, base: &str, tag: &str) -> bool {
     if middle == base {
         return true;
     }
-    let (stem, ext) = match base.rsplit_once('.') {
-        Some((s, e)) if !s.is_empty() => (s, format!(".{e}")),
-        _ => (base, String::new()),
-    };
-    (2..100).any(|n| middle == format!("{stem} ({n}){ext}"))
+    (2..100).any(|n| middle == super::files_cmd::numbered(base, n))
 }
 
 /// DE: Entfernt eigene Temporärausgaben neben den Zielen. EN: Removes own temporary output next to targets.

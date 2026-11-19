@@ -14,6 +14,15 @@ German release notes: see `docs/releases/`.
   `Sec-Fetch-Site` header) are rejected with 403, and without `--allow-remote` only local `Host`
   values are accepted (DNS rebinding). Found with the test cases added to #151.
 
+### Fixed
+- **Free names keep the file extension** (#256): when the target is taken, `encrypt --rename` and
+  the context menu now name the result `report (2).txt.pqkf` instead of `report.txt (2).pqkf`, so
+  the decrypted file is `report (2).txt` and still opens with the right program. Existing files are
+  unaffected. **DE:** Freie Namen behalten die Endung (`bericht (2).txt.pqkf` statt
+  `bericht.txt (2).pqkf`).
+- **Error message for an existing target** no longer suggests `--force`, which `encrypt`/`decrypt`
+  do not have; it names `-o/--out` and `--rename` (#256).
+
 ### Added
 - **Security QA baseline (#151):** versioned bilingual attack catalogue with separate execution
   evidence, offline reference/contract validation and existing CI integration. Two replay tests
