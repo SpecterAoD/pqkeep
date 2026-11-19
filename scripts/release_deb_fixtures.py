@@ -10,11 +10,28 @@ EN: Derives deliberately unusable packages from a checked candidate (truncated, 
 """
 
 from pathlib import Path
+import io
+import os
 import subprocess
+import tarfile
 
 MISSING = "pqkeep-test-missing-dependency"
 CONFLICT = "pqkeep-test-conflict"
 STUB = b"#!/bin/sh\nexit 97\n"
+
+
+def root_mtime(package: Path) -> int:
+    """Zeitstempel des Wurzelverzeichnisses `./` im Datenteil.
+
+    DE: `dpkg-deb --raw-extract` legt `DEBIAN/` im Wurzelverzeichnis an und setzt dessen
+        Zeitstempel auf „jetzt“; ohne Wiederherstellung unterscheidet sich der Inhalt, sobald
+        zwischen Bau und Umbau eine Sekunde vergeht.
+    EN: `dpkg-deb --raw-extract` creates `DEBIAN/` in the root and sets its mtime to "now";
+        without restoring it the content differs as soon as a second passes.
+    """
+    data = subprocess.check_output(["dpkg-deb", "--fsys-tarfile", str(package)])
+    with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+        return int(tar.getmember("./").mtime)
 
 
 def field(package: Path, name: str) -> str:
@@ -53,6 +70,8 @@ def missing_dependency(package: Path, work: Path) -> Path:
     index = next(i for i, line in enumerate(lines) if line.startswith("Depends: "))
     lines[index] += f", {MISSING} (>= 1)"
     control.write_text("\n".join(lines) + "\n")
+    mtime = root_mtime(package)
+    os.utime(tree, (mtime, mtime))
     return build(tree, work / "pqkeep-test-missing-dependency.deb")
 
 
