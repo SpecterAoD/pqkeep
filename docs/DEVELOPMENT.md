@@ -39,6 +39,11 @@ production code (allowed in tests). Functions over 50 code lines fail via clippy
 
 ### Run tests selectively
 
+The approved [fault/recovery design](security/FAULT_RECOVERY.md) (#152) records checkpoints,
+invariants and the process-crash/power-loss boundary. Step A is documentation only; proposed
+fault tests are not implemented or execution evidence. Later tests reuse existing cargo test
+and native CI; no new test command, Cargo feature or production hook is introduced here.
+
 The [attack catalogue and baseline](security/ATTACK_TEST_MATRIX.md) record scoped assertions and
 actual execution separately. Update case/test/CI references together; new execution records need
 the tested commit, platform/features and run/job/attempt. The validator is offline and does not
@@ -140,6 +145,11 @@ Produktionscode verboten (in Tests erlaubt). Funktionen über 50 Codezeilen sche
 [`docs/security/CI_SECURITY.md`](security/CI_SECURITY.md).
 
 ### Tests gezielt ausführen
+
+Der freigegebene [Fault-/Recovery-Entwurf](security/FAULT_RECOVERY.md) (#152) beschreibt Punkte,
+Invarianten und Prozesscrash-/Stromausfallgrenze. Schritt A ist nur Dokumentation; geplante
+Fault-Tests sind weder implementiert noch Ausführungsnachweise. Spätere Tests nutzen cargo test
+und native CI; hier entstehen kein neuer Testbefehl, Cargo-Feature oder produktiver Hook.
 
 [Angriffskatalog und Baseline](security/ATTACK_TEST_MATRIX.md) trennen Assertions und Ausführung.
 Fall-/Test-/CI-Verweise gemeinsam pflegen; Nachweise benötigen Quell-SHA, Plattform/Features und

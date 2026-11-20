@@ -42,6 +42,10 @@ Drop nicht, temporärer Klartext kann bleiben. Windows ohne Sandbox/eigene ACL-P
 und mlock-Best-effort-Ausnahmen gelten weiterhin. Source-/Publish-/FAT-Rennen siehe FILE_FORMAT.md
 und FORMAT.md. STREAM-Puffer sind begrenzt, Source-/Pfadlisten und Argon2 benötigen weiteren Speicher.
 
+Der freigegebene [Fault-/Recovery-Testentwurf](security/FAULT_RECOVERY.md) (#152) definiert
+Commitgrenze, Bestandsschutz und isolierte Prozessabbrüche. Schritt A dokumentiert nur;
+Fault-Hooks und neue Crash-Nachweise folgen nach gesonderter Schrittfreigabe.
+
 ## Sichtbar trotz Verschlüsselung
 
 - Schlüsseldatei: Metadaten (Name, Organisation …), öffentlicher Schlüssel, Algorithmus, Zeitpunkt.
@@ -75,6 +79,10 @@ does not prove crash/OOM/power-loss recovery: abort/SIGKILL skips Drop and tempo
 remain. Windows lacks an equivalent sandbox/dedicated ACL validation; Landlock/mlock best-effort
 exceptions remain. See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races. STREAM buffers
 are bounded, but source/path bookkeeping and Argon2 require additional memory.
+
+The approved [fault/recovery test design](security/FAULT_RECOVERY.md) (#152) defines the
+commit boundary, preservation and isolated process termination. Step A documents only;
+fault hooks and new crash evidence await separate step approval.
 
 **Goals:** confidentiality and integrity of stored private keys against offline attackers who obtain
 the key file, and of encrypted files/directories (`.pqkf`), also against future quantum computers.
