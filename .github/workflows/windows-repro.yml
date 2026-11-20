@@ -1,0 +1,59 @@
+# DE: Zwei unabhängige Windows-Release-Builds desselben Commits; Hashvergleich ohne Normalisierung.
+# EN: Two independent Windows release builds of one commit; compare hashes without normalization.
+name: Windows reproducibility
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/build.yml"
+      - ".github/workflows/windows-repro.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproducibility:
+    name: Windows MSVC byte-for-byte comparison
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Toolchain und reproduzierbare Eingaben / toolchain and inputs
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain
+          rustc -vV
+          ws=$(cygpath -w "$PWD")
+          ch=$(cygpath -w "$HOME/.cargo")
+          echo "RUSTFLAGS=--remap-path-prefix=$ws=/build --remap-path-prefix=$ch=/cargo -C control-flow-guard -C link-arg=/Brepro" >> "$GITHUB_ENV"
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+      - name: Zwei isolierte Builds / two isolated builds
+        run: |
+          set -euo pipefail
+          for run in first second; do
+            echo "Build $run / build $run"
+            CARGO_TARGET_DIR="$RUNNER_TEMP/pqkeep-$run" cargo build --release --locked --target x86_64-pc-windows-msvc
+            for exe in pqkeep.exe pqkeepw.exe; do
+              python scripts/check_binary.py "$RUNNER_TEMP/pqkeep-$run/x86_64-pc-windows-msvc/release/$exe"
+            done
+          done
+      - name: Bitidentität prüfen / verify byte identity
+        run: |
+          set -euo pipefail
+          for exe in pqkeep.exe pqkeepw.exe; do
+            first="$RUNNER_TEMP/pqkeep-first/x86_64-pc-windows-msvc/release/$exe"
+            second="$RUNNER_TEMP/pqkeep-second/x86_64-pc-windows-msvc/release/$exe"
+            echo "$exe"
+            sha256sum "$first" "$second"
+            if ! cmp -s "$first" "$second"; then
+              echo "::error::$exe differs across independent builds"
+              exit 1
+            fi
+          done
+          echo "Both Windows executables are byte-identical / Beide Windows-Programme sind bitidentisch" >> "$GITHUB_STEP_SUMMARY"

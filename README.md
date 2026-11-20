@@ -3,7 +3,7 @@
 **Post-quantum keys, kept simple and documented.**
 
 [![CI](https://github.com/SpecterAoD/pqkeep/actions/workflows/ci.yml/badge.svg)](https://github.com/SpecterAoD/pqkeep/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/SpecterAoD/pqkeep?include_prereleases&label=release)](https://github.com/SpecterAoD/pqkeep/releases)
+[![Release](https://img.shields.io/github/v/release/SpecterAoD/pqkeep?include_prereleases&sort=semver&filter=v*&label=release)](https://github.com/SpecterAoD/pqkeep/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SpecterAoD/pqkeep/badge)](https://scorecard.dev/viewer/?uri=github.com/SpecterAoD/pqkeep)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16717/badge)](https://www.bestpractices.dev/projects/16717)
