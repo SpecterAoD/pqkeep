@@ -189,7 +189,7 @@ fn extract_dir<R: Read>(mut archive: ArchiveReader<R>, target: &Path) -> Result<
     Ok(report)
 }
 
-fn finish_file(out: BufWriter<File>) -> Result<()> {
+fn finish_file(out: BufWriter<crate::fsutil::OutputFile>) -> Result<()> {
     let file = out.into_inner().map_err(|e| Error::from(e.into_error()))?;
     file.sync_all()?;
     Ok(())

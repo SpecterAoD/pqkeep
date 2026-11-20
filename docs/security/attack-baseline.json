@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "baseline_version": "1.0.1",
-  "matrix_version": "1.0.1",
+  "baseline_version": "1.1.0",
+  "matrix_version": "1.1.0",
   "evidence": [
     {
       "id": "B1-linux-x86_64",
@@ -3693,6 +3693,2316 @@
       "limits": {
         "de": "Run 43947063245 erfolgreich; 429 Rust-Tests mit no-default gemeldet (einschließlich Doctests/Probe-Einstiegen). Dieser Nachweis umfasst nur die aufgeführten Assertions. Checkout c817c44 ist bytegleich zum signierten Branch e735edb vor dem reinen Berichtscommit. Interne/cfg-Auslassungen sind keine bestandenen Assertions.",
         "en": "Run 43947063245 passed; 429 Rust tests reported with no-default (including doctests/probe entry points). This evidence covers only the listed assertions. Checkout c817c44 equals signed branch e735edb before the reporting-only commit. Internal/cfg skips are not passed assertions."
+      }
+    },
+    {
+      "id": "B152-ubuntu-latest-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:31:49Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413180,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413180",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-014",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec014_parent_sync_failure_is_best_effort_after_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-ubuntu-latest-no-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:33:32Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413180,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413180",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-latest",
+      "features": "no-default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-014",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec014_parent_sync_failure_is_best_effort_after_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-ubuntu-22.04-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:33:53Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413283,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413283",
+      "platform": "linux-x86_64",
+      "runner": "ubuntu-22.04",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-014",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec014_parent_sync_failure_is_best_effort_after_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-ubuntu-22.04-arm-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:32:04Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413074,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413074",
+      "platform": "linux-arm64",
+      "runner": "ubuntu-22.04-arm",
+      "features": "default",
+      "environment": {
+        "kernel": "Linux 6.8.0-1070-azure aarch64",
+        "page_size": 4096,
+        "toolchain": "rustc 1.100.0 (0ef1bc386 2026-11-09)"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-014",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec014_parent_sync_failure_is_best_effort_after_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-windows-latest-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:35:28Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413305,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413305",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-009",
+          "test_refs": [
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_key_replace_preserves_original_and_retry_succeeds",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_archive_does_not_publish_plaintext_and_retry_succeeds",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_factor_read_fails_then_reopens_without_replacement",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "fs009_cleanup_sharing_lock_leaves_temp_until_handle_release",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-windows-latest-no-default",
+      "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
+      "observed_utc": "2026-11-20T21:38:38Z",
+      "origin": "ci",
+      "result": "passed",
+      "run_id": 44820659991,
+      "job_id": 136580413305,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991/job/136580413305",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "no-default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-REC-005",
+          "test_refs": [
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_success_and_postcommit_states_are_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_short_interrupted_and_zero_writes",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/envelope/fault_tests.rs",
+              "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "stream_failures_never_report_success_at_boundaries",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "short_and_interrupted_writes_preserve_stream_content",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/crypto_stream_faults.rs",
+              "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-015",
+          "test_refs": [
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_scopes_are_thread_and_root_isolated",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_occurrence_and_flush_are_observed",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/fault_scope_tests.rs",
+              "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_driver_tests.rs",
+              "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-006",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_precommit_factor_failures_never_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-007",
+          "test_refs": [
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/fault_tests.rs",
+              "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-008",
+          "test_refs": [
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-009",
+          "test_refs": [
+            {
+              "path": "src/crypto/factor_fault_tests.rs",
+              "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/files/recovery_tests.rs",
+              "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-FS-009",
+          "test_refs": [
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_key_replace_preserves_original_and_retry_succeeds",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_archive_does_not_publish_plaintext_and_retry_succeeds",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_factor_read_fails_then_reopens_without_replacement",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "fs009_cleanup_sharing_lock_leaves_temp_until_handle_release",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-010",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-011",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-012",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/files_recovery.rs",
+              "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        },
+        {
+          "case_id": "QA1-REC-013",
+          "test_refs": [
+            {
+              "path": "src/crash_recovery_tests.rs",
+              "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+              "kind": "rust-unit",
+              "stage": "existing"
+            },
+            {
+              "path": "src/cli/context_child_tests.rs",
+              "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+              "kind": "rust-unit",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Only the listed executed assertions. Two ignored private child entries are explicitly invoked by parent tests, not passing scenarios. Unix-only symlink/root probe excluded on Windows. Process termination with running kernel, no OS/power-loss/real FAT/AV/ACL/reparse/OOM claim; no-default runtime on Ubuntu latest/Windows only. Unknown environment fields were not printed. Checkout tree equals signed implementation ba52dcd.",
+        "de": "Nur aufgeführte tatsächlich bestandene Assertions. Zwei ignorierte private Child-Einstiege werden von Parenttests gestartet, zählen nicht als bestandene Szenarien. Unix-Symlink-/Rootprobe unter Windows ausgeschlossen. Prozessabbruch bei laufendem Kernel, keine OS-/Stromverlust-/echte FAT-/AV-/ACL-/Reparse-/OOM-Garantie; No-default-Runtime nur Ubuntu latest/Windows. Nicht ausgegebene Umgebungsfelder unknown. Checkoutbaum entspricht signiertem ba52dcd."
+      }
+    },
+    {
+      "id": "B152-windows-initial-sharing-failed",
+      "source_commit": "8d573ec7943d14abfa468163d3042451f38859c5",
+      "observed_utc": "2026-11-20T21:23:29Z",
+      "origin": "ci",
+      "result": "failed",
+      "run_id": 44819132853,
+      "job_id": 136575140904,
+      "attempt": 1,
+      "url": "https://github.com/SpecterAoD/pqkeep/actions/runs/44819132853/job/136575140904",
+      "platform": "windows-x86_64",
+      "runner": "windows-latest",
+      "features": "default",
+      "environment": {
+        "kernel": "unknown",
+        "page_size": "unknown",
+        "toolchain": "unknown"
+      },
+      "scope": [
+        {
+          "case_id": "QA1-FS-009",
+          "test_refs": [
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_archive_does_not_publish_plaintext_and_retry_succeeds",
+              "kind": "rust-integration",
+              "stage": "existing"
+            },
+            {
+              "path": "tests/windows_storage_locks.rs",
+              "symbol": "fs009_locked_factor_read_fails_then_reopens_without_replacement",
+              "kind": "rust-integration",
+              "stage": "existing"
+            }
+          ]
+        }
+      ],
+      "limits": {
+        "en": "Initial test expectation incorrectly assumed PermissionDenied; the Windows sharing violation mapped to Uncategorized. Fixed by requiring raw OS error 32 from a reference open and exact propagation of its kind. No product-code change; later successful records supersede this run. No success inferred for interrupted assertions.",
+        "de": "Erster Test erwartete fälschlich PermissionDenied; Windows-Sharingfehler wurde Uncategorized zugeordnet. Korrigiert durch OS-Fehler-32-Prüfung eines Referenz-Open und exakte Weitergabe seines Kind. Kein Produktivcode-Edit; spätere erfolgreiche Datensätze ersetzen diesen Lauf. Unterbrochene Assertions gelten nicht als bestanden."
       }
     }
   ]

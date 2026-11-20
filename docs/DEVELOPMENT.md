@@ -39,6 +39,15 @@ production code (allowed in tests). Functions over 50 code lines fail via clippy
 
 ### Run tests selectively
 
+The approved [fault/recovery design](security/FAULT_RECOVERY.md) (#152) records checkpoints,
+invariants and the process-crash/power-loss boundary. Approved step B adds scoped cfg(test)
+envelope tests and ordinary STREAM Write adapters, discovered by existing cargo test/CI.
+Approved C adds factor/archive/decrypt/cleanup and Unix parent-sync cases plus native Windows
+sharing-lock tests. Approved D adds acknowledged kill/restart/multistage tests. No OS/power-loss
+guarantee or production hook. Two ignored private child entries are run explicitly by parent tests;
+they are not passing-skip evidence. Deadlines fail, never schedule termination.
+[Native execution and rollback evidence](security/FAULT_RECOVERY_EVIDENCE.md) pins the tested revision.
+
 The [attack catalogue and baseline](security/ATTACK_TEST_MATRIX.md) record scoped assertions and
 actual execution separately. Update case/test/CI references together; new execution records need
 the tested commit, platform/features and run/job/attempt. The validator is offline and does not
@@ -49,6 +58,12 @@ latest and Windows latest, while Ubuntu 22.04/ARM64 additionally compile no-defa
 cargo test --locked --test cli_files            # one integration test file
 cargo test --locked --test cli_files passphrase # tests whose name contains "passphrase"
 cargo test --locked --lib files::               # unit tests of one module
+cargo test --locked --lib fault_                # envelope/factor/archive/I/O (#152)
+cargo test --locked --lib files_recovery_tests  # decrypt/cleanup and late tampering
+cargo test --locked --lib crash_                # parent tests start isolated children
+cargo test --locked --test files_recovery       # ordinary CLI/core with stale data
+cargo test --locked --test windows_storage_locks # native Windows only; 0 on Linux
+cargo test --locked --test crypto_stream_faults # ordinary STREAM I/O failures
 cargo test --locked --no-default-features       # without the REST API
 ```
 
@@ -141,6 +156,15 @@ Produktionscode verboten (in Tests erlaubt). Funktionen über 50 Codezeilen sche
 
 ### Tests gezielt ausführen
 
+Der freigegebene [Fault-/Recovery-Entwurf](security/FAULT_RECOVERY.md) (#152) beschreibt Punkte,
+Invarianten und Prozesscrash-/Stromausfallgrenze. Freigegebener Schritt B ergänzt Scoped-
+cfg(test)-Envelope-Tests und normale STREAM-Write-Adapter, erkannt durch bestehendes cargo test/CI.
+Freigegebenes C ergänzt Faktor-/Archiv-/Decrypt-/Cleanup- und Unix-Eltern-sync-Fälle sowie native
+Windows-Sharing-Locktests. Freigegebenes D ergänzt bestätigte Kill-/Neustart-/Mehrstufentests.
+Keine OS-/Stromausfallgarantie oder produktiver Hook. Zwei ignorierte private Child-Einstiege
+werden explizit von Parent-Tests gestartet, nicht als bestandene Skips gezählt. Fristen sind Fehler.
+[Native Ausführung und Rücksetzprobe](security/FAULT_RECOVERY_EVIDENCE.md) erfassen die Testrevision.
+
 [Angriffskatalog und Baseline](security/ATTACK_TEST_MATRIX.md) trennen Assertions und Ausführung.
 Fall-/Test-/CI-Verweise gemeinsam pflegen; Nachweise benötigen Quell-SHA, Plattform/Features und
 Run/Job/Attempt. Der Validator arbeitet offline und führt keine gespeicherten Kommandos aus.
@@ -151,6 +175,12 @@ Ubuntu 22.04/ARM64 kompilieren No-default zusätzlich mit Clippy.
 cargo test --locked --test cli_files            # eine Integrationstest-Datei
 cargo test --locked --test cli_files passphrase # Tests, deren Name „passphrase“ enthält
 cargo test --locked --lib files::               # Unit-Tests eines Moduls
+cargo test --locked --lib fault_                # Envelope/Faktor/Archiv/I/O (#152)
+cargo test --locked --lib files_recovery_tests  # Decrypt/Cleanup und spätes Tampering
+cargo test --locked --lib crash_                # Parent-Tests starten isolierte Kinder
+cargo test --locked --test files_recovery       # normale CLI/Core mit alten Temps
+cargo test --locked --test windows_storage_locks # nur natives Windows; 0 auf Linux
+cargo test --locked --test crypto_stream_faults # normale STREAM-I/O-Fehler
 cargo test --locked --no-default-features       # ohne REST-API
 ```
 
