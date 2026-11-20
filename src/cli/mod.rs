@@ -32,6 +32,7 @@ mod json_out;
 mod keys;
 mod many_text;
 mod menu;
+mod preview;
 mod recipients;
 mod recipients_ui;
 mod sandbox;
@@ -69,6 +70,7 @@ pub fn run() -> ExitCode {
     let lang = args::detect_lang(&argv);
     let t = texts(lang);
     warn_if_root(t);
+    preview::show(t);
     let interactive = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
     let result = if argv.len() <= 1 && interactive {
         menu::run(t, lang, |a| run_child(&a, lang))
@@ -87,10 +89,10 @@ pub fn run() -> ExitCode {
 fn run_child(argv: &[String], lang: Lang) -> CliResult {
     let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let exe = std::env::current_exe().map_err(fail)?;
-    let status = std::process::Command::new(exe)
-        .args(argv.iter().skip(1))
-        .status()
-        .map_err(fail)?;
+    let mut cmd = std::process::Command::new(exe);
+    cmd.args(argv.iter().skip(1));
+    preview::mark_child(&mut cmd);
+    let status = cmd.status().map_err(fail)?;
     if status.success() {
         Ok(())
     } else {

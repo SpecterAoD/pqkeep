@@ -58,6 +58,7 @@ pub static EN: Texts = Texts {
     msg_entropy: "Estimated strength (bits)",
     msg_generated_hint: "Store the passphrase safely (e.g. password manager). It is not saved.",
     msg_root_warning: "WARNING: pqkeep is running as root. This is not needed – please run as a normal user.",
+    msg_preview_banner: "PREVIEW BUILD – not audited and not a release. Do not use it for data you cannot lose; files may change in later versions.",
     msg_hardening: "Hardening",
     msg_error: "Error",
     msg_warning: "Warning",

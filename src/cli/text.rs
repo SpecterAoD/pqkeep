@@ -62,6 +62,7 @@ pub struct Texts {
     pub msg_entropy: &'static str,
     pub msg_generated_hint: &'static str,
     pub msg_root_warning: &'static str,
+    pub msg_preview_banner: &'static str,
     pub msg_hardening: &'static str,
     pub msg_error: &'static str,
     pub msg_warning: &'static str,
