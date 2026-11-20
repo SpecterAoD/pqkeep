@@ -71,7 +71,13 @@ jobs:
           fi
           skip=false
           reason="build"
-          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+          # DE: Vorschauen nur von `main`; ein Handstart auf einem anderen Branch baut und
+          #     veröffentlicht nichts (Pull Requests bauen weiter zum Testen, ohne Veröffentlichung).
+          # EN: Previews from `main` only; a manual start on another branch builds and publishes
+          #     nothing (pull requests still build for testing, without publishing).
+          if [ "$GITHUB_EVENT_NAME" != "pull_request" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            skip=true; reason="nicht main / not main ($GITHUB_REF)"
+          elif [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
             last=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" \
               -q '[.[] | select(.tag_name | startswith("preview-"))] | first | .target_commitish // ""')
             ci=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push" \

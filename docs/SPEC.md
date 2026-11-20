@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.13: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.14: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -15,6 +15,7 @@
 > Änderung v2.11 (10.11.2026, freigegeben von SpecterAoD mit dem Plan zu #92): Kontextmenü auch für Thunar (Xfce) über die gemeinsame Datei `~/.config/Thunar/uca.xml` – nur eigene Blöcke mit festen Kennungen, fremde Aktionen bleiben Byte für Byte erhalten, strenge Aufbauprüfung ohne XML-Crate, Sicherung vor dem Schreiben, Prüfsumme je Block (Manifest Version 2).
 > Änderung v2.12 (15.11.2026, freigegeben von SpecterAoD mit dem Projektplan „Community und Struktur“): englische Übersetzung `docs/SPEC.en.md`, gemeinsam gepflegt; externe Beiträge dürfen nur Englisch sein, die deutsche Fassung wird nachgezogen (`CONTRIBUTING.md`).
 > Änderung v2.13 (16.11.2026, freigegeben von SpecterAoD): Ausnahme von 5c für Bilder der Dokumentation unter `docs/images/` (PNG, JPEG, WebP, höchstens 500 KB je Datei, Signatur passend zur Endung; geprüft von `scripts/check_limits.sh`).
+> Änderung v2.14 (20.11.2026, freigegeben von SpecterAoD): wöchentliche Vorschau-Builds (Abschnitt 5, #269) – gleicher Build wie Releases, nur als unsigniertes GitHub-Pre-Release, im Programm als Vorschau gekennzeichnet; Betas und Releases bleiben unverändert.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
