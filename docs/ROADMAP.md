@@ -21,6 +21,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
+## In Bearbeitung / In progress
+
+- [ ] [#152](https://github.com/SpecterAoD/pqkeep/issues/152): QA-2: Deterministic fault injection and crash-recovery tests / Deterministische Fehler-Injektion und Crash-Recovery-Tests.
+  - P2, M2; dependency / Abhängigkeit: [#151](https://github.com/SpecterAoD/pqkeep/issues/151) completed / abgeschlossen ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
+  - A/B/C/D approved / freigegeben (17.11.2026): [threat model/design](security/FAULT_RECOVERY.md), scoped I/O, envelope/STREAM/factor/archive/decrypt/cleanup and acknowledged crash/restart tests implemented locally. / Threat Model/Entwurf, Scoped-I/O und Envelope-/STREAM-/Faktor-/Archiv-/Decrypt-/Cleanup-/bestätigte Crash-/Neustarttests lokal implementiert.
+  - Matrix/baseline 1.1.0: twelve new bounded cases proven natively; E approved (20.11.2026), [evidence](security/FAULT_RECOVERY_EVIDENCE.md), [draft PR #279](https://github.com/SpecterAoD/pqkeep/pull/279); final review/merge pending. / Zwölf neue begrenzte Fälle nativ belegt; E freigegeben, Nachweise und Draft-PR verlinkt; finales Review/Merge offen.
+
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
 - [x] [#151](https://github.com/SpecterAoD/pqkeep/issues/151): QA-1: Versioned attack test matrix and baseline / Versionierte Angriffstest-Matrix und Baseline. ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251), 16.11.2026)

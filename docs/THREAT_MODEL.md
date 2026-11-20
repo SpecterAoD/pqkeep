@@ -42,6 +42,12 @@ Drop nicht, temporärer Klartext kann bleiben. Windows ohne Sandbox/eigene ACL-P
 und mlock-Best-effort-Ausnahmen gelten weiterhin. Source-/Publish-/FAT-Rennen siehe FILE_FORMAT.md
 und FORMAT.md. STREAM-Puffer sind begrenzt, Source-/Pfadlisten und Argon2 benötigen weiteren Speicher.
 
+Der freigegebene [Fault-/Recovery-Testentwurf](security/FAULT_RECOVERY.md) (#152) definiert
+Commitgrenze, Bestandsschutz und isolierte Prozessabbrüche. Schritt B implementiert lokale
+Envelope-/STREAM-Fehlertests; C ergänzt Faktor-/Archiv-/Decrypt-/Cleanup- und Eltern-sync-Fehler
+sowie Windows-Sharing-Locks. D ergänzt bestätigte Child-Kills und frische Prüfprozesse.
+[Native Nachweise](security/FAULT_RECOVERY_EVIDENCE.md) liegen vor; OS-/Stromausfallgarantien bleiben offen.
+
 ## Sichtbar trotz Verschlüsselung
 
 - Schlüsseldatei: Metadaten (Name, Organisation …), öffentlicher Schlüssel, Algorithmus, Zeitpunkt.
@@ -75,6 +81,12 @@ does not prove crash/OOM/power-loss recovery: abort/SIGKILL skips Drop and tempo
 remain. Windows lacks an equivalent sandbox/dedicated ACL validation; Landlock/mlock best-effort
 exceptions remain. See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races. STREAM buffers
 are bounded, but source/path bookkeeping and Argon2 require additional memory.
+
+The approved [fault/recovery test design](security/FAULT_RECOVERY.md) (#152) defines the
+commit boundary, preservation and isolated process termination. Step B implements local
+envelope/STREAM fault tests; C adds factor/archive/decrypt/cleanup and parent-sync faults plus
+Windows sharing locks. D adds acknowledged child kills and fresh verification processes.
+[Native evidence](security/FAULT_RECOVERY_EVIDENCE.md) is recorded; OS/power-loss guarantees remain open.
 
 **Goals:** confidentiality and integrity of stored private keys against offline attackers who obtain
 the key file, and of encrypted files/directories (`.pqkf`), also against future quantum computers.

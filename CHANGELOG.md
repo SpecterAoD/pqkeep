@@ -7,6 +7,11 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **Deterministic fault/crash tests (#152):** scoped test-only I/O faults and acknowledged child
+  termination/restart tests for keys, factors, archives and authenticated output; v1/v2 unchanged.
+  Process termination does not establish OS-crash or power-loss durability.
+  **DE:** Testgebundene I/O-Fehler und bestätigte Child-Abbruch-/Neustarttests für Schlüssel,
+  Faktoren, Archive und authentifizierte Ausgabe; v1/v2 unverändert. Keine OS-/Stromverlustgarantie.
 - **Weekly preview builds** (#269): pre-release `preview-<date>.<commit>` of `main`, built with the same
   workflow as the releases (`build.yml`), unsigned and never "Latest". Previews are marked in the
   program (`--version` shows `+preview.<id>`, banner on a terminal, "PREVIEW" in window titles);

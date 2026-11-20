@@ -17,7 +17,8 @@ attack is prevented. Reuse the [v2 catalogue](../V2_TESTS.md), [threat model](..
 [CI policy](CI_SECURITY.md). Related hardening #129 and #147–#150 remains open.
 #152 owns deterministic fault/crash/recovery injection, #153 expanded parser/IPC/permission
 fuzzing and sanitizer work, #154 reproducible builds, independent audit and the release gate.
-Recording their current gaps here does not implement those follow-ups.
+Approved #152 A–E finalizes 1.1.0: 59 cases; twelve new bounded cases have native execution proof.
+[Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
 
@@ -175,7 +176,8 @@ Angriffsabwehr. [v2-Katalog](../V2_TESTS.md), [Bedrohungsmodell](../THREAT_MODEL
 [CI-Regeln](CI_SECURITY.md) werden wiederverwendet. #129 und #147–#150 bleiben offene Härtung.
 #152 übernimmt deterministische Fault-/Crash-/Recovery-Injektion, #153 Parser-/IPC-/Permissions-
 Fuzzing und Sanitizer-Ausbau, #154 reproduzierbare Builds, unabhängigen Audit und Release-Gate.
-Ihre Lücken zu erfassen implementiert die Folgeschritte nicht.
+Freigegebenes #152-A–E finalisiert 1.1.0: 59 Fälle; zwölf neue begrenzte Fälle sind nativ belegt.
+[Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.0.1",
-  "reviewed_source_commit": "e735edb83559214c85d5de491f267a4a659f93fe",
+  "matrix_version": "1.1.0",
+  "reviewed_source_commit": "ba52dcd99a7326f3bbb2add69dde25deab3dc94f",
   "cases": [
     {
       "id": "QA1-CRY-001",
@@ -4078,6 +4078,1151 @@
       ],
       "v2_ids": [],
       "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-005",
+      "category": "Recovery",
+      "component_paths": [
+        "src/envelope/io.rs",
+        "src/fsutil.rs"
+      ],
+      "scenario": {
+        "de": "Deterministische Schreibfehler bei gültigen v1/v2-Schlüsseldateien",
+        "en": "Deterministic write failures with valid v1/v2 key files"
+      },
+      "expected_behavior": {
+        "de": "Vor Commit alte gültige Datei erhalten, Fehler melden; nach Commit nur vollständige gültige Ausgabe",
+        "en": "Preserve the old valid file before commit and report errors; after commit only complete valid output"
+      },
+      "boundary": {
+        "de": "AES-v1/v2, exklusive Testroots, reguläre Fehler-Rückkehr; keine Crash-/Stromausfallgarantie.",
+        "en": "AES v1/v2, exclusive test roots, ordinary error return; no crash/power-loss guarantee."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_success_and_postcommit_states_are_valid",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_short_interrupted_and_zero_writes",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "stream_failures_never_report_success_at_boundaries",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "short_and_interrupted_writes_preserve_stream_content",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-015",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crash_driver_tests.rs"
+      ],
+      "scenario": {
+        "de": "Fehlerplan: Thread-/Root-Isolation, exakte Bytes, Wiederholbarkeit und RAII",
+        "en": "Fault plans: thread/root isolation, exact bytes, repeatability and RAII"
+      },
+      "expected_behavior": {
+        "de": "Nur gewählte Operation treffen; unbenutzte Pläne scheitern, Unwinding restauriert; alter Writer übernimmt keinen neuen Plan",
+        "en": "Affect only the selected operation; reject unused plans, restore on unwinding, do not attach an old writer to a new plan"
+      },
+      "boundary": {
+        "de": "Nur cfg(test)-Libbinary; Eltern-/Symlink-Ausbruchprobe Unix-only; keine produktive Hook-Schnittstelle.",
+        "en": "Only the cfg(test) lib binary; parent/symlink escape probe is Unix-only; no production hook interface."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_scopes_are_thread_and_root_isolated",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_occurrence_and_flush_are_observed",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_driver_tests.rs",
+          "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_driver_tests.rs",
+          "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-006",
+      "category": "Recovery",
+      "component_paths": [
+        "src/crypto/factor.rs",
+        "src/fsutil.rs"
+      ],
+      "scenario": {
+        "de": "Fehler bei Faktor-Erzeugung vor/nach Commit; bestehender Faktor bleibt unverändert",
+        "en": "Factor creation failures before/after commit; existing factor stays unchanged"
+      },
+      "expected_behavior": {
+        "de": "Vor Commit kein Ziel; nach Commit gültige 32 Bytes; primäre Fehler bleiben erhalten",
+        "en": "No target before commit; valid 32 bytes after commit; preserve primary errors"
+      },
+      "boundary": {
+        "de": "0/1/31 Bytes und vollständige 32 Bytes vor sync; keine Crash-/ACL-Garantie.",
+        "en": "0/1/31 bytes and complete 32 bytes before sync; no crash/ACL guarantee."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crypto/factor_fault_tests.rs",
+          "symbol": "rec006_precommit_factor_failures_never_publish",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crypto/factor_fault_tests.rs",
+          "symbol": "rec006_existing_factor_and_completed_publications_stay_valid",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-007",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/encrypt.rs",
+        "src/files/output.rs",
+        "src/fsutil.rs"
+      ],
+      "scenario": {
+        "de": "Archiv-Verschlüsselung: Write/Flush/Sync/Publish, kurze Grenzen und Rename-Fallback",
+        "en": "Archive encryption: write/flush/sync/publish, byte boundaries and rename fallback"
+      },
+      "expected_behavior": {
+        "de": "Quellen erhalten, kein Teilarchiv als Ziel; nach Publish vollständiges prüfbares Archiv",
+        "en": "Preserve sources, no partial target archive; after publish a complete verifiable archive"
+      },
+      "boundary": {
+        "de": "v1/v2, Datei/Baum, synthetische 64-KiB-Grenzen; Unsupported nur injiziert, kein echtes FAT.",
+        "en": "v1/v2, file/tree, synthetic 64-KiB boundaries; injected Unsupported only, no real FAT."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/files/fault_tests.rs",
+          "symbol": "rec007_encrypt_failures_preserve_sources_and_hide_partial_archive",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/fault_tests.rs",
+          "symbol": "rec007_publication_failures_leave_complete_valid_archive",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/fault_tests.rs",
+          "symbol": "rec007_hardlink_failure_and_rename_fallback_are_distinct",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/fault_tests.rs",
+          "symbol": "rec007_boundary_sizes_roundtrip_without_faults",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-008",
+      "category": "Recovery",
+      "component_paths": [
+        "src/files/decrypt.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Entschlüsselung: I/O-Abbrüche und späte Authentifizierungsfehler bei Datei/Baum",
+        "en": "Decryption: I/O interruption and late authentication failure for file/tree output"
+      },
+      "expected_behavior": {
+        "de": "Kein endgültiges Teil-Klartextziel, Archiv/Quelle unverändert; nach Publish vollständige Ausgabe",
+        "en": "No final partial plaintext target, unchanged archive/source; after publish complete output"
+      },
+      "boundary": {
+        "de": "v1/v2, leere/nestierte Verzeichnisse; eigene Temps können bei Cleanupfehler bleiben; kein Kill.",
+        "en": "v1/v2, empty/nested directories; own temps may remain on cleanup error; no kill."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec008_decrypt_failures_never_publish_partial_file_or_tree",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec008_directory_rename_failure_and_postpublish_error",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec008_empty_tree_failures_and_control_are_unambiguous",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-009",
+      "category": "Recovery",
+      "component_paths": [
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Primärer Write/Sync/Auth-Fehler plus sekundärer remove-Fehler",
+        "en": "Primary write/sync/authentication error plus secondary remove error"
+      },
+      "expected_behavior": {
+        "de": "Primären Fehler melden, gültige Ziele und Fremddateien erhalten; eigene Reste nicht automatisch übernehmen",
+        "en": "Report the primary error, preserve valid targets and foreign files; never adopt own remnants automatically"
+      },
+      "boundary": {
+        "de": "Reguläre Fehler-Rückkehr mit weiterem Aufruf im selben Prozess; kein Prozess-Neustart oder sicheres Löschen.",
+        "en": "Ordinary error return with another call in the same process; no process restart or secure erasure."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crypto/factor_fault_tests.rs",
+          "symbol": "rec009_factor_cleanup_failure_preserves_primary_and_leaves_own_temp",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec009_decrypt_primary_error_survives_cleanup_failure",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec009_encrypt_primary_error_survives_cleanup_failure",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_tests.rs",
+          "symbol": "rec008_late_authentication_failure_never_reaches_publish",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-014",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs"
+      ],
+      "scenario": {
+        "de": "Injizierter Fehler bei Unix-Elternordner-Synchronisation nach Publish",
+        "en": "Injected Unix parent-directory synchronization error after publication"
+      },
+      "expected_behavior": {
+        "de": "Bestehender Best-effort-Vertrag: gültige veröffentlichte Ausgabe, erfolgreicher Aufruf",
+        "en": "Existing best-effort contract: valid published output, successful return"
+      },
+      "boundary": {
+        "de": "Nur Unix-Hook geprüft; Windows-no-op nur cfg-Review; keine OS-/Stromausfall-Persistenz.",
+        "en": "Only Unix hook asserted; Windows no-op only cfg review; no OS/power-loss persistence."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/files/fault_tests.rs",
+          "symbol": "rec014_parent_sync_failure_is_best_effort_after_publish",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FS-009",
+      "category": "Filesystem",
+      "component_paths": [
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/decrypt.rs",
+        "src/cli/context_child.rs"
+      ],
+      "scenario": {
+        "de": "Native Windows-Sharing-Locks auf Schlüssel, Archiv und Faktor",
+        "en": "Native Windows sharing locks on key, archive and factor"
+      },
+      "expected_behavior": {
+        "de": "Gesperrte Operation scheitert ohne Bestandsschaden/Teilausgabe; nach Handle-Freigabe erfolgreicher Aufruf; gesperrtes Cleanup darf eigenen Temp zurücklassen, nach Freigabe entfernbar",
+        "en": "Locked operation fails without existing-data damage/partial output; succeeds after handle release; locked cleanup may leave its own temp, removable after release"
+      },
+      "boundary": {
+        "de": "share_mode(0), cfg(windows), uninstrumentierte API; kein Antivirus-/ACL-/Reparse-/Windows-FS-Gesamtnachweis.",
+        "en": "share_mode(0), cfg(windows), uninstrumented API; no general antivirus/ACL/reparse/Windows-filesystem proof."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/windows_storage_locks.rs",
+          "symbol": "fs009_locked_key_replace_preserves_original_and_retry_succeeds",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/windows_storage_locks.rs",
+          "symbol": "fs009_locked_archive_does_not_publish_plaintext_and_retry_succeeds",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/windows_storage_locks.rs",
+          "symbol": "fs009_locked_factor_read_fails_then_reopens_without_replacement",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "fs009_cleanup_sharing_lock_leaves_temp_until_handle_release",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default",
+        "B152-windows-initial-sharing-failed"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-010",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Bestätigter Prozessabbruch vor Commit: Schlüssel/Faktor/Archiv/Klartext",
+        "en": "Acknowledged process termination before commit: key/factor/archive/plaintext"
+      },
+      "expected_behavior": {
+        "de": "Alter gültiger Schlüssel bleibt; vor Commit kein neues endgültiges Ziel; SIGKILL/TerminateProcess ist nie Erfolg",
+        "en": "Old valid key preserved; no new final target before commit; SIGKILL/TerminateProcess never counts as success"
+      },
+      "boundary": {
+        "de": "AES-Schlüssel v1/v2, eigene Libtest-Kinder: vor open/nach create/nach einem Byte/vor Publish; Windows nativ ausstehend.",
+        "en": "AES keys v1/v2, own libtest children: before open/after create/after one byte/before publish."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-011",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Bestätigter Prozessabbruch direkt nach Hardlink oder Rename",
+        "en": "Acknowledged termination immediately after hardlink or rename"
+      },
+      "expected_behavior": {
+        "de": "Vollständiges gültiges Ziel erneut öffnen; Kind liefert keinen Erfolg/Done-Marker",
+        "en": "Reopen a complete valid target; killed child emits no success/done marker"
+      },
+      "boundary": {
+        "de": "Prozessabsturz bei laufendem Kernel; keine OS-/Stromausfall-/Cache-Dauerhaftigkeit.",
+        "en": "Process termination with running kernel; no OS/power-loss/cache durability."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-012",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Frischer Prozess mit eigenen/fremden vollständigen/gekürzten Temps und defekten Metadaten",
+        "en": "Fresh process with own/foreign complete/truncated temps and damaged metadata"
+      },
+      "expected_behavior": {
+        "de": "Gültige Ziele prüfen, beschädigte Eingaben abweisen, Temps/Fremdes nicht übernehmen oder ändern",
+        "en": "Validate good targets, reject damaged inputs, never adopt or modify temps/foreign files"
+      },
+      "boundary": {
+        "de": "Frischer Libtest-Prozess plus normale CLI inspect/Core-Prüfung; kein Startup-Scavenger/Recoverydienst oder historische Release-Binaries.",
+        "en": "Fresh libtest process plus ordinary CLI inspect/core checks; no startup scavenger/recovery service or historical release binaries."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_recovery.rs",
+          "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_recovery.rs",
+          "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-013",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Drei Core-Speicheroperationen und vorhandenes CLI-Cleanup nach Kindabbruch",
+        "en": "Three core save operations and existing CLI cleanup after child termination"
+      },
+      "expected_behavior": {
+        "de": "Erste Operation gültig, zweite nicht veröffentlicht, dritte nicht begonnen; Cleanup erhält Fertiges/Fremdes",
+        "en": "First operation valid, second unpublished, third unstarted; cleanup preserves completed/foreign files"
+      },
+      "boundary": {
+        "de": "Testgesteuerte Folge echter Envelope-Aufrufe, kein produktiver Batch-/UI-Abbruchbeweis; CLI-Cleanup-Kind erzeugt synthetische Reste.",
+        "en": "Test-driven sequence of real envelope calls, not a production batch/UI cancellation proof; CLI cleanup child creates synthetic remnants."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [
+        "B152-ubuntu-latest-default",
+        "B152-ubuntu-latest-no-default",
+        "B152-ubuntu-22.04-default",
+        "B152-ubuntu-22.04-arm-default",
+        "B152-windows-latest-default",
+        "B152-windows-latest-no-default"
+      ],
       "gap": null,
       "next_evidence": null,
       "retired": false,
