@@ -5,6 +5,8 @@ Keine Installation, Maintainerskripte oder Änderungen an Nutzerdateien.
 Gemeinsame Paketlogik für amd64 und arm64; jede Architektur wird nativ gebaut und geprüft.
 `--release` ergibt die Paketversion ohne CI-Suffix (nur für signierte Tags), `--successor`
 ein höher sortierendes Testpaket für Upgrade-/Downgrade-Prüfungen, das nie veröffentlicht wird.
+`--allow-preview` erlaubt ein Vorschau-Binary (`+preview.<Kennung>` in `--version`); nur der
+Vorschau-Build setzt es, Release-Läufe nie – dort wird ein Vorschau-Binary abgewiesen.
 """
 
 import argparse
@@ -58,13 +60,14 @@ def deb_version(upstream: str, revision: str, stamp: int, sha: str,
     return f"{version}-{revision}{suffix}" + ("+test1" if successor else "")
 
 
-def binary_version_ok(output: str, upstream: str, release: bool) -> bool:
-    """`pqkeep --version` passt zu Cargo.toml; Vorschau-Builds tragen `+preview.<Kennung>` dahinter,
-    Release-Pakete (`--release`) nie."""
+def binary_version_ok(output: str, upstream: str, allow_preview: bool = False) -> bool:
+    """`pqkeep --version` passt zu Cargo.toml; ein Vorschau-Binary (`+preview.<Kennung>` dahinter)
+    nur mit `allow_preview`, das allein der Vorschau-Build setzt."""
     expected = "pqkeep " + upstream
     if output == expected:
         return True
-    return not release and re.fullmatch(re.escape(expected) + r"\+preview(\.[0-9A-Za-z.-]{1,40})?", output) is not None
+    preview = re.escape(expected) + r"\+preview(\.[0-9A-Za-z.-]{1,40})?"
+    return allow_preview and re.fullmatch(preview, output) is not None
 
 
 def put(stage: Path, name: str, data: bytes, mode: int = 0o644) -> None:
@@ -151,7 +154,7 @@ def normalize(stage: Path, stamp: int) -> None:
 
 
 def build(binary: Path, target: str, out: Path, sha: str, root: Path,
-          release: bool = False, successor: bool = False) -> Path:
+          release: bool = False, successor: bool = False, allow_preview: bool = False) -> Path:
     """Isoliert bauen und erst nach Erfolg atomar ohne Überschreiben bereitstellen."""
     if os.geteuid() == 0:
         raise ValueError("Paketbau muss ohne Root-Rechte erfolgen")
@@ -171,7 +174,7 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path,
         raise ValueError("SOURCE_DATE_EPOCH muss ausdrücklich gesetzt sein")
     version = deb_version(upstream, metadata["revision"], stamp, sha, release, successor)
     if not binary_version_ok(subprocess.check_output([str(binary), "--version"], text=True).strip(),
-                             upstream, release):
+                             upstream, allow_preview):
         raise ValueError("Binary-Version passt nicht zu Cargo.toml")
     if any(p.is_symlink() for p in (out.absolute(), *out.absolute().parents)):
         raise ValueError("Ausgabepfad enthält einen Symlink")
@@ -205,10 +208,11 @@ def main() -> int:
     parser.add_argument("--ci-sha", required=True)
     parser.add_argument("--release", action="store_true")
     parser.add_argument("--successor", action="store_true")
+    parser.add_argument("--allow-preview", action="store_true")
     args = parser.parse_args()
     try:
         build(args.binary, args.target, args.out, args.ci_sha, Path(__file__).resolve().parents[1],
-              args.release, args.successor)
+              args.release, args.successor, args.allow_preview)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"FEHLER: {error}")
         return 1

@@ -1,11 +1,11 @@
-# MASTER PROJECT SPECIFICATION v2.13: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.14: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.13. Both versions are maintained together; every change to one is made to the other in the
+> 2.14. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.13. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.14. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
@@ -21,6 +21,7 @@
 > Change v2.11 (2026-11-10, approved by SpecterAoD with the plan for #92): context menu also for Thunar (Xfce) via the shared file `~/.config/Thunar/uca.xml` – only own blocks with fixed identifiers, foreign actions stay byte for byte, strict structure check without an XML crate, backup before writing, checksum per block (manifest version 2).
 > Change v2.12 (2026-11-15, approved by SpecterAoD with the "community and structure" project plan): English translation `docs/SPEC.en.md`, maintained together; external contributions may be English only, the German version follows (`CONTRIBUTING.md`).
 > Change v2.13 (2026-11-16, approved by SpecterAoD): exception from 5c for documentation images below `docs/images/` (PNG, JPEG, WebP, at most 500 KB per file, signature matching the extension; checked by `scripts/check_limits.sh`).
+> Change v2.14 (2026-11-20, approved by SpecterAoD): weekly preview builds (section 5, #269) – the same build as releases, published only as an unsigned GitHub pre-release, marked as a preview in the program; betas and releases stay unchanged.
 
 > Working instruction for Claude Code. This specification is binding. In case of contradictions or gaps: do not guess, ask briefly.
 
@@ -117,6 +118,7 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - **No secrets** in the repository or in workflows. Tests generate all passphrases and keys dynamically at runtime (generator, temporary directories via `tempfile`). Negative tests may use deliberately weak sample values as test data, but never real or reused secrets.
 - Additional checks: secret scanning with push protection (GitHub) and `gitleaks` in CI; test check "no `#[test]` in `src/` except `*_tests.rs`".
 - Release and signing: see section 5a.
+- Preview builds (weekly, `preview.yml`, #269): the same build as for releases (`build.yml`), published only as an unsigned GitHub pre-release (never "Latest", the last four are kept); marked in the program (`+preview.` in `--version`, banner, window titles). Betas and releases stay unchanged; details in `docs/RELEASE.md`.
 
 ## 5a. Release signing & supply chain (required for releases **and** betas)
 

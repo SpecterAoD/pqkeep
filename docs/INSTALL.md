@@ -11,6 +11,10 @@ Datei prüfen – Prüfsumme, Attestation und Sigstore-Signatur wie im
 [README](../README.md#release-prüfen) beschrieben. Eine Prüfsumme allein bestätigt keine
 Herkunft. Es gibt kein APT-Repository: Aktualisiert wird durch Installieren des neueren Pakets.
 
+Wöchentliche **Vorschauen** von `main` erscheinen als Pre-Release `preview-<Datum>.<Commit>` – ohne
+Signatur, nicht geprüft, nur zum Testen (Details: [RELEASE.md](RELEASE.md#vorschau-builds-wöchentlich)).
+Das Programm zeigt sie in `--version` mit `+preview.` an.
+
 Zum Testen eines Entwicklungsstands erzeugt jeder Lauf des Release-Workflows zusätzlich die
 Actions-Artefakte `candidate-debian-amd64` und `candidate-debian-arm64` (14 Tage verfügbar,
 unsigniert, Dateiname `pqkeep_<Debian-Version>_<Architektur>.deb`). Dafür nur den eigenen
@@ -98,6 +102,10 @@ Since v0.1.0-beta.2, releases include Debian packages for AMD64 and ARM64:
 installing it – checksum, attestation and Sigstore signature as described in the
 [README](../README.md#verifying-a-release). A checksum alone does not authenticate a package.
 There is no APT repository: update by installing the newer package.
+
+Weekly **previews** of `main` appear as pre-release `preview-<date>.<commit>` – unsigned, not audited,
+for testing only (details: [RELEASE.md](RELEASE.md#preview-builds-weekly)). The program shows them with
+`+preview.` in `--version`.
 
 To test a development state, every Release workflow run also produces the Actions artifacts
 `candidate-debian-amd64` and `candidate-debian-arm64` (retained for 14 days, unsigned, file

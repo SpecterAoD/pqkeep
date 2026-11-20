@@ -126,16 +126,17 @@ class DebianTests(unittest.TestCase):
 
     def test_binary_version_output(self):
         base = "0.1.0-beta.3"
+        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}", base))
         self.assertTrue(deb.binary_version_ok(f"pqkeep {base}", base, True))
-        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}", base, False))
         preview = f"pqkeep {base}+preview.20261123.a1b2c3d"
-        self.assertTrue(deb.binary_version_ok(preview, base, False))
-        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}+preview", base, False))
-        # Release-Pakete dürfen nie aus einem Vorschau-Binary entstehen.
-        self.assertFalse(deb.binary_version_ok(preview, base, True))
+        self.assertTrue(deb.binary_version_ok(preview, base, True))
+        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}+preview", base, True))
+        # Ohne ausdrückliche Erlaubnis (Release-Läufe) wird ein Vorschau-Binary abgewiesen.
+        self.assertFalse(deb.binary_version_ok(preview, base))
+        self.assertFalse(deb.binary_version_ok(preview, base, False))
         for bad in (f"pqkeep {base}+other", f"pqkeep {base}+preview.", f"pqkeep {base}+preview.a b",
                     f"pqkeep 0.1.0+preview.x", f"pqkeep {base}+preview.{'a' * 41}"):
-            self.assertFalse(deb.binary_version_ok(bad, base, False), bad)
+            self.assertFalse(deb.binary_version_ok(bad, base, True), bad)
 
     def test_invalid_versions(self):
         for version in ("../1", "01.2.3", "1.2", "1.2.3+meta", "1.2.3-beta..1",

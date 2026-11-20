@@ -68,6 +68,24 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertEqual(1, len(found), found)
         self.assertIn("extra", found[0])
 
+    def test_reusable_workflow_without_write(self):
+        # DE: Wiederverwendbare Workflows bleiben beim Lesen. EN: Reusable workflows stay read-only.
+        reusable = BASE.replace("on: [push]", "on:\n  workflow_call:")
+        self.assertEqual([], audit(reusable, "build.yml"))
+        sample = reusable + WRITE_JOB.format("contents", "")
+        self.check(sample, "reusable workflow requests write")
+        self.check(reusable.replace("contents: read", "contents: write"), "reusable workflow requests write")
+
+    def test_preview_never_signs_or_uses_release_environment(self):
+        # DE: Nur preview.yml hat diese Grenzen; Kommentare zählen nicht.
+        # EN: Only preview.yml has these limits; comments do not count.
+        step = "      - run: cosign sign-blob --yes x\n"
+        self.assertTrue(any("must not sign" in x for x in audit(BASE + step, "preview.yml")))
+        self.assertEqual([], audit(BASE + step, "other.yml"))
+        env = BASE.replace("    runs-on: ubuntu-latest\n", "    runs-on: ubuntu-latest\n    environment: release\n")
+        self.assertTrue(any("release environment" in x for x in audit(env, "preview.yml")))
+        self.assertEqual([], audit("# kein Sigstore, kein SignPath\n" + BASE, "preview.yml"))
+
     def test_pr_secret_index_and_comment(self):
         pr = PR
         self.check(pr + "env:\n  KEY: ${{ secrets['API_KEY'] }}\n", "repository secrets")
