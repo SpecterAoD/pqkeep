@@ -78,6 +78,34 @@ Release (Sigstore-Bundle, offline prüfbar mit `gh attestation verify <datei> --
 Erst nach Zusage der SignPath Foundation: Signierschritt vor dem Verpacken einbauen, Zugangsdaten
 nur als Secret im Environment `release`, Hinweis gemäß [`CODE_SIGNING_POLICY.md`](../CODE_SIGNING_POLICY.md).
 
+## Vorschau-Builds (wöchentlich)
+
+Neben Betas und Releases entsteht jede Woche (Sonntag, früher Morgen UTC) eine **Vorschau** von
+`main`: Workflow `.github/workflows/preview.yml`. Sie nutzt denselben Build wie die Releases
+(`.github/workflows/build.yml`: bauen, Härtungsprüfung, Rauchtest, Archive, `.deb`, SBOM,
+Installationstests, Manifest). Nur das Veröffentlichen unterscheidet sich.
+
+| | Beta / Release | Vorschau |
+|---|---|---|
+| Auslöser | signierter Tag `v*` (Release-Workflow) | Zeitplan oder *Run workflow* |
+| Version in `--version` | `0.1.0-beta.3` | `0.1.0-beta.3+preview.<Datum>.<Commit>` |
+| Im Programm | – | Banner (Terminal), „PREVIEW“ in Fenstertiteln |
+| Dateiname | `pqkeep-0.1.0-beta.3-…` | `pqkeep-0.1.0-beta.3-preview.<Datum>.<Commit>-…` |
+| GitHub | Entwurf, von Hand veröffentlicht | Pre-Release `preview-<Datum>.<Commit>`, nie „Latest“ |
+| Signierung | Sigstore, Freigabe im Environment `release` | keine; nur Build-Provenance und Prüfsummen |
+| Aufbewahrung | dauerhaft | die letzten vier |
+
+Ablauf: Der Zeitplan überspringt den Lauf, wenn es seit der letzten Vorschau keinen neuen Commit
+gibt oder die CI auf dem Commit nicht grün ist; von Hand startet er immer. Pull Requests, die
+`preview.yml` oder `build.yml` ändern, bauen nur und testen (kein Veröffentlichen).
+
+**Betas und Releases bleiben unberührt:** Die Kennzeichnung entsteht nur beim Bauen über
+`PQKEEP_CHANNEL=preview` und `PQKEEP_BUILD_ID`; Release-Builds setzen die Variablen gar nicht, und
+der Schritt „Kanal prüfen“ in `build.yml` bricht ab, wenn ein Release `+preview.` trägt oder eine
+Vorschau nicht. Wer `build.yml` ändert, prüft das mit einem Trockenlauf des Release-Workflows.
+
+Vorschauen sind **nicht geprüft** und nicht für Daten gedacht, die nicht verloren gehen dürfen.
+
 ---
 
 ## English
@@ -123,3 +151,32 @@ release file name follows the archive scheme because GitHub replaces `~` in asse
 package SBOM is derived from the archive SBOM of the same architecture, with its own
 `serialNumber` and `pqkeep:debian:*` properties. Both Linux targets build natively with glibc
 symbols capped at 2.35; tested distributions and limits: [package tests](PACKAGE_TESTS.md).
+
+
+## Preview builds (weekly)
+
+Besides betas and releases, a **preview** of `main` is built every week (Sunday, early morning UTC):
+workflow `.github/workflows/preview.yml`. It uses the same build as the releases
+(`.github/workflows/build.yml`: build, hardening check, smoke test, archives, `.deb`, SBOM,
+installation tests, manifest). Only publishing differs.
+
+| | Beta / release | Preview |
+|---|---|---|
+| Trigger | signed tag `v*` (release workflow) | schedule or *Run workflow* |
+| Version in `--version` | `0.1.0-beta.3` | `0.1.0-beta.3+preview.<date>.<commit>` |
+| In the program | – | banner (terminal), "PREVIEW" in window titles |
+| File name | `pqkeep-0.1.0-beta.3-…` | `pqkeep-0.1.0-beta.3-preview.<date>.<commit>-…` |
+| GitHub | draft, published by hand | pre-release `preview-<date>.<commit>`, never "Latest" |
+| Signing | Sigstore, approval in environment `release` | none; build provenance and checksums only |
+| Retention | permanent | the last four |
+
+Flow: the schedule skips the run when there is no new commit since the last preview or CI on the
+commit is not green; a manual start always runs. Pull requests changing `preview.yml` or
+`build.yml` only build and test (no publishing).
+
+**Betas and releases stay untouched:** the marking exists only at build time through
+`PQKEEP_CHANNEL=preview` and `PQKEEP_BUILD_ID`; release builds do not set the variables at all, and
+the step "check channel" in `build.yml` fails if a release carries `+preview.` or a preview does
+not. Whoever changes `build.yml` checks it with a dry run of the release workflow.
+
+Previews are **not audited** and not meant for data you cannot lose.

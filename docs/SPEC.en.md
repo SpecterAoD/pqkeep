@@ -117,6 +117,7 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - **No secrets** in the repository or in workflows. Tests generate all passphrases and keys dynamically at runtime (generator, temporary directories via `tempfile`). Negative tests may use deliberately weak sample values as test data, but never real or reused secrets.
 - Additional checks: secret scanning with push protection (GitHub) and `gitleaks` in CI; test check "no `#[test]` in `src/` except `*_tests.rs`".
 - Release and signing: see section 5a.
+- Preview builds (weekly, `preview.yml`, #269): the same build as for releases (`build.yml`), published only as an unsigned GitHub pre-release (never "Latest", the last four are kept); marked in the program (`+preview.` in `--version`, banner, window titles). Betas and releases stay unchanged; details in `docs/RELEASE.md`.
 
 ## 5a. Release signing & supply chain (required for releases **and** betas)
 

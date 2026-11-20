@@ -3,7 +3,9 @@
 YAML-Parser: explizite `permissions` oben, Actions per vollständigem Commit-SHA, keine
 `pull_request_target`/`workflow_run`-Trigger, keine serialisierten Secrets, kein `curl | sh`,
 keine Downloads ohne Prüfsumme,
-keine Secrets und keine Schreibrechte in PR-Workflows (Ausnahme: CodeQL-Upload). Ergänzt
+keine Secrets und keine Schreibrechte in PR-Workflows (Ausnahme: CodeQL-Upload), wiederverwendbare
+Workflows (`workflow_call`) ohne Schreibrechte, Vorschau-Workflow (`preview.yml`) ohne Signierung und
+ohne Environment `release` (#269). Ergänzt
 actionlint und zizmor, ersetzt sie nicht. Aufruf: `python3 scripts/check_actions_policy.py`
 (Exit 1 bei Funden).
 
@@ -11,7 +13,9 @@ EN: Own strict rules for the workflow files (#181), standard library only, no YA
 explicit top-level `permissions`, actions pinned to full commit SHAs, no
 `pull_request_target`/`workflow_run` triggers, no serialized secrets, no `curl | sh`, no downloads
 without a checksum, no secrets
-and no write permissions in PR workflows (exception: CodeQL upload). Complements actionlint and
+and no write permissions in PR workflows (exception: CodeQL upload), reusable workflows
+(`workflow_call`) without write permissions, the preview workflow (`preview.yml`) without signing and
+without the `release` environment (#269). Complements actionlint and
 zizmor, does not replace them. Usage: `python3 scripts/check_actions_policy.py` (exit 1 on
 findings).
 """
@@ -45,6 +49,8 @@ DOWNLOAD = re.compile(r"\b(?:curl|wget)\b[^\n]*(?:\s-[a-zA-Z]*[oO]\b|--output\b|
 CHECKSUM = re.compile(r"sha256sum\s+(?:-c|--check)\b|--require-hashes\b|shasum\s+-a\s*256\s+-c\b")
 WRITE_SCOPE = re.compile(r"(?m)^\s*(?:permissions:\s*write-all\b|[a-z-]+:\s*write\b)")
 CODEQL_SCOPE = re.compile(r"(?m)^\s*security-events:\s*write\b")
+RELEASE_ENV = re.compile(r"(?m)^\s*environment:\s*['\"]?release\b")
+SIGNING = re.compile(r"\b(?:cosign|signpath|sigstore)\b", re.I)
 
 
 def events(text: str) -> set[str]:
@@ -120,6 +126,16 @@ def audit(text: str, name: str) -> list[str]:
     for step in run_steps(text):
         if DOWNLOAD.search(step) and not CHECKSUM.search(step):
             problems.append("download without checksum verification")
+    code = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#"))
+    if "workflow_call" in triggers and WRITE_SCOPE.search(code):
+        problems.append("reusable workflow requests write permission")
+    if name == "preview.yml":
+        # DE: Vorschauen werden nicht signiert und brauchen die Freigabe `release` nie.
+        # EN: Previews are never signed and never need the `release` approval.
+        if RELEASE_ENV.search(code):
+            problems.append("preview workflow must not use the release environment")
+        if SIGNING.search(code):
+            problems.append("preview workflow must not sign")
     if "pull_request" in triggers:
         # DE: Nur echte Ausdrücke, nicht das Wort in Kommentaren. EN: Real expressions only.
         if SECRET_EXPR.search(text):

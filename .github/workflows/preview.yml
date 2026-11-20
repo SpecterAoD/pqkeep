@@ -1,0 +1,156 @@
+# DE: Wöchentliche Vorschau von `main` (#269). Nutzt denselben Build wie die Releases (build.yml),
+#     veröffentlicht aber nur ein GitHub-Pre-Release `preview-<Datum>.<Commit>`:
+#     - nie "Latest", keine Signierung (kein Sigstore, kein SignPath, kein Environment `release`),
+#       nur Build-Provenance und Prüfsummen; Dateien heißen `…-preview.<Kennung>-…`;
+#     - übersprungen, wenn es seit der letzten Vorschau keinen neuen Commit gibt oder die CI auf
+#       dem Commit nicht grün ist (nur beim Zeitplan; von Hand startet immer);
+#     - es bleiben die letzten vier Vorschauen, ältere werden samt Tag gelöscht;
+#     - Pull Requests, die diesen Workflow oder build.yml ändern: nur Build und Tests (kein Publish).
+#     Releases und Betas bleiben davon unberührt: Tags `v*` lösen nur release.yml aus.
+# EN: Weekly preview of `main` (#269). Uses the same build as the releases (build.yml) but only
+#     publishes a GitHub pre-release `preview-<date>.<commit>`:
+#     - never "Latest", no signing (no Sigstore, no SignPath, no `release` environment), only build
+#       provenance and checksums; files are named `…-preview.<id>-…`;
+#     - skipped when there is no new commit since the last preview or CI on the commit is not
+#       green (schedule only; a manual start always runs);
+#     - the last four previews are kept, older ones are deleted together with their tag;
+#     - pull requests changing this workflow or build.yml: build and tests only (no publish).
+#     Releases and betas stay untouched: tags `v*` trigger release.yml only.
+name: Preview
+
+on:
+  schedule:
+    - cron: "41 3 * * 0"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/preview.yml"
+      - ".github/workflows/build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  KEEP_PREVIEWS: "4"
+
+jobs:
+  prepare:
+    name: Vorbereitung / prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      epoch: ${{ steps.meta.outputs.epoch }}
+      build_id: ${{ steps.meta.outputs.build_id }}
+      skip: ${{ steps.meta.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Version, Kennung, Überspringen / version, id, skip
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo_version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          epoch=$(git log -1 --format=%ct)
+          build_id="$(date -u -d "@$epoch" +%Y%m%d).$(git rev-parse --short=7 HEAD)"
+          if ! printf '%s' "$build_id" | grep -Eq '^[0-9]{8}\.[0-9a-f]{7}$'; then
+            echo "Ungültige Kennung / invalid id: $build_id" >&2
+            exit 1
+          fi
+          skip=false
+          reason="build"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            last=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" \
+              -q '[.[] | select(.tag_name | startswith("preview-"))] | first | .target_commitish // ""')
+            ci=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push" \
+              -q '.workflow_runs | first | .conclusion // ""')
+            if [ "$last" = "$GITHUB_SHA" ]; then
+              skip=true; reason="kein neuer Commit seit der letzten Vorschau / no new commit since the last preview"
+            elif [ "$ci" != "success" ]; then
+              skip=true; reason="CI auf dem Commit nicht grün / CI on the commit is not green (${ci:-none})"
+            fi
+          fi
+          {
+            echo "epoch=$epoch"
+            echo "build_id=$build_id"
+            echo "version=$cargo_version-preview.$build_id"
+            echo "skip=$skip"
+          } >> "$GITHUB_OUTPUT"
+          echo "Vorschau / preview $build_id: $reason (skip=$skip)" >> "$GITHUB_STEP_SUMMARY"
+
+  # DE: Gleicher Build wie bei Releases; bei `skip` entfällt er und mit ihm das Veröffentlichen.
+  # EN: Same build as for releases; on `skip` it is omitted and so is publishing.
+  build:
+    name: Build
+    needs: prepare
+    if: needs.prepare.outputs.skip != 'true'
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository] -- gleicher Commit wie der Aufrufer / same commit as the caller
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      epoch: ${{ needs.prepare.outputs.epoch }}
+      is_tag: "false"
+      channel: preview
+      build_id: ${{ needs.prepare.outputs.build_id }}
+
+  publish:
+    name: Pre-Release veröffentlichen / publish pre-release
+    needs: [prepare, build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      BUILD_ID: ${{ needs.prepare.outputs.build_id }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-input
+          path: dist
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+      - name: Prüfsummen / checksums
+        working-directory: dist
+        run: sha256sum -- *.tar.gz *.zip *.deb *.cdx.json | sort -k2 > SHA256SUMS && cat SHA256SUMS
+      - name: Pre-Release / pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="preview-$BUILD_ID"
+          cat > notes.md <<EOF
+          **DE:** Automatische Vorschau von \`main\` (Commit \`$GITHUB_SHA\`). **Nicht geprüft, nicht signiert, kein Release.** Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateiformate können sich noch ändern. Verlassen Sie sich nur auf die veröffentlichten Betas und Releases. Prüfen: \`sha256sum -c SHA256SUMS\` und \`gh attestation verify <Datei> --repo $GITHUB_REPOSITORY\`.
+
+          **EN:** Automatic preview of \`main\` (commit \`$GITHUB_SHA\`). **Not audited, not signed, not a release.** Do not use it for data you cannot lose; file formats may still change. Rely only on the published betas and releases. Verify with \`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
+          EOF
+          gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --prerelease --latest=false --title "PQKeep Preview $BUILD_ID" --notes-file notes.md
+      # DE: Nur Vorschauen mit passendem Tag-Namen werden gelöscht; `v*`-Tags sind außerdem geschützt.
+      # EN: Only previews with a matching tag name are deleted; `v*` tags are protected as well.
+      - name: Alte Vorschauen entfernen / prune old previews
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            -q '[.[] | select((.tag_name | test("^preview-[0-9]{8}\\.[0-9a-f]{7}$")) and .prerelease)]
+                | sort_by(.created_at) | reverse | .['"$KEEP_PREVIEWS"':] | .[].tag_name' |
+          while read -r old; do
+            echo "Lösche / delete $old"
+            gh release delete "$old" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          done

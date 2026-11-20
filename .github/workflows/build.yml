@@ -1,0 +1,325 @@
+# DE: Wiederverwendbarer Build für Releases und Vorschauen: bauen, härten prüfen, Rauchtest,
+#     Pakete (Archiv und .deb), SBOM, Installationstests und Artefaktmanifest. Aufgerufen von
+#     release.yml (Tag, Trockenlauf) und preview.yml (wöchentliche Vorschau). Er hat nur
+#     Leserechte und kennt weder Signierung noch Veröffentlichung – beides bleibt in den
+#     aufrufenden Workflows. Ergebnis: Artefakte `dist-*` und `release-input`.
+#     `channel=preview` kennzeichnet das Programm als Vorschau; sonst bleibt alles unverändert.
+# EN: Reusable build for releases and previews: build, hardening check, smoke test, packages
+#     (archive and .deb), SBOM, installation tests and artifact manifest. Called by release.yml
+#     (tag, dry run) and preview.yml (weekly preview). It has read permission only and knows
+#     neither signing nor publishing – both stay in the calling workflows. Result: artifacts
+#     `dist-*` and `release-input`. `channel=preview` marks the program as a preview; otherwise
+#     everything stays unchanged.
+name: Build (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version for file names / Version für Dateinamen"
+        type: string
+        required: true
+      epoch:
+        description: "SOURCE_DATE_EPOCH"
+        type: string
+        required: true
+      is_tag:
+        description: "true for a signed release tag / true bei signiertem Release-Tag"
+        type: string
+        required: true
+      channel:
+        description: "release (default) or preview / release (Standard) oder preview"
+        type: string
+        default: release
+      build_id:
+        description: "Preview build id, e.g. 20261123.a1b2c3d / Vorschau-Kennung"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CYCLONEDX_VERSION: "0.5.9"
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # DE: Ubuntu 22.04 (glibc 2.35) für breite Kompatibilität. EN: for wide compatibility.
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: dist-x86_64-unknown-linux-gnu
+            deb_arch: amd64
+            exe: pqkeep
+            extra: ""
+            flags: ""
+          # DE: RUSTFLAGS überschreibt .cargo/config.toml – CFG daher hier ausdrücklich.
+          # EN: RUSTFLAGS overrides .cargo/config.toml – hence CFG explicitly here.
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: dist-x86_64-pc-windows-msvc
+            deb_arch: ""
+            exe: pqkeep.exe
+            # DE: Startprogramm ohne Konsolenfenster (Kontextmenü). EN: Launcher without console window.
+            extra: pqkeepw.exe
+            flags: "-C control-flow-guard"
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact: dist-aarch64-unknown-linux-gnu
+            deb_arch: arm64
+            exe: pqkeep
+            extra: ""
+            flags: ""
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_DATE_EPOCH: ${{ inputs.epoch }}
+      VERSION: ${{ inputs.version }}
+      IS_TAG: ${{ inputs.is_tag }}
+      CHANNEL: ${{ inputs.channel }}
+      BUILD_ID: ${{ inputs.build_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show active-toolchain || rustup toolchain install
+      - name: Reproduzierbare Pfade / reproducible paths
+        run: |
+          if command -v cygpath >/dev/null; then ws=$(cygpath -w "$PWD"); ch=$(cygpath -w "$HOME/.cargo"); else ws="$PWD"; ch="$HOME/.cargo"; fi
+          echo "RUSTFLAGS=--remap-path-prefix=$ws=/build --remap-path-prefix=$ch=/cargo ${{ matrix.flags }}" >> "$GITHUB_ENV"
+      # DE: Nur Vorschau-Builds werden gekennzeichnet (src/build_info.rs). Betas und Releases setzen
+      #     die Variablen gar nicht, damit ihre Binaries unverändert bleiben.
+      # EN: Only preview builds are marked (src/build_info.rs). Betas and releases do not set the
+      #     variables at all, so their binaries stay unchanged.
+      - name: Vorschau-Kennzeichnung / preview marking
+        if: inputs.channel == 'preview'
+        run: |
+          echo "PQKEEP_CHANNEL=preview" >> "$GITHUB_ENV"
+          echo "PQKEEP_BUILD_ID=$BUILD_ID" >> "$GITHUB_ENV"
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Native ELF-Architektur und glibc-Basis
+        if: runner.os == 'Linux'
+        run: |
+          uname -a
+          getconf PAGESIZE
+          getconf GNU_LIBC_VERSION
+          rustc -vV
+          cargo --version
+          cc --version
+          ld --version
+          sha256sum Cargo.lock
+          printf 'Runner image: %s\n' "$ImageVersion"
+          python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" --native
+      - name: Härtung prüfen / check hardening
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          for exe in ${{ matrix.exe }} ${{ matrix.extra }}; do
+            "$py" scripts/check_binary.py "target/${{ matrix.target }}/release/$exe"
+          done
+      - name: Rauchtest / smoke test
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_smoke.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
+      # DE: Vorschauen tragen `+preview.` in der Versionszeile, Betas und Releases nie.
+      # EN: Previews carry `+preview.` in the version line, betas and releases never do.
+      - name: Kanal prüfen / check channel
+        run: |
+          out=$("target/${{ matrix.target }}/release/${{ matrix.exe }}" --version)
+          echo "$out"
+          case "$out" in
+            *"+preview."*) found=preview ;;
+            *+*) echo "Unerwartetes Plus-Zeichen / unexpected plus sign" >&2; exit 1 ;;
+            *) found=release ;;
+          esac
+          want=release
+          if [ "$CHANNEL" = "preview" ]; then want=preview; fi
+          if [ "$found" != "$want" ]; then
+            echo "Kanal $found, erwartet $want / channel $found, expected $want" >&2
+            exit 1
+          fi
+      # DE: Platz für die Windows-Signatur (SignPath) nach deren Zusage – vor dem Verpacken.
+      # EN: Place for the Windows signature (SignPath) after approval – before packaging.
+      - name: Paket / package
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_package.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "$VERSION" "${{ matrix.target }}" dist
+      - name: SBOM (CycloneDX)
+        run: |
+          sha256sum Cargo.lock > "$RUNNER_TEMP/pqkeep-lock.sha256"
+          cargo install --locked cargo-cyclonedx --version "$CYCLONEDX_VERSION"
+          cargo cyclonedx --format json --spec-version 1.5 --target "${{ matrix.target }}" \
+            --override-filename "pqkeep-$VERSION-${{ matrix.target }}.cdx"
+          mv "pqkeep-$VERSION-${{ matrix.target }}.cdx.json" dist/
+          # DE: serialNumber (von actions/attest verlangt) und reproduzierbarer Zeitstempel.
+          # EN: serialNumber (required by actions/attest) and reproducible timestamp.
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/release_sbom.py "dist/pqkeep-$VERSION-${{ matrix.target }}.cdx.json" \
+            "$VERSION" "${{ matrix.target }}" "$GITHUB_SHA"
+          sha256sum -c "$RUNNER_TEMP/pqkeep-lock.sha256"
+          ls -l dist
+      - name: Identität des verpackten Linux-Binaries
+        if: runner.os == 'Linux'
+        run: |
+          python3 scripts/release_elf.py "target/${{ matrix.target }}/release/${{ matrix.exe }}" "${{ matrix.target }}" \
+            --archive "dist/pqkeep-$VERSION-${{ matrix.target }}.tar.gz"
+      - name: Debian-Paket und reproduzierbares Verpacken
+        if: matrix.deb_arch != ''
+        run: |
+          dpkg-deb --version
+          dpkg-shlibdeps --version
+          binary="target/${{ matrix.target }}/release/pqkeep"
+          # DE: Signierter Tag: Release-Version ohne CI-Suffix. Sonst CI-Kandidat; das
+          #     Nachfolger-Testpaket trägt dann die Release-Version und prüft so auch diesen Weg.
+          # EN: Signed tag: release version without CI suffix. Otherwise CI candidate; the
+          #     successor test package then carries the release version and covers that path.
+          if [ "$IS_TAG" = "true" ]; then kind=(--release); next=(--release --successor); else kind=(); next=(--release); fi
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-dist --ci-sha "$GITHUB_SHA" "${kind[@]}"
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" "${kind[@]}"
+          cmp deb-dist/*.deb deb-repeat/*.deb
+          # Nachfolger-Testpaket nur für Upgrade-/Downgrade-Prüfungen: gleiches Binary, höhere
+          # Version. Wird nie veröffentlicht (Artefaktname außerhalb dist-*).
+          python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-next --ci-sha "$GITHUB_SHA" "${next[@]}"
+          deb=$(ls deb-dist/*.deb)
+          dpkg --compare-versions "$(dpkg-deb -f "$deb" Version)" lt "$(dpkg-deb -f deb-next/*.deb Version)"
+          dpkg-deb --info "$deb"
+          dpkg-deb --contents "$deb"
+          # DE: Release-Dateiname ohne Tilde (GitHub ersetzt sie in Asset-Namen) und eigene SBOM.
+          # EN: Release file name without tilde (GitHub replaces it in asset names) and own SBOM.
+          asset="dist/pqkeep-$VERSION-${{ matrix.deb_arch }}.deb"
+          cp "$deb" "$asset"
+          python3 scripts/release_sbom.py --deb "dist/pqkeep-$VERSION-${{ matrix.target }}.cdx.json" \
+            "$asset.cdx.json" "$(dpkg-deb -f "$deb" Version)" "${{ matrix.deb_arch }}" \
+            "$(sha256sum "$binary" | cut -d' ' -f1)" "$GITHUB_SHA"
+          sha256sum "$deb" "$asset"
+      - name: Debian-Kandidat getrennt bereitstellen
+        if: matrix.deb_arch != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: candidate-debian-${{ matrix.deb_arch }}
+          path: deb-dist/*.deb
+          if-no-files-found: error
+          retention-days: 14
+      - name: Nachfolger-Testpaket getrennt bereitstellen
+        if: matrix.deb_arch != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lifecycle-debian-${{ matrix.deb_arch }}
+          path: deb-next/*.deb
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  debian:
+    name: Debian-Installation ${{ matrix.arch }} (${{ matrix.name }})
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+        distro: [debian12, debian13, ubuntu22, ubuntu24, ubuntu26]
+        include:
+          # `other`: Paket der jeweils anderen Architektur; es muss abgewiesen werden.
+          - arch: amd64
+            runner: ubuntu-22.04
+            other: arm64
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+            other: amd64
+          # Offizielle Image-Digests am 10.11.2026 (Debian 12, Ubuntu 22.04) und 12.11.2026
+          # geprüft; keine beweglichen Tags allein.
+          # Alle OCI-Indizes enthalten native amd64- und arm64/v8-Manifeste.
+          - distro: debian12
+            name: Debian 12
+            image: debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+          - distro: debian13
+            name: Debian 13
+            image: debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+          - distro: ubuntu22
+            name: Ubuntu 22.04
+            image: ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
+          - distro: ubuntu24
+            name: Ubuntu 24.04
+            image: ubuntu:24.04@sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5
+          - distro: ubuntu26
+            name: Ubuntu 26.04
+            image: ubuntu:26.04@sha256:065aa8626841f16057b78b027b464cd59c4fac36c204c72dcbf48d66f5fa8a96
+    # Kurzlebige native Testcontainer; keine privilegierten Optionen oder gelockerten Filter.
+    container:
+      image: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate-debian-${{ matrix.arch }}
+          path: candidate
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: lifecycle-debian-${{ matrix.arch }}
+          path: successor
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate-debian-${{ matrix.other }}
+          path: foreign
+      - name: Werkzeuge ausschließlich im Testcontainer
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends python3 lintian
+          cat /etc/os-release
+          dpkg-deb --version
+          lintian --version
+      - name: Lintian ohne Overrides
+        run: lintian --allow-root --fail-on error candidate/*.deb successor/*.deb
+      - name: Native Installation, Nutzung und Entfernung
+        run: python3 scripts/release_deb_smoke.py candidate/*.deb --arch "${{ matrix.arch }}"
+      - name: Lebenszyklus – Abweisungen, Upgrade, Downgrade, Wiederherstellung, Purge
+        run: |
+          python3 scripts/release_deb_lifecycle.py candidate/*.deb successor/*.deb foreign/*.deb \
+            --arch "${{ matrix.arch }}"
+
+  # DE: Läuft auch in PRs und ohne Rechte: gleicht die Build-Artefakte mit dem Manifest ab.
+  #     Nur dessen Ergebnis wird signiert; Kandidaten- und Testpakete gehören nicht dazu.
+  # EN: Also runs in PRs and without permissions: checks the build artifacts against the
+  #     manifest. Only its result gets signed; candidate and test packages are not part of it.
+  manifest:
+    name: Artefaktmanifest / artifact manifest
+    needs: [build, debian]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: dist-*
+          path: downloads
+      - name: Manifest abgleichen / check manifest
+        run: |
+          ls -lR downloads
+          python3 scripts/release_manifest.py collect downloads dist "$VERSION" "$GITHUB_SHA"
+          ls -l dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-input
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

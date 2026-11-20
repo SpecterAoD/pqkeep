@@ -111,6 +111,7 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - **Keine Secrets** im Repository oder in Workflows. Tests erzeugen alle Passphrasen und Schlüssel zur Laufzeit dynamisch (Generator, temporäre Verzeichnisse via `tempfile`). Negativtests dürfen bewusst schwache Beispielwerte als Testdaten nutzen, aber nie echte oder wiederverwendete Geheimnisse.
 - Zusätzliche Prüfungen: Secret-Scanning mit Push Protection (GitHub) und `gitleaks` im CI; Test-Check „keine `#[test]` in `src/` außer `*_tests.rs`“.
 - Release und Signierung: siehe Abschnitt 5a.
+- Vorschau-Builds (wöchentlich, `preview.yml`, #269): derselbe Build wie bei Releases (`build.yml`), nur als unsigniertes GitHub-Pre-Release (nie „Latest“, die letzten vier bleiben); im Programm gekennzeichnet (`+preview.` in `--version`, Banner, Fenstertitel). Betas und Releases bleiben unverändert; Details in `docs/RELEASE.md`.
 
 ## 5a. Release-Signierung & Lieferkette (Pflicht für Releases **und** Betas)
 

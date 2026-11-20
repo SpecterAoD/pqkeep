@@ -6,6 +6,18 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Added
+- **Weekly preview builds** (#269): pre-release `preview-<date>.<commit>` of `main`, built with the same
+  workflow as the releases (`build.yml`), unsigned and never "Latest". Previews are marked in the
+  program (`--version` shows `+preview.<id>`, banner on a terminal, "PREVIEW" in window titles);
+  betas and releases are unchanged. See `docs/RELEASE.md`.
+
+### Changed
+- Release workflow: build, packages, installation tests and manifest moved into the reusable
+  `build.yml`; signing and publishing stay in `release.yml`. The release artifacts are unchanged.
+- The root warning is no longer printed in child processes of the window flows (it made a complete
+  success look "incomplete" when run as root).
+
 ## [0.1.0-beta.3] – 2026-11-19
 
 Third public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
