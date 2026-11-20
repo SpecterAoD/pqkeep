@@ -46,7 +46,7 @@ Der freigegebene [Fault-/Recovery-Testentwurf](security/FAULT_RECOVERY.md) (#152
 Commitgrenze, Bestandsschutz und isolierte Prozessabbrüche. Schritt B implementiert lokale
 Envelope-/STREAM-Fehlertests; C ergänzt Faktor-/Archiv-/Decrypt-/Cleanup- und Eltern-sync-Fehler
 sowie Windows-Sharing-Locks. D ergänzt bestätigte Child-Kills und frische Prüfprozesse.
-Native Windows-/ARM64-Nachweise sowie OS-/Stromausfallgarantien bleiben offen.
+[Native Nachweise](security/FAULT_RECOVERY_EVIDENCE.md) liegen vor; OS-/Stromausfallgarantien bleiben offen.
 
 ## Sichtbar trotz Verschlüsselung
 
@@ -86,7 +86,7 @@ The approved [fault/recovery test design](security/FAULT_RECOVERY.md) (#152) def
 commit boundary, preservation and isolated process termination. Step B implements local
 envelope/STREAM fault tests; C adds factor/archive/decrypt/cleanup and parent-sync faults plus
 Windows sharing locks. D adds acknowledged child kills and fresh verification processes.
-Native Windows/ARM64 evidence and OS/power-loss guarantees remain open.
+[Native evidence](security/FAULT_RECOVERY_EVIDENCE.md) is recorded; OS/power-loss guarantees remain open.
 
 **Goals:** confidentiality and integrity of stored private keys against offline attackers who obtain
 the key file, and of encrypted files/directories (`.pqkf`), also against future quantum computers.

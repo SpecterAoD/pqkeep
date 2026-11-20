@@ -46,6 +46,7 @@ Approved C adds factor/archive/decrypt/cleanup and Unix parent-sync cases plus n
 sharing-lock tests. Approved D adds acknowledged kill/restart/multistage tests. No OS/power-loss
 guarantee or production hook. Two ignored private child entries are run explicitly by parent tests;
 they are not passing-skip evidence. Deadlines fail, never schedule termination.
+[Native execution and rollback evidence](security/FAULT_RECOVERY_EVIDENCE.md) pins the tested revision.
 
 The [attack catalogue and baseline](security/ATTACK_TEST_MATRIX.md) record scoped assertions and
 actual execution separately. Update case/test/CI references together; new execution records need
@@ -162,6 +163,7 @@ Freigegebenes C ergänzt Faktor-/Archiv-/Decrypt-/Cleanup- und Unix-Eltern-sync-
 Windows-Sharing-Locktests. Freigegebenes D ergänzt bestätigte Kill-/Neustart-/Mehrstufentests.
 Keine OS-/Stromausfallgarantie oder produktiver Hook. Zwei ignorierte private Child-Einstiege
 werden explizit von Parent-Tests gestartet, nicht als bestandene Skips gezählt. Fristen sind Fehler.
+[Native Ausführung und Rücksetzprobe](security/FAULT_RECOVERY_EVIDENCE.md) erfassen die Testrevision.
 
 [Angriffskatalog und Baseline](security/ATTACK_TEST_MATRIX.md) trennen Assertions und Ausführung.
 Fall-/Test-/CI-Verweise gemeinsam pflegen; Nachweise benötigen Quell-SHA, Plattform/Features und

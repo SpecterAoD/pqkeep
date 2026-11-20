@@ -12,10 +12,10 @@ The maintainer approved the architecture plan and step A on 2026-11-17 (Europe/B
 Step B was separately approved on 2026-11-17: scoped I/O, envelope and STREAM fault tests are
 implemented locally; scoped process-crash/restart tests are added in D.
 C was separately approved on 2026-11-17 and is implemented locally: factor, archive/decrypt,
-cleanup and Unix parent-sync fault cases plus Windows sharing-lock tests. Validation is recorded
-separately; native CI remains pending. D was separately approved on 2026-11-17 and implements
-acknowledged child termination/restart and multistage tests locally. E requires renewed approval
-under SPEC section 0.2. This document is an
+cleanup and Unix parent-sync fault cases plus Windows sharing-lock tests. Native execution is
+recorded in the evidence page. D was separately approved on 2026-11-17 and implements
+acknowledged child termination/restart and multistage tests locally. E was approved on 2026-11-20;
+see [execution evidence](FAULT_RECOVERY_EVIDENCE.md). This document is an
 architecture decision for test infrastructure, not a new storage/recovery guarantee.
 
 Reviewed base: `53b0ddf9f563d62f48509ae3db1a54264e7f5152`. Read the existing
@@ -112,10 +112,10 @@ production-activatable fault features violate scope. No new automatic recovery s
 
 ### Planned coverage, steps and evidence
 
-REC-005/015 are implemented in B; REC-006–009/014 and FS-009 in C, all recorded as partial.
-D implements REC-010–013 locally; all new cases remain partial pending signed source/native CI:
+REC-005/015 are implemented in B; REC-006–009/014 and FS-009 in C; D adds REC-010–013.
+E records native execution for all twelve bounded cases (covered); broad original gaps stay open:
 
-| Planned ID | Scope |
+| Stable ID | Scope |
 |---|---|
 | QA1-REC-005 / QA1-REC-006 | Key replacement before commit / factor creation failures |
 | QA1-REC-007 / QA1-REC-008 | Archive encryption failures / decrypt file-tree errors and late tampering |
@@ -135,13 +135,13 @@ D changes only lib test wiring, existing test helpers and CLI tests; no further 
 Unexpected architecture changes need another proposal. Test code stays in
 separate *_tests.rs or tests/ files within the existing line limits.
 
-A retained 1.0.1. B–D prepare draft 1.1.0 with twelve new partial cases (59 total),
-schema 1 and QA1 IDs linked to #152. Original-case V/C/U mappings and all eleven historical
-evidence records are unchanged.
-The recorded reviewed-source SHA remains the historical #151 anchor, not B–D execution proof.
-The original 47 cases and historical baseline are unchanged; REC-015 gains sequence/driver assertions; FS-009 adds CLI cleanup-lock coverage.
-New cases stay partial with no evidence_refs until a signed source revision/native CI is recorded;
-local uncommitted results use external patch/file hashes, never a fictitious tested commit.
+E finalizes matrix/baseline 1.1.0: 59 cases (36 covered, 11 partial, 8 missing, 2 manual,
+2 not-applicable), schema 1 and stable QA1 IDs linked to #152. Original 47 cases, V/C/U mappings
+and eleven historical records are unchanged. Six passed native records and the initial failed
+Windows sharing-kind expectation pin actual tested checkouts; signed source and CI tree equality
+are linked in the evidence page. Only bounded new cases become covered after every applicable
+reference is observed as passed. Historical records remain historical; uncommitted local steps
+use external patch/file hashes. Private child entries never count as passing scenarios.
 FS-007/008 and REC-002/003 retain untested variants; MEM-006 remains missing for actual OOM.
 Local kill tests close only their asserted process-crash scope, never OS/power-loss gaps. Record only real
 executions with full SHA, UTC, OS/runner/features, run/job/attempt, exact test references and limits.
@@ -151,7 +151,7 @@ or fixture upload is planned; existing cargo test discovers the tests. CodeQL ex
 explicit review is still needed. Compilation, cfg exclusions and internal early returns are not
 passed assertions. Two ignored private child-entry helpers are invoked explicitly by parent tests,
 not counted as passing scenarios. Captured child output is bounded and protocol-checked; stdout
-contains no payload. Local Linux SIGKILL proof is separate from pending native Windows/ARM64 CI;
+contains no payload. Native Linux x86_64/ARM64 and Windows results are pinned separately;
 no OS/power-loss durability is established. CLI cleanup tests use a synthetic child-remnant fixture.
 
 ### Rollback and completion gate
@@ -159,7 +159,7 @@ no OS/power-loss durability is established. CLI cleanup tests use a synthetic ch
 Back up directly edited files/modes outside the worktree and verify hashes before approved edits.
 Use small signed commits. Before merge, practically revert only this work in a separate worktree,
 compare the expected base, run fmt/limits/smoke and reopen/check/decrypt synthetic pre-change
-v1/v2 keys/factors/archives with unchanged hashes. This is a planned check, not already executed.
+v1/v2 keys/factors/archives with unchanged hashes. This practical check passed in E.
 Post-merge rollback uses a separate signed revert PR, CI and approval; no data migration.
 Done requires approved steps, scoped invariants, positive/negative/boundary/tamper/crash/restart
 assertions, actual native Linux/Windows results, all required checks, bilingual docs, truthful
@@ -176,9 +176,9 @@ Der Maintainer hat Gesamtentwurf und Schritt A am 17.11.2026 (Europe/Berlin) fre
 B wurde am 17.11.2026 separat freigegeben: Scoped-I/O, Envelope-/STREAM-Fehlertests sind lokal
 implementiert. C wurde am 17.11.2026 separat freigegeben und ist lokal implementiert:
 Faktor-/Archiv-/Entschlüsselungs-/Cleanup-/Unix-Eltern-sync-Fehler und Windows-Sharing-Locktests.
-Validierung getrennt; native CI steht aus. D wurde am 17.11.2026 separat freigegeben:
-bestätigte Child-Abbrüche/Neustart-/Mehrstufentests lokal implementiert. E benötigt gemäß
-SPEC 0.2 erneute Freigabe. Dies ist eine Architekturentscheidung
+Native Ausführung ist auf der Nachweisseite erfasst. D am 17.11.2026 separat freigegeben:
+bestätigte Child-Abbrüche/Neustart-/Mehrstufentests lokal implementiert. E am 20.11.2026 freigegeben;
+[Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md). Dies ist eine Architekturentscheidung
 für Tests, keine neue Speicher-/Recoverygarantie. Geprüfte Basis ist
 `53b0ddf9f563d62f48509ae3db1a54264e7f5152`; bestehendes Threat Model, Formate, D1–D4 und Katalog
 gelten gemeinsam (Links oben). Keine Krypto-/Format-/Abhängigkeits-/öffentliche API-/Sandboxänderung.
@@ -240,8 +240,8 @@ Restaurierung prüfen, unzulässiges Verschachteln/unerreichte Punkte scheitern 
 Tempnamen erhalten; ENOSPC/EACCES/write/flush/sync/link/rename/remove plattformgerecht simulieren,
 sonst echtes Dateisystem. Benannte Punkte, Grenzgrößen und zwölf reservierte IDs stehen oben;
 alle gelten für beide Sprachen. REC-005/015 sind in B, REC-006–009/014 und FS-009 in C
-implementiert; D ergänzt REC-010–013 lokal. Alle neuen Fälle bleiben partial bis signierte
-Quell-/native CI-Nachweise vorliegen. BeforeHardLink/BeforeRename
+implementiert; D ergänzt REC-010–013. E belegt alle zwölf begrenzten neuen Fälle nativ
+(covered); breite Altlücken bleiben offen. BeforeHardLink/BeforeRename
 unterscheiden Publish-Pfade; BeforeDirSync ist Unix-only. AfterFirstOperation liegt in einer
 testgesteuerten Folge echter Envelope-Aufrufe; Pause/PauseAfter blockieren nur das Testkind.
 Geordnete Mehrfachpläne prüfen jeden Verbrauch.
@@ -264,12 +264,12 @@ output/decrypt-Typbindungen. C ergänzt nur Faktor-/Output-/fsutil-Punkte und Li
 gemeinsame Ausgabepfade vermeiden weitere encrypt/decrypt-Edits. D ändert nur Lib-Testverdrahtung,
 Testhelfer und CLI-Tests, keine weiteren produktiven I/O-Pfade. Unerwartete Architekturänderungen
 erneut vorlegen; Tests separat innerhalb bestehender Zeilenlimits.
-A beließ 1.0.1. B–D bereiten Entwurf 1.1.0 mit zwölf neuen partial-Fällen (59 gesamt),
-Schema 1, QA1 und #152 vor; REC-015 ergänzt Sequenz-Assertions.
-Die ursprünglichen 47 Altfälle/V-C-U und elf historischen Nachweise bleiben unverändert; die Review-SHA bezeichnet
-weiter den historischen #151-Stand, keinen B–D-Testnachweis. Neue Fälle bleiben partial ohne
-evidence_refs bis signierte Quellrevision/native CI vorliegen; lokale uncommittete Ergebnisse
-werden extern mit Patch-/Dateihashes belegt, nie mit erfundener Test-SHA.
+E finalisiert Matrix/Baseline 1.1.0: 59 Fälle, 36 covered, 11 partial, 8 missing, 2 manual,
+2 not-applicable; Schema 1, stabile QA1-IDs und #152. Ursprüngliche 47 Altfälle/V-C-U und elf
+historische Nachweise bleiben unverändert. Sechs bestandene native Datensätze sowie der erste
+fehlgeschlagene Windows-Fehlertyp-Test erfassen echte Checkouts; signierte Quelle/Baumgleichheit
+stehen auf der Nachweisseite. Nur neue begrenzte Fälle nach allen anwendbaren Testnachweisen
+covered; lokale uncommittete Schritte extern über Patch-/Dateihashes, nie erfundene Test-SHA.
 Breite FS-007/008-, REC-002/003-Lücken und echter OOM MEM-006 bleiben sichtbar.
 Nur echte Läufe mit SHA/UTC/OS/Runner/Features/Run/Job/Attempt/Tests/Grenzen erfassen. Bestehende
 native Linux-x86_64/ARM64-/Windows-x86_64-CI nutzen; No-default-Runtime auf Ubuntu latest/Windows.
@@ -285,7 +285,7 @@ OS-/Stromausfallgarantie. CLI-Cleanup nutzt synthetische, tatsächlich im Kind e
 Betroffene Dateien/Rechte vor freigegebenen Edits außerhalb Worktree sichern, Hashes prüfen;
 kleine signierte Commits. Praktische Revertprobe im separaten Worktree: nur eigene Arbeit zurück,
 Basisbaum vergleichen, fmt/Limits/Smoke, synthetische v1/v2-Schlüssel/Faktoren/Archive mit
-unveränderten Hashes erneut öffnen/check/decrypt. Geplant, noch nicht durchgeführt. Nach Merge
+unveränderten Hashes erneut öffnen/check/decrypt: in E praktisch bestanden. Nach Merge
 separater signierter Revert-PR mit CI/Freigabe, keine Datenmigration.
 Done verlangt freigegebene Schritte, Invarianten im Scope, Positiv-/Negativ-/Grenz-/Tamper-/Crash-/
 Neustarttests, echte native Linux-/Windows-Ergebnisse, Pflichtchecks, DE/EN-Doku, ehrliche Matrix,

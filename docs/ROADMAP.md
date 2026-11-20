@@ -26,7 +26,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 - [ ] [#152](https://github.com/SpecterAoD/pqkeep/issues/152): QA-2: Deterministic fault injection and crash-recovery tests / Deterministische Fehler-Injektion und Crash-Recovery-Tests.
   - P2, M2; dependency / Abhängigkeit: [#151](https://github.com/SpecterAoD/pqkeep/issues/151) completed / abgeschlossen ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
   - A/B/C/D approved / freigegeben (17.11.2026): [threat model/design](security/FAULT_RECOVERY.md), scoped I/O, envelope/STREAM/factor/archive/decrypt/cleanup and acknowledged crash/restart tests implemented locally. / Threat Model/Entwurf, Scoped-I/O und Envelope-/STREAM-/Faktor-/Archiv-/Decrypt-/Cleanup-/bestätigte Crash-/Neustarttests lokal implementiert.
-  - Matrix/baseline 1.1.0 in preparation: twelve new partial cases, native CI pending; E awaits approval. / Matrix/Baseline 1.1.0 in Vorbereitung: zwölf neue partial-Fälle, native CI offen; E wartet auf Freigabe.
+  - Matrix/baseline 1.1.0: twelve new bounded cases proven natively; E approved (20.11.2026), [evidence](security/FAULT_RECOVERY_EVIDENCE.md), [draft PR #279](https://github.com/SpecterAoD/pqkeep/pull/279); final review/merge pending. / Zwölf neue begrenzte Fälle nativ belegt; E freigegeben, Nachweise und Draft-PR verlinkt; finales Review/Merge offen.
 
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
