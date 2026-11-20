@@ -49,6 +49,7 @@ jobs:
       epoch: ${{ steps.meta.outputs.epoch }}
       build_id: ${{ steps.meta.outputs.build_id }}
       skip: ${{ steps.meta.outputs.skip }}
+      is_tag: ${{ steps.meta.outputs.is_tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -86,6 +87,7 @@ jobs:
             echo "build_id=$build_id"
             echo "version=$cargo_version-preview.$build_id"
             echo "skip=$skip"
+            echo "is_tag=false"
           } >> "$GITHUB_OUTPUT"
           echo "Vorschau / preview $build_id: $reason (skip=$skip)" >> "$GITHUB_STEP_SUMMARY"
 
@@ -99,7 +101,7 @@ jobs:
     with:
       version: ${{ needs.prepare.outputs.version }}
       epoch: ${{ needs.prepare.outputs.epoch }}
-      is_tag: "false"
+      is_tag: ${{ needs.prepare.outputs.is_tag }}
       channel: preview
       build_id: ${{ needs.prepare.outputs.build_id }}
 

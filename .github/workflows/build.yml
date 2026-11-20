@@ -180,6 +180,9 @@ jobs:
           # EN: Signed tag: release version without CI suffix. Otherwise CI candidate; the
           #     successor test package then carries the release version and covers that path.
           if [ "$IS_TAG" = "true" ]; then kind=(--release); next=(--release --successor); else kind=(); next=(--release); fi
+          # DE: Nur Vorschauen dürfen ein Vorschau-Binary verpacken; Release-Läufe weisen es ab.
+          # EN: Only previews may package a preview binary; release runs reject it.
+          if [ "$CHANNEL" = "preview" ]; then kind+=(--allow-preview); next+=(--allow-preview); fi
           python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-dist --ci-sha "$GITHUB_SHA" "${kind[@]}"
           python3 scripts/release_deb.py "$binary" "${{ matrix.target }}" deb-repeat --ci-sha "$GITHUB_SHA" "${kind[@]}"
           cmp deb-dist/*.deb deb-repeat/*.deb
