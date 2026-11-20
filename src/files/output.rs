@@ -16,6 +16,9 @@ use std::path::{Path, PathBuf};
 use crate::fsutil::{OutputFile, open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::{Error, Result};
 
+#[cfg(test)]
+use crate::fault_io_tests::{Point, checkpoint};
+
 /// DE: Temporäre Ausgabe mit Aufräumen bei Fehlern. EN: Temporary output with cleanup on failure.
 pub(crate) struct TempOutput {
     temp: PathBuf,
@@ -48,7 +51,13 @@ impl TempOutput {
         ensure_absent(target)?;
         let temp = temp_path(target)?;
         let file = open_new(&temp)?;
-        Ok((Self::new(temp, target, false), file))
+        let output = Self::new(temp, target, false);
+        #[cfg(test)]
+        if let Err(error) = checkpoint(output.path(), Point::AfterTempCreate) {
+            drop(file);
+            return Err(error.into());
+        }
+        Ok((output, file))
     }
 
     /// DE: Temporärordner für ein Ordnerziel. EN: Temporary directory for a directory target.
@@ -58,7 +67,10 @@ impl TempOutput {
         let mut builder = dir_builder();
         builder.recursive(false);
         builder.create(&temp)?;
-        Ok(Self::new(temp, target, true))
+        let output = Self::new(temp, target, true);
+        #[cfg(test)]
+        checkpoint(output.path(), Point::AfterTempCreate)?;
+        Ok(output)
     }
 
     fn new(temp: PathBuf, target: &Path, is_dir: bool) -> Self {
@@ -82,7 +94,13 @@ impl TempOutput {
     pub fn publish(mut self) -> Result<()> {
         if self.is_dir {
             ensure_absent(&self.target)?;
+            #[cfg(test)]
+            checkpoint(&self.temp, Point::BeforePublish)?;
+            #[cfg(test)]
+            checkpoint(&self.temp, Point::BeforeRename)?;
             fs::rename(&self.temp, &self.target)?;
+            #[cfg(test)]
+            checkpoint(&self.target, Point::AfterPublish)?;
         } else {
             publish_no_overwrite(&self.temp, &self.target)?;
         }
@@ -99,6 +117,19 @@ impl Drop for TempOutput {
         }
         // DE: Nur die eigene, selbst angelegte Temporärausgabe wird entfernt.
         // EN: Only our own, self-created temporary output is removed.
+        #[cfg(test)]
+        if checkpoint(
+            &self.temp,
+            if self.is_dir {
+                Point::BeforeRemoveDirAll
+            } else {
+                Point::BeforeRemoveFile
+            },
+        )
+        .is_err()
+        {
+            return;
+        }
         let _ = if self.is_dir {
             fs::remove_dir_all(&self.temp)
         } else {

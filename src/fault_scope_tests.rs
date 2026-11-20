@@ -192,3 +192,39 @@ fn rec015_unwinding_restores_scope_and_detaches_open_writer() {
     assert_eq!(next.sync_all().unwrap_err().kind(), ErrorKind::Other);
     scope.finish();
 }
+
+#[test]
+fn rec015_sequence_requires_every_fault_and_restores_after_failure() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("out");
+    let first = plan(
+        Point::BeforeOpen,
+        Action::Fail(Failure::Kind(ErrorKind::StorageFull)),
+    );
+    let second = plan(
+        Point::BeforeFileSync,
+        Action::Fail(Failure::Kind(ErrorKind::PermissionDenied)),
+    );
+    assert!(
+        catch_unwind(AssertUnwindSafe(|| {
+            let scope = Scope::sequence(dir.path(), vec![first, second]);
+            assert!(crate::fault_io_tests::checkpoint(&path, Point::BeforeOpen).is_err());
+            scope.finish();
+        }))
+        .is_err()
+    );
+    let scope = Scope::sequence(dir.path(), vec![first, second]);
+    assert_eq!(
+        crate::fault_io_tests::checkpoint(&path, Point::BeforeOpen)
+            .unwrap_err()
+            .kind(),
+        ErrorKind::StorageFull
+    );
+    assert_eq!(
+        crate::fault_io_tests::checkpoint(&path, Point::BeforeFileSync)
+            .unwrap_err()
+            .kind(),
+        ErrorKind::PermissionDenied
+    );
+    scope.finish();
+}

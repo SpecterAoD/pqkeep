@@ -30,6 +30,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[path = "envelope/fault_tests.rs"]
 mod envelope_fault_tests;
 #[cfg(test)]
+#[path = "crypto/factor_fault_tests.rs"]
+mod factor_fault_tests;
+#[cfg(test)]
 mod fault_fixture_tests;
 #[cfg(test)]
 mod fault_io_tests;
@@ -37,3 +40,9 @@ mod fault_io_tests;
 mod fault_scope_tests;
 #[cfg(test)]
 mod fault_writer_tests;
+#[cfg(test)]
+#[path = "files/fault_tests.rs"]
+mod files_fault_tests;
+#[cfg(test)]
+#[path = "files/recovery_tests.rs"]
+mod files_recovery_tests;

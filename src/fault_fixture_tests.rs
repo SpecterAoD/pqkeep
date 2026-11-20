@@ -123,3 +123,104 @@ pub(crate) fn assert_no_temps(root: &Path) {
         "Temporary leftovers / Temporärreste"
     );
 }
+
+pub(crate) struct ArchiveCase {
+    pub root: tempfile::TempDir,
+    pub source: std::path::PathBuf,
+    pub archive: std::path::PathBuf,
+    pass: StrongPassphrase,
+    factor: Option<Factor>,
+}
+
+impl ArchiveCase {
+    pub(crate) fn new(v2: bool, tree: bool, size: usize) -> Self {
+        let root = tempfile::tempdir().unwrap();
+        let source = root.path().join("source");
+        let archive = root.path().join("archive.pqkf");
+        let payload = vec![0x5a; size];
+        if tree {
+            std::fs::create_dir_all(source.join("nested")).unwrap();
+            std::fs::write(source.join("a"), &payload).unwrap();
+            std::fs::write(source.join("nested/b"), b"synthetic / synthetisch").unwrap();
+        } else {
+            std::fs::write(&source, &payload).unwrap();
+        }
+        Self {
+            root,
+            source,
+            archive,
+            pass: generator::generate(&generator::Options::default()).unwrap(),
+            factor: v2.then(|| Factor::from_bytes(&rng::array::<32>().unwrap()).unwrap()),
+        }
+    }
+
+    pub(crate) fn encrypt(&self) -> crate::Result<crate::files::Report> {
+        let params = kdf::KdfParams {
+            memory_kib: kdf::MIN_MEMORY_KIB,
+            iterations: kdf::MIN_ITERATIONS,
+            parallelism: 1,
+        };
+        let protection = match &self.factor {
+            Some(factor) => crate::files::Protection::Slots {
+                passphrase: Some(crate::files::PassphraseAccess {
+                    passphrase: &self.pass,
+                    params,
+                    factor: Some(factor),
+                }),
+                recipients: &[],
+            },
+            None => crate::files::Protection::Passphrase {
+                passphrase: &self.pass,
+                params,
+            },
+        };
+        crate::files::encrypt(&self.source, &self.archive, &protection)
+    }
+
+    pub(crate) fn unlock(&self) -> crate::files::Unlock<'_> {
+        match &self.factor {
+            Some(factor) => crate::files::Unlock::PassphraseWithFactor {
+                passphrase: self.pass.as_ref(),
+                factor,
+            },
+            None => crate::files::Unlock::Passphrase(self.pass.as_ref()),
+        }
+    }
+
+    pub(crate) fn assert_valid(&self, output: &Path) {
+        crate::files::check(&self.archive, &self.unlock()).unwrap();
+        crate::files::decrypt(&self.archive, output, &self.unlock()).unwrap();
+        assert!(
+            tree_bytes(&self.source) == tree_bytes(output),
+            "Output changed / Ausgabe verändert"
+        );
+    }
+
+    pub(crate) fn assert_no_secrets(&self, message: &str) {
+        assert_absent(message, self.pass.as_ref().expose());
+        if let Some(factor) = &self.factor {
+            assert_absent(message, factor.expose());
+        }
+    }
+}
+
+pub(crate) fn tree_bytes(path: &Path) -> Vec<(std::path::PathBuf, Vec<u8>)> {
+    if path.is_file() {
+        return vec![(std::path::PathBuf::new(), std::fs::read(path).unwrap())];
+    }
+    let mut entries: Vec<_> = std::fs::read_dir(path)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    entries.sort();
+    let mut files = Vec::new();
+    for entry in entries {
+        for (tail, bytes) in tree_bytes(&entry) {
+            files.push((
+                std::path::PathBuf::from(entry.file_name().unwrap()).join(tail),
+                bytes,
+            ));
+        }
+    }
+    files
+}

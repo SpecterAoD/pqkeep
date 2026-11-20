@@ -42,7 +42,8 @@ production code (allowed in tests). Functions over 50 code lines fail via clippy
 The approved [fault/recovery design](security/FAULT_RECOVERY.md) (#152) records checkpoints,
 invariants and the process-crash/power-loss boundary. Approved step B adds scoped cfg(test)
 envelope tests and ordinary STREAM Write adapters, discovered by existing cargo test/CI.
-They establish neither process-crash nor power-loss recovery. No Cargo feature/production hook.
+Approved C adds factor/archive/decrypt/cleanup and Unix parent-sync cases plus native Windows
+sharing-lock tests. They establish neither process-crash nor power-loss recovery. No production hook.
 
 The [attack catalogue and baseline](security/ATTACK_TEST_MATRIX.md) record scoped assertions and
 actual execution separately. Update case/test/CI references together; new execution records need
@@ -54,7 +55,9 @@ latest and Windows latest, while Ubuntu 22.04/ARM64 additionally compile no-defa
 cargo test --locked --test cli_files            # one integration test file
 cargo test --locked --test cli_files passphrase # tests whose name contains "passphrase"
 cargo test --locked --lib files::               # unit tests of one module
-cargo test --locked --lib fault_                # scoped envelope/I/O tests (#152)
+cargo test --locked --lib fault_                # envelope/factor/archive/I/O (#152)
+cargo test --locked --lib files_recovery_tests  # decrypt/cleanup and late tampering
+cargo test --locked --test windows_storage_locks # native Windows only; 0 on Linux
 cargo test --locked --test crypto_stream_faults # ordinary STREAM I/O failures
 cargo test --locked --no-default-features       # without the REST API
 ```
@@ -151,7 +154,8 @@ Produktionscode verboten (in Tests erlaubt). Funktionen über 50 Codezeilen sche
 Der freigegebene [Fault-/Recovery-Entwurf](security/FAULT_RECOVERY.md) (#152) beschreibt Punkte,
 Invarianten und Prozesscrash-/Stromausfallgrenze. Freigegebener Schritt B ergänzt Scoped-
 cfg(test)-Envelope-Tests und normale STREAM-Write-Adapter, erkannt durch bestehendes cargo test/CI.
-Sie belegen keine Crash-/Stromausfall-Recovery. Kein Cargo-Feature/produktiver Hook.
+Freigegebenes C ergänzt Faktor-/Archiv-/Decrypt-/Cleanup- und Unix-Eltern-sync-Fälle sowie native
+Windows-Sharing-Locktests. Keine Crash-/Stromausfall-Recovery belegt, kein produktiver Hook.
 
 [Angriffskatalog und Baseline](security/ATTACK_TEST_MATRIX.md) trennen Assertions und Ausführung.
 Fall-/Test-/CI-Verweise gemeinsam pflegen; Nachweise benötigen Quell-SHA, Plattform/Features und
@@ -163,7 +167,9 @@ Ubuntu 22.04/ARM64 kompilieren No-default zusätzlich mit Clippy.
 cargo test --locked --test cli_files            # eine Integrationstest-Datei
 cargo test --locked --test cli_files passphrase # Tests, deren Name „passphrase“ enthält
 cargo test --locked --lib files::               # Unit-Tests eines Moduls
-cargo test --locked --lib fault_                # Scoped-Envelope-/I/O-Tests (#152)
+cargo test --locked --lib fault_                # Envelope/Faktor/Archiv/I/O (#152)
+cargo test --locked --lib files_recovery_tests  # Decrypt/Cleanup und spätes Tampering
+cargo test --locked --test windows_storage_locks # nur natives Windows; 0 auf Linux
 cargo test --locked --test crypto_stream_faults # normale STREAM-I/O-Fehler
 cargo test --locked --no-default-features       # ohne REST-API
 ```

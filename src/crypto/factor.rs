@@ -20,6 +20,9 @@ use crate::crypto::{SecretBytes, rng};
 use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::{Error, Result};
 
+#[cfg(test)]
+use crate::fault_io_tests::{Point, checkpoint};
+
 /// DE: Länge der Faktordatei in Bytes. EN: Length of the factor file in bytes.
 pub const FACTOR_LEN: usize = 32;
 
@@ -95,6 +98,10 @@ impl Factor {
         let result = write_and_publish(&temp, path, bytes.expose());
         if result.is_err() {
             // DE: Aufräumen; Fehler hier sind zweitrangig. EN: Clean up; errors here are secondary.
+            #[cfg(test)]
+            if checkpoint(&temp, Point::BeforeRemoveFile).is_err() {
+                return result;
+            }
             let _ = fs::remove_file(&temp);
         }
         result
@@ -108,6 +115,8 @@ impl Factor {
 
 fn write_and_publish(temp: &Path, path: &Path, data: &[u8]) -> Result<()> {
     let mut file = open_new(temp)?;
+    #[cfg(test)]
+    checkpoint(temp, Point::AfterTempCreate)?;
     file.write_all(data)?;
     file.sync_all()?;
     drop(file);

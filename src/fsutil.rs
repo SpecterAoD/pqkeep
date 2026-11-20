@@ -6,7 +6,7 @@
 //! temporary name in the target directory, creation with `create_new` (Linux
 //! 0600), publishing without overwriting via hard link, fsync of the directory.
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
@@ -17,7 +17,7 @@ use crate::{Error, Result};
 
 // DE: Nur Lib-Tests erhalten einen Wrapper. EN: Only lib tests receive a wrapper.
 #[cfg(not(test))]
-pub(crate) type OutputFile = File;
+pub(crate) type OutputFile = fs::File;
 #[cfg(test)]
 use crate::fault_io_tests::{Point, checkpoint};
 #[cfg(test)]
@@ -88,10 +88,16 @@ pub(crate) fn open_new(path: &Path) -> std::io::Result<OutputFile> {
 pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<()> {
     #[cfg(test)]
     checkpoint(temp, Point::BeforePublish)?;
-    match fs::hard_link(temp, path) {
+    #[cfg(test)]
+    let link = checkpoint(temp, Point::BeforeHardLink).and_then(|()| fs::hard_link(temp, path));
+    #[cfg(not(test))]
+    let link = fs::hard_link(temp, path);
+    match link {
         Ok(()) => {
             #[cfg(test)]
             checkpoint(temp, Point::AfterPublish)?;
+            #[cfg(test)]
+            checkpoint(temp, Point::BeforeRemoveFile)?;
             fs::remove_file(temp)
         }
         // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Prüfen + Umbenennen, nicht atomar.
@@ -100,6 +106,8 @@ pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<
             if path.exists() {
                 return Err(ErrorKind::AlreadyExists.into());
             }
+            #[cfg(test)]
+            checkpoint(temp, Point::BeforeRename)?;
             fs::rename(temp, path)?;
             #[cfg(test)]
             checkpoint(path, Point::AfterPublish)?;
@@ -112,12 +120,16 @@ pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<
 #[cfg(unix)]
 /// DE: fsync des Elternordners (best effort). EN: fsync of the parent directory (best effort).
 pub(crate) fn sync_dir(path: &Path) {
+    #[cfg(test)]
+    if checkpoint(path, Point::BeforeDirSync).is_err() {
+        return;
+    }
     let dir = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
     // DE: Best effort: Ordnereintrag dauerhaft machen. EN: Best effort: persist the dir entry.
-    if let Ok(d) = File::open(dir) {
+    if let Ok(d) = fs::File::open(dir) {
         let _ = d.sync_all();
     }
 }

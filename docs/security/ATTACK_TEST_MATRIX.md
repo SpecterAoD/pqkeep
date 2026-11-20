@@ -17,8 +17,8 @@ attack is prevented. Reuse the [v2 catalogue](../V2_TESTS.md), [threat model](..
 [CI policy](CI_SECURITY.md). Related hardening #129 and #147–#150 remains open.
 #152 owns deterministic fault/crash/recovery injection, #153 expanded parser/IPC/permission
 fuzzing and sanitizer work, #154 reproducible builds, independent audit and the release gate.
-Recording gaps does not implement follow-ups. Approved #152 step B prepares matrix/baseline 1.1.0:
-49 cases, adding REC-005/015 as partial; historical evidence/review SHA are not new-test execution.
+Recording gaps does not implement follow-ups. Approved #152 B/C prepare draft 1.1.0: 55 cases,
+eight new partial cases; historical evidence/review SHA do not prove new tests or native CI.
 
 ### Files, status and execution
 
@@ -176,8 +176,8 @@ Angriffsabwehr. [v2-Katalog](../V2_TESTS.md), [Bedrohungsmodell](../THREAT_MODEL
 [CI-Regeln](CI_SECURITY.md) werden wiederverwendet. #129 und #147–#150 bleiben offene Härtung.
 #152 übernimmt deterministische Fault-/Crash-/Recovery-Injektion, #153 Parser-/IPC-/Permissions-
 Fuzzing und Sanitizer-Ausbau, #154 reproduzierbare Builds, unabhängigen Audit und Release-Gate.
-Lückenerfassung implementiert keine Folgeschritte. Freigegebenes #152-B bereitet 1.1.0 vor: 49 Fälle,
-REC-005/015 neu als partial; historische Nachweise/Review-SHA belegen keine neue Testausführung.
+Lückenerfassung implementiert keine Folgeschritte. #152-B/C bereiten Entwurf 1.1.0 mit 55 Fällen vor:
+acht neue partial-Fälle; historische Nachweise/Review-SHA belegen keine neuen Tests/native CI.
 
 ### Dateien, Status und Ausführung
 

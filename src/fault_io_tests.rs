@@ -16,6 +16,12 @@ pub(crate) enum Point {
     BeforeFileSync,
     BeforePublish,
     AfterPublish,
+    BeforeHardLink,
+    BeforeRename,
+    #[cfg(unix)]
+    BeforeDirSync,
+    BeforeRemoveFile,
+    BeforeRemoveDirAll,
 }
 
 #[derive(Clone, Copy)]
@@ -51,9 +57,9 @@ pub(crate) struct Plan {
 
 pub(crate) struct State {
     root: PathBuf,
-    plan: Plan,
+    plans: Vec<Plan>,
+    index: usize,
     seen: usize,
-    consumed: bool,
     active: bool,
     trace: Vec<Point>,
 }
@@ -68,15 +74,22 @@ pub(crate) struct Scope(Shared);
 
 impl Scope {
     pub(crate) fn new(root: &Path, plan: Plan) -> Self {
-        assert!(plan.occurrence > 0, "Fault occurrence / Fehlervorkommen");
+        Self::sequence(root, vec![plan])
+    }
+
+    pub(crate) fn sequence(root: &Path, plans: Vec<Plan>) -> Self {
+        assert!(!plans.is_empty());
         assert!(root.is_absolute() && root.symlink_metadata().unwrap().is_dir());
-        assert!(matches!(plan.action, Action::Fail(_)) || plan.point == Point::Write);
-        assert!(!matches!(plan.action, Action::Short(0)));
+        for plan in &plans {
+            assert!(plan.occurrence > 0, "Fault occurrence / Fehlervorkommen");
+            assert!(matches!(plan.action, Action::Fail(_)) || plan.point == Point::Write);
+            assert!(!matches!(plan.action, Action::Short(0)));
+        }
         let state = Rc::new(RefCell::new(State {
             root: root.canonicalize().unwrap(),
-            plan,
+            plans,
+            index: 0,
             seen: 0,
-            consumed: false,
             active: true,
             trace: Vec::new(),
         }));
@@ -93,7 +106,7 @@ impl Scope {
 
     pub(crate) fn finish(self) -> Vec<Point> {
         assert!(
-            self.0.borrow().consumed,
+            self.0.borrow().index == self.0.borrow().plans.len(),
             "Unreached fault / Fehlerpunkt nicht erreicht"
         );
         let trace = self.0.borrow().trace.clone();
@@ -113,7 +126,7 @@ impl Drop for Scope {
         });
         // DE: Beim Unwinding keine zweite Panik. EN: No second panic during unwinding.
         assert!(
-            self.0.borrow().consumed || std::thread::panicking(),
+            self.0.borrow().index == self.0.borrow().plans.len() || std::thread::panicking(),
             "Unused fault / Unverbrauchter Fehler"
         );
     }
@@ -139,15 +152,18 @@ pub(crate) fn action(state: &Shared, point: Point) -> Option<Action> {
         return None;
     }
     state.trace.push(point);
-    if state.plan.point != point || state.consumed {
+    let plan = *state.plans.get(state.index)?;
+    if plan.point != point {
         return None;
     }
     state.seen += 1;
-    (state.seen >= state.plan.occurrence).then_some(state.plan.action)
+    (state.seen >= plan.occurrence).then_some(plan.action)
 }
 
 pub(crate) fn consume(state: &Shared) {
-    state.borrow_mut().consumed = true;
+    let mut state = state.borrow_mut();
+    state.index += 1;
+    state.seen = 0;
 }
 
 pub(crate) fn check_state(state: &Shared, point: Point) -> io::Result<()> {

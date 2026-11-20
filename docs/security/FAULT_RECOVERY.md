@@ -10,8 +10,10 @@ Issue [#152](https://github.com/SpecterAoD/pqkeep/issues/152), M2/P2, depends on
 [#151](https://github.com/SpecterAoD/pqkeep/issues/151) ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
 The maintainer approved the architecture plan and step A on 2026-11-17 (Europe/Berlin).
 Step B was separately approved on 2026-11-17: scoped I/O, envelope and STREAM fault tests are
-implemented locally. Crash, factor/archive fault and cleanup coverage remain in steps C–D.
-Steps C–E require renewed approval under SPEC section 0.2. This document is an
+implemented locally. Process-crash/restart coverage remains in D.
+C was separately approved on 2026-11-17 and is implemented locally: factor, archive/decrypt,
+cleanup and Unix parent-sync fault cases plus Windows sharing-lock tests. Validation is recorded
+separately; native CI remains pending. Steps D–E require renewed approval under SPEC section 0.2. This document is an
 architecture decision for test infrastructure, not a new storage/recovery guarantee.
 
 Reviewed base: `53b0ddf9f563d62f48509ae3db1a54264e7f5152`. Read the existing
@@ -87,7 +89,8 @@ Model platform-correct ENOSPC/EACCES and write/flush/sync/link/rename/remove out
 use real files and publication. No crypto/RNG hooks, new crates or unsafe code are planned.
 
 Points: BeforeOpen, AfterTempCreate, Write(N), BeforeFlush, BeforeFileSync, BeforePublish,
-AfterPublish, BeforeDirSync, BeforeRemoveFile, BeforeRemoveDirAll, AfterFirstOperation.
+AfterPublish, BeforeHardLink, BeforeRename, BeforeDirSync (Unix only), BeforeRemoveFile, BeforeRemoveDirAll;
+AfterFirstOperation remains planned for D. Ordered multi-fault plans verify every fault was consumed.
 Observe hardlink publication separately from temp unlink. Synthetic sizes: 0/1/65535/65536/
 65537 bytes and several chunks; empty/nested trees; factor-write boundaries 0/1/31/32 bytes.
 
@@ -106,7 +109,8 @@ production-activatable fault features violate scope. No new automatic recovery s
 
 ### Planned coverage, steps and evidence
 
-REC-005/015 below are implemented in B and recorded as partial; other IDs remain planned:
+REC-005/015 are implemented in B; REC-006–009/014 and FS-009 in C, all recorded as partial.
+REC-010–013 remain planned for D:
 
 | Planned ID | Scope |
 |---|---|
@@ -122,13 +126,16 @@ archive/decrypt/cleanup and Windows locks. D: acknowledged crash/restart/multi-s
 E: final evidence, native CI, documentation and practical rollback. Renew approval between steps.
 Production-source edits are limited to test binding/checkpoints in lib.rs, fsutil.rs,
 envelope/io.rs, crypto/factor.rs and files/output.rs, encrypt.rs, decrypt.rs. B changes only
-lib.rs/fsutil/envelope plus mechanical output/decrypt type bindings; other hooks wait for C–D.
+lib.rs/fsutil/envelope plus mechanical output/decrypt type bindings. C adds only factor/output/
+fsutil hooks and lib wiring; existing shared output paths avoid additional encrypt/decrypt edits.
 Unexpected architecture changes need another proposal. Test code stays in
 separate *_tests.rs or tests/ files within the existing line limits.
 
-A retained matrix/baseline 1.0.1. B prepares 1.1.0 with REC-005/015, schema 1 and QA1 IDs linked
-to #152. Existing cases, V/C/U mappings and all eleven historical evidence records are unchanged.
-The recorded reviewed-source SHA remains the historical #151 anchor, not B execution proof.
+A retained matrix/baseline 1.0.1. B/C prepare draft 1.1.0 with eight new partial cases (55 total),
+schema 1 and QA1 IDs linked to #152. Original-case V/C/U mappings and all eleven historical
+evidence records are unchanged.
+The recorded reviewed-source SHA remains the historical #151 anchor, not B/C execution proof.
+The original 47 cases and historical baseline are unchanged; REC-015 gains sequence assertions.
 New cases stay partial with no evidence_refs until a signed source revision/native CI is recorded;
 local uncommitted results use external patch/file hashes, never a fictitious tested commit.
 FS-007/008 and REC-002/003 retain untested variants; MEM-006 remains missing for actual OOM.
@@ -138,7 +145,7 @@ Use [DEVELOPMENT.md](../DEVELOPMENT.md) and existing native Linux x86_64/ARM64 a
 CI. No-default runtime remains on Ubuntu latest/Windows latest. No new workflow/job/permission
 or fixture upload is planned; existing cargo test discovers the tests. CodeQL excludes test files;
 explicit review is still needed. Compilation, cfg exclusions and internal early returns are not
-passed assertions. A records no fault results; B does not establish crash/power-loss coverage.
+passed assertions. A records no fault results; B/C do not establish crash/power-loss coverage.
 
 ### Rollback and completion gate
 
@@ -160,8 +167,10 @@ Issue [#152](https://github.com/SpecterAoD/pqkeep/issues/152), M2/P2, folgt auf 
 [#151](https://github.com/SpecterAoD/pqkeep/issues/151) ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
 Der Maintainer hat Gesamtentwurf und Schritt A am 17.11.2026 (Europe/Berlin) freigegeben.
 B wurde am 17.11.2026 separat freigegeben: Scoped-I/O, Envelope-/STREAM-Fehlertests sind lokal
-implementiert. Crash-, Faktor-/Archiv-Fault- und Cleanup-Tests folgen in C–D; C–E benötigen
-gemäß SPEC 0.2 erneute Freigabe. Dies ist eine Architekturentscheidung
+implementiert. C wurde am 17.11.2026 separat freigegeben und ist lokal implementiert:
+Faktor-/Archiv-/Entschlüsselungs-/Cleanup-/Unix-Eltern-sync-Fehler und Windows-Sharing-Locktests.
+Validierung wird getrennt erfasst; native CI steht aus. Crash-/Neustarttests folgen in D;
+D–E benötigen gemäß SPEC 0.2 erneute Freigabe. Dies ist eine Architekturentscheidung
 für Tests, keine neue Speicher-/Recoverygarantie. Geprüfte Basis ist
 `53b0ddf9f563d62f48509ae3db1a54264e7f5152`; bestehendes Threat Model, Formate, D1–D4 und Katalog
 gelten gemeinsam (Links oben). Keine Krypto-/Format-/Abhängigkeits-/öffentliche API-/Sandboxänderung.
@@ -222,8 +231,9 @@ Threadlokale RAII-Pläne mit privatem Root, Punkt, Byte-/Vorkommensindex und Akt
 Restaurierung prüfen, unzulässiges Verschachteln/unerreichte Punkte scheitern lassen. Echte zufällige
 Tempnamen erhalten; ENOSPC/EACCES/write/flush/sync/link/rename/remove plattformgerecht simulieren,
 sonst echtes Dateisystem. Benannte Punkte, Grenzgrößen und zwölf reservierte IDs stehen oben;
-alle gelten unverändert für beide Sprachen. REC-005/015 sind in B implementiert und partial
-im Katalog erfasst; die übrigen IDs bleiben geplant.
+alle gelten für beide Sprachen. REC-005/015 sind in B, REC-006–009/014 und FS-009 in C
+implementiert und partial erfasst; REC-010–013 bleiben für D geplant. BeforeHardLink/BeforeRename
+unterscheiden Publish-Pfade; BeforeDirSync ist Unix-only. Geordnete Mehrfachpläne prüfen jeden Verbrauch.
 
 Parent startet eigenes Libtest-Binary mit exaktem Testnamen, übergibt begrenztes stdin-Protokoll
 und Secrets nur über Pipe/Speicher. Kind bestätigt Punkt ohne Inhaltsausgabe und wartet; erst
@@ -239,11 +249,13 @@ A dokumentiert; B Adapter/Envelope/STREAM; C Faktor/Archive/Decrypt/Cleanup/Wind
 D bestätigte Crashes/Neustart/Mehrstufen; E Nachweise/CI/Doku/Rollback. Jeweils erneut freigeben.
 Produktionsdateien nur lib.rs, fsutil.rs, envelope/io.rs, crypto/factor.rs und files/output.rs,
 encrypt.rs, decrypt.rs für Testbindung/Punkte. B ändert lib.rs/fsutil/envelope sowie mechanische
-output/decrypt-Typbindungen; übrige Hooks warten auf C–D. Unerwartete Architekturänderungen
+output/decrypt-Typbindungen. C ergänzt nur Faktor-/Output-/fsutil-Punkte und Lib-Verdrahtung;
+gemeinsame Ausgabepfade vermeiden weitere encrypt/decrypt-Edits. Unerwartete Architekturänderungen
 erneut vorlegen; Tests separat innerhalb bestehender Zeilenlimits.
-A beließ Matrix/Baseline 1.0.1. B bereitet 1.1.0 mit REC-005/015, Schema 1, QA1 und #152 vor.
-Altfälle/V-C-U und elf historische Nachweise bleiben unverändert; die Review-SHA bezeichnet
-weiter den historischen #151-Stand, keinen B-Testnachweis. Neue Fälle bleiben partial ohne
+A beließ 1.0.1. B/C bereiten den Entwurf 1.1.0 mit acht neuen partial-Fällen (55 gesamt),
+Schema 1, QA1 und #152 vor; REC-015 ergänzt Sequenz-Assertions.
+Die ursprünglichen 47 Altfälle/V-C-U und elf historischen Nachweise bleiben unverändert; die Review-SHA bezeichnet
+weiter den historischen #151-Stand, keinen B/C-Testnachweis. Neue Fälle bleiben partial ohne
 evidence_refs bis signierte Quellrevision/native CI vorliegen; lokale uncommittete Ergebnisse
 werden extern mit Patch-/Dateihashes belegt, nie mit erfundener Test-SHA.
 Breite FS-007/008-, REC-002/003-Lücken und echter OOM MEM-006 bleiben sichtbar.
@@ -251,7 +263,7 @@ Nur echte Läufe mit SHA/UTC/OS/Runner/Features/Run/Job/Attempt/Tests/Grenzen er
 native Linux-x86_64/ARM64-/Windows-x86_64-CI nutzen; No-default-Runtime auf Ubuntu latest/Windows.
 Keine neuen Workflows/Jobs/Rechte/Uploads, Entdeckung über cargo test. CodeQL ignoriert Testdateien,
 explizites Review bleibt nötig. Kompilierung/cfg-Ausnahmen/interne Rücksprünge sind keine bestandenen
-Assertions. A belegt keine Fault-Ergebnisse; B belegt keine Crash-/Stromausfallabdeckung.
+Assertions. A belegt keine Fault-Ergebnisse; B/C belegen keine Crash-/Stromausfallabdeckung.
 
 ### Rückweg und Abschluss
 
