@@ -13,6 +13,7 @@ use std::process::Command;
 pub const DIALOG_CHILD_ENV: &str = "PQKEEP_DIALOG_CHILD";
 
 /// DE: Läuft dieser Prozess als Kind eines Fensterablaufs? EN: Is this process a child of a window flow?
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn is_dialog_child() -> bool {
     std::env::var_os(DIALOG_CHILD_ENV).is_some()
 }
