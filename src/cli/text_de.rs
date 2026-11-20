@@ -58,6 +58,7 @@ pub static DE: Texts = Texts {
     msg_entropy: "Geschätzte Stärke (Bit)",
     msg_generated_hint: "Passphrase sicher aufbewahren (z. B. Passwortmanager). Sie wird nicht gespeichert.",
     msg_root_warning: "WARNUNG: pqkeep läuft mit root-Rechten. Diese werden nicht benötigt – bitte als normaler Benutzer starten.",
+    msg_preview_banner: "VORSCHAU-BUILD – nicht geprüft und kein Release. Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateien können sich in späteren Versionen ändern.",
     msg_hardening: "Härtung",
     msg_error: "Fehler",
     msg_warning: "Warnung",

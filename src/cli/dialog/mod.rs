@@ -122,7 +122,7 @@ impl Dialog {
         available().map(|(kind, path)| Self {
             kind,
             path,
-            title: title.to_owned(),
+            title: pqkeep::build_info::window_title(title),
             cancel: cancel.to_owned(),
         })
     }

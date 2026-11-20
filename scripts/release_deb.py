@@ -58,6 +58,15 @@ def deb_version(upstream: str, revision: str, stamp: int, sha: str,
     return f"{version}-{revision}{suffix}" + ("+test1" if successor else "")
 
 
+def binary_version_ok(output: str, upstream: str, release: bool) -> bool:
+    """`pqkeep --version` passt zu Cargo.toml; Vorschau-Builds tragen `+preview.<Kennung>` dahinter,
+    Release-Pakete (`--release`) nie."""
+    expected = "pqkeep " + upstream
+    if output == expected:
+        return True
+    return not release and re.fullmatch(re.escape(expected) + r"\+preview(\.[0-9A-Za-z.-]{1,40})?", output) is not None
+
+
 def put(stage: Path, name: str, data: bytes, mode: int = 0o644) -> None:
     """Nur intern festgelegte Paketpfade beschreiben."""
     path = stage / name
@@ -161,7 +170,8 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path,
     if "SOURCE_DATE_EPOCH" not in os.environ:
         raise ValueError("SOURCE_DATE_EPOCH muss ausdrücklich gesetzt sein")
     version = deb_version(upstream, metadata["revision"], stamp, sha, release, successor)
-    if subprocess.check_output([str(binary), "--version"], text=True).strip() != "pqkeep " + upstream:
+    if not binary_version_ok(subprocess.check_output([str(binary), "--version"], text=True).strip(),
+                             upstream, release):
         raise ValueError("Binary-Version passt nicht zu Cargo.toml")
     if any(p.is_symlink() for p in (out.absolute(), *out.absolute().parents)):
         raise ValueError("Ausgabepfad enthält einen Symlink")

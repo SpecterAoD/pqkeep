@@ -124,6 +124,19 @@ class DebianTests(unittest.TestCase):
                              ("0.1.0~beta.1-1", release)]:
             subprocess.run(["dpkg", "--compare-versions", older, "lt", newer], check=True)
 
+    def test_binary_version_output(self):
+        base = "0.1.0-beta.3"
+        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}", base, True))
+        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}", base, False))
+        preview = f"pqkeep {base}+preview.20261123.a1b2c3d"
+        self.assertTrue(deb.binary_version_ok(preview, base, False))
+        self.assertTrue(deb.binary_version_ok(f"pqkeep {base}+preview", base, False))
+        # Release-Pakete dürfen nie aus einem Vorschau-Binary entstehen.
+        self.assertFalse(deb.binary_version_ok(preview, base, True))
+        for bad in (f"pqkeep {base}+other", f"pqkeep {base}+preview.", f"pqkeep {base}+preview.a b",
+                    f"pqkeep 0.1.0+preview.x", f"pqkeep {base}+preview.{'a' * 41}"):
+            self.assertFalse(deb.binary_version_ok(bad, base, False), bad)
+
     def test_invalid_versions(self):
         for version in ("../1", "01.2.3", "1.2", "1.2.3+meta", "1.2.3-beta..1",
                         "1.2.3-01", "1.2.3-", "1.2.3\nPackage: evil", "1:2.3.4"):

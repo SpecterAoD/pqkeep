@@ -168,7 +168,7 @@ fn help_commands(lang: Lang) -> [Command; 3] {
 pub fn build(lang: Lang) -> Command {
     let t = texts(lang);
     let cmd = base("pqkeep", t.app_about, t.app_after, lang)
-        .version(pqkeep::VERSION)
+        .version(pqkeep::build_info::version_line())
         .disable_version_flag(true)
         .disable_help_subcommand(true)
         .subcommand_required(true)

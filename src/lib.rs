@@ -10,6 +10,7 @@
 
 #[cfg(feature = "api")]
 pub mod api;
+pub mod build_info;
 pub mod crypto;
 pub mod envelope;
 pub mod error;
