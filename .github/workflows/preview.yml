@@ -143,12 +143,12 @@ jobs:
         run: |
           tag="preview-$BUILD_ID"
           cat > notes.md <<EOF
-          **DE:** Automatische Vorschau von \`main\` (Commit \`$GITHUB_SHA\`). **Nicht geprüft, nicht signiert, kein Release.** Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateiformate können sich noch ändern. Verlassen Sie sich nur auf die veröffentlichten Betas und Releases. Prüfen: \`sha256sum -c SHA256SUMS\` und \`gh attestation verify <Datei> --repo $GITHUB_REPOSITORY\`.
+          **DE:** PQKeep Weekly Build – automatische Vorschau von \`main\` (Commit \`$GITHUB_SHA\`). **Nicht geprüft, nicht signiert, kein Release.** Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateiformate können sich noch ändern. Verlassen Sie sich nur auf die veröffentlichten Betas und Releases. Prüfen: \`sha256sum -c SHA256SUMS\` und \`gh attestation verify <Datei> --repo $GITHUB_REPOSITORY\`.
 
-          **EN:** Automatic preview of \`main\` (commit \`$GITHUB_SHA\`). **Not audited, not signed, not a release.** Do not use it for data you cannot lose; file formats may still change. Rely only on the published betas and releases. Verify with \`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
+          **EN:** PQKeep Weekly Build – automatic preview of \`main\` (commit \`$GITHUB_SHA\`). **Not audited, not signed, not a release.** Do not use it for data you cannot lose; file formats may still change. Rely only on the published betas and releases. Verify with \`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
           EOF
           gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --prerelease --latest=false --title "PQKeep Preview $BUILD_ID" --notes-file notes.md
+            --prerelease --latest=false --title "PQKeep Weekly Build $BUILD_ID" --notes-file notes.md
       # DE: Nur Vorschauen mit passendem Tag-Namen werden gelöscht; `v*`-Tags sind außerdem geschützt.
       # EN: Only previews with a matching tag name are deleted; `v*` tags are protected as well.
       - name: Alte Vorschauen entfernen / prune old previews
