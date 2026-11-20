@@ -3698,7 +3698,7 @@
     {
       "id": "B152-ubuntu-latest-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:31:49.9670672Z",
+      "observed_utc": "2026-11-20T21:31:49Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
@@ -4072,7 +4072,7 @@
     {
       "id": "B152-ubuntu-latest-no-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:33:32.8753430Z",
+      "observed_utc": "2026-11-20T21:33:32Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
@@ -4446,7 +4446,7 @@
     {
       "id": "B152-ubuntu-22.04-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:33:53.2030709Z",
+      "observed_utc": "2026-11-20T21:33:53Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
@@ -4820,7 +4820,7 @@
     {
       "id": "B152-ubuntu-22.04-arm-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:32:04.3936186Z",
+      "observed_utc": "2026-11-20T21:32:04Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
@@ -5194,7 +5194,7 @@
     {
       "id": "B152-windows-latest-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:35:28.8573562Z",
+      "observed_utc": "2026-11-20T21:35:28Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
@@ -5580,7 +5580,7 @@
     {
       "id": "B152-windows-latest-no-default",
       "source_commit": "aa80258d60a81ef02f97a8b90e91a93505ccaae2",
-      "observed_utc": "2026-11-20T21:38:38.8742506Z",
+      "observed_utc": "2026-11-20T21:38:38Z",
       "origin": "ci",
       "result": "passed",
       "run_id": 44820659991,
