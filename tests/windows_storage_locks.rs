@@ -23,6 +23,14 @@ fn lock(path: &Path) -> File {
         .unwrap()
 }
 
+// DE: ERROR_SHARING_VIOLATION (32); ErrorKind-Zuordnung hängt von Rust ab.
+// EN: ERROR_SHARING_VIOLATION (32); ErrorKind mapping depends on Rust.
+fn sharing_error(path: &Path) -> ErrorKind {
+    let error = File::open(path).unwrap_err();
+    assert_eq!(error.raw_os_error(), Some(32));
+    error.kind()
+}
+
 #[test]
 fn fs009_locked_key_replace_preserves_original_and_retry_succeeds() {
     let root = tempfile::tempdir().unwrap();
@@ -75,9 +83,10 @@ fn fs009_locked_archive_does_not_publish_plaintext_and_retry_succeeds() {
     .unwrap();
     let before = std::fs::read(&archive).unwrap();
     let locked = lock(&archive);
+    let expected = sharing_error(&archive);
     assert_eq!(
         files::decrypt(&archive, &target, &Unlock::Passphrase(pass.as_ref())),
-        Err(Error::Io(ErrorKind::PermissionDenied))
+        Err(Error::Io(expected))
     );
     assert!(!target.exists());
     drop(locked);
@@ -97,10 +106,8 @@ fn fs009_locked_factor_read_fails_then_reopens_without_replacement() {
     Factor::create(&target).unwrap();
     let before = zeroize::Zeroizing::new(std::fs::read(&target).unwrap());
     let locked = lock(&target);
-    assert!(matches!(
-        Factor::read(&target),
-        Err(Error::Io(ErrorKind::PermissionDenied))
-    ));
+    let expected = sharing_error(&target);
+    assert!(matches!(Factor::read(&target), Err(Error::Io(kind)) if kind == expected));
     assert_eq!(
         Factor::create(&target),
         Err(Error::Io(ErrorKind::AlreadyExists))
