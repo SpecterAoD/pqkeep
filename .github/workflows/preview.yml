@@ -1,7 +1,7 @@
 # DE: Wöchentliche Vorschau von `main` (#269). Nutzt denselben Build wie die Releases (build.yml),
 #     veröffentlicht aber nur ein GitHub-Pre-Release `preview-<Datum>.<Commit>`:
-#     - nie "Latest", keine Signierung (kein Sigstore, kein SignPath, kein Environment `release`),
-#       nur Build-Provenance und Prüfsummen; Dateien heißen `…-preview.<Kennung>-…`;
+#     - nie "Latest", Sigstore-Signaturen (kein SignPath, kein Environment `release`),
+#       Build-Provenance, SBOM-Attestationen und Prüfsummen; Dateien heißen `…-preview.<Kennung>-…`;
 #     - übersprungen, wenn es seit der letzten Vorschau keinen neuen Commit gibt oder die CI auf
 #       dem Commit nicht grün ist (nur beim Zeitplan; von Hand startet immer);
 #     - es bleiben die letzten vier Vorschauen, ältere werden samt Tag gelöscht;
@@ -9,8 +9,8 @@
 #     Releases und Betas bleiben davon unberührt: Tags `v*` lösen nur release.yml aus.
 # EN: Weekly preview of `main` (#269). Uses the same build as the releases (build.yml) but only
 #     publishes a GitHub pre-release `preview-<date>.<commit>`:
-#     - never "Latest", no signing (no Sigstore, no SignPath, no `release` environment), only build
-#       provenance and checksums; files are named `…-preview.<id>-…`;
+#     - never "Latest", keyless Sigstore signatures (no SignPath, no `release` environment), build
+#       provenance, SBOM attestations and checksums; files are named `…-preview.<id>-…`;
 #     - skipped when there is no new commit since the last preview or CI on the commit is not
 #       green (schedule only; a manual start always runs);
 #     - the last four previews are kept, older ones are deleted together with their tag;
@@ -36,6 +36,7 @@ concurrency:
 
 env:
   KEEP_PREVIEWS: "4"
+  COSIGN_VERSION: "v3.1.4"
 
 jobs:
   prepare:
@@ -129,23 +130,83 @@ jobs:
           name: release-input
           path: dist
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        id: provenance
         with:
           subject-path: |
             dist/*.tar.gz
             dist/*.zip
             dist/*.deb
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.tar.gz
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-unknown-linux-gnu.cdx.json
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.zip
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-x86_64-pc-windows-msvc.cdx.json
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-aarch64-unknown-linux-gnu.tar.gz
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-aarch64-unknown-linux-gnu.cdx.json
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-amd64.deb
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-amd64.deb.cdx.json
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/pqkeep-${{ env.VERSION }}-arm64.deb
+          sbom-path: dist/pqkeep-${{ env.VERSION }}-arm64.deb.cdx.json
       - name: Prüfsummen / checksums
         working-directory: dist
         run: sha256sum -- *.tar.gz *.zip *.deb *.cdx.json | sort -k2 > SHA256SUMS && cat SHA256SUMS
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+      - name: Keyless Sigstore-Signaturen / keyless signatures
+        working-directory: dist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.tar.gz *.zip *.deb SHA256SUMS; do
+            cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
+          done
+      - name: Provenance als Anhang / provenance as asset
+        env:
+          BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+        run: cp -- "$BUNDLE" "dist/pqkeep-$VERSION.intoto.jsonl"
+      - name: Signaturen und Attestationen prüfen / verify before publishing
+        working-directory: dist
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNER_WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: |
+          set -euo pipefail
+          sha256sum -c SHA256SUMS
+          id="https://github.com/$SIGNER_WORKFLOW_REF"
+          for f in *.tar.gz *.zip *.deb SHA256SUMS; do
+            cosign verify-blob --bundle "$f.sigstore.json" \
+              --certificate-identity "$id" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com "$f"
+          done
+          for f in *.tar.gz *.zip *.deb; do
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/preview.yml"
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --bundle "pqkeep-$VERSION.intoto.jsonl" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/preview.yml"
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --predicate-type https://cyclonedx.org/bom
+          done
       - name: Pre-Release / pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="preview-$BUILD_ID"
           cat > notes.md <<EOF
-          **DE:** PQKeep Weekly Build – automatische Vorschau von \`main\` (Commit \`$GITHUB_SHA\`). **Nicht geprüft, nicht signiert, kein Release.** Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateiformate können sich noch ändern. Verlassen Sie sich nur auf die veröffentlichten Betas und Releases. Prüfen: \`sha256sum -c SHA256SUMS\` und \`gh attestation verify <Datei> --repo $GITHUB_REPOSITORY\`.
+          **DE:** PQKeep Weekly Build – automatische Vorschau von \`main\` (Commit \`$GITHUB_SHA\`). **Nicht unabhängig geprüft, Sigstore-signiert, kein stabiler Release.** Nicht für Daten verwenden, die nicht verloren gehen dürfen; Dateiformate können sich noch ändern. Verlassen Sie sich nur auf die veröffentlichten Betas und Releases. Prüfen: \`sha256sum -c SHA256SUMS\` und \`gh attestation verify <Datei> --repo $GITHUB_REPOSITORY\`.
 
-          **EN:** PQKeep Weekly Build – automatic preview of \`main\` (commit \`$GITHUB_SHA\`). **Not audited, not signed, not a release.** Do not use it for data you cannot lose; file formats may still change. Rely only on the published betas and releases. Verify with \`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
+          **EN:** PQKeep Weekly Build – automatic preview of \`main\` (commit \`$GITHUB_SHA\`). **Not independently audited, Sigstore-signed, not a stable release.** Do not use it for data you cannot lose; file formats may still change. Rely only on the published betas and releases. Verify with \`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`.
           EOF
           gh release create "$tag" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --prerelease --latest=false --title "PQKeep Weekly Build $BUILD_ID" --notes-file notes.md
