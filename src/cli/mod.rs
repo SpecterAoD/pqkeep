@@ -32,6 +32,7 @@ mod json_out;
 mod keys;
 mod many_text;
 mod menu;
+mod notices;
 mod preview;
 mod recipients;
 mod recipients_ui;
@@ -208,7 +209,10 @@ fn execute(argv: &[String], lang: Lang, report: HardeningReport) -> CliResult {
 
 #[cfg(target_os = "linux")]
 fn warn_if_root(t: &Texts) {
-    if rustix::process::geteuid().is_root() {
+    if notices::root_warning_wanted(
+        rustix::process::geteuid().is_root(),
+        notices::is_dialog_child(),
+    ) {
         eprintln!("{}", t.msg_root_warning);
     }
 }

@@ -67,6 +67,7 @@ pub(super) fn spawn(lang: Lang, args: &[&str], stdin: Stdio) -> CliResult<Child>
     let code = if lang == Lang::De { "de" } else { "en" };
     let mut cmd = Command::new(exe);
     super::dialog::no_console_window(&mut cmd);
+    super::notices::mark_dialog_child(&mut cmd);
     cmd.args(["--lang", code])
         .args(args)
         .stdin(stdin)
