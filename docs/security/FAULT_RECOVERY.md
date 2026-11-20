@@ -9,8 +9,9 @@
 Issue [#152](https://github.com/SpecterAoD/pqkeep/issues/152), M2/P2, depends on completed
 [#151](https://github.com/SpecterAoD/pqkeep/issues/151) ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
 The maintainer approved the architecture plan and step A on 2026-11-17 (Europe/Berlin).
-**Step A documents the design; fault hooks and new recovery tests are not implemented yet.**
-Subsequent steps require renewed approval under SPEC section 0.2. This document is an
+Step B was separately approved on 2026-11-17: scoped I/O, envelope and STREAM fault tests are
+implemented locally. Crash, factor/archive fault and cleanup coverage remain in steps C–D.
+Steps C–E require renewed approval under SPEC section 0.2. This document is an
 architecture decision for test infrastructure, not a new storage/recovery guarantee.
 
 Reviewed base: `53b0ddf9f563d62f48509ae3db1a54264e7f5152`. Read the existing
@@ -105,7 +106,7 @@ production-activatable fault features violate scope. No new automatic recovery s
 
 ### Planned coverage, steps and evidence
 
-These IDs are reserved by this design only, not yet added to the machine-readable matrix:
+REC-005/015 below are implemented in B and recorded as partial; other IDs remain planned:
 
 | Planned ID | Scope |
 |---|---|
@@ -120,12 +121,16 @@ A: document this design and roadmap. B: scoped adapter, envelope/STREAM controls
 archive/decrypt/cleanup and Windows locks. D: acknowledged crash/restart/multi-stage cases.
 E: final evidence, native CI, documentation and practical rollback. Renew approval between steps.
 Production-source edits are limited to test binding/checkpoints in lib.rs, fsutil.rs,
-envelope/io.rs, crypto/factor.rs and files/output.rs, encrypt.rs, decrypt.rs; actual hooks are
-deferred to B–D. Unexpected architecture changes need another proposal. Test code stays in
+envelope/io.rs, crypto/factor.rs and files/output.rs, encrypt.rs, decrypt.rs. B changes only
+lib.rs/fsutil/envelope plus mechanical output/decrypt type bindings; other hooks wait for C–D.
+Unexpected architecture changes need another proposal. Test code stays in
 separate *_tests.rs or tests/ files within the existing line limits.
 
-Matrix/baseline 1.0.1 and existing IDs/V-C-U mappings are unchanged in A. Later add narrow cases
-with matrix/baseline 1.1.0, schema 1 and the existing QA1 namespace, all new cases linked to #152.
+A retained matrix/baseline 1.0.1. B prepares 1.1.0 with REC-005/015, schema 1 and QA1 IDs linked
+to #152. Existing cases, V/C/U mappings and all eleven historical evidence records are unchanged.
+The recorded reviewed-source SHA remains the historical #151 anchor, not B execution proof.
+New cases stay partial with no evidence_refs until a signed source revision/native CI is recorded;
+local uncommitted results use external patch/file hashes, never a fictitious tested commit.
 FS-007/008 and REC-002/003 retain untested variants; MEM-006 remains missing for actual OOM.
 Neither green cleanup tests nor a catalogue edit close crash/power-loss gaps. Record only real
 executions with full SHA, UTC, OS/runner/features, run/job/attempt, exact test references and limits.
@@ -133,7 +138,7 @@ Use [DEVELOPMENT.md](../DEVELOPMENT.md) and existing native Linux x86_64/ARM64 a
 CI. No-default runtime remains on Ubuntu latest/Windows latest. No new workflow/job/permission
 or fixture upload is planned; existing cargo test discovers the tests. CodeQL excludes test files;
 explicit review is still needed. Compilation, cfg exclusions and internal early returns are not
-passed assertions. A records no new fault/crash test success or baseline coverage.
+passed assertions. A records no fault results; B does not establish crash/power-loss coverage.
 
 ### Rollback and completion gate
 
@@ -154,8 +159,9 @@ release or issue closure. A documentation approval alone is not implementation c
 Issue [#152](https://github.com/SpecterAoD/pqkeep/issues/152), M2/P2, folgt auf abgeschlossenes
 [#151](https://github.com/SpecterAoD/pqkeep/issues/151) ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251)).
 Der Maintainer hat Gesamtentwurf und Schritt A am 17.11.2026 (Europe/Berlin) freigegeben.
-**A dokumentiert das Design; Fault-Hooks und neue Recoverytests sind noch nicht implementiert.**
-Folgeschritte benötigen gemäß SPEC 0.2 erneute Freigabe. Dies ist eine Architekturentscheidung
+B wurde am 17.11.2026 separat freigegeben: Scoped-I/O, Envelope-/STREAM-Fehlertests sind lokal
+implementiert. Crash-, Faktor-/Archiv-Fault- und Cleanup-Tests folgen in C–D; C–E benötigen
+gemäß SPEC 0.2 erneute Freigabe. Dies ist eine Architekturentscheidung
 für Tests, keine neue Speicher-/Recoverygarantie. Geprüfte Basis ist
 `53b0ddf9f563d62f48509ae3db1a54264e7f5152`; bestehendes Threat Model, Formate, D1–D4 und Katalog
 gelten gemeinsam (Links oben). Keine Krypto-/Format-/Abhängigkeits-/öffentliche API-/Sandboxänderung.
@@ -216,7 +222,8 @@ Threadlokale RAII-Pläne mit privatem Root, Punkt, Byte-/Vorkommensindex und Akt
 Restaurierung prüfen, unzulässiges Verschachteln/unerreichte Punkte scheitern lassen. Echte zufällige
 Tempnamen erhalten; ENOSPC/EACCES/write/flush/sync/link/rename/remove plattformgerecht simulieren,
 sonst echtes Dateisystem. Benannte Punkte, Grenzgrößen und zwölf reservierte IDs stehen oben;
-alle gelten unverändert für beide Sprachen, noch keine maschinenlesbare Matrixerweiterung.
+alle gelten unverändert für beide Sprachen. REC-005/015 sind in B implementiert und partial
+im Katalog erfasst; die übrigen IDs bleiben geplant.
 
 Parent startet eigenes Libtest-Binary mit exaktem Testnamen, übergibt begrenztes stdin-Protokoll
 und Secrets nur über Pipe/Speicher. Kind bestätigt Punkt ohne Inhaltsausgabe und wartet; erst
@@ -231,15 +238,20 @@ widersprechen dem Scope. Keine automatische Recoveryfunktion hinzufügen.
 A dokumentiert; B Adapter/Envelope/STREAM; C Faktor/Archive/Decrypt/Cleanup/Windows-Locks;
 D bestätigte Crashes/Neustart/Mehrstufen; E Nachweise/CI/Doku/Rollback. Jeweils erneut freigeben.
 Produktionsdateien nur lib.rs, fsutil.rs, envelope/io.rs, crypto/factor.rs und files/output.rs,
-encrypt.rs, decrypt.rs für Testbindung/Punkte; Hooks erst B–D. Unerwartete Architekturänderungen
+encrypt.rs, decrypt.rs für Testbindung/Punkte. B ändert lib.rs/fsutil/envelope sowie mechanische
+output/decrypt-Typbindungen; übrige Hooks warten auf C–D. Unerwartete Architekturänderungen
 erneut vorlegen; Tests separat innerhalb bestehender Zeilenlimits.
-Matrix/Baseline 1.0.1, IDs/V-C-U bleiben in A unverändert. Später 1.1.0, Schema 1, QA1-Namensraum,
-neue Fälle mit #152; breite FS-007/008-, REC-002/003-Lücken und echter OOM MEM-006 bleiben sichtbar.
+A beließ Matrix/Baseline 1.0.1. B bereitet 1.1.0 mit REC-005/015, Schema 1, QA1 und #152 vor.
+Altfälle/V-C-U und elf historische Nachweise bleiben unverändert; die Review-SHA bezeichnet
+weiter den historischen #151-Stand, keinen B-Testnachweis. Neue Fälle bleiben partial ohne
+evidence_refs bis signierte Quellrevision/native CI vorliegen; lokale uncommittete Ergebnisse
+werden extern mit Patch-/Dateihashes belegt, nie mit erfundener Test-SHA.
+Breite FS-007/008-, REC-002/003-Lücken und echter OOM MEM-006 bleiben sichtbar.
 Nur echte Läufe mit SHA/UTC/OS/Runner/Features/Run/Job/Attempt/Tests/Grenzen erfassen. Bestehende
 native Linux-x86_64/ARM64-/Windows-x86_64-CI nutzen; No-default-Runtime auf Ubuntu latest/Windows.
 Keine neuen Workflows/Jobs/Rechte/Uploads, Entdeckung über cargo test. CodeQL ignoriert Testdateien,
 explizites Review bleibt nötig. Kompilierung/cfg-Ausnahmen/interne Rücksprünge sind keine bestandenen
-Assertions. A belegt keine neuen Fault-/Crash-Erfolge oder erhöhte Baselineabdeckung.
+Assertions. A belegt keine Fault-Ergebnisse; B belegt keine Crash-/Stromausfallabdeckung.
 
 ### Rückweg und Abschluss
 

@@ -43,8 +43,8 @@ und mlock-Best-effort-Ausnahmen gelten weiterhin. Source-/Publish-/FAT-Rennen si
 und FORMAT.md. STREAM-Puffer sind begrenzt, Source-/Pfadlisten und Argon2 benötigen weiteren Speicher.
 
 Der freigegebene [Fault-/Recovery-Testentwurf](security/FAULT_RECOVERY.md) (#152) definiert
-Commitgrenze, Bestandsschutz und isolierte Prozessabbrüche. Schritt A dokumentiert nur;
-Fault-Hooks und neue Crash-Nachweise folgen nach gesonderter Schrittfreigabe.
+Commitgrenze, Bestandsschutz und isolierte Prozessabbrüche. Schritt B implementiert lokale
+Envelope-/STREAM-Fehlertests; Crash-/Stromausfallnachweise und weitere Schrittfreigaben bleiben offen.
 
 ## Sichtbar trotz Verschlüsselung
 
@@ -81,8 +81,8 @@ exceptions remain. See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races
 are bounded, but source/path bookkeeping and Argon2 require additional memory.
 
 The approved [fault/recovery test design](security/FAULT_RECOVERY.md) (#152) defines the
-commit boundary, preservation and isolated process termination. Step A documents only;
-fault hooks and new crash evidence await separate step approval.
+commit boundary, preservation and isolated process termination. Step B implements local
+envelope/STREAM fault tests; crash/power-loss evidence and further step approvals remain open.
 
 **Goals:** confidentiality and integrity of stored private keys against offline attackers who obtain
 the key file, and of encrypted files/directories (`.pqkf`), also against future quantum computers.

@@ -20,6 +20,9 @@ use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::security::Lang;
 use crate::{Error, Result};
 
+#[cfg(test)]
+use crate::fault_io_tests::{Point, checkpoint};
+
 /// DE: Hinweis beim Laden (kein Fehler). EN: Warning when loading (not an error).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -148,11 +151,19 @@ pub fn write_atomic(path: &Path, data: &[u8], overwrite: Overwrite) -> Result<()
 
 fn write_and_publish(temp: &Path, path: &Path, data: &[u8], overwrite: Overwrite) -> Result<()> {
     let mut file = open_new(temp)?;
+    #[cfg(test)]
+    checkpoint(temp, Point::AfterTempCreate)?;
     file.write_all(data)?;
     file.sync_all()?;
     drop(file);
     match overwrite {
-        Overwrite::Yes => fs::rename(temp, path)?,
+        Overwrite::Yes => {
+            #[cfg(test)]
+            checkpoint(temp, Point::BeforePublish)?;
+            fs::rename(temp, path)?;
+            #[cfg(test)]
+            checkpoint(path, Point::AfterPublish)?;
+        }
         Overwrite::No => publish_no_overwrite(temp, path)?,
     }
     sync_dir(path);

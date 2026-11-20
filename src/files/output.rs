@@ -9,11 +9,11 @@
 //! fails, `Drop` removes our own temporary output and the target never appears.
 //! Existing targets are never overwritten. Linux: files 0600, directories 0700.
 
-use std::fs::{self, DirBuilder, File};
+use std::fs::{self, DirBuilder};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
-use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
+use crate::fsutil::{OutputFile, open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::{Error, Result};
 
 /// DE: Temporäre Ausgabe mit Aufräumen bei Fehlern. EN: Temporary output with cleanup on failure.
@@ -44,7 +44,7 @@ fn dir_builder() -> DirBuilder {
 
 impl TempOutput {
     /// DE: Temporärdatei für ein Dateiziel. EN: Temporary file for a file target.
-    pub fn file(target: &Path) -> Result<(Self, File)> {
+    pub fn file(target: &Path) -> Result<(Self, OutputFile)> {
         ensure_absent(target)?;
         let temp = temp_path(target)?;
         let file = open_new(&temp)?;
@@ -122,7 +122,7 @@ pub(crate) fn create_dir(root: &Path, parts: &[&str]) -> Result<()> {
 
 /// DE: Legt eine neue Datei unter `root` an (Elternordner bei Bedarf).
 /// EN: Creates a new file below `root` (parent directories if needed).
-pub(crate) fn create_file(root: &Path, parts: &[&str]) -> Result<File> {
+pub(crate) fn create_file(root: &Path, parts: &[&str]) -> Result<OutputFile> {
     let path = join(root, parts);
     if let Some(parent) = path.parent() {
         dir_builder().create(parent)?;

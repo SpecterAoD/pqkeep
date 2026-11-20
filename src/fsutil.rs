@@ -15,6 +15,14 @@ use crate::crypto::rng;
 use crate::envelope::hex_encode;
 use crate::{Error, Result};
 
+// DE: Nur Lib-Tests erhalten einen Wrapper. EN: Only lib tests receive a wrapper.
+#[cfg(not(test))]
+pub(crate) type OutputFile = File;
+#[cfg(test)]
+use crate::fault_io_tests::{Point, checkpoint};
+#[cfg(test)]
+pub(crate) use crate::fault_writer_tests::OutputFile;
+
 /// DE: Kennung dieses Prozesses für Temporärnamen (16 Hex), siehe [`set_temp_tag`].
 /// EN: This process's tag for temporary names (16 hex), see [`set_temp_tag`].
 static TEMP_TAG: OnceLock<String> = OnceLock::new();
@@ -59,7 +67,9 @@ pub(crate) fn temp_path(path: &Path) -> Result<PathBuf> {
 }
 
 /// DE: Neue Datei, darf nicht existieren (Linux 0600). EN: New file, must not exist (Linux 0600).
-pub(crate) fn open_new(path: &Path) -> std::io::Result<File> {
+pub(crate) fn open_new(path: &Path) -> std::io::Result<OutputFile> {
+    #[cfg(test)]
+    checkpoint(path, Point::BeforeOpen)?;
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -67,21 +77,33 @@ pub(crate) fn open_new(path: &Path) -> std::io::Result<File> {
         use std::os::unix::fs::OpenOptionsExt;
         options.mode(0o600);
     }
-    options.open(path)
+    let file = options.open(path)?;
+    #[cfg(test)]
+    let file = OutputFile::new(file, path);
+    Ok(file)
 }
 
 /// DE: Veröffentlicht `temp` als `path`, ohne zu überschreiben.
 /// EN: Publishes `temp` as `path` without overwriting.
 pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<()> {
+    #[cfg(test)]
+    checkpoint(temp, Point::BeforePublish)?;
     match fs::hard_link(temp, path) {
-        Ok(()) => fs::remove_file(temp),
+        Ok(()) => {
+            #[cfg(test)]
+            checkpoint(temp, Point::AfterPublish)?;
+            fs::remove_file(temp)
+        }
         // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Prüfen + Umbenennen, nicht atomar.
         // EN: File systems without hard links (e.g. FAT): check + rename, not atomic.
         Err(e) if e.kind() == ErrorKind::Unsupported => {
             if path.exists() {
                 return Err(ErrorKind::AlreadyExists.into());
             }
-            fs::rename(temp, path)
+            fs::rename(temp, path)?;
+            #[cfg(test)]
+            checkpoint(path, Point::AfterPublish)?;
+            Ok(())
         }
         Err(e) => Err(e),
     }

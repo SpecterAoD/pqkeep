@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.0.1",
+  "matrix_version": "1.1.0",
   "reviewed_source_commit": "e735edb83559214c85d5de491f267a4a659f93fe",
   "cases": [
     {
@@ -4080,6 +4080,226 @@
       "evidence_refs": [],
       "gap": null,
       "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-005",
+      "category": "Recovery",
+      "component_paths": [
+        "src/envelope/io.rs",
+        "src/fsutil.rs"
+      ],
+      "scenario": {
+        "de": "Deterministische Schreibfehler bei gültigen v1/v2-Schlüsseldateien",
+        "en": "Deterministic write failures with valid v1/v2 key files"
+      },
+      "expected_behavior": {
+        "de": "Vor Commit alte gültige Datei erhalten, Fehler melden; nach Commit nur vollständige gültige Ausgabe",
+        "en": "Preserve the old valid file before commit and report errors; after commit only complete valid output"
+      },
+      "boundary": {
+        "de": "AES-v1/v2, exklusive Testroots, reguläre Fehler-Rückkehr; keine Crash-/Stromausfallgarantie.",
+        "en": "AES v1/v2, exclusive test roots, ordinary error return; no crash/power-loss guarantee."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_precommit_failures_preserve_v1_v2_keys",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_success_and_postcommit_states_are_valid",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_short_interrupted_and_zero_writes",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/envelope/fault_tests.rs",
+          "symbol": "rec005_os_errors_and_messages_expose_no_secrets",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "stream_failures_never_report_success_at_boundaries",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "short_and_interrupted_writes_preserve_stream_content",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/crypto_stream_faults.rs",
+          "symbol": "decrypt_writer_failure_is_propagated_without_retry_success",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Tests im lokalen, noch nicht committeten Schritt-B-Arbeitsbaum; signierte Quell-SHA und native CI-Nachweise stehen aus. Keine historische Baselineausführung dieser neuen Tests.",
+        "en": "Tests in the local uncommitted step-B worktree; signed source SHA and native CI evidence pending. No historical baseline execution of these new tests."
+      },
+      "next_evidence": {
+        "de": "Lokale Ergebnisse mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche Linux-/Windows-Run/Job/Attempt-Nachweise ergänzen.",
+        "en": "Record local results with patch/file hashes; after signed commit add actual Linux/Windows run/job/attempt evidence."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-015",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs"
+      ],
+      "scenario": {
+        "de": "Fehlerplan: Thread-/Root-Isolation, exakte Bytes, Wiederholbarkeit und RAII",
+        "en": "Fault plans: thread/root isolation, exact bytes, repeatability and RAII"
+      },
+      "expected_behavior": {
+        "de": "Nur gewählte Operation treffen; unbenutzte Pläne scheitern, Unwinding restauriert; alter Writer übernimmt keinen neuen Plan",
+        "en": "Affect only the selected operation; reject unused plans, restore on unwinding, do not attach an old writer to a new plan"
+      },
+      "boundary": {
+        "de": "Nur cfg(test)-Libbinary; Eltern-/Symlink-Ausbruchprobe Unix-only; keine produktive Hook-Schnittstelle.",
+        "en": "Only the cfg(test) lib binary; parent/symlink escape probe is Unix-only; no production hook interface."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_repeated_fault_has_same_trace_and_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_scopes_are_thread_and_root_isolated",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_occurrence_and_flush_are_observed",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_partial_write_hits_exact_byte_boundary",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_rejects_unreached_nested_and_zero_occurrence_plans",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_parent_and_symlink_paths_cannot_escape_root",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/fault_scope_tests.rs",
+          "symbol": "rec015_unwinding_restores_scope_and_detaches_open_writer",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Tests im lokalen, noch nicht committeten Schritt-B-Arbeitsbaum; signierte Quell-SHA und native CI-Nachweise stehen aus. Keine historische Baselineausführung dieser neuen Tests.",
+        "en": "Tests in the local uncommitted step-B worktree; signed source SHA and native CI evidence pending. No historical baseline execution of these new tests."
+      },
+      "next_evidence": {
+        "de": "Lokale Ergebnisse mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche Linux-/Windows-Run/Job/Attempt-Nachweise ergänzen.",
+        "en": "Record local results with patch/file hashes; after signed commit add actual Linux/Windows run/job/attempt evidence."
+      },
       "retired": false,
       "replacement": null
     }
