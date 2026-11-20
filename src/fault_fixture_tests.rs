@@ -30,6 +30,13 @@ pub(crate) struct Keys {
 }
 
 impl Keys {
+    pub(crate) fn credentials(&self) -> (&[u8], &[u8]) {
+        (
+            self.pass.as_ref().expose(),
+            self.factor.as_ref().map_or(&[], Factor::expose),
+        )
+    }
+
     pub(crate) fn new(with_factor: bool) -> Self {
         let pass = generator::generate(&generator::Options::default()).unwrap();
         let factor = with_factor.then(|| Factor::from_bytes(&rng::array::<32>().unwrap()).unwrap());
@@ -133,6 +140,13 @@ pub(crate) struct ArchiveCase {
 }
 
 impl ArchiveCase {
+    pub(crate) fn credentials(&self) -> (&[u8], &[u8]) {
+        (
+            self.pass.as_ref().expose(),
+            self.factor.as_ref().map_or(&[], Factor::expose),
+        )
+    }
+
     pub(crate) fn new(v2: bool, tree: bool, size: usize) -> Self {
         let root = tempfile::tempdir().unwrap();
         let source = root.path().join("source");

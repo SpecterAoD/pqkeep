@@ -4198,7 +4198,8 @@
       "category": "Recovery",
       "component_paths": [
         "src/fsutil.rs",
-        "src/envelope/io.rs"
+        "src/envelope/io.rs",
+        "src/crash_driver_tests.rs"
       ],
       "scenario": {
         "de": "Fehlerplan: Thread-/Root-Isolation, exakte Bytes, Wiederholbarkeit und RAII",
@@ -4276,6 +4277,18 @@
           "symbol": "rec015_sequence_requires_every_fault_and_restores_after_failure",
           "kind": "rust-unit",
           "stage": "existing"
+        },
+        {
+          "path": "src/crash_driver_tests.rs",
+          "symbol": "rec015_child_guard_reaps_on_parent_unwinding",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_driver_tests.rs",
+          "symbol": "rec015_unreached_child_point_is_failure_not_skip",
+          "kind": "rust-unit",
+          "stage": "existing"
         }
       ],
       "ci_refs": [
@@ -4299,8 +4312,8 @@
       "v2_ids": [],
       "evidence_refs": [],
       "gap": {
-        "de": "Uncommittete Schritte B/C; Sequenzverbrauch ergänzt. Signierte Quell-SHA/native CI ausstehend; kein historischer Nachweis.",
-        "en": "Uncommitted steps B/C; sequence consumption added. Signed source SHA/native CI pending; no historical proof."
+        "de": "Uncommittete Schritte B–D: Scope-/Sequenzverbrauch sowie ACK-/Guard-Negativtests. Signierte Quell-SHA/native CI fehlen; kein historischer Nachweis.",
+        "en": "Uncommitted steps B–D: scope/sequence consumption and ACK/guard negative tests. Signed source SHA/native CI pending; no historical proof."
       },
       "next_evidence": {
         "de": "Lokale Ergebnisse mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche Linux-/Windows-Run/Job/Attempt-Nachweise ergänzen.",
@@ -4743,15 +4756,16 @@
       "component_paths": [
         "src/envelope/io.rs",
         "src/crypto/factor.rs",
-        "src/files/decrypt.rs"
+        "src/files/decrypt.rs",
+        "src/cli/context_child.rs"
       ],
       "scenario": {
         "de": "Native Windows-Sharing-Locks auf Schlüssel, Archiv und Faktor",
         "en": "Native Windows sharing locks on key, archive and factor"
       },
       "expected_behavior": {
-        "de": "Gesperrte Operation scheitert ohne Bestandsschaden/Teilausgabe; nach Handle-Freigabe erfolgreicher Aufruf",
-        "en": "Locked operation fails without existing-data damage/partial output; succeeds after handle release"
+        "de": "Gesperrte Operation scheitert ohne Bestandsschaden/Teilausgabe; nach Handle-Freigabe erfolgreicher Aufruf; gesperrtes Cleanup darf eigenen Temp zurücklassen, nach Freigabe entfernbar",
+        "en": "Locked operation fails without existing-data damage/partial output; succeeds after handle release; locked cleanup may leave its own temp, removable after release"
       },
       "boundary": {
         "de": "share_mode(0), cfg(windows), uninstrumentierte API; kein Antivirus-/ACL-/Reparse-/Windows-FS-Gesamtnachweis.",
@@ -4789,6 +4803,12 @@
           "symbol": "fs009_locked_factor_read_fails_then_reopens_without_replacement",
           "kind": "rust-integration",
           "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "fs009_cleanup_sharing_lock_leaves_temp_until_handle_release",
+          "kind": "rust-unit",
+          "stage": "existing"
         }
       ],
       "ci_refs": [
@@ -4815,6 +4835,388 @@
       "next_evidence": {
         "de": "Lokale Ergebnisse mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche Linux-/Windows-Run/Job/Attempt-Nachweise ergänzen.",
         "en": "Record local results with patch/file hashes; after signed commit add actual Linux/Windows run/job/attempt evidence."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-010",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Bestätigter Prozessabbruch vor Commit: Schlüssel/Faktor/Archiv/Klartext",
+        "en": "Acknowledged process termination before commit: key/factor/archive/plaintext"
+      },
+      "expected_behavior": {
+        "de": "Alter gültiger Schlüssel bleibt; vor Commit kein neues endgültiges Ziel; SIGKILL/TerminateProcess ist nie Erfolg",
+        "en": "Old valid key preserved; no new final target before commit; SIGKILL/TerminateProcess never counts as success"
+      },
+      "boundary": {
+        "de": "AES-Schlüssel v1/v2, eigene Libtest-Kinder: vor open/nach create/nach einem Byte/vor Publish; Windows nativ ausstehend.",
+        "en": "AES keys v1/v2, own libtest children: before open/after create/after one byte/before publish; native Windows pending."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_control_releases_checkpoint_and_reports_success",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Lokaler uncommitteter Schritt-D-Stand; signierte Quell-SHA/native Windows-/ARM64-CI fehlen. Ignorierte private Child-Einstiege sind keine bestandenen Szenarien.",
+        "en": "Local uncommitted step-D state; signed source SHA/native Windows/ARM64 CI pending. Ignored private child entries are not passed scenarios."
+      },
+      "next_evidence": {
+        "de": "Lokale Ausführung mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche native Run/Job/Attempt-Nachweise ohne Rohfixtures ergänzen.",
+        "en": "Record local execution with patch/file hashes; after signed commit add actual native run/job/attempt proof without raw fixtures."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-011",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Bestätigter Prozessabbruch direkt nach Hardlink oder Rename",
+        "en": "Acknowledged termination immediately after hardlink or rename"
+      },
+      "expected_behavior": {
+        "de": "Vollständiges gültiges Ziel erneut öffnen; Kind liefert keinen Erfolg/Done-Marker",
+        "en": "Reopen a complete valid target; killed child emits no success/done marker"
+      },
+      "boundary": {
+        "de": "Prozessabsturz bei laufendem Kernel; keine OS-/Stromausfall-/Cache-Dauerhaftigkeit.",
+        "en": "Process termination with running kernel; no OS/power-loss/cache durability."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Lokaler uncommitteter Schritt-D-Stand; signierte Quell-SHA/native Windows-/ARM64-CI fehlen. Ignorierte private Child-Einstiege sind keine bestandenen Szenarien.",
+        "en": "Local uncommitted step-D state; signed source SHA/native Windows/ARM64 CI pending. Ignored private child entries are not passed scenarios."
+      },
+      "next_evidence": {
+        "de": "Lokale Ausführung mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche native Run/Job/Attempt-Nachweise ohne Rohfixtures ergänzen.",
+        "en": "Record local execution with patch/file hashes; after signed commit add actual native run/job/attempt proof without raw fixtures."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-012",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Frischer Prozess mit eigenen/fremden vollständigen/gekürzten Temps und defekten Metadaten",
+        "en": "Fresh process with own/foreign complete/truncated temps and damaged metadata"
+      },
+      "expected_behavior": {
+        "de": "Gültige Ziele prüfen, beschädigte Eingaben abweisen, Temps/Fremdes nicht übernehmen oder ändern",
+        "en": "Validate good targets, reject damaged inputs, never adopt or modify temps/foreign files"
+      },
+      "boundary": {
+        "de": "Frischer Libtest-Prozess plus normale CLI inspect/Core-Prüfung; kein Startup-Scavenger/Recoverydienst oder historische Release-Binaries.",
+        "en": "Fresh libtest process plus ordinary CLI inspect/core checks; no startup scavenger/recovery service or historical release binaries."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_key_replace_crashes_preserve_valid_v1_v2_state",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_factor_crashes_leave_absent_or_valid_target",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_archive_crashes_preserve_sources_and_restart_safely",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec010_011_decrypt_crashes_never_publish_partial_plaintext",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_recovery.rs",
+          "symbol": "rec012_fresh_cli_rejects_stale_data_and_preserves_valid_archive",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_recovery.rs",
+          "symbol": "rec012_truncated_headers_are_rejected_without_promoting_temp",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Lokaler uncommitteter Schritt-D-Stand; signierte Quell-SHA/native Windows-/ARM64-CI fehlen. Ignorierte private Child-Einstiege sind keine bestandenen Szenarien.",
+        "en": "Local uncommitted step-D state; signed source SHA/native Windows/ARM64 CI pending. Ignored private child entries are not passed scenarios."
+      },
+      "next_evidence": {
+        "de": "Lokale Ausführung mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche native Run/Job/Attempt-Nachweise ohne Rohfixtures ergänzen.",
+        "en": "Record local execution with patch/file hashes; after signed commit add actual native run/job/attempt proof without raw fixtures."
+      },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-REC-013",
+      "category": "Recovery",
+      "component_paths": [
+        "src/fsutil.rs",
+        "src/envelope/io.rs",
+        "src/crypto/factor.rs",
+        "src/files/output.rs"
+      ],
+      "scenario": {
+        "de": "Drei Core-Speicheroperationen und vorhandenes CLI-Cleanup nach Kindabbruch",
+        "en": "Three core save operations and existing CLI cleanup after child termination"
+      },
+      "expected_behavior": {
+        "de": "Erste Operation gültig, zweite nicht veröffentlicht, dritte nicht begonnen; Cleanup erhält Fertiges/Fremdes",
+        "en": "First operation valid, second unpublished, third unstarted; cleanup preserves completed/foreign files"
+      },
+      "boundary": {
+        "de": "Testgesteuerte Folge echter Envelope-Aufrufe, kein produktiver Batch-/UI-Abbruchbeweis; CLI-Cleanup-Kind erzeugt synthetische Reste.",
+        "en": "Test-driven sequence of real envelope calls, not a production batch/UI cancellation proof; CLI cleanup child creates synthetic remnants."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "src/crash_recovery_tests.rs",
+          "symbol": "rec013_multistage_kill_distinguishes_committed_pending_and_unstarted",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/cli/context_child_tests.rs",
+          "symbol": "rec013_cleanup_after_actual_child_death_preserves_other_files",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P2",
+      "issues": [
+        152
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Lokaler uncommitteter Schritt-D-Stand; signierte Quell-SHA/native Windows-/ARM64-CI fehlen. Ignorierte private Child-Einstiege sind keine bestandenen Szenarien.",
+        "en": "Local uncommitted step-D state; signed source SHA/native Windows/ARM64 CI pending. Ignored private child entries are not passed scenarios."
+      },
+      "next_evidence": {
+        "de": "Lokale Ausführung mit Patch-/Dateihashes festhalten; nach signiertem Commit tatsächliche native Run/Job/Attempt-Nachweise ohne Rohfixtures ergänzen.",
+        "en": "Record local execution with patch/file hashes; after signed commit add actual native run/job/attempt proof without raw fixtures."
       },
       "retired": false,
       "replacement": null

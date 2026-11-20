@@ -2,12 +2,13 @@
 //! EN: Lib test binary only: isolated, explicitly consumed I/O plans without content logging.
 #![allow(clippy::unwrap_used, clippy::panic)]
 
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::io::{self, ErrorKind};
 use std::path::{Component, Path, PathBuf};
 use std::rc::Rc;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) enum Point {
     BeforeOpen,
     AfterTempCreate,
@@ -22,6 +23,7 @@ pub(crate) enum Point {
     BeforeDirSync,
     BeforeRemoveFile,
     BeforeRemoveDirAll,
+    AfterFirstOperation,
 }
 
 #[derive(Clone, Copy)]
@@ -46,6 +48,8 @@ pub(crate) enum Action {
     Short(usize),
     Interrupt,
     Zero,
+    Pause,
+    PauseAfter(usize),
 }
 
 #[derive(Clone, Copy)]
@@ -82,7 +86,10 @@ impl Scope {
         assert!(root.is_absolute() && root.symlink_metadata().unwrap().is_dir());
         for plan in &plans {
             assert!(plan.occurrence > 0, "Fault occurrence / Fehlervorkommen");
-            assert!(matches!(plan.action, Action::Fail(_)) || plan.point == Point::Write);
+            assert!(
+                matches!(plan.action, Action::Fail(_) | Action::Pause)
+                    || plan.point == Point::Write
+            );
             assert!(!matches!(plan.action, Action::Short(0)));
         }
         let state = Rc::new(RefCell::new(State {
@@ -172,6 +179,10 @@ pub(crate) fn check_state(state: &Shared, point: Point) -> io::Result<()> {
         Some(Action::Fail(failure)) => {
             consume(state);
             Err(failure.error())
+        }
+        Some(Action::Pause) => {
+            consume(state);
+            crate::crash_driver_tests::pause()
         }
         Some(_) => panic!("Invalid fault point / Ungültiger Fehlerpunkt"),
     }

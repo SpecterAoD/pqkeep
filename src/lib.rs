@@ -46,3 +46,8 @@ mod files_fault_tests;
 #[cfg(test)]
 #[path = "files/recovery_tests.rs"]
 mod files_recovery_tests;
+
+#[cfg(test)]
+mod crash_driver_tests;
+#[cfg(test)]
+mod crash_recovery_tests;
