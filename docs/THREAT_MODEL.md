@@ -114,3 +114,23 @@ write access to the source directory during encryption (TOCTOU), programs of the
 changing the context menu entries (Linux `~/.local/share`, Windows `HKCU\Software\Classes`; `integrate
 status` reports modified entries), secure deletion of originals, FIPS 140
 validation and external audit.
+
+## Rekey (#109): interrupted replacement / unterbrochener Austausch
+
+EN: Authenticate old protection before writing; require a strong new passphrase and the same
+v2 factor. Keep key identity and format, disallow KDF reduction. New outputs/backups use strict
+no-replace publication; confirmed in-place replacement commits an exact old encrypted backup
+first. Never adopt stale temps or overwrite a committed backup. Trusted directories and one
+writer are required: snapshot checks are not atomic CAS or process locks. Process-kill tests
+prove no OS-crash/power-loss durability; parent sync remains best effort. Windows sharing tests
+add no AV/reparse/ACL guarantee. Old copies retain old protection and are not revoked/securely
+erased. See [REKEY.md](REKEY.md) and [design/test invariants](security/REKEY_DESIGN.md).
+
+DE: Alten Schutz vor Schreibzugriffen authentifizieren, neue starke Passphrase und denselben
+v2-Faktor verlangen. Identität/Format erhalten, keine KDF-Absenkung. Neue Ziele/Sicherungen strikt
+ohne Ersetzen; bestätigter Austausch erst nach exakter verschlüsselter Altsicherung. Keine Temps
+übernehmen oder bestehende Sicherung ersetzen. Vertrauenswürdige Verzeichnisse/ein Schreiber
+nötig: Snapshotprüfung ist kein atomarer CAS/Prozesslock. Prozessabbrüche belegen keine OS-/
+Stromverlustgarantie, Eltern-sync bleibt best effort. Windows-Sperrtests ergänzen keine AV-/
+Reparse-/ACL-Garantie. Alte Kopien behalten alten Schutz, werden nicht widerrufen/sicher gelöscht.
+Siehe [REKEY.md](REKEY.md) und [Entwurf/Testinvarianten](security/REKEY_DESIGN.md).

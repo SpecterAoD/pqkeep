@@ -64,7 +64,7 @@ impl Access {
 
 /// DE: Fehler, wenn `--factor-file` nicht dazu passt, ob eine Faktordatei nötig ist.
 /// EN: Error if `--factor-file` does not match whether a factor file is needed.
-fn check_factor(needed: bool, given: bool, lang: Lang) -> CliResult {
+pub(super) fn check_factor(needed: bool, given: bool, lang: Lang) -> CliResult {
     let field = match (needed, given) {
         (true, false) => "factor_required",
         (false, true) => "factor_unused",

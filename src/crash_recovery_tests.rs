@@ -18,6 +18,7 @@ pub(crate) fn execute(
     let root = &request.root;
     match request.operation {
         Operation::Key => save_next(root, "key.json"),
+        Operation::Rekey | Operation::RekeyBackup => rekey(root, pass.unwrap(), factor),
         Operation::Factor => Factor::create(&root.join("factor")),
         Operation::Encrypt => encrypt(root, pass.unwrap(), factor),
         Operation::Decrypt => files::decrypt(
@@ -53,6 +54,18 @@ pub(crate) fn execute(
             Ok(())
         }
     }
+}
+
+fn rekey(root: &Path, pass: &StrongPassphrase, factor: Option<&Factor>) -> Result<()> {
+    let source = root.join("keys/key.json");
+    let backup = root.join("backups/key.json");
+    let loaded = envelope::RekeyFile::open(&source)?;
+    let mut options = envelope::RekeyOptions::new(&source);
+    options.overwrite = envelope::Overwrite::Yes;
+    options.backup = Some(&backup);
+    // DE: Gleiche erzeugte Passphrase isoliert den Speicher-Commit; getrennte Tests wechseln sie.
+    // EN: Same generated passphrase isolates storage commit; separate tests change it.
+    loaded.write(&options, pass.as_ref(), pass, factor)
 }
 
 fn save_next(root: &Path, name: &str) -> Result<()> {

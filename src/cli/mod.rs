@@ -36,6 +36,9 @@ mod notices;
 mod preview;
 mod recipients;
 mod recipients_ui;
+mod rekey_cmd;
+mod rekey_input;
+mod rekey_text;
 mod sandbox;
 #[cfg(feature = "api")]
 mod serve;
@@ -141,6 +144,7 @@ fn dispatch(
     match matches.subcommand() {
         Some(("generate", m)) => keys::generate(t, lang, m),
         Some(("factor", m)) => factor_cmd::create(lang, m),
+        Some(("rekey", m)) => rekey_cmd::run(t, lang, m),
         Some(("export", m)) => keys::export(t, lang, m),
         Some(("inspect", m)) => keys::inspect(t, lang, m),
         Some(("validate", m)) => validate::validate(t, lang, m),

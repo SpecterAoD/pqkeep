@@ -123,3 +123,13 @@ profile. No paths inside the container.
 
 **Public key file (`*.pub.json`):** magic `PQKEEP-PUB`, ML-KEM/ML-DSA only, contains nothing
 secret. Not signed – confirm the fingerprint with the owner through a second channel.
+
+## Rekey (#109)
+
+DE: `pqkeep rekey` erneuert ausschließlich den Schutz derselben privaten Schlüsseldatei.
+Formatversion, Header, Schlüsselmaterial und Key-ID bleiben gleich; Salt/Nonce sind frisch.
+Keine Formatmigration. Sicherung/Restore, KDF-Regeln und Grenzen: [REKEY.md](REKEY.md).
+
+EN: `pqkeep rekey` renews protection of the same private key file only. Format version,
+header, key material and ID stay unchanged; salt/nonce are fresh. No format migration.
+Backup/restore, KDF policy and limits: [REKEY.md](REKEY.md).

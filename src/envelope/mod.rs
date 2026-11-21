@@ -11,10 +11,13 @@ mod encoding;
 mod format;
 pub mod io;
 mod keyfile;
+mod keyfile_rekey;
 mod keyfile_v2;
 mod metadata;
 mod parse;
 mod public;
+mod rekey;
+mod rekey_paths;
 pub mod time;
 
 pub use encoding::hex_encode;
@@ -27,3 +30,4 @@ pub(crate) use keyfile::fingerprint;
 pub use keyfile::{KEY_ID_LEN, KeyFile, MAX_FILE_BYTES, UnlockedKey};
 pub use metadata::{MAX_ACCOUNT_TYPE_CHARS, MAX_FIELD_CHARS, Metadata};
 pub use public::{PUBLIC_MAGIC, PublicKeyFile};
+pub use rekey::{RekeyFile, RekeyOptions};
