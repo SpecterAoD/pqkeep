@@ -142,3 +142,25 @@ docs/limits and a reviewable PR; leave #109 open/In progress until the owner mer
 DE: Rückweg signierter Revert-PR; praktische Rücksetzprobe mit generierten Schlüsseln/Archiv/
 Signatur und gleichen geschützten Hashes. Abschluss der Bearbeitung bis zum geprüften PR;
 Issue bleibt offen/In progress, Merge entscheidet Eigentümer.
+
+## Executable test mapping / Ausführbare Zuordnung
+
+| IDs | Source / Quelle |
+|---|---|
+| RKEY-001–003 | `tests/rekey_core.rs`, `tests/common/rekey.rs` |
+| RKEY-004–007 | `tests/rekey_io.rs`, `tests/cli_rekey.rs` |
+| RKEY-008–009 | `src/rekey_fault_tests.rs` (backup/target boundaries, sync, publish, cleanup, unsupported links) |
+| RKEY-010 | `src/rekey_crash_tests.rs`, existing cfg(test) driver/recovery operations |
+| RKEY-011 | `tests/cli_rekey.rs`, `tests/cli_help.rs`; bounded zeroizing input in `src/cli/rekey_input.rs` |
+| RKEY-012 | `tests/rekey_compat.rs` (archive v1/v2, key v1/v2, signatures, old backup) |
+| RKEY-013 | `tests/rekey_windows.rs`, Unix permissions in `tests/rekey_io.rs` |
+| RKEY-014 | Full existing suites and isolated revert evidence in [PR #282](https://github.com/SpecterAoD/pqkeep/pull/282) |
+
+EN: Invocation/results and native CI are recorded in that PR, with exact revisions. The original
+attack matrix/baseline remain unchanged; these issue-local acceptance IDs do not relabel their
+historical evidence. No cargo builds may replace a running crash-test executable in its target
+directory: run rebuilds/configurations sequentially or use separate target directories.
+DE: Aufrufe/Ergebnisse und native CI stehen mit Revisionen im PR. Ursprüngliche Angriffsmatrix/
+Baseline unverändert; Issue-IDs ersetzen keine historischen Nachweise. Ein laufendes Crash-Test-
+Executable darf nicht im selben Target-Verzeichnis durch parallele Builds ersetzt werden; Builds/
+Konfigurationen nacheinander oder in getrennten Target-Verzeichnissen ausführen.

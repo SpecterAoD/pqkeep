@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.14: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.15: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -16,6 +16,8 @@
 > Änderung v2.12 (15.11.2026, freigegeben von SpecterAoD mit dem Projektplan „Community und Struktur“): englische Übersetzung `docs/SPEC.en.md`, gemeinsam gepflegt; externe Beiträge dürfen nur Englisch sein, die deutsche Fassung wird nachgezogen (`CONTRIBUTING.md`).
 > Änderung v2.13 (16.11.2026, freigegeben von SpecterAoD): Ausnahme von 5c für Bilder der Dokumentation unter `docs/images/` (PNG, JPEG, WebP, höchstens 500 KB je Datei, Signatur passend zur Endung; geprüft von `scripts/check_limits.sh`).
 > Änderung v2.14 (20.11.2026, freigegeben von SpecterAoD): wöchentliche Vorschau-Builds (Abschnitt 5, #269) – gleicher Build wie Releases, nur als unsigniertes GitHub-Pre-Release, im Programm als Vorschau gekennzeichnet; Betas und Releases bleiben unverändert.
+
+> Änderung v2.15 (21.11.2026, eigentümerseitig freigegebener Plan zu #109): ausdrücklicher Passphrase-Wechsel privater Schlüsseldateien bei gleicher Identität/Format/Faktor, standardmäßig neue Ausgabe, bestätigter Austausch mit exakter verschlüsselter Sicherung, keine KDF-Absenkung. Siehe `docs/REKEY.md`.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
@@ -103,6 +105,19 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - **Originale:** werden nicht gelöscht; sicheres Löschen ist auf SSDs unzuverlässig (Abschnitt 5b).
 - **Geplante Erweiterungen (spätere Updates):** Spiegel-Modus (Ordnerstruktur erhalten, jede Datei einzeln verschlüsselt), mehrere Empfänger pro Datei, optionale ML-DSA-Signatur des Absenders.
 - **Dokumentation:** `docs/FILE_FORMAT.md` (DE/EN), Ergänzung in `docs/THREAT_MODEL.md` (sichtbare Metadaten: ungefähre Größe; Angriffe über manipulierte Archive).
+
+## 4b. Passphrase-Wechsel privater Schlüsseldateien (#109)
+
+- Opt-in `rekey FILE --out PATH`; verdeckte alte/neue Eingabe mit Bestätigung oder drei begrenzte
+  Stdin-Zeilen. Bestehende Befehle unverändert; neuer Befehl lehnt mehrdeutiges `--passphrase-file` ab.
+- Material, ID, öffentlicher Schlüssel, Zeit, Metadaten, Format und Faktor erhalten; frische Salt/Nonce.
+  KDF standardmäßig exakt gleich, ausdrückliche Core-Anpassung ohne Senken von m/t/p. Keine Migration.
+- Bestehende fremde Ziele/Sicherungen nie ersetzen; Austausch nur bestätigt mit `--force` und zuerst
+  neuer exakter verschlüsselter `--backup`. Strikte Veröffentlichung ohne Ersetzen benötigt Hardlinks.
+- Vertrauenswürdige Verzeichnisse/ein Schreiber; kein atomarer CAS, automatischer Restore, sicheres
+  Löschen oder Widerruf alter Kopien. Eltern-sync best effort, keine OS-/Stromverlustgarantie.
+  [REKEY.md](REKEY.md) und [security/REKEY_DESIGN.md](security/REKEY_DESIGN.md) nennen Plattformgrenzen
+  und Testinvarianten.
 
 ## 5. Automatisierung & CI/CD (GitHub Actions)
 

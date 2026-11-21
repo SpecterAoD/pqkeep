@@ -25,6 +25,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 
 - [ ] [#109](https://github.com/SpecterAoD/pqkeep/issues/109): `pqkeep rekey` – Passphrase einer Schlüsseldatei ändern / change a key file's passphrase.
   - P1, M2; SpecterAoD; started / begonnen 21.11.2026. Dependencies #39–#41 completed; #152 supplies fault/crash tests. / Abhängigkeiten abgeschlossen; Fehler-/Crash-Testgrundlage vorhanden.
+  - [PR #282](https://github.com/SpecterAoD/pqkeep/pull/282), [DE/EN usage](REKEY.md); owner review/merge pending. / Eigentümerreview/Merge ausstehend.
   - [Security/design plan](security/REKEY_DESIGN.md): preserve key material/ID and v1/v2; explicit output, protected backup before in-place replacement. / Schlüsselmaterial/ID und v1/v2 erhalten; ausdrückliches Ziel, geschützte Sicherung vor Austausch.
   - Owner authorized issue-scoped implementation, signed commits, tests and PR; merge to main excluded. / Issue-bezogene Umsetzung, signierte Commits, Tests und PR freigegeben; Merge nach main ausgenommen.
 

@@ -89,3 +89,13 @@ principle is encryption instead of deletion; PQKeep deliberately does not delete
 
 **Fingerprints:** confirm a recipient's fingerprint (`pqkeep inspect anna.pub.json`) over a second
 channel before encrypting for them.
+
+## Key file passphrase / Passphrase der Schlüsseldatei
+
+EN: `pqkeep rekey FILE --out NEW` changes protection without changing key material or identity.
+Confirmed in-place replacement requires a new exact encrypted backup. The same v2 factor and
+default KDF remain; old copies are not revoked. [Instructions and limits](REKEY.md).
+
+DE: `pqkeep rekey FILE --out NEW` ändert den Schutz ohne Schlüssel-/Identitätswechsel.
+Bestätigter Austausch braucht eine neue exakte verschlüsselte Sicherung. v2-Faktor und KDF
+bleiben standardmäßig gleich; alte Kopien werden nicht widerrufen. [Anleitung und Grenzen](REKEY.md).
