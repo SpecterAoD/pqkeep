@@ -76,12 +76,14 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.check(sample, "reusable workflow requests write")
         self.check(reusable.replace("contents: read", "contents: write"), "reusable workflow requests write")
 
-    def test_preview_never_signs_or_uses_release_environment(self):
-        # DE: Nur preview.yml hat diese Grenzen; Kommentare zählen nicht.
-        # EN: Only preview.yml has these limits; comments do not count.
-        step = "      - run: cosign sign-blob --yes x\n"
-        self.assertTrue(any("must not sign" in x for x in audit(BASE + step, "preview.yml")))
-        self.assertEqual([], audit(BASE + step, "other.yml"))
+    def test_preview_allows_sigstore_but_rejects_signpath_and_release_environment(self):
+        # DE: Keyless Sigstore ist für Vorschauen erlaubt, SignPath und release-Environment nicht.
+        # EN: Keyless Sigstore is allowed for previews, SignPath and release environment are not.
+        cosign = "      - run: cosign sign-blob --yes x\n"
+        self.assertEqual([], audit(BASE + cosign, "preview.yml"))
+        self.assertEqual([], audit(BASE + cosign, "other.yml"))
+        signpath = "      - run: signpath sign x\n"
+        self.assertTrue(any("SignPath" in x for x in audit(BASE + signpath, "preview.yml")))
         env = BASE.replace("    runs-on: ubuntu-latest\n", "    runs-on: ubuntu-latest\n    environment: release\n")
         self.assertTrue(any("release environment" in x for x in audit(env, "preview.yml")))
         self.assertEqual([], audit("# kein Sigstore, kein SignPath\n" + BASE, "preview.yml"))
