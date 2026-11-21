@@ -17,7 +17,7 @@ use std::path::Path;
 use super::keyfile::{KeyFile, MAX_FILE_BYTES};
 use super::public::PublicKeyFile;
 use crate::fsutil::{
-    open_new, publish_no_overwrite, publish_no_overwrite_strict, sync_dir, temp_path,
+    OutputFile, open_new, publish_no_overwrite, publish_no_overwrite_strict, sync_dir, temp_path,
 };
 use crate::security::Lang;
 use crate::{Error, Result};
@@ -152,26 +152,43 @@ pub(super) fn write_atomic_strict(path: &Path, data: &[u8]) -> Result<()> {
 
 fn write_atomic_inner(path: &Path, data: &[u8], overwrite: Overwrite, strict: bool) -> Result<()> {
     let temp = temp_path(path)?;
-    let result = write_and_publish(&temp, path, data, overwrite, strict);
-    if result.is_err() {
-        // DE: Aufräumen; Fehler hier sind zweitrangig. EN: Clean up; errors here are secondary.
-        #[cfg(test)]
-        if checkpoint(&temp, Point::BeforeRemoveFile).is_err() {
-            return result;
-        }
-        let _ = fs::remove_file(&temp);
-    }
-    result
+    write_temp(&temp, path, data, overwrite, strict)
 }
 
-fn write_and_publish(
+fn write_temp(
     temp: &Path,
     path: &Path,
     data: &[u8],
     overwrite: Overwrite,
     strict: bool,
 ) -> Result<()> {
-    let mut file = open_new(temp)?;
+    // DE: Cleanup erst nach erfolgreichem create_new: Kollisionen gehören uns nicht.
+    // EN: Only clean up after successful create_new: collisions are not our files.
+    let file = open_new(temp)?;
+    let result = write_and_publish(file, temp, path, data, overwrite, strict);
+    if result.is_err() {
+        // DE: Aufräumen; Fehler hier sind zweitrangig. EN: Clean up; errors here are secondary.
+        #[cfg(test)]
+        if checkpoint(temp, Point::BeforeRemoveFile).is_err() {
+            return result;
+        }
+        let _ = fs::remove_file(temp);
+    }
+    result
+}
+
+#[cfg(test)]
+#[path = "io_owner_tests.rs"]
+mod owner_tests;
+
+fn write_and_publish(
+    mut file: OutputFile,
+    temp: &Path,
+    path: &Path,
+    data: &[u8],
+    overwrite: Overwrite,
+    strict: bool,
+) -> Result<()> {
     #[cfg(test)]
     checkpoint(temp, Point::AfterTempCreate)?;
     file.write_all(data)?;

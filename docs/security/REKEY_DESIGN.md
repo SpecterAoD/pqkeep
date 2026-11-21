@@ -164,3 +164,21 @@ DE: Aufrufe/Ergebnisse und native CI stehen mit Revisionen im PR. Ursprüngliche
 Baseline unverändert; Issue-IDs ersetzen keine historischen Nachweise. Ein laufendes Crash-Test-
 Executable darf nicht im selben Target-Verzeichnis durch parallele Builds ersetzt werden; Builds/
 Konfigurationen nacheinander oder in getrennten Target-Verzeichnissen ausführen.
+
+## Review follow-up: temporary-file ownership / Review-Nachtrag: Temp-Besitz
+
+EN: The existing envelope writer attempted cleanup even when `create_new` failed. A controlled
+private temporary-path collision reproduced deletion of a pre-existing valid key; a pre-open
+permission fault also attempted unowned cleanup. Two regression tests were red before the fix
+and green after it (`src/envelope/io_owner_tests.rs`, RKEY-007/008). Acquire the output handle
+before entering the cleanup-owned write/publish phase. This narrow shared-helper correction
+preserves formats, cryptography, error codes and existing hard-link fallback policy. It is
+within the owner's issue-scoped data-preservation authorization; no public hook or dependency.
+Re-run complete suites/native CI on the final code; rollback includes this correction as well.
+DE: Der bisherige Envelope-Schreiber versuchte Cleanup auch nach fehlgeschlagenem `create_new`.
+Eine kontrollierte private Temp-Kollision löschte reproduzierbar einen vorhandenen gültigen
+Schlüssel; ein Fehler vor dem Öffnen versuchte ebenfalls fremdes Cleanup. Zwei Tests vorher rot,
+nachher grün (Datei/IDs oben). Handle vor der Cleanup-verantwortlichen Schreib-/Publikationsphase
+erwerben. Kleine gemeinsame Helferkorrektur innerhalb der issue-bezogenen Bestandsschutzfreigabe,
+keine Format-/Krypto-/Fehlercode-/Fallbackänderung, öffentliche Hooks oder Abhängigkeit. Volltests/
+native CI auf endgültigem Code wiederholen; vollständiger Revert nimmt auch diese Korrektur zurück.
