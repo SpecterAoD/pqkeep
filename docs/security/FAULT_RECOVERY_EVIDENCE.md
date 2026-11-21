@@ -3,8 +3,9 @@
 ## English
 
 Issue [#152](https://github.com/SpecterAoD/pqkeep/issues/152), A–D approved on 2026-11-17,
-E on 2026-11-20. [Draft PR #279](https://github.com/SpecterAoD/pqkeep/pull/279) records final
-local checks and final PR CI. No merge, release, deployment or issue closure is authorized.
+E on 2026-11-20. [Merged PR #279](https://github.com/SpecterAoD/pqkeep/pull/279) records final
+local checks and PR CI; the owner authorized merge and issue completion on 2026-11-21.
+No production deployment. Post-merge test-driver correction: [PR #280](https://github.com/SpecterAoD/pqkeep/pull/280).
 
 ### Source and executed assertions
 
@@ -12,7 +13,7 @@ Signed implementation: `ba52dcd99a7326f3bbb2add69dde25deab3dc94f`, based on main
 `9683df8ae8f8b284b4854fcd3e9d856a0edd947b`. Four thematic A–D commits and a separate Windows
 expectation correction have valid GitHub signatures. CI actually checked out
 `aa80258d60a81ef02f97a8b90e91a93505ccaae2`; its complete tree equals the signed implementation.
-Later evidence/documentation commits preserve product, test, dependency and workflow bytes.
+The evidence/documentation commits in PR #279 preserve product, test, dependency and workflow bytes.
 
 [CI 44820659991](https://github.com/SpecterAoD/pqkeep/actions/runs/44820659991), attempt 1:
 
@@ -73,12 +74,13 @@ After merge: separate signed revert PR, CI and explicit approval; no user-data m
 
 ## Deutsch
 
-Issue #152: A–D am 17.11.2026, E am 20.11.2026 freigegeben. Draft-PR #279 erfasst die finalen
-lokalen Prüfungen und PR-CI. Kein Merge, Release, Deployment oder Issue-Abschluss freigegeben.
+Issue #152: A–D am 17.11.2026, E am 20.11.2026 freigegeben. PR #279 erfasst finale lokale
+Prüfungen und PR-CI; Merge und Issue-Abschluss am 21.11.2026 ausdrücklich freigegeben.
+Kein Produktionsdeployment. Nachträgliche Testtreiberkorrektur: PR #280 (oben verlinkt).
 
 Signierte Implementierung, main-Basis, tatsächlicher CI-Checkout und Joblinks stehen oben.
 Vier fachliche Commits plus separate Windows-Testkorrektur gültig GitHub-signiert. Der
-CI-Checkout ist vollständig bytegleich zur signierten Quelle; spätere Nachweis-/Dokucommits
+CI-Checkout ist vollständig bytegleich zur signierten Quelle; Nachweis-/Dokucommits in PR #279
 lassen Produktivcode, Tests, Abhängigkeiten und Workflows unverändert.
 
 Native Ergebnisse: Linux Default je 581; No-default Ubuntu latest 542. Windows 519/482.
@@ -115,3 +117,22 @@ Schlüssel tatsächlich über Empfängerarchive entsperrt. Quellen-/Schlüssel-/
 unverändert, private temporäre Fixtures entfernt. Kein historischer Release-Binarytest.
 Finale Test-/Berichtsänderungen gehören zum abschließenden PR-Rücksetzreview. Nach Merge
 separater signierter Revert-PR mit CI und ausdrücklicher Freigabe, keine Nutzerdatenmigration.
+
+## Post-merge driver regression / Nachträgliche Testtreiberkorrektur
+
+EN: [Main CI 44838917029](https://github.com/SpecterAoD/pqkeep/actions/runs/44838917029/job/136642157083)
+exposed a BrokenPipe race: a restart child without a pause could exit before the parent sent
+an unneeded continuation byte. This is a test-protocol failure, not a storage failure. The owner
+approved PR #280's test-only correction: send continuation only after an acknowledged pause.
+The regression forces child exit before finish and failed deterministically on the old driver.
+Exit status, bounded output, secret checks and ACK-before-kill assertions remain; no ignored
+BrokenPipe, retry, sleep-based scheduling or production changes. Final execution is recorded in
+PR #280; the historical native records above retain their original source and counts.
+
+DE: Der verlinkte Main-CI-Lauf zeigte ein BrokenPipe-Rennen: Ein Neustart-Kind ohne Haltepunkt
+konnte vor dem unnötigen Fortsetzungsbyte enden. Testprotokollfehler, kein Speicherfehler.
+Freigegebene reine Testkorrektur in #280: Fortsetzung nur nach bestätigtem Haltepunkt.
+Regression erzwingt Child-Exit vor finish und scheiterte mit altem Treiber deterministisch.
+Exitstatus, begrenzte Ausgabe, Secret- und ACK-vor-Kill-Prüfungen bleiben erhalten; kein
+ignorierter BrokenPipe, Retry, zeitgesteuerter Ablauf oder Produktivcode-Edit. Finale Ausführung
+in PR #280; historische Nachweise oben behalten ihre Quellrevisionen und Testzahlen.
