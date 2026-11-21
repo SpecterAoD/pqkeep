@@ -9,7 +9,7 @@ use zeroize::Zeroizing;
 use super::io::{self, CliResult, Failure, code};
 use super::{rekey_text, text::Texts, validate};
 
-const MAX_LINE: u64 = 4096;
+const MAX_LINE: usize = 4096;
 
 pub(super) fn read(
     t: &Texts,
@@ -59,12 +59,14 @@ fn invalid(lang: Lang) -> Failure {
 }
 
 fn line(reader: &mut impl BufRead, lang: Lang) -> CliResult<Zeroizing<Vec<u8>>> {
-    let mut bytes = Zeroizing::new(Vec::new());
+    // DE: Vorab reservieren: keine ungenullten alten Puffer durch Reallokation.
+    // EN: Reserve up front: no unzeroized old buffers from reallocation.
+    let mut bytes = Zeroizing::new(Vec::with_capacity(MAX_LINE + 1));
     reader
-        .take(MAX_LINE + 1)
+        .take((MAX_LINE + 1) as u64)
         .read_until(b'\n', &mut bytes)
         .map_err(|e| Failure::from_error(&e.into(), lang))?;
-    if bytes.len() as u64 > MAX_LINE || !bytes.ends_with(b"\n") {
+    if bytes.len() > MAX_LINE || !bytes.ends_with(b"\n") {
         return Err(invalid(lang));
     }
     bytes.pop();
