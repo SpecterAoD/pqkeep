@@ -12,7 +12,7 @@
 //! excessive nesting. Duplicates are detected case-insensitively too (on
 //! Windows/macOS they would be the same file).
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use crate::{Error, Result};
 
@@ -88,7 +88,7 @@ pub fn validate(path: &str) -> Result<Vec<&str>> {
 /// file/directory conflicts ("a" as a file and "a/b").
 #[derive(Default)]
 pub struct PathSet {
-    entries: HashSet<String>,
+    entries: BTreeSet<String>,
     files: HashSet<String>,
 }
 
@@ -105,6 +105,19 @@ impl PathSet {
             }
         }
         let key = folded.join("/");
+        if is_file {
+            // DE: Auch spätere Datei-Vorfahren abweisen, ohne alle bisherigen Pfade abzulaufen.
+            // EN: Reject later file ancestors too, without scanning every previous path.
+            let prefix = format!("{key}/");
+            if self
+                .entries
+                .range(prefix.clone()..)
+                .next()
+                .is_some_and(|p| p.starts_with(&prefix))
+            {
+                return Err(invalid());
+            }
+        }
         if !self.entries.insert(key.clone()) {
             return Err(invalid());
         }

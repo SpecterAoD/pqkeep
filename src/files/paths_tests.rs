@@ -101,3 +101,32 @@ fn duplicates_and_conflicts() {
         "Unicode-Groß/klein / Unicode case"
     );
 }
+
+/// DE: LIST-004: Datei als späterer Vorfahr ist ebenfalls ein Konflikt; kein O(n²)-Scan.
+/// EN: LIST-004: A later file ancestor also conflicts; avoid a quadratic scan.
+#[test]
+fn later_file_ancestors_conflict_independently_of_order_and_case() {
+    for child_file in [false, true] {
+        for (parent, child) in [("a", "a/b"), ("Ä", "ä/b")] {
+            let mut set = PathSet::default();
+            set.insert(&validate(child).unwrap(), child_file).unwrap();
+            set.insert(&["a-"], false).unwrap();
+            assert!(set.insert(&validate(parent).unwrap(), true).is_err());
+            // DE: Der abgewiesene Vorfahr darf den Zustand nicht vergiften.
+            // EN: The rejected ancestor must not poison the state.
+            let sibling = format!("{parent}/c");
+            set.insert(&validate(&sibling).unwrap(), true).unwrap();
+        }
+    }
+}
+
+#[test]
+fn later_directory_parent_and_non_descendant_prefixes_remain_valid() {
+    let mut set = PathSet::default();
+    set.insert(&["a", "b"], true).unwrap();
+    set.insert(&["a"], false).unwrap();
+    set.insert(&["ab"], true).unwrap();
+    let mut set = PathSet::default();
+    set.insert(&["a-"], false).unwrap();
+    set.insert(&["a"], true).unwrap();
+}

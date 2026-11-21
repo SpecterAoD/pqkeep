@@ -115,6 +115,19 @@ fn duplicates_and_conflicts() {
             .concat(),
         ),
         ("dir dup", [dir_entry("d"), dir_entry("D"), end(2)].concat()),
+        (
+            "later file ancestor",
+            [
+                file_entry("a/b", b"1", true),
+                file_entry("a", b"2", true),
+                end(2),
+            ]
+            .concat(),
+        ),
+        (
+            "later file above directory",
+            [dir_entry("a/b"), file_entry("A", b"2", true), end(2)].concat(),
+        ),
     ];
     for (what, plain) in cases {
         assert_rejected(&key, Content::Directory, &plain, what);
