@@ -123,3 +123,26 @@ container (`encrypt` with several sources and `--out`) `source` is a **list**. S
 with `encrypt --each` and `decrypt` with several files; every file is processed even if one fails and
 `exit_code` is the first error. If the command fails as a whole (one source, container, weak or wrong
 passphrase, existing target with one source) there is only `error`, no `results`.
+
+
+## Archivliste: separates Schema / Archive listing: separate schema
+
+DE: Ausschließlich der ausdrücklich aufgerufene Befehl `list --json` verwendet `pqkeep-list/1`.
+Er zeigt bewusst vertrauliche Archivpfade, erst nach vollständiger Containerprüfung. Alle oben
+beschriebenen `pqkeep-json/1`-Befehle behalten ihre Verträge und zeigen keine Archiv-Inhaltspfade.
+Erfolgsfelder: `source`, `authentication: "container_integrity"`, `entries` (je `kind`, `path`,
+`bytes`; Ordner `bytes: null`) und `summary` (`files`, `directories`, `bytes`), plus gemeinsame
+Hülle. Fehler: nur Hülle/`error`, keine Einträge oder Authentisierungszusage; auch frühe
+Datei-/Sandboxfehler verwenden das List-Schema. Argumentparserfehler bleiben stderr/Exit2.
+Bei Ausgabefehlern ist der echte Prozess-Exit maßgeblich: ein bereits geschriebenes Erfolgsobjekt
+kann nicht zurückgenommen werden. Immer Objekt und Prozess-Exit prüfen, kein zweites JSON wird
+angehängt. Keine Absenderidentitätszusage. Grenzen und Anleitung: [LIST.md](LIST.md).
+
+EN: Only the explicit `list --json` command uses `pqkeep-list/1`, deliberately revealing archive
+paths after full verification. Existing `pqkeep-json/1` commands and their no-archive-path contract
+remain unchanged. Success adds source, authentication=container_integrity, entries (kind/path/bytes,
+null bytes for directory) and summary (files/directories/bytes), plus the common envelope.
+Errors have only envelope/error, no entries/authentication claim; early file/sandbox errors use
+this schema too. Argument parser errors remain stderr/exit2. For output errors the actual process
+exit is authoritative: an already written success object cannot be withdrawn. Check both object
+and process status; no second JSON object is appended. No sender identity claim. See LIST.md.

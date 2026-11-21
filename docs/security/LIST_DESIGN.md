@@ -6,7 +6,7 @@ und PR ohne erneute Einzelfreigabe; Merge nach main ausdrücklich ausgenommen. /
 Owner approved this plan and issue-scoped implementation, tests, signed commits and PR without
 repeated approvals; merge to main explicitly excluded.
 
-## Geprüfter Istzustand / Verified current state
+## Geprüfter Istzustand vor Beginn / Verified pre-work snapshot
 
 - Aktuelle Roadmap, #117 einschließlich aller Kommentare und die unten genannten Issues geprüft.
   / Current roadmap, all #117 comments and the related issues below inspected.
@@ -38,7 +38,7 @@ repeated approvals; merge to main explicitly excluded.
 | #147 / #148 / #150 | Bestehende Secret-Typen nutzen; keine globale Speicherhärtung, kein Versprechen vollständiger RAM-Löschung. / Reuse secret types; no broad memory-hardening work or complete erasure claim. |
 | #151 / #152 / #153 / #154 | #117 enthält eigene Erfolgs-/Fehler-/Grenz-/Manipulations- und Ausgabe-Gating-Tests; vorhandene Infrastruktur wiederverwenden. #153 erweitert später Corpus/IPC/Berechtigungsmatrix, #154 bleibt Audit-/Release-Gate. Baseline nicht vor Tests auf covered setzen. / Focused feature tests now, broader fuzz/permission work later; no premature baseline claims. |
 
-## Sicherheitsentscheidungen zur Freigabe / Security decisions for approval
+## Freigegebene Sicherheitsentscheidungen / Approved security decisions
 
 1. **JSON-Vertrag:** `docs/JSON.md` und `src/cli/json_out.rs` versprechen für `pqkeep-json/1`
    ausdrücklich keine Archiv-Inhaltspfade. Vorschlag: nur der neue ausdrückliche Befehl
@@ -99,3 +99,59 @@ behauptet. Der zentrale Vorschlag und die Abgrenzung sind in
 [#153](https://github.com/SpecterAoD/pqkeep/issues/153#issuecomment-7063016144) dokumentiert.
 Testnachweise stehen vor Umsetzung aus; keine Baseline vorzeitig auf covered gesetzt. /
 Coordination recorded; executable evidence pending implementation, no premature coverage claims.
+
+
+## Implementierung und Review / Implementation and review
+
+DE: `files::list` und `files::check` nutzen `scan.rs` mit demselben ArchiveReader, Unlock,
+Pfadregeln und Endprüfung. Der Besucher ist privat; nur list sammelt begrenzte Pending-Metadaten.
+Keine JSON-/Terminal-/Umgebungslogik im Core. `list_cmd` hält den CLI-Adapter samt fallibler
+Ausgabe; `json_out` wählt nur für list das neue Schema, auch bei frühen Fehlern.
+
+EN: Listing/check share the existing reader, unlock, path rules and end checks through a private
+scan. Only listing collects bounded pending metadata. No JSON/terminal/environment handling in
+the core; CLI rendering is fallible and early list errors select the same dedicated schema.
+
+DE: Der zusätzliche LIST-004-Regressionstest war vor der Korrektur rot: ein späterer Datei-Vorfahr
+konnte die ursprüngliche PathSet-Prüfung passieren. Der gemeinsame Validator nutzt jetzt eine
+geordnete Präfixsuche in BTreeSet, statt alle vorhandenen Pfade pro Eintrag linear zu durchsuchen.
+Datei-Vorfahren scheitern in beiden Reihenfolgen und auch nach Groß-/Kleinschreibung; spätere
+Ordner und nicht verwandte Präfixe bleiben erlaubt. Gültige Archivformate bleiben unverändert.
+EN: Red/green regression exposed a later file ancestor passing the original PathSet checks.
+Ordered BTreeSet prefix lookup rejects conflicts in either order/case without a full per-entry
+linear scan. Later directory parents and unrelated prefixes remain valid; valid formats unchanged.
+
+DE: Die Liste belegt keine unbeschränkte OOM-/RAM-Lösch- oder OS-/Stromausfallgarantie.
+Die neuen List-Tests prüfen späte Fehler/Ausgabe-Gating; die bestehenden bestätigten
+Prozessabbruchtests laufen als Regression mit, ohne einen neuen List-Mid-read-Killnachweis zu
+behaupten. Übertragungsfehler können nach abgeschlossener Authentisierung auftreten: Prozess-Exit
+prüfen, selbst wenn ein bereits geschriebenes JSON-Objekt den Prüfschritt als erfolgreich beschreibt.
+EN: No unrestricted OOM/erasure/OS-crash/power-loss guarantee. New list tests cover late failures
+and output gating; existing acknowledged process-kill tests run as regressions, not a new listing
+mid-read kill claim. Output can fail after verification; actual process exit remains authoritative.
+
+## Ausführbare Testzuordnung / Executable test mapping
+
+Alle Namen beziehen sich auf separate Rust-Testdateien. Endrevision, native Läufe/Jobs und
+Ergebnisse werden in [PR #283](https://github.com/SpecterAoD/pqkeep/pull/283) dokumentiert.
+Historische Angriffsmatrix/Baseline unverändert; keine externe Audit-Zusage.
+All references identify separate Rust tests. Final revision/native run/job evidence is recorded
+in the linked PR; historical matrix/baseline unchanged, no external audit claim.
+
+| ID | Tests / Nachweise |
+|---|---|
+| LIST-001 | `tests/files_list.rs::v1_and_v2_directory_metadata_matches_extraction_and_check_without_writes`; `tests/files_list_limits.rs::empty_directory_is_a_valid_empty_listing` |
+| LIST-002 | `tests/files_list.rs::all_kem_accesses_and_factor_errors_follow_existing_unlock_rules`; `tests/cli_list.rs::wrong_passphrase_and_required_input_do_not_list_metadata`; `tests/cli_list_access.rs` |
+| LIST-003 | `tests/files_list.rs::late_tampering_truncation_and_appending_never_return_a_listing`; `tests/files_malicious.rs::structural_errors` |
+| LIST-004 | `tests/files_malicious.rs::path_traversal_and_absolute_paths`, `duplicates_and_conflicts`, `single_file_content_rules`; `src/files/paths_tests.rs::later_file_ancestors_conflict_independently_of_order_and_case`, `later_directory_parent_and_non_descendant_prefixes_remain_valid` |
+| LIST-005 | `tests/files_list_limits.rs` (real 10,000/10,001 and 16MiB/one-byte-over containers); `src/files/list_tests.rs` (UTF-8 bytes, overflow, nonmutation) |
+| LIST-006 | `tests/files_list.rs::v1_and_v2_directory_metadata_matches_extraction_and_check_without_writes`; isolated compatibility probe input hashes / isolierte Kompatibilitätsprobe mit Eingabehashes |
+| LIST-007 | `tests/cli_list.rs::early_missing_header_and_credential_errors_use_the_listing_schema`, `old_check_json_stays_metadata_free_and_keeps_its_schema`; `tests/cli_help.rs` |
+| LIST-008 | `tests/cli_list.rs::late_authentication_failure_has_no_names_or_partial_list_in_text_or_json`, `closed_stdout_is_an_io_failure_after_a_valid_listing`; `src/cli/list_cmd_tests.rs` (write/flush, quoted names, one JSON line) |
+| LIST-009 | `src/cli/access_tests.rs::list_reads_only_named_access_files`; `tests/cli_list.rs::v1_v2_text_and_json_work_in_both_languages_with_sandbox_and_no_files`, `native_windows_exclusive_source_lock_returns_only_an_error` (Windows only / nur Windows) |
+| LIST-010 | Full cargo suites both feature configurations and native CI, isolated all-commit revert/tree comparison and baseline/feature CLI compatibility probe / Volltests beider Konfigurationen und native CI, isolierte Revert-/Baum- und CLI-Kompatibilitätsprobe |
+
+Rollback: separater geprüfter signierter Revert ohne Datenkonvertierung; vollständige Rücknahme
+stellt auch die frühere Pfadvalidator-Implementierung wieder her. Kein automatischer Restore.
+EN: Separate reviewed signed revert without conversion; reverting all commits also restores the
+previous path-validator implementation. No automatic data restore/adoption.
