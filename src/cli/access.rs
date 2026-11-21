@@ -88,17 +88,30 @@ fn secret_files(m: &ArgMatches, lang: Lang, access: &mut CliAccess) -> CliResult
     Ok(())
 }
 
+fn initial(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<CliAccess> {
+    // DE: Bedienfehler vor „nicht gefunden“ melden. EN: Report usage errors before "not found".
+    if name == "encrypt" {
+        super::recipients::check_factor(m, lang)?;
+    }
+    if name == "rekey" {
+        super::rekey_cmd::check_input(lang)?;
+    }
+    let mut access = CliAccess::default();
+    if name == "rekey"
+        && let Some(backup) = path_arg(m, "backup")
+    {
+        access.write_dirs.push(existing(parent(&backup), lang)?);
+    }
+    secret_files(m, lang, &mut access)?;
+    Ok(access)
+}
+
 /// DE: Freigaben für einen Befehl; `None` = Befehl richtet die Sandbox selbst ein
 /// (`serve` ohne `--init-token`).
 /// EN: Permissions for a command; `None` = the command sets up the sandbox itself
 /// (`serve` without `--init-token`).
 pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<CliAccess>> {
-    // DE: Bedienfehler vor „nicht gefunden“ melden. EN: Report usage errors before "not found".
-    if name == "encrypt" {
-        super::recipients::check_factor(m, lang)?;
-    }
-    let mut access = CliAccess::default();
-    secret_files(m, lang, &mut access)?;
+    let mut access = initial(name, m, lang)?;
     let mut read = |p: Option<PathBuf>| -> CliResult {
         if let Some(p) = p {
             access.read.push(existing(p, lang)?);
@@ -111,7 +124,7 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             read(path_arg(m, "file"))?;
             None
         }
-        "export" => {
+        "export" | "rekey" => {
             read(path_arg(m, "file"))?;
             path_arg(m, "out")
         }

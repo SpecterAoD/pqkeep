@@ -15,6 +15,7 @@ const COMMANDS: &[&str] = &[
     "passphrase",
     "inspect",
     "export",
+    "rekey",
     "encrypt",
     "decrypt",
     "sign",
