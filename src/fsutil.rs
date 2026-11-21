@@ -86,6 +86,15 @@ pub(crate) fn open_new(path: &Path) -> std::io::Result<OutputFile> {
 /// DE: Veröffentlicht `temp` als `path`, ohne zu überschreiben.
 /// EN: Publishes `temp` as `path` without overwriting.
 pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<()> {
+    publish(temp, path, true)
+}
+
+/// DE: Rekey: ohne Hardlinks kein unsicherer Fallback. EN: Rekey: no weak fallback without links.
+pub(crate) fn publish_no_overwrite_strict(temp: &Path, path: &Path) -> std::io::Result<()> {
+    publish(temp, path, false)
+}
+
+fn publish(temp: &Path, path: &Path, allow_fallback: bool) -> std::io::Result<()> {
     #[cfg(test)]
     checkpoint(temp, Point::BeforePublish)?;
     #[cfg(test)]
@@ -102,7 +111,7 @@ pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<
         }
         // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Prüfen + Umbenennen, nicht atomar.
         // EN: File systems without hard links (e.g. FAT): check + rename, not atomic.
-        Err(e) if e.kind() == ErrorKind::Unsupported => {
+        Err(e) if allow_fallback && e.kind() == ErrorKind::Unsupported => {
             if path.exists() {
                 return Err(ErrorKind::AlreadyExists.into());
             }

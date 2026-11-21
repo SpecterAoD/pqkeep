@@ -16,7 +16,9 @@ use std::path::Path;
 
 use super::keyfile::{KeyFile, MAX_FILE_BYTES};
 use super::public::PublicKeyFile;
-use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
+use crate::fsutil::{
+    open_new, publish_no_overwrite, publish_no_overwrite_strict, sync_dir, temp_path,
+};
 use crate::security::Lang;
 use crate::{Error, Result};
 
@@ -116,7 +118,7 @@ pub fn read_limited(path: &Path) -> Result<String> {
 }
 
 #[cfg(unix)]
-fn permission_warnings(file: &File) -> Result<Vec<FileWarning>> {
+pub(super) fn permission_warnings(file: &File) -> Result<Vec<FileWarning>> {
     use std::os::unix::fs::PermissionsExt;
     let mode = file.metadata()?.permissions().mode() & 0o777;
     // DE: Maske ist lesbarer als `trailing_zeros`. EN: The mask is clearer than `trailing_zeros`.
@@ -131,7 +133,7 @@ fn permission_warnings(file: &File) -> Result<Vec<FileWarning>> {
 #[cfg(not(unix))]
 // DE: Gleiche Signatur wie die Unix-Variante. EN: Same signature as the Unix variant.
 #[allow(clippy::unnecessary_wraps)]
-fn permission_warnings(_file: &File) -> Result<Vec<FileWarning>> {
+pub(super) fn permission_warnings(_file: &File) -> Result<Vec<FileWarning>> {
     Ok(Vec::new())
 }
 
@@ -140,16 +142,35 @@ fn permission_warnings(_file: &File) -> Result<Vec<FileWarning>> {
 /// # Errors
 /// DE/EN: [`Error::Io`] (u. a. `AlreadyExists` ohne Überschreiben / without overwrite).
 pub fn write_atomic(path: &Path, data: &[u8], overwrite: Overwrite) -> Result<()> {
+    write_atomic_inner(path, data, overwrite, false)
+}
+
+/// DE: Neue Rekey-Ausgabe/Sicherung, ohne FAT-Fallback. EN: New rekey output/backup, no FAT fallback.
+pub(super) fn write_atomic_strict(path: &Path, data: &[u8]) -> Result<()> {
+    write_atomic_inner(path, data, Overwrite::No, true)
+}
+
+fn write_atomic_inner(path: &Path, data: &[u8], overwrite: Overwrite, strict: bool) -> Result<()> {
     let temp = temp_path(path)?;
-    let result = write_and_publish(&temp, path, data, overwrite);
+    let result = write_and_publish(&temp, path, data, overwrite, strict);
     if result.is_err() {
         // DE: Aufräumen; Fehler hier sind zweitrangig. EN: Clean up; errors here are secondary.
+        #[cfg(test)]
+        if checkpoint(&temp, Point::BeforeRemoveFile).is_err() {
+            return result;
+        }
         let _ = fs::remove_file(&temp);
     }
     result
 }
 
-fn write_and_publish(temp: &Path, path: &Path, data: &[u8], overwrite: Overwrite) -> Result<()> {
+fn write_and_publish(
+    temp: &Path,
+    path: &Path,
+    data: &[u8],
+    overwrite: Overwrite,
+    strict: bool,
+) -> Result<()> {
     let mut file = open_new(temp)?;
     #[cfg(test)]
     checkpoint(temp, Point::AfterTempCreate)?;
@@ -160,10 +181,13 @@ fn write_and_publish(temp: &Path, path: &Path, data: &[u8], overwrite: Overwrite
         Overwrite::Yes => {
             #[cfg(test)]
             checkpoint(temp, Point::BeforePublish)?;
+            #[cfg(test)]
+            checkpoint(temp, Point::BeforeRename)?;
             fs::rename(temp, path)?;
             #[cfg(test)]
             checkpoint(path, Point::AfterPublish)?;
         }
+        Overwrite::No if strict => publish_no_overwrite_strict(temp, path)?,
         Overwrite::No => publish_no_overwrite(temp, path)?,
     }
     sync_dir(path);
