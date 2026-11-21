@@ -21,20 +21,16 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## In Bearbeitung / In progress
-
-- [ ] [#109](https://github.com/SpecterAoD/pqkeep/issues/109): `pqkeep rekey` – Passphrase einer Schlüsseldatei ändern / change a key file's passphrase.
-  - P1, M2; SpecterAoD; started / begonnen 21.11.2026. Dependencies #39–#41 completed; #152 supplies fault/crash tests. / Abhängigkeiten abgeschlossen; Fehler-/Crash-Testgrundlage vorhanden.
-  - [PR #282](https://github.com/SpecterAoD/pqkeep/pull/282), [DE/EN usage](REKEY.md); owner review/merge pending. / Eigentümerreview/Merge ausstehend.
-  - [Security/design plan](security/REKEY_DESIGN.md): preserve key material/ID and v1/v2; explicit output, protected backup before in-place replacement. / Schlüsselmaterial/ID und v1/v2 erhalten; ausdrückliches Ziel, geschützte Sicherung vor Austausch.
-  - Owner authorized issue-scoped implementation, signed commits, tests and PR; merge to main excluded. / Issue-bezogene Umsetzung, signierte Commits, Tests und PR freigegeben; Merge nach main ausgenommen.
-
 ## Abgeschlossene Ergänzungen / Completed follow-ups
+
+- [x] [#109](https://github.com/SpecterAoD/pqkeep/issues/109): `pqkeep rekey` – Passphrase-Wechsel mit gleicher Schlüsselidentität/Format/Faktor und exakter Sicherung vor bestätigtem Austausch. / Passphrase changes preserve identity/format/factor, with an exact backup before confirmed replacement. ([PR #282](https://github.com/SpecterAoD/pqkeep/pull/282), 21.11.2026)
+  - Mit ausdrücklicher Eigentümerfreigabe signiert gemergt; [DE/EN-Anleitung](REKEY.md), [Entwurf und Grenzen](security/REKEY_DESIGN.md). / Signed merge with explicit owner authorization; bilingual usage, design and limits linked.
+  - [PR-CI](https://github.com/SpecterAoD/pqkeep/actions/runs/44885410985): Linux 605/566, Windows 544/507; [acht Fuzz-Ziele](https://github.com/SpecterAoD/pqkeep/actions/runs/44885478805) bestanden. / Native full suites and all eight fuzz targets passed.
 
 - [x] [#152](https://github.com/SpecterAoD/pqkeep/issues/152): QA-2: Deterministic fault injection and crash-recovery tests / Deterministische Fehler-Injektion und Crash-Recovery-Tests. ([PR #279](https://github.com/SpecterAoD/pqkeep/pull/279), 21.11.2026)
   - P2, M2; A–E approved and merged with owner authorization; dependency #151 / PR #251 complete. / A–E freigegeben und mit ausdrücklicher Freigabe gemergt; Abhängigkeit abgeschlossen.
   - Twelve new bounded cases, native Linux/Windows tests and rollback verified; [design](security/FAULT_RECOVERY.md), [evidence](security/FAULT_RECOVERY_EVIDENCE.md), [final CI](https://github.com/SpecterAoD/pqkeep/actions/runs/44823927772). / Zwölf neue begrenzte Fälle, native Tests und Rücksetzung nachgewiesen.
-  - Process kills and simulated I/O faults do not prove OS-crash/power-loss durability; broad matrix gaps and #109/#124 remain open. / Prozessabbrüche und simulierte I/O-Fehler belegen keine OS-/Stromverlustdauerhaftigkeit; übergreifende Matrixlücken und #109/#124 bleiben offen.
+  - Process kills and simulated I/O faults do not prove OS-crash/power-loss durability; broad matrix gaps and #124 remain open; #109 is now completed. / Prozessabbrüche und simulierte I/O-Fehler belegen keine OS-/Stromverlustdauerhaftigkeit; übergreifende Matrixlücken und #124 bleiben offen; #109 ist inzwischen abgeschlossen.
 - [x] [#151](https://github.com/SpecterAoD/pqkeep/issues/151): QA-1: Versioned attack test matrix and baseline / Versionierte Angriffstest-Matrix und Baseline. ([PR #251](https://github.com/SpecterAoD/pqkeep/pull/251), 16.11.2026)
   - Status: Completed / Abgeschlossen; Priority / Priorität: P2; Milestone / Meilenstein: M2.
   - 47 versioned DE/EN cases, offline validation and native Linux/Windows CI; evidence and limits: [attack matrix](security/ATTACK_TEST_MATRIX.md), [baseline](security/attack-baseline.json), [verified CI](https://github.com/SpecterAoD/pqkeep/actions/runs/43949469492). / 47 versionierte DE/EN-Fälle, Offline-Validierung und native Linux-/Windows-CI; Nachweise und Grenzen in Matrix und Baseline.

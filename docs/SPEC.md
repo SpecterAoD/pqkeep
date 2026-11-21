@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.15: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.16: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -20,6 +20,8 @@
 > Änderung v2.15 (21.11.2026, eigentümerseitig freigegebener Plan zu #109): ausdrücklicher Passphrase-Wechsel privater Schlüsseldateien bei gleicher Identität/Format/Faktor, standardmäßig neue Ausgabe, bestätigter Austausch mit exakter verschlüsselter Sicherung, keine KDF-Absenkung. Siehe `docs/REKEY.md`.
 
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
+
+> Änderung v2.16 (21.11.2026, Freigabe zur Fertigstellung von PR #281): neue Vorschauen mit Keyless Sigstore, Build-/SBOM-Attestationen und Verifikation vor Veröffentlichung; kein SignPath oder Release-Environment, keine Änderung bestehender Vorschauen.
 
 ## 0. Arbeitsweise (gilt für jeden Schritt)
 
@@ -127,7 +129,7 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - **Keine Secrets** im Repository oder in Workflows. Tests erzeugen alle Passphrasen und Schlüssel zur Laufzeit dynamisch (Generator, temporäre Verzeichnisse via `tempfile`). Negativtests dürfen bewusst schwache Beispielwerte als Testdaten nutzen, aber nie echte oder wiederverwendete Geheimnisse.
 - Zusätzliche Prüfungen: Secret-Scanning mit Push Protection (GitHub) und `gitleaks` im CI; Test-Check „keine `#[test]` in `src/` außer `*_tests.rs`“.
 - Release und Signierung: siehe Abschnitt 5a.
-- Vorschau-Builds (wöchentlich, `preview.yml`, #269): derselbe Build wie bei Releases (`build.yml`), nur als unsigniertes GitHub-Pre-Release (nie „Latest“, die letzten vier bleiben); im Programm gekennzeichnet (`+preview.` in `--version`, Banner, Fenstertitel). Betas und Releases bleiben unverändert; Details in `docs/RELEASE.md`.
+- Vorschau-Builds (wöchentlich, `preview.yml`, #269): derselbe Build wie bei Releases (`build.yml`), als Sigstore-signiertes GitHub-Pre-Release mit Build-/SBOM-Attestationen (nie „Latest“, die letzten vier bleiben); im Programm gekennzeichnet (`+preview.` in `--version`, Banner, Fenstertitel). Betas und Releases bleiben unverändert; Details in `docs/RELEASE.md`.
 
 ## 5a. Release-Signierung & Lieferkette (Pflicht für Releases **und** Betas)
 

@@ -18,9 +18,12 @@ German release notes: see `docs/releases/`.
   **DE:** Testgebundene I/O-Fehler und bestätigte Child-Abbruch-/Neustarttests für Schlüssel,
   Faktoren, Archive und authentifizierte Ausgabe; v1/v2 unverändert. Keine OS-/Stromverlustgarantie.
 - **Weekly preview builds** (#269): pre-release `preview-<date>.<commit>` of `main`, built with the same
-  workflow as the releases (`build.yml`), unsigned and never "Latest". Previews are marked in the
+  workflow as the releases (`build.yml`), never "Latest"; new previews are keyless Sigstore-signed
+  with build/SBOM attestations verified before publication (#281). Previews are marked in the
   program (`--version` shows `+preview.<id>`, banner on a terminal, "PREVIEW" in window titles);
   betas and releases are unchanged. See `docs/RELEASE.md`.
+  **DE:** Neue Vorschauen mit Sigstore, Build-/SBOM-Attestationen und Prüfung vor Veröffentlichung;
+  nie „Latest“, kein SignPath oder Release-Environment. Bestehende Vorschauen unverändert.
 
 ### Changed
 - Release workflow: build, packages, installation tests and manifest moved into the reusable
