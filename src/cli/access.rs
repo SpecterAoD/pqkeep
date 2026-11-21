@@ -129,6 +129,12 @@ pub fn for_command(name: &str, m: &ArgMatches, lang: Lang) -> CliResult<Option<C
             path_arg(m, "out")
         }
         "encrypt" | "decrypt" => file_access(name, m, lang, &mut access)?,
+        // DE/EN: list öffnet nur Quelle/Zugang, niemals Ausgabepfade / source/access only, no output.
+        "list" => {
+            read(path_arg(m, "source"))?;
+            read(path_arg(m, "key"))?;
+            None
+        }
         // DE/EN: `check` liest nur, schreibt nirgends / only reads, writes nowhere.
         "check" => {
             super::check_cmd::read_paths(m)

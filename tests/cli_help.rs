@@ -22,6 +22,7 @@ const COMMANDS: &[&str] = &[
     "verify",
     "factor",
     "check",
+    "list",
     "integrate",
     "context",
     #[cfg(feature = "api")]
