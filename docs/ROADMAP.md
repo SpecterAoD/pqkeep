@@ -21,15 +21,12 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## In Bearbeitung / In progress
-
-- [ ] [#117](https://github.com/SpecterAoD/pqkeep/issues/117): `pqkeep list` – authentisierte Archivliste ohne Extraktion / authenticated archive listing without extraction.
-  - P2, M2; SpecterAoD; begonnen / started 21.11.2026. #116/#86 abgeschlossen, #118 konsolidiert. / Dependencies complete, #118 consolidated.
-  - [Draft PR #283](https://github.com/SpecterAoD/pqkeep/pull/283), [DE/EN-Anleitung](LIST.md); Endprüfung läuft, kein Merge. / Final verification in progress, no merge.
-  - [Freigegebener DE/EN-Plan](security/LIST_DESIGN.md): begrenzte Liste erst nach vollständiger Prüfung, eigenes List-JSON, bestehende Formate unverändert. / Bounded output after full verification, separate listing JSON, existing formats unchanged.
-  - Umsetzung, signierte Commits, Tests und PR ohne weitere Einzelfreigaben autorisiert; Merge nach main ausgenommen. #98/#99/#63/#153 separat abgegrenzt. / Issue-scoped work authorized through validated PR; merge excluded, related work remains separate.
-
 ## Abgeschlossene Ergänzungen / Completed follow-ups
+
+- [x] [#117](https://github.com/SpecterAoD/pqkeep/issues/117): `pqkeep list` – authentisierte v1/v2-Archivliste ohne Extraktion; begrenzte Metadaten erst nach vollständiger Prüfung, eigenes List-JSON. / Authenticated v1/v2 archive listing without extraction; bounded metadata after full verification, dedicated listing JSON. ([PR #283](https://github.com/SpecterAoD/pqkeep/pull/283), 21.11.2026)
+  - Mit Eigentümerfreigabe signiert nach main übernommen; [DE/EN-Anleitung](LIST.md), [Plan/Testzuordnung und Grenzen](security/LIST_DESIGN.md). #116/#86 abgeschlossen, #118 konsolidiert. / Owner-authorized signed main merge; bilingual usage, design, test mapping and limits linked; dependencies complete.
+  - [PR-CI](https://github.com/SpecterAoD/pqkeep/actions/runs/44932164489): Linux 628/589, Windows 568/531; [acht Fuzz-Ziele](https://github.com/SpecterAoD/pqkeep/actions/runs/44932178185) bestanden; [main-Abnahme](https://github.com/SpecterAoD/pqkeep/actions/runs/44936806831). / Native full suites and all eight existing fuzz targets passed; main validation linked.
+  - Integrität ist keine Absenderidentität; bestehende Formate unverändert. Allgemeine API/Crate-Aufteilung/GUI und breite QA bleiben #98/#99/#63/#153. / Integrity is not sender identity; existing formats unchanged; general API/crate/GUI and broad QA work remain separate.
 
 - [x] [#109](https://github.com/SpecterAoD/pqkeep/issues/109): `pqkeep rekey` – Passphrase-Wechsel mit gleicher Schlüsselidentität/Format/Faktor und exakter Sicherung vor bestätigtem Austausch. / Passphrase changes preserve identity/format/factor, with an exact backup before confirmed replacement. ([PR #282](https://github.com/SpecterAoD/pqkeep/pull/282), 21.11.2026)
   - Mit ausdrücklicher Eigentümerfreigabe signiert gemergt; [DE/EN-Anleitung](REKEY.md), [Entwurf und Grenzen](security/REKEY_DESIGN.md). / Signed merge with explicit owner authorization; bilingual usage, design and limits linked.
