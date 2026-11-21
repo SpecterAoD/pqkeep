@@ -21,6 +21,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
+## In Bearbeitung / In progress
+
+- [ ] [#117](https://github.com/SpecterAoD/pqkeep/issues/117): `pqkeep list` – authentisierte Archivliste ohne Extraktion / authenticated archive listing without extraction.
+  - P2, M2; SpecterAoD; begonnen / started 21.11.2026. #116/#86 abgeschlossen, #118 konsolidiert. / Dependencies complete, #118 consolidated.
+  - [Freigegebener DE/EN-Plan](security/LIST_DESIGN.md): begrenzte Liste erst nach vollständiger Prüfung, eigenes List-JSON, bestehende Formate unverändert. / Bounded output after full verification, separate listing JSON, existing formats unchanged.
+  - Umsetzung, signierte Commits, Tests und PR ohne weitere Einzelfreigaben autorisiert; Merge nach main ausgenommen. #98/#99/#63/#153 separat abgegrenzt. / Issue-scoped work authorized through validated PR; merge excluded, related work remains separate.
+
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
 - [x] [#109](https://github.com/SpecterAoD/pqkeep/issues/109): `pqkeep rekey` – Passphrase-Wechsel mit gleicher Schlüsselidentität/Format/Faktor und exakter Sicherung vor bestätigtem Austausch. / Passphrase changes preserve identity/format/factor, with an exact backup before confirmed replacement. ([PR #282](https://github.com/SpecterAoD/pqkeep/pull/282), 21.11.2026)
