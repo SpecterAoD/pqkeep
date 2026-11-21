@@ -20,8 +20,10 @@ mod encrypt;
 mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
+mod list;
 mod output;
 pub mod paths;
+mod scan;
 mod slot_v2;
 mod walk;
 
@@ -35,6 +37,7 @@ pub use decrypt::decrypt;
 pub use encrypt::{encrypt, encrypt_many};
 pub use format::{Content, FileHeader, HeaderMode};
 pub use format_v2::{HeaderV2, Slot};
+pub use list::{EntryKind, ListEntry, Listing, MAX_LIST_ENTRIES, MAX_LIST_PATH_BYTES, list};
 pub use slot_v2::MAX_RECIPIENTS;
 pub use walk::{SkipReason, Skipped};
 
