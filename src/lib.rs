@@ -54,3 +54,6 @@ mod crash_recovery_tests;
 
 #[cfg(test)]
 mod rekey_fault_tests;
+
+#[cfg(test)]
+mod rekey_crash_tests;

@@ -222,6 +222,46 @@ fn rkey008_cleanup_failure_retains_primary_error() {
 }
 
 #[test]
+fn rkey008_backup_and_target_partial_write_boundaries() {
+    for v2 in [false, true] {
+        let keys = Keys::new(v2);
+        let (old, factor) = credentials(&keys);
+        let new = generator::generate(&generator::Options::default()).unwrap();
+        for backup_phase in [false, true] {
+            for after in [0, 1, keys.old.to_json().unwrap().len() - 1] {
+                let files = Files::new(&keys);
+                let scope = Scope::new(
+                    if backup_phase {
+                        &files.backups
+                    } else {
+                        &files.dir
+                    },
+                    plan(
+                        Point::Write,
+                        Action::Partial {
+                            after,
+                            failure: Failure::Kind(ErrorKind::StorageFull),
+                        },
+                    ),
+                );
+                let result = RekeyFile::open(&files.source).unwrap().write(
+                    &files.options(),
+                    old.as_ref(),
+                    &new,
+                    factor.as_ref(),
+                );
+                scope.finish();
+                assert!(matches!(result, Err(Error::Io(ErrorKind::StorageFull))));
+                files.assert_state(&keys, &old, &new, factor.as_ref(), false);
+                assert_eq!(files.backup.exists(), !backup_phase);
+                assert_no_temps(&files.dir);
+                assert_no_temps(&files.backups);
+            }
+        }
+    }
+}
+
+#[test]
 fn rkey009_unsupported_hardlinks_never_enable_rekey_fallback() {
     let keys = Keys::new(false);
     let (old, _) = credentials(&keys);
