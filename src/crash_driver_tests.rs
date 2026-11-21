@@ -29,6 +29,8 @@ pub(crate) type Credentials<'a> = Option<(&'a [u8], &'a [u8])>;
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub(crate) enum Operation {
     Key,
+    Rekey,
+    RekeyBackup,
     Factor,
     Encrypt,
     Decrypt,
@@ -274,9 +276,14 @@ fn crash_child_entry() {
     let _ = report;
     let (request, pass, factor) = read_request();
     crate::files::set_temp_tag(&request.tag).unwrap();
+    let scope_root = match request.operation {
+        Operation::Rekey => request.root.join("keys"),
+        Operation::RekeyBackup => request.root.join("backups"),
+        _ => request.root.clone(),
+    };
     let scope = request.point.map(|point| {
         Scope::new(
-            &request.root,
+            &scope_root,
             Plan {
                 point,
                 occurrence: request.occurrence,

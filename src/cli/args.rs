@@ -187,6 +187,7 @@ pub fn build(lang: Lang) -> Command {
         )
         .args(global_args(lang))
         .subcommand(generate(lang))
+        .subcommand(super::rekey_cmd::command(lang))
         .subcommand(super::factor_cmd::command(lang))
         .subcommands(pass_commands(lang))
         .subcommand(

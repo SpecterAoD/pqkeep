@@ -1,11 +1,11 @@
-# MASTER PROJECT SPECIFICATION v2.14: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.15: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.14. Both versions are maintained together; every change to one is made to the other in the
+> 2.15. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.14. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.15. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
@@ -22,6 +22,8 @@
 > Change v2.12 (2026-11-15, approved by SpecterAoD with the "community and structure" project plan): English translation `docs/SPEC.en.md`, maintained together; external contributions may be English only, the German version follows (`CONTRIBUTING.md`).
 > Change v2.13 (2026-11-16, approved by SpecterAoD): exception from 5c for documentation images below `docs/images/` (PNG, JPEG, WebP, at most 500 KB per file, signature matching the extension; checked by `scripts/check_limits.sh`).
 > Change v2.14 (2026-11-20, approved by SpecterAoD): weekly preview builds (section 5, #269) – the same build as releases, published only as an unsigned GitHub pre-release, marked as a preview in the program; betas and releases stay unchanged.
+
+> Change v2.15 (2026-11-21, owner-authorized plan for #109): opt-in key file rekey; preserve identity/format/factor, new output by default, confirmed replacement with an exact encrypted backup, no KDF reduction. See `docs/REKEY.md`.
 
 > Working instruction for Claude Code. This specification is binding. In case of contradictions or gaps: do not guess, ask briefly.
 
@@ -109,6 +111,18 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - **Originals:** are not deleted; secure deletion is unreliable on SSDs (section 5b).
 - **Planned extensions (later updates):** mirror mode (folder structure preserved, each file encrypted separately), multiple recipients per file, optional ML-DSA signature of the sender.
 - **Documentation:** `docs/FILE_FORMAT.md` (DE/EN), addition to `docs/THREAT_MODEL.md` (visible metadata: approximate size; attacks via manipulated archives).
+
+## 4b. Key file passphrase changes (#109)
+
+- Opt-in `rekey FILE --out PATH`; hidden old/new/confirmation input or three bounded stdin lines.
+  Existing commands retain their interfaces; the new command rejects ambiguous `--passphrase-file`.
+- Preserve material, ID, public key, creation time, metadata, format and factor. Fresh salt/nonce;
+  default KDF exact, explicit core changes cannot reduce any m/t/p component. No format migration.
+- Existing unrelated outputs/backups never replaced; in-place only confirmed with `--force` and a
+  new exact encrypted `--backup` first. Strict no-replace publication needs hard links.
+- Trusted directories/single writer; no atomic CAS, automatic restore, secure deletion or old-copy
+  revocation. Parent sync best effort, no OS-crash/power-loss guarantee. See [REKEY.md](REKEY.md)
+  and [security/REKEY_DESIGN.md](security/REKEY_DESIGN.md) for platform limits and test invariants.
 
 ## 5. Automation & CI/CD (GitHub Actions)
 

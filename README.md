@@ -95,6 +95,7 @@ source (Rust ≥ 1.88): `cargo build --release --locked` (binary: `target/releas
 pqkeep                                   # interactive menu (in a terminal)
 pqkeep generate                          # guided: purpose, strength, details, passphrase
 pqkeep passphrase                        # generate a secure passphrase
+pqkeep rekey jane.key.json --out jane.new.key.json  # renew key file protection
 pqkeep generate --name "Jane Doe" --out jane.key.json
 pqkeep export jane.key.json --out jane.pub.json   # share your public key
 pqkeep encrypt report.pdf                # with a passphrase
@@ -114,7 +115,8 @@ pqkeep integrate install                 # right-click menu in Nemo/Nautilus/Dol
 
 Language: `--lang en|de` (default: system language). Passphrases are never command-line
 arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` (servers: see
-[`docs/SERVER.md`](docs/SERVER.md)).
+[`docs/SERVER.md`](docs/SERVER.md)). For `rekey`, use hidden input or three stdin lines;
+`--passphrase-file` is not supported. See [`docs/REKEY.md`](docs/REKEY.md).
 
 ### Security at a glance
 
@@ -184,6 +186,7 @@ so Windows SmartScreen may warn when it is started for the first time.
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
 | Debian package tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Cryptography | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
+| Change key file passphrase | [`docs/REKEY.md`](docs/REKEY.md) |
 | Key file format | [`docs/FORMAT.md`](docs/FORMAT.md) |
 | File encryption format | [`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md) |
 | Signature file format | [`docs/SIGNATURE_FORMAT.md`](docs/SIGNATURE_FORMAT.md) |
@@ -298,6 +301,7 @@ Windows-Archiv. Bau aus dem Quelltext (Rust ≥ 1.88): `cargo build --release --
 pqkeep                                   # interaktives Menü (im Terminal)
 pqkeep generate                          # geführt: Zweck, Stärke, Angaben, Passphrase
 pqkeep passphrase                        # sichere Passphrase erzeugen
+pqkeep rekey anna.key.json --out anna.neu.key.json  # Schutz der Schlüsseldatei erneuern
 pqkeep generate --name "Max Muster" --out max.key.json
 pqkeep export max.key.json --out max.pub.json   # öffentlichen Schlüssel weitergeben
 pqkeep encrypt bericht.pdf               # mit Passphrase
@@ -317,7 +321,8 @@ pqkeep integrate install                 # Rechtsklick-Menü in Nemo/Nautilus/Do
 
 Sprache: `--lang de|en` (Standard: Systemsprache). Passphrasen sind nie Argumente auf der
 Kommandozeile – nur verdeckte Eingabe, `--passphrase-stdin` oder `--passphrase-file` (Server:
-siehe [`docs/SERVER.md`](docs/SERVER.md)).
+siehe [`docs/SERVER.md`](docs/SERVER.md)). Bei `rekey` verdeckte Eingabe oder drei Stdin-Zeilen
+verwenden; `--passphrase-file` wird nicht unterstützt. Siehe [`docs/REKEY.md`](docs/REKEY.md).
 
 ### Sicherheit auf einen Blick
 
@@ -388,6 +393,7 @@ Das Windows-Programm ist noch nicht Authenticode-signiert (siehe
 | Installation | [`docs/INSTALL.md`](docs/INSTALL.md) |
 | Debian-Paket-Tests | [`docs/PACKAGE_TESTS.md`](docs/PACKAGE_TESTS.md) |
 | Kryptografie | [`docs/CRYPTO.md`](docs/CRYPTO.md) |
+| Passphrase der Schlüsseldatei ändern | [`docs/REKEY.md`](docs/REKEY.md) |
 | Format der Schlüsseldatei | [`docs/FORMAT.md`](docs/FORMAT.md) |
 | Format verschlüsselter Dateien | [`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md) |
 | Format der Signaturdatei | [`docs/SIGNATURE_FORMAT.md`](docs/SIGNATURE_FORMAT.md) |

@@ -7,6 +7,11 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **Key file passphrase changes (#109):** `pqkeep rekey` preserves key material, identity and v1/v2;
+  explicit new output, or confirmed replacement with an exact old encrypted backup. Same factor
+  and default KDF; strict publication needs hard links. Old copies are not revoked. See `docs/REKEY.md`.
+  **DE:** Passphrase-Schutz erneuern bei gleichem Schlüssel/ID/Format; neue Ausgabe oder bestätigter
+  Austausch mit exakter alter Sicherung. Faktor/KDF erhalten, Hardlinks nötig, alte Kopien bleiben nutzbar.
 - **Deterministic fault/crash tests (#152):** scoped test-only I/O faults and acknowledged child
   termination/restart tests for keys, factors, archives and authenticated output; v1/v2 unchanged.
   Process termination does not establish OS-crash or power-loss durability.
