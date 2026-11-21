@@ -161,11 +161,13 @@ impl Running {
         );
     }
 
-    fn finish(mut self, kill: bool) -> Captured {
+    fn finish(mut self, kill: bool, resume: bool) -> Captured {
         if kill {
             self.child.kill().unwrap();
-        } else if let Some(input) = &mut self.input {
-            input.write_all(b"C").unwrap();
+        } else if resume {
+            // DE: Nur ein bestätigter Haltepunkt liest ein Fortsetzungsbyte.
+            // EN: Only an acknowledged pause point reads a continuation byte.
+            self.input.as_mut().unwrap().write_all(b"C").unwrap();
         }
         self.input.take();
         let status = self.wait();
@@ -222,7 +224,7 @@ pub(crate) fn run(request: &Request, credentials: Credentials<'_>, kill: bool) -
     if request.point.is_some() {
         child.await_ready();
     }
-    child.finish(kill)
+    child.finish(kill, request.point.is_some())
 }
 
 fn encode(request: &Request, credentials: Credentials<'_>) -> Bytes {
@@ -303,6 +305,19 @@ fn read_request() -> (Request, Option<StrongPassphrase>, Option<Factor>) {
     });
     let factor = (!factor.is_empty()).then(|| Factor::from_bytes(&factor).unwrap());
     (request, pass, factor)
+}
+
+#[test]
+fn rec015_completed_restart_needs_no_continue_byte() {
+    let root = tempfile::tempdir().unwrap();
+    let request = Request::new(root.path(), Operation::Factor, None);
+    let mut child = Running::start(&request, None);
+    // DE: Exit vor finish erzwingen: kein Timing-Rennen als Testvoraussetzung.
+    // EN: Force exit before finish: no scheduling race required by the test.
+    assert!(child.wait().success());
+    let captured = child.finish(false, false);
+    assert!(captured.err.is_empty());
+    Factor::read(&root.path().join("factor")).unwrap();
 }
 
 #[test]
