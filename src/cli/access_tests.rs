@@ -133,3 +133,22 @@ fn u02_missing_factor_file_is_reported_before_the_sandbox() {
     ];
     assert!(access(&argv).is_none());
 }
+
+/// DE: LIST-009: Nur exakt Quelle/Schlüssel/Faktor lesbar, kein Schreibordner.
+/// EN: LIST-009: Read only the exact source/key/factor, no writable directory.
+#[test]
+fn list_reads_only_named_access_files() {
+    let (_dir, source, key, factor) = setup();
+    let allowed = access(&[
+        "pqkeep",
+        "list",
+        text(&source),
+        "--key",
+        text(&key),
+        "--factor-file",
+        text(&factor),
+    ])
+    .unwrap();
+    assert_eq!(allowed.read, [factor, source, key]);
+    assert_eq!(allowed.write_dirs, [] as [PathBuf; 0]);
+}

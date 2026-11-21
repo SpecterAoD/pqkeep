@@ -7,6 +7,10 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **Authenticated archive listing (#117):** explicit `pqkeep list` for current v1/v2 containers;
+  bounded metadata after full verification, no extraction/spool, listing-only JSON schema.
+  **DE:** Archivnamen/Größen ausdrücklich nach vollständiger Prüfung, ohne Extraktion/Spool;
+  begrenzte Metadaten und eigenes JSON, bestehende Formate/Befehle unverändert. See `docs/LIST.md`.
 - **Key file passphrase changes (#109):** `pqkeep rekey` preserves key material, identity and v1/v2;
   explicit new output, or confirmed replacement with an exact old encrypted backup. Same factor
   and default KDF; strict publication needs hard links. Old copies are not revoked. See `docs/REKEY.md`.
@@ -26,6 +30,9 @@ German release notes: see `docs/releases/`.
   nie „Latest“, kein SignPath oder Release-Environment. Bestehende Vorschauen unverändert.
 
 ### Changed
+- Archive path validation rejects later file ancestors independently of entry order, using an
+  ordered prefix lookup; valid archives remain compatible. / Archivkonflikte auch bei späteren
+  Datei-Vorfahren abweisen, ohne linearen Gesamtscan je Eintrag; gültige Archive bleiben kompatibel.
 - Release workflow: build, packages, installation tests and manifest moved into the reusable
   `build.yml`; signing and publishing stay in `release.yml`. The release artifacts are unchanged.
 - The root warning is no longer printed in child processes of the window flows (it made a complete

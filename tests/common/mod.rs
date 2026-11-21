@@ -5,6 +5,7 @@
 // EN: Helpers are not #[test] functions; unwrap deliberately allowed here.
 #![allow(dead_code, clippy::unwrap_used)]
 
+pub mod archive;
 pub mod fake_dialog;
 pub mod rekey;
 pub mod v2_files;

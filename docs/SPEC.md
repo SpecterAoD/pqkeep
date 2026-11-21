@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.16: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.17: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -22,6 +22,8 @@
 > Arbeitsanweisung für Claude Code. Diese Spezifikation ist verbindlich. Bei Widersprüchen oder Lücken: nicht raten, sondern kurz nachfragen.
 
 > Änderung v2.16 (21.11.2026, Freigabe zur Fertigstellung von PR #281): neue Vorschauen mit Keyless Sigstore, Build-/SBOM-Attestationen und Verifikation vor Veröffentlichung; kein SignPath oder Release-Environment, keine Änderung bestehender Vorschauen.
+
+> Änderung v2.17 (21.11.2026, eigentümerseitig freigegebener Plan zu #117): authentisierte Archivliste ohne Extraktion; eigene JSON-Kennung und begrenzte Metadaten erst nach vollständiger Prüfung. Bestehende Formate/JSON-Befehle unverändert.
 
 ## 0. Arbeitsweise (gilt für jeden Schritt)
 
@@ -120,6 +122,19 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
   Löschen oder Widerruf alter Kopien. Eltern-sync best effort, keine OS-/Stromverlustgarantie.
   [REKEY.md](REKEY.md) und [security/REKEY_DESIGN.md](security/REKEY_DESIGN.md) nennen Plattformgrenzen
   und Testinvarianten.
+
+
+## 4c. Authentisierte Archivliste (#117)
+
+- Opt-in `list DATEI.pqkf`, eine Quelle, dieselben Passphrase-/Schlüssel-/Faktor-Zugänge wie decrypt.
+- Gemeinsamer privater Scan für check/list; vorhandene v1/v2-Parser und Pfadregeln, keine Extraktion.
+- Alle Inhaltsprüfsummen, Pfade/Konflikte, Archiv- und STREAM-Ende vor Rückgabe/Ausgabe prüfen.
+- List-only maximal 10.000 Einträge und 16 MiB UTF-8-Pfadbytes; kein Temp-Spool/Abschneiden/Fallback.
+  Inhalt gestreamt, Metadaten/Prüfstrukturen zusätzlich begrenzt; keine konstante Gesamt-RAM-Zusage.
+- Nur list zeigt bewusst vertrauliche Archivpfade: JSON `pqkeep-list/1`; bestehendes
+  `pqkeep-json/1` unverändert. Frühe Fehler im List-Schema, Ausgabefehler mit echtem Fehler-Exit.
+- Integrität ist keine Absenderidentität; keine GUI, IPC-/Fortschritts-/Resume-API oder Formatänderung.
+  [Anleitung](LIST.md), [Abgrenzung und Testfälle](security/LIST_DESIGN.md); allgemeine API bleibt #98.
 
 ## 5. Automatisierung & CI/CD (GitHub Actions)
 

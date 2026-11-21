@@ -134,3 +134,20 @@ nötig: Snapshotprüfung ist kein atomarer CAS/Prozesslock. Prozessabbrüche bel
 Stromverlustgarantie, Eltern-sync bleibt best effort. Windows-Sperrtests ergänzen keine AV-/
 Reparse-/ACL-Garantie. Alte Kopien behalten alten Schutz, werden nicht widerrufen/sicher gelöscht.
 Siehe [REKEY.md](REKEY.md) und [Entwurf/Testinvarianten](security/REKEY_DESIGN.md).
+
+
+## Archivliste / Archive listing (#117)
+
+DE: Explizite Metadatenfreigabe über `list`: Nutzdaten verwerfen, Namen/Größen erst nach
+vollständiger Integritäts-/Strukturprüfung, begrenzte Sammlung ohne Disk-Spool. Fehler enthalten
+keine Archiv-Inhaltspfade; nur der ausdrücklich angeforderte List-Vertrag zeigt diese nach Erfolg.
+Integrität beweist keine Absenderidentität. Pfadkonflikte werden unabhängig von Eintragsreihenfolge
+geprüft. Metadaten/PathSet brauchen zusätzlichen begrenzten Speicher; keine vollständige
+RAM-Lösch-/OOM-Garantie. Vorhandene Source-/OS-Grenzen gelten weiter. [Grenzen](LIST.md),
+[Abgrenzung und Tests](security/LIST_DESIGN.md).
+
+EN: Explicit `list` metadata disclosure: discard payload, release bounded names/sizes only after
+full integrity/structure checks, no disk spool. Errors contain no internal archive paths; only
+the requested listing contract exposes them after success. Integrity is not sender identity.
+Conflicts are checked independently of entry order; metadata/bookkeeping consume additional
+bounded memory, without full erasure/OOM guarantees. Existing source/OS boundaries remain.

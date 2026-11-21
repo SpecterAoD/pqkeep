@@ -128,3 +128,15 @@ for all; mixed protection aborts up front. `--rename` picks a free name; at most
 originals are not deleted; a local attacker with write access to the source directory could swap a
 file for a symlink between check and open (TOCTOU); directory publishing is check + rename; memory use
 is constant.
+
+
+## Archivliste / Archive listing (#117)
+
+DE: `pqkeep list` verwendet unveränderte v1/v2-Parser und prüft vollständig, ohne zu extrahieren.
+Die zusätzlichen Listengrenzen (10.000 Einträge/16MiB Pfadbytes) verändern das Dateiformat und die
+bestehenden check/decrypt-Grenzen nicht. Geprüfte Metadaten werden begrenzt im RAM gesammelt;
+die Aussage über konstante Inhaltspuffer ist keine konstante Gesamt-RAM-Garantie für Pfadlisten.
+EN: Listing reuses current v1/v2 formats and full checks without extraction. Listing-only caps
+(10,000 entries/16MiB path bytes) do not change formats or check/decrypt limits. Verified metadata
+is buffered within caps; constant payload buffers do not imply constant total RAM for path lists.
+See / siehe [LIST.md](LIST.md).

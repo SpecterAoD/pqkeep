@@ -9,6 +9,9 @@
 //! `error` is printed; only errors in the arguments themselves (clap) stay text (exit 2). No
 //! secrets, no paths from archive contents. Description: `docs/JSON.md`.
 
+// DE: Nur list nutzt pqkeep-list/1 für ausdrücklich angeforderte Archivpfade.
+// EN: Only list uses pqkeep-list/1 for explicitly requested archive paths.
+
 use clap::{Arg, ArgMatches};
 use pqkeep::security::Lang;
 use serde_json::{Map, Value, json};
@@ -56,12 +59,22 @@ pub fn error(f: &Failure) -> Value {
 /// EN: Prints the object and returns the exit code (without a second text message).
 pub fn emit(command: &str, body: Map<String, Value>, exit: u8) -> CliResult {
     let mut out = Map::new();
-    out.insert("schema".into(), SCHEMA.into());
+    let schema = if command == "list" {
+        super::list_cmd::SCHEMA
+    } else {
+        SCHEMA
+    };
+    out.insert("schema".into(), schema.into());
     out.insert("command".into(), command.into());
     out.insert("ok".into(), (exit == code::OK).into());
     out.insert("exit_code".into(), exit.into());
     out.extend(body);
-    println!("{}", Value::Object(out));
+    let value = Value::Object(out);
+    if command == "list" {
+        super::list_cmd::emit_json(&value)?;
+    } else {
+        println!("{value}");
+    }
     if exit == code::OK {
         Ok(())
     } else {

@@ -1,4 +1,4 @@
-# MASTER PROJECT SPECIFICATION v2.16: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.17: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.15. Both versions are maintained together; every change to one is made to the other in the
@@ -28,6 +28,8 @@
 > Working instruction for Claude Code. This specification is binding. In case of contradictions or gaps: do not guess, ask briefly.
 
 > Change v2.16 (2026-11-21, owner authorization to complete PR #281): new previews use keyless Sigstore, build/SBOM attestations and verification before publication; no SignPath or release environment, no change to existing previews.
+
+> Change v2.17 (2026-11-21, owner-approved #117 plan): authenticated archive listing without extraction; separate JSON schema and bounded metadata only after full verification. Existing formats/JSON commands unchanged.
 
 ## 0. Way of working (applies to every step)
 
@@ -125,6 +127,19 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - Trusted directories/single writer; no atomic CAS, automatic restore, secure deletion or old-copy
   revocation. Parent sync best effort, no OS-crash/power-loss guarantee. See [REKEY.md](REKEY.md)
   and [security/REKEY_DESIGN.md](security/REKEY_DESIGN.md) for platform limits and test invariants.
+
+
+## 4c. Authenticated archive listing (#117)
+
+- Opt-in `list FILE.pqkf`, one source, existing decrypt passphrase/key/factor access methods.
+- Private checked scan shared with check, existing v1/v2 parsers/path rules, no extraction.
+- Verify checksums, paths/conflicts and archive/STREAM end before returning/printing metadata.
+- Listing-only caps: 10,000 entries and 16 MiB UTF-8 path bytes; no temp spool/truncation/fallback.
+  Payload is streamed; bounded metadata/bookkeeping require additional memory, not constant total RAM.
+- Only list deliberately reveals confidential archive paths: JSON `pqkeep-list/1`, existing
+  `pqkeep-json/1` unchanged. Early failures use listing schema; output failures exit nonzero.
+- Integrity is not sender identity; no GUI, IPC/progress/resume API or format changes.
+  [Usage](LIST.md), [boundaries/test cases](security/LIST_DESIGN.md); general API remains #98.
 
 ## 5. Automation & CI/CD (GitHub Actions)
 
