@@ -11,8 +11,8 @@ Datei prüfen – Prüfsumme, Attestation und Sigstore-Signatur wie im
 [README](../README.md#release-prüfen) beschrieben. Eine Prüfsumme allein bestätigt keine
 Herkunft. Es gibt kein APT-Repository: Aktualisiert wird durch Installieren des neueren Pakets.
 
-Wöchentliche **Vorschauen** von `main` erscheinen als Pre-Release `preview-<Datum>.<Commit>` – ohne
-Signatur, nicht geprüft, nur zum Testen (Details: [RELEASE.md](RELEASE.md#vorschau-builds-wöchentlich)).
+Wöchentliche **Vorschauen** von `main` erscheinen als Pre-Release `preview-<Datum>.<Commit>` – Sigstore-signiert,
+nicht unabhängig geprüft, nur zum Testen (Details: [RELEASE.md](RELEASE.md#vorschau-builds-wöchentlich)).
 Das Programm zeigt sie in `--version` mit `+preview.` an.
 
 Zum Testen eines Entwicklungsstands erzeugt jeder Lauf des Release-Workflows zusätzlich die
@@ -103,7 +103,7 @@ installing it – checksum, attestation and Sigstore signature as described in t
 [README](../README.md#verifying-a-release). A checksum alone does not authenticate a package.
 There is no APT repository: update by installing the newer package.
 
-Weekly **previews** of `main` appear as pre-release `preview-<date>.<commit>` – unsigned, not audited,
+Weekly **previews** of `main` appear as pre-release `preview-<date>.<commit>` – Sigstore-signed, not independently audited,
 for testing only (details: [RELEASE.md](RELEASE.md#preview-builds-weekly)). The program shows them with
 `+preview.` in `--version`.
 

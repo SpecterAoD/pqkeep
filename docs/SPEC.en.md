@@ -1,4 +1,4 @@
-# MASTER PROJECT SPECIFICATION v2.15: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.16: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.15. Both versions are maintained together; every change to one is made to the other in the
@@ -26,6 +26,8 @@
 > Change v2.15 (2026-11-21, owner-authorized plan for #109): opt-in key file rekey; preserve identity/format/factor, new output by default, confirmed replacement with an exact encrypted backup, no KDF reduction. See `docs/REKEY.md`.
 
 > Working instruction for Claude Code. This specification is binding. In case of contradictions or gaps: do not guess, ask briefly.
+
+> Change v2.16 (2026-11-21, owner authorization to complete PR #281): new previews use keyless Sigstore, build/SBOM attestations and verification before publication; no SignPath or release environment, no change to existing previews.
 
 ## 0. Way of working (applies to every step)
 
@@ -132,7 +134,7 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - **No secrets** in the repository or in workflows. Tests generate all passphrases and keys dynamically at runtime (generator, temporary directories via `tempfile`). Negative tests may use deliberately weak sample values as test data, but never real or reused secrets.
 - Additional checks: secret scanning with push protection (GitHub) and `gitleaks` in CI; test check "no `#[test]` in `src/` except `*_tests.rs`".
 - Release and signing: see section 5a.
-- Preview builds (weekly, `preview.yml`, #269): the same build as for releases (`build.yml`), published only as an unsigned GitHub pre-release (never "Latest", the last four are kept); marked in the program (`+preview.` in `--version`, banner, window titles). Betas and releases stay unchanged; details in `docs/RELEASE.md`.
+- Preview builds (weekly, `preview.yml`, #269): the same build as for releases (`build.yml`), published as a Sigstore-signed GitHub pre-release with build/SBOM attestations (never "Latest", the last four are kept); marked in the program (`+preview.` in `--version`, banner, window titles). Betas and releases stay unchanged; details in `docs/RELEASE.md`.
 
 ## 5a. Release signing & supply chain (required for releases **and** betas)
 

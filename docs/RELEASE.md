@@ -92,7 +92,7 @@ Installationstests, Manifest). Nur das Veröffentlichen unterscheidet sich.
 | Im Programm | – | Banner (Terminal), „PREVIEW“ in Fenstertiteln |
 | Dateiname | `pqkeep-0.1.0-beta.3-…` | `pqkeep-0.1.0-beta.3-preview.<Datum>.<Commit>-…` |
 | GitHub | Entwurf, von Hand veröffentlicht | Pre-Release `preview-<Datum>.<Commit>`, nie „Latest“ |
-| Signierung | Sigstore, Freigabe im Environment `release` | keine; nur Build-Provenance und Prüfsummen |
+| Signierung | Sigstore, Freigabe im Environment `release` | Keyless Sigstore, Build-/SBOM-Attestationen und Prüfsummen; kein Environment `release` |
 | Aufbewahrung | dauerhaft | die letzten vier |
 
 Ablauf: Der Zeitplan überspringt den Lauf, wenn es seit der letzten Vorschau keinen neuen Commit
@@ -104,7 +104,13 @@ gibt oder die CI auf dem Commit nicht grün ist; von Hand startet er immer. Pull
 der Schritt „Kanal prüfen“ in `build.yml` bricht ab, wenn ein Release `+preview.` trägt oder eine
 Vorschau nicht. Wer `build.yml` ändert, prüft das mit einem Trockenlauf des Release-Workflows.
 
-Vorschauen sind **nicht geprüft** und nicht für Daten gedacht, die nicht verloren gehen dürfen.
+Neue Vorschauen ab PR #281 werden vor Veröffentlichung geprüft: Prüfsummen für fünf Pakete und
+fünf SBOMs, Sigstore-Bundles für die fünf Pakete und `SHA256SUMS`, Build-Provenance (auch als
+`.intoto.jsonl`) und CycloneDX-Attestationen für alle fünf Pakete. Verifikation wie bei Releases,
+aber mit Identität `https://github.com/SpecterAoD/pqkeep/.github/workflows/preview.yml@refs/heads/main`.
+Alte Vorschauen erhalten nachträglich keine Signaturen. Kein SignPath/Authenticode; Signaturen
+belegen Herkunft und Unverändertheit, keine unabhängige Sicherheitsprüfung.
+Vorschauen sind **nicht unabhängig geprüft** und nicht für Daten gedacht, die nicht verloren gehen dürfen.
 
 ---
 
@@ -167,7 +173,7 @@ installation tests, manifest). Only publishing differs.
 | In the program | – | banner (terminal), "PREVIEW" in window titles |
 | File name | `pqkeep-0.1.0-beta.3-…` | `pqkeep-0.1.0-beta.3-preview.<date>.<commit>-…` |
 | GitHub | draft, published by hand | pre-release `preview-<date>.<commit>`, never "Latest" |
-| Signing | Sigstore, approval in environment `release` | none; build provenance and checksums only |
+| Signing | Sigstore, approval in environment `release` | keyless Sigstore, build/SBOM attestations and checksums; no `release` environment |
 | Retention | permanent | the last four |
 
 Flow: the schedule skips the run when there is no new commit since the last preview or CI on the
@@ -179,4 +185,10 @@ commit is not green; a manual start always runs. Pull requests changing `preview
 the step "check channel" in `build.yml` fails if a release carries `+preview.` or a preview does
 not. Whoever changes `build.yml` checks it with a dry run of the release workflow.
 
-Previews are **not audited** and not meant for data you cannot lose.
+New previews from PR #281 are verified before publication: checksums for five packages and
+five SBOMs, Sigstore bundles for the five packages and `SHA256SUMS`, build provenance (also as
+`.intoto.jsonl`) and CycloneDX attestations for all five packages. Verify as for releases,
+but use identity `https://github.com/SpecterAoD/pqkeep/.github/workflows/preview.yml@refs/heads/main`.
+Older previews do not gain signatures retroactively. No SignPath/Authenticode; signatures prove
+origin and integrity, not an independent security audit.
+Previews are **not independently audited** and not meant for data you cannot lose.

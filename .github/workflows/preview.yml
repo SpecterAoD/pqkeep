@@ -196,6 +196,7 @@ jobs:
               --bundle "pqkeep-$VERSION.intoto.jsonl" \
               --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/preview.yml"
             gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/preview.yml" \
               --predicate-type https://cyclonedx.org/bom
           done
       - name: Pre-Release / pre-release
