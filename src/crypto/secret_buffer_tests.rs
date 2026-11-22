@@ -37,3 +37,19 @@ fn byte_buffer_truncation_keeps_fixed_locked_storage() {
     assert!(buffer.is_locked() && buffer.len() == 4);
     assert!(super::SecretBytes::zeroed(0).unwrap().is_locked());
 }
+
+#[test]
+fn typed_buffers_wipe_while_locked_during_unwinding() {
+    let checked = Arc::new(AtomicBool::new(false));
+    let result = std::panic::catch_unwind({
+        let checked = Arc::clone(&checked);
+        move || {
+            let _buffer = super::secret_buffer::SecretBuffer::new(vec![Probe(checked)]).unwrap();
+            // DE: Synthetisches Unwind ohne Secret im Panic-Hook; kein Abort-Nachweis.
+            // EN: Synthetic unwind without secrets in panic hooks; not an abort claim.
+            std::panic::resume_unwind(Box::new(()));
+        }
+    });
+    assert!(result.is_err());
+    assert!(checked.load(Ordering::SeqCst));
+}
