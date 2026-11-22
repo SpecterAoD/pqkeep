@@ -96,7 +96,11 @@ Entschlüsseln.
 - Ob man einem Absender vertraut, entscheidet später das Kontaktverzeichnis (#105/#107).
 - Krypto-Richtlinie und Suite-Migration (#275/#276): die Algorithmus-Kennung im Absenderblock ist
   dafür vorgesehen; weitere Algorithmen nur mit eigener Formatänderung.
-- REST-API und Menü/Kontextmenü bieten die Signatur vorerst nicht an.
+- Menü und Kontextmenü (#287): optionale Frage „Als Absender signieren?“ beim Verschlüsseln; nach dem
+  Entschlüsseln nennen Terminal und Fertig-Fenster den geprüften Absender. Mit Passphrase-Schutz
+  schreiben beide Passwortfenster nacheinander in dieselbe Pipe zum Kindprozess – der
+  Kontextmenü-Prozess sieht keine Passphrase.
+- Die REST-API bietet die Signatur nicht an (dort bewusst keine Dateiverschlüsselung).
 
 ---
 
@@ -148,4 +152,7 @@ reveals who a file comes from.
 
 **Scope:** `.pqsig` stays; stream mode (#83) can reuse the sender block; trust decisions belong to the
 contacts directory (#105/#107); the algorithm ID is ready for the crypto policy (#275/#276); not offered
-via the REST API, the menu or the context menu for now.
+via the REST API (it deliberately offers no file encryption). Menu and context menu (#287) ask
+"Sign as sender?" when encrypting and name the verified sender after decrypting; with passphrase
+protection both password windows write into the same pipe to the child – the context menu process
+never sees a passphrase.

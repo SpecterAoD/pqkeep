@@ -284,3 +284,43 @@ fn sign_passphrase_file_enables_batch_signing() {
     let lone = ["encrypt", "a.txt", "--sign-passphrase-file", "sign.pass"];
     assert_eq!(run(d, &lone, "").0, 2);
 }
+
+/// DE: #287: So liefert das Kontextmenü beide Passphrasen über eine Pipe – neue Datei-Passphrase
+/// (zwei Zeilen), danach die des Signaturschlüssels. EN: #287: this is how the context menu delivers
+/// both passphrases through one pipe – new file passphrase (two lines), then the signing key's.
+#[test]
+fn context_pipe_delivers_file_and_signing_passphrases() {
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    let anna = key(d, "anna", "ml-dsa-87", &[]);
+    fs::write(d.join("a.txt"), b"geheim").unwrap();
+    let file_pass = pass();
+    let stdin = format!("{file_pass}{file_pass}{anna}");
+    let enc = [
+        "encrypt",
+        "--sign-with",
+        "anna.key.json",
+        "--passphrase-stdin",
+        "--confirm-stdin",
+        "--sign-passphrase-next-line",
+        "--",
+        "a.txt",
+    ];
+    let (code, _, err) = run(d, &enc, &stdin);
+    assert_eq!(code, 0, "{err}");
+    let check = [
+        "check",
+        "a.txt.pqkf",
+        "--signer",
+        "anna.pub.json",
+        "--passphrase-stdin",
+    ];
+    let (code, out, _) = run(d, &check, &file_pass);
+    assert_eq!(code, 0);
+    assert!(out.contains("Signed by (verified)"), "{out}");
+    // DE: Abweichende Wiederholung → nichts geschrieben. EN: Mismatching repeat → nothing written.
+    fs::remove_file(d.join("a.txt.pqkf")).unwrap();
+    let wrong = format!("{file_pass}{}{anna}", pass());
+    assert_ne!(run(d, &enc, &wrong).0, 0);
+    assert!(!d.join("a.txt.pqkf").exists());
+}

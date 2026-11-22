@@ -46,12 +46,20 @@ fn summary(out: &str, done: &[String]) -> String {
 fn show(ui: &Ui<'_>, m: &ManyTexts, outcome: Outcome) -> Option<CliResult> {
     let d = ui.d;
     match outcome {
-        Outcome::Done { out, warn, done } if warn.is_empty() => {
+        Outcome::Done {
+            out,
+            warn,
+            done,
+            signers,
+        } if warn.is_empty() => {
+            let signer = super::context_sign::signer_lines(ui.lang, &signers);
             ui.dlg
-                .info(&format!("{}\n{}", m.ctx_done, summary(&out, &done)));
+                .info(&format!("{}\n{}{signer}", m.ctx_done, summary(&out, &done)));
             Some(Ok(()))
         }
-        Outcome::Done { out, warn, done } => {
+        Outcome::Done {
+            out, warn, done, ..
+        } => {
             let text = format!(
                 "{}\n{}\n\n{}\n{warn}",
                 m.ctx_done,
@@ -117,19 +125,59 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     let mode = ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)?;
     if mode == 1 {
         cmd.extend(recipients_ui::to_args(&recipients(ui, &sources[0])?));
-        cmd.push("--".into());
-        cmd.extend(refs.iter().map(|r| (*r).to_owned()));
-        let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
-        return repeat(ui, m, || ui.plain(&args, &targets, each));
     }
     // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
     if mode == 2 {
         cmd.extend([FLAG.to_owned(), ui.ask_for(&sources[0], Ask::Factor)?]);
     }
+    // DE: Optional als Absender signieren (#287). EN: Optionally sign as sender (#287).
+    let sign = super::context_sign::ask(ui, &sources[0])?;
+    cmd.extend(
+        sign.as_ref()
+            .map(super::context_sign::SignChoice::args)
+            .unwrap_or_default(),
+    );
     let args: Vec<&str> = cmd.iter().map(String::as_str).collect();
-    repeat(ui, m, || {
-        ui.with_pass(ui.d.new_pass, true, &args, refs, &targets, each)
-    })
+    run_encrypt(
+        ui,
+        m,
+        (mode == 1, sign.is_some()),
+        &args,
+        refs,
+        &targets,
+        each,
+    )
+}
+
+/// DE: Startet das Verschlüsseln je nach (Empfänger?, signiert?). EN: Starts encrypting depending on
+/// (recipients?, signed?).
+fn run_encrypt(
+    ui: &Ui<'_>,
+    m: &ManyTexts,
+    kind: (bool, bool),
+    args: &[&str],
+    refs: &[&str],
+    targets: &[PathBuf],
+    each: bool,
+) -> CliResult {
+    match kind {
+        (true, false) => {
+            let all = [args, &["--"], refs].concat();
+            repeat(ui, m, || ui.plain(&all, targets, each))
+        }
+        (true, true) => {
+            let prompt = super::signing::texts(ui.lang).prompt;
+            repeat(ui, m, || {
+                ui.with_pass(prompt, false, args, refs, targets, each)
+            })
+        }
+        (false, true) => repeat(ui, m, || {
+            super::context_sign::two_passphrases(ui, args, refs, targets, each)
+        }),
+        (false, false) => repeat(ui, m, || {
+            ui.with_pass(ui.d.new_pass, true, args, refs, targets, each)
+        }),
+    }
 }
 
 /// DE: Empfänger in Fenstern: je Fingerabdruck bestätigen, dann „weiteren hinzufügen?“ (#47).

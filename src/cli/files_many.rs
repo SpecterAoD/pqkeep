@@ -63,7 +63,7 @@ impl<'a> Tally<'a> {
                 if self.progress.is_some()
                     && let Some(name) = out.file_name()
                 {
-                    println!("@@done {}", name.to_string_lossy());
+                    println!("@@done {}", super::files_cmd::shown(Path::new(name)));
                 }
             }
             Err(e) => {

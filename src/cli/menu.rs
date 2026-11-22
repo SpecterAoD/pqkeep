@@ -82,6 +82,8 @@ fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> C
                 argv.extend([super::factor_cmd::FLAG.to_owned(), factor]);
             }
         }
+        // DE: Optional als Absender signieren (#287). EN: Optionally sign as sender (#287).
+        super::signing::menu_args(lang, |prompt| ask(prompt, true), argv)?;
     } else {
         let extra = super::factor_ui::for_decrypt(Path::new(&path), lang, |what| match what {
             Ask::Key => ask(t.menu_keyfile, false),
