@@ -51,6 +51,8 @@ mod serve_text;
 mod sign_cmd;
 mod sign_text;
 mod signing;
+#[cfg(target_os = "linux")]
+mod terminal_mode;
 mod terminal_secret;
 mod text;
 mod text_de;

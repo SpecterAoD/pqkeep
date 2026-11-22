@@ -87,3 +87,11 @@ Systemänderungen. Negativtests mit Limit null bleiben unverändert verpflichten
 EN: Owner explicitly approved a 2 GiB memlock budget solely for ephemeral Linux GitHub CI
 test processes. The wrapper adjusts only its own limit, then executes unprivileged tests.
 No local elevation or persistent settings; zero-budget denial tests remain mandatory.
+
+DE: Linux hält den Raw-/No-Echo-Modus mittels vorhandener sicherer rustix-Termios-API
+vor dem Prompt bis zum Ende jeder vollständigen Eingabe. Normale Fehler- und Erfolgswege
+prüfen die Wiederherstellung. Ctrl-C wird als Taste behandelt, sodass die Guards laufen.
+Windows nutzt die vorhandene Console-Input-Event-API des Providers, keinen Zeilenleser.
+EN: Linux holds raw/no-echo mode from before the prompt across the whole input via the
+existing safe rustix termios API, checks restoration on normal error/success paths, and
+handles Ctrl-C as a key so guards run. Windows retains provider console-input events.

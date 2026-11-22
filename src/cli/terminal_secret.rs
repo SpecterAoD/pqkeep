@@ -10,13 +10,24 @@ use super::io::{CliResult, Failure, code};
 use super::text::Texts;
 
 fn read(term: &Term, prompt: &str, lang: Lang) -> CliResult<SecretBytes> {
+    #[cfg(target_os = "linux")]
+    let mode =
+        super::terminal_mode::Mode::new().map_err(|e| Failure::from_error(&e.into(), lang))?;
+    let result = read_hidden(term, prompt, lang);
+    #[cfg(target_os = "linux")]
+    mode.restore()
+        .map_err(|e| Failure::from_error(&e.into(), lang))?;
+    result
+}
+
+fn read_hidden(term: &Term, prompt: &str, lang: Lang) -> CliResult<SecretBytes> {
     let fail = |e: std::io::Error| Failure::from_error(&e.into(), lang);
     let mut out =
         SecretBytes::zeroed(INPUT_LIMIT_CHARS * 4).map_err(|e| Failure::from_error(&e, lang))?;
     term.write_str(&format!("{prompt}: ")).map_err(fail)?;
     let mut len = 0;
     loop {
-        match term.read_key().map_err(fail)? {
+        match term.read_key_raw().map_err(fail)? {
             Key::Enter => break,
             Key::Escape | Key::CtrlC => return Err(Failure::new(code::ERROR, "")),
             Key::Backspace if len > 0 => {
