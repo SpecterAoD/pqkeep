@@ -84,9 +84,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TRIAL_DIST: ${{ runner.temp }}/release-trial
-        run: >-
-          python3 scripts/release_trust_probe.py "$TRIAL_DIST" 0.1.0-beta.3-dev.bc17cff
-          SpecterAoD/pqkeep refs/heads/main bc17cffabec5413b6b96a7c94a2cd3e682afe31d
+          TRIAL_VERSION: 0.1.0-beta.3-dev.bc17cff
+          TRIAL_REPO: SpecterAoD/pqkeep
+          TRIAL_REF: refs/heads/main
+          TRIAL_COMMIT: bc17cffabec5413b6b96a7c94a2cd3e682afe31d
+        run: python3 scripts/release_trust_probe.py
       - name: Version, Zeitstempel, Tag-Signatur / version, timestamp, tag signature
         id: meta
         run: python3 scripts/release_ref.py
@@ -206,9 +208,8 @@ jobs:
       - name: Vollständige Verifikation / complete verification
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_REF: ${{ github.ref }}
-          EXPECTED_COMMIT: ${{ github.sha }}
-        run: python3 scripts/release_trust.py dist "$VERSION" "$GITHUB_REPOSITORY" "$EXPECTED_REF" "$EXPECTED_COMMIT"
+          RELEASE_DIST: dist
+        run: python3 scripts/release_trust.py
 
   draft:
     name: Geprüfter Release-Entwurf / verified release draft
@@ -238,9 +239,8 @@ jobs:
       - name: Schreibgrenze erneut prüfen / reverify at write boundary
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_REF: ${{ github.ref }}
-          EXPECTED_COMMIT: ${{ github.sha }}
-        run: python3 scripts/release_trust.py dist "$VERSION" "$GITHUB_REPOSITORY" "$EXPECTED_REF" "$EXPECTED_COMMIT"
+          RELEASE_DIST: dist
+        run: python3 scripts/release_trust.py
       - name: Release-Entwurf / release draft
         if: needs.prepare.outputs.is_tag == 'true'
         env:

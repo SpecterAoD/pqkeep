@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """DE: Vollständige Release-Verifikation ohne Schreibrechte oder OIDC.
 EN: Complete release verification without write permissions or OIDC."""
-import argparse
+import os
+import sys
 from pathlib import Path
 import re
 import subprocess
@@ -53,19 +54,16 @@ def verify(dist, version, repo, ref, commit, workflow='release'):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('dist', type=Path)
-    parser.add_argument('version')
-    parser.add_argument('repo')
-    parser.add_argument('ref')
-    parser.add_argument('commit')
-    parser.add_argument('--workflow', choices=('release', 'preview'), default='release')
-    args = parser.parse_args()
-    try:
-        verify(args.dist, args.version, args.repo, args.ref, args.commit, args.workflow)
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
-        parser.exit(1, f'Verifikation fehlgeschlagen / verification failed: {error}\n')
+    # DE: Nur Workflow-Kontext, keine frei weitergereichten CLI-Argumente.
+    # EN: Use workflow context only; never forward arbitrary CLI arguments.
+    if len(sys.argv) != 1:
+        raise ValueError('No command-line arguments accepted')
+    verify(Path(os.environ['RELEASE_DIST']), os.environ['VERSION'],
+           os.environ['GITHUB_REPOSITORY'], os.environ['GITHUB_REF'], os.environ['GITHUB_SHA'])
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        raise SystemExit(f'Verifikation fehlgeschlagen / verification failed: {error}') from error

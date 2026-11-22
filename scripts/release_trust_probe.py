@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """DE: Reale Gegenproben an einem signierten Bündel; nur temporäre Kopien verändern.
 EN: Real verification probes against a signed bundle; modify temporary copies only."""
-import argparse
+import os
+import sys
 import hashlib
 from pathlib import Path
 import shutil
@@ -53,7 +54,7 @@ def run(dist, version, repo, ref, commit):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('dist', 'version', 'repo', 'ref', 'commit'):
-        parser.add_argument(name, type=Path if name == 'dist' else str)
-    run(**vars(parser.parse_args()))
+    if len(sys.argv) != 1:
+        raise SystemExit('No command-line arguments accepted')
+    run(Path(os.environ['TRIAL_DIST']), os.environ['TRIAL_VERSION'],
+        os.environ['TRIAL_REPO'], os.environ['TRIAL_REF'], os.environ['TRIAL_COMMIT'])

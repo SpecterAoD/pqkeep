@@ -213,7 +213,8 @@ network/tool failure stops the chain. No artifact executable is run during verif
 DE: Beide privilegierten Jobs behalten die bestehenden Reviewer-/Refschutzregeln; daher können
 zwei Environment-Freigaben anfallen. Ein Feature-Branch erhält keinen Signier-/Veröffentlichungspfad.
 Reine Lese-Gegenproben können ein zuvor freigegebenes signiertes main-Bündel mit unabhängig
-bekannten Erwartungen prüfen: `python3 scripts/release_trust_probe.py DIST VERSION REPO REF COMMIT`.
+bekannten Erwartungen prüfen: `python3 scripts/release_trust_probe.py` (Erwartungen aus `TRIAL_DIST`, `TRIAL_VERSION`,
+`TRIAL_REPO`, `TRIAL_REF`, `TRIAL_COMMIT`, keine CLI-Weitergabe).
 Sie verändern nur temporäre Kopien; ungültige Signaturen/Identitäten/Refs/Commits müssen scheitern.
 
 EN: A branch PR cannot exercise environment-gated signing/drafting without changing protections.

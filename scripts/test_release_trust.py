@@ -54,6 +54,13 @@ class TrustTests(unittest.TestCase):
                     trust.verify(*ARGS)
                 self.assertEqual(stage + 1, execute.call_count)
 
+    def test_cli_arguments_are_rejected_before_context_or_tools(self):
+        with patch.object(trust.sys, 'argv', ['runner', '--anything']), \
+                patch.object(trust, 'execute') as execute:
+            with self.assertRaises(ValueError):
+                trust.main()
+            execute.assert_not_called()
+
     def test_processes_have_timeout_and_no_shell(self):
         with patch.object(trust.subprocess, 'run') as run:
             trust.execute(['cosign', 'verify-blob'], Path('dist'))

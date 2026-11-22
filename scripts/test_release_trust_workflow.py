@@ -17,8 +17,8 @@ def contract(text):
     assert 'id-token: write' not in jobs['draft']
     for name in ['verify', 'draft']:
         assert 'python3 scripts/release_trust.py' in jobs[name]
-        assert 'EXPECTED_COMMIT: ${{ github.sha }}' in jobs[name]
-        assert 'EXPECTED_REF: ${{ github.ref }}' in jobs[name]
+        assert 'RELEASE_DIST: dist' in jobs[name]
+        assert 'run: python3 scripts/release_trust.py\n' in jobs[name]
     for name in ['publish', 'draft']:
         assert "    if: github.event_name != 'pull_request'" in jobs[name]
         assert 'environment: release' in jobs[name]
@@ -33,7 +33,7 @@ class WorkflowTests(unittest.TestCase):
         for old, bad in [('needs: [prepare, verify]', 'needs: [prepare, build]'),
                           ('needs: [prepare, publish]', 'needs: prepare'),
                           ('contents: read\n      id-token: write', 'contents: write\n      id-token: write'),
-                          ('EXPECTED_COMMIT: ${{ github.sha }}', 'EXPECTED_COMMIT: untrusted'),
+                          ('RELEASE_DIST: dist', 'RELEASE_DIST: unknown'),
                           ('scripts/release_ref.py', 'scripts/skip.py'),
                           ("if: needs.prepare.outputs.is_tag == 'true'", 'if: always()')]:
             with self.subTest(old=old), self.assertRaises(AssertionError):
