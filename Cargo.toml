@@ -130,4 +130,3 @@ api = ["dep:axum", "dep:hyper", "dep:hyper-util", "dep:tokio", "dep:tower", "dep
 #     Affects run time only, not semantics; own code stays unoptimised.
 [profile.dev.package."*"]
 opt-level = 3
-

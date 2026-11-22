@@ -6,13 +6,18 @@ use zeroize::ZeroizeOnDrop;
 use crate::hardening::memlock::{self, LockedRange};
 use crate::{Error, Result};
 
+#[cfg(test)]
+#[path = "secret_state_tests.rs"]
+mod tests;
+
 pub(crate) struct SecretState<T: ZeroizeOnDrop> {
-    inner: Option<Box<T>>,
+    inner: Box<T>,
     lock: Option<LockedRange>,
+    public_state: fn() -> T,
 }
 
 impl<T: ZeroizeOnDrop> SecretState<T> {
-    pub(crate) fn new(value: T) -> Result<Self> {
+    pub(crate) fn new(value: T, public_state: fn() -> T) -> Result<Self> {
         let inner = Box::new(value);
         let addr = std::ptr::from_ref(&*inner).addr();
         let lock = memlock::lock_range(addr, size_of::<T>());
@@ -21,36 +26,28 @@ impl<T: ZeroizeOnDrop> SecretState<T> {
             return Err(Error::MemoryLock);
         }
         Ok(Self {
-            inner: Some(inner),
+            inner,
             lock: Some(lock),
+            public_state,
         })
     }
 
     pub(crate) fn get(&self) -> &T {
-        // DE: Nur Drop nimmt den Wert heraus. EN: Only Drop removes the value.
-        match &self.inner {
-            Some(value) => value,
-            None => unreachable_state(),
-        }
+        &self.inner
     }
 
     pub(crate) fn get_mut(&mut self) -> &mut T {
-        match &mut self.inner {
-            Some(value) => value,
-            None => unreachable_state(),
-        }
+        &mut self.inner
     }
-}
-
-// DE: Unerreichbarer verletzter interner Zustand: niemals ungesichert fortfahren.
-// EN: Unreachable invalid internal state: never continue without protection.
-fn unreachable_state() -> ! {
-    std::process::abort()
 }
 
 impl<T: ZeroizeOnDrop> Drop for SecretState<T> {
     fn drop(&mut self) {
-        drop(self.inner.take());
+        // DE: Zuweisung zerstört den Secret-Zustand an Ort und Stelle, noch gesperrt.
+        // Die Box bleibt bis nach dem Entsperren allokiert (VirtualFree entsperrt implizit).
+        // EN: Assignment drops secret state in place while locked. Keep the Box allocated
+        // until after unlocking; VirtualFree would otherwise implicitly remove the lock.
+        *self.inner = (self.public_state)();
         self.lock.take();
     }
 }
