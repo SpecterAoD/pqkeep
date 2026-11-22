@@ -92,7 +92,7 @@ pub fn passphrase_kek(
     }
     let secret = factor.map_or(&[][..], Factor::expose);
     let ad = info(domain, b"argon2\0", &[]);
-    let mut b = SecretBytes::new(vec![0u8; kdf::OUTPUT_LEN])?;
+    let mut b = SecretBytes::zeroed(kdf::OUTPUT_LEN)?;
     kdf::argon2id(
         passphrase.expose(),
         salt,

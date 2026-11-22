@@ -34,7 +34,7 @@ pub fn array<const N: usize>() -> Result<[u8; N]> {
 /// # Errors
 /// DE/EN: [`Error::Rng`].
 pub fn secret(len: usize) -> Result<SecretBytes> {
-    let mut out = SecretBytes::new(vec![0u8; len])?;
+    let mut out = SecretBytes::zeroed(len)?;
     fill(out.expose_mut())?;
     Ok(out)
 }

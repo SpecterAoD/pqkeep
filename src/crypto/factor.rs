@@ -71,7 +71,7 @@ impl Factor {
         }
         // DE: Ein Byte mehr als nötig lesen, um zu große Dateien zu erkennen.
         // EN: Read one byte more than needed to detect files that are too large.
-        let mut buffer = SecretBytes::new(vec![0u8; FACTOR_LEN + 1])?;
+        let mut buffer = SecretBytes::zeroed(FACTOR_LEN + 1)?;
         let mut filled = 0;
         while filled < buffer.len() {
             match file.read(&mut buffer.expose_mut()[filled..])? {

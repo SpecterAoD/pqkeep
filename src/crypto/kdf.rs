@@ -120,7 +120,7 @@ pub fn derive(passphrase: &[u8], salt: &[u8], params: &KdfParams) -> Result<Secr
             field: "passphrase",
         });
     }
-    let mut key = SecretBytes::new(vec![0u8; OUTPUT_LEN])?;
+    let mut key = SecretBytes::zeroed(OUTPUT_LEN)?;
     argon2id(passphrase, salt, params, &[], &[], key.expose_mut())?;
     Ok(key)
 }
