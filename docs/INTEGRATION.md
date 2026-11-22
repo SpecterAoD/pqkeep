@@ -122,10 +122,13 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   **Fingerabdruck zur Bestätigung** angezeigt; danach „Weiteren Empfänger hinzufügen?“ (Standard
   Nein) – bis zu 64 Empfänger, jeder mit eigenem Fingerabdruck. Mehrere Empfänger erzeugen Format v2.
   Eine eigene Passphrase zusätzlich zu Empfängern gibt es nur im Menü und auf der Kommandozeile
-  (`--with-passphrase`).
+  (`--with-passphrase`). Danach optional **„Als Absender signieren?“** (#287): eigenen
+  ML-DSA-87-Schlüssel wählen (ggf. dessen Faktordatei) und dessen Passphrase eingeben – Format v3,
+  siehe [V3_SIGNED.md](V3_SIGNED.md).
 - **Entschlüsseln:** Der Modus wird aus der Datei erkannt; bei Empfänger-Dateien wird nach der
   eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
-  sie verlangt. Weitergegeben wird nur ihr Pfad.
+  sie verlangt. Weitergegeben wird nur ihr Pfad. Signierte Dateien werden immer geprüft; die
+  Fertig-Meldung nennt den **geprüften Absender** (Fingerabdruck).
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
   (`bericht (2).txt`, verschlüsselt `bericht (2).txt.pqkf` – die Endung bleibt beim
   Entschlüsseln erhalten); überschrieben wird nie.
@@ -244,7 +247,8 @@ recipients write format v2; an own passphrase in addition to recipients only in 
 for your key file in recipient mode and for the factor file only if the file or the key file requires it (only its path is
 passed on). The result is placed next to the source under a free name
 (`report (2).txt`, encrypted `report (2).txt.pqkf` – the extension survives decryption) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
-sandboxed process (on Linux also via small windows, see above).
+sandboxed process (on Linux also via small windows, see above). Optionally **"Sign as sender?"** (#287) when encrypting (own ML-DSA-87 key, its passphrase; format v3); after
+decrypting a signed file the final message names the **verified sender**.
 
 **Several files:** Linux: Nemo (`Selection=notnone`), Nautilus, Dolphin and Thunar (`%F`) pass all selected
 entries, one argument each after `--`. Windows: classic entries would start one process per file,

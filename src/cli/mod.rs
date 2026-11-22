@@ -14,6 +14,7 @@ mod context_child;
 mod context_dialog;
 mod context_dialog_many;
 mod context_many;
+mod context_sign;
 mod dialog;
 mod dialog_text;
 mod factor_cmd;

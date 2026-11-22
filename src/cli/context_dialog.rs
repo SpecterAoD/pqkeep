@@ -15,6 +15,7 @@ use pqkeep::security::Lang;
 
 use super::context::{out_arg, utf8};
 use super::context_child::{Outcome, Watch, finish, new_tag, spawn, with_tag};
+use super::context_sign::{SignChoice, two_passphrases};
 use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
 use super::factor_cmd::FLAG;
@@ -40,7 +41,7 @@ pub(super) fn cancelled() -> Failure {
 impl Ui<'_> {
     /// DE: Kindprozess ohne Passphrase. EN: Child without passphrase.
     /// DE: Fortschrittstexte; `step` = Schritte je Datei. EN: Progress texts; `step` = steps per file.
-    fn watch(&self, step: bool) -> Watch<'_> {
+    pub(super) fn watch(&self, step: bool) -> Watch<'_> {
         Watch {
             working: self.d.working,
             step: step.then_some(self.d.step),
@@ -109,11 +110,19 @@ impl Ui<'_> {
     }
 
     /// DE: Wiederholt `step` nach Fehlern auf Wunsch. EN: Repeats `step` after errors on request.
-    fn repeat(&self, out: &str, mut step: impl FnMut() -> CliResult<Outcome>) -> CliResult {
+    pub(super) fn repeat(
+        &self,
+        out: &str,
+        mut step: impl FnMut() -> CliResult<Outcome>,
+    ) -> CliResult {
         for _ in 0..ATTEMPTS {
             match step()? {
-                Outcome::Done { warn, .. } if warn.is_empty() => {
-                    self.dlg.info(&format!("{}\n{out}", self.d.done));
+                Outcome::Done {
+                    warn, out: text, ..
+                } if warn.is_empty() => {
+                    // DE: Geprüften Absender nennen (#287). EN: Name the verified sender (#287).
+                    let signer = super::context_sign::signer_lines(self.lang, &text);
+                    self.dlg.info(&format!("{}\n{out}{signer}", self.d.done));
                     return Ok(());
                 }
                 // DE: Ein unvollständiges Archiv darf nicht wie ein voller Erfolg aussehen.
@@ -209,21 +218,24 @@ impl Ui<'_> {
             let factor = (mode == 2)
                 .then(|| self.ask_for(Path::new(path), Ask::Factor))
                 .transpose()?;
+            let sign = super::context_sign::ask(self, Path::new(path))?;
+            let sign_args = sign.as_ref().map(SignChoice::args).unwrap_or_default();
             let mut cmd = vec!["encrypt", "--out", &out];
             if let Some(f) = &factor {
                 cmd.extend([FLAG, f.as_str()]);
+            }
+            cmd.extend(sign_args.iter().map(String::as_str));
+            if sign.is_some() {
+                return self.repeat(&out, || {
+                    two_passphrases(self, &cmd, &[path], &targets, false)
+                });
             }
             let new_pass = self.d.new_pass;
             return self.repeat(&out, || {
                 self.with_pass(new_pass, true, &cmd, &[path], &targets, false)
             });
         }
-        let all = super::context_dialog_many::recipients(self, Path::new(path))?;
-        let to = super::recipients_ui::to_args(&all);
-        let mut cmd = vec!["encrypt"];
-        cmd.extend(to.iter().map(String::as_str));
-        cmd.extend(["--out", &out, "--", path]);
-        self.repeat(&out, || self.plain(&cmd, &targets, false))
+        super::context_sign::for_recipients(self, path, &out, &targets)
     }
 
     fn decrypt(&self, source: &Path, path: &str) -> CliResult {

@@ -16,6 +16,11 @@ German release notes: see `docs/releases/`.
   files without a terminal: the signing key's passphrase comes from its own file (same rules as
   `--passphrase-file`: regular file, one line, Linux `0600`). Without it the clear usage error stays.
   **DE:** Signieren passphrasegeschützter Dateien auch ohne Terminal.
+- **Sender signature in the menu and the context menu (#287):** when encrypting, the menu and the
+  context menu (windows and terminal, single and several files) optionally ask "Sign as sender?"
+  and the own ML-DSA-87 key; after decrypting, the final message names the verified sender. With
+  passphrase protection both password windows write into one pipe to the sandboxed child – the
+  context menu process never sees a passphrase. **DE:** Absender-Signatur in Menü und Kontextmenü.
 - **Sender signature inside `.pqkf` (#44, U1):** `pqkeep encrypt --sign-with <key.key.json>`
   (optionally `--sign-factor-file`) embeds an ML-DSA-87 signature over the whole header (all
   recipients) and the ciphertext; such files use the new **format v3** (`docs/V3_SIGNED.md`, SPEC

@@ -202,6 +202,18 @@ impl Dialog {
     /// EN: Starts the password window with output into a pipe. `confirm` = new passphrase twice.
     /// Returns the process and whether the receiver must compare two lines.
     pub fn password(&self, text: &str, confirm: Option<(&str, &str)>) -> Option<(Child, bool)> {
+        self.password_into(text, confirm, Stdio::piped())
+    }
+
+    /// DE: Wie [`Self::password`], schreibt aber in `out` (z. B. eine gemeinsame Pipe für zwei
+    /// Fenster, #287). EN: Like [`Self::password`], but writes into `out` (e.g. one shared pipe for
+    /// two windows, #287).
+    pub fn password_into(
+        &self,
+        text: &str,
+        confirm: Option<(&str, &str)>,
+        out: impl Into<Stdio>,
+    ) -> Option<(Child, bool)> {
         let req = match confirm {
             Some((first, second)) => Request::NewPassword {
                 text,
@@ -211,7 +223,7 @@ impl Dialog {
             None => Request::Password { text },
         };
         let two_lines = confirm.is_some() && !self.kind.confirms_itself();
-        let child = self.command(&req)?.stdout(Stdio::piped()).spawn().ok()?;
+        let child = self.command(&req)?.stdout(out).spawn().ok()?;
         Some((child, two_lines))
     }
 

@@ -198,6 +198,8 @@ pub(super) fn terminal(
         _ => Vec::new(),
     };
     args.extend(extra.iter().map(String::as_str));
+    let sign = super::context::sign_args(lang)?;
+    args.extend(sign.iter().map(String::as_str));
     args.push("--");
     args.extend(&refs);
     child(lang, &args)

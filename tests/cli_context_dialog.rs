@@ -38,14 +38,17 @@ fn passphrase_roundtrip_with_zenity() {
     let file = e.work().join("bericht.txt");
     fs::write(&file, b"geheimer Inhalt").unwrap();
     let p = pass();
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
+    // DE: Modus, „Als Absender signieren?“ nein (#287), Passphrase, Fertig.
+    // EN: Mode, "Sign as sender?" no (#287), passphrase, done.
+    e.answer(&[(0, "0\n"), (1, ""), (0, &format!("{p}\n{p}\n")), (0, "")]);
     assert_eq!(e.context("encrypt", &file), 0);
     let enc = e.work().join("bericht.txt.pqkf");
     assert!(enc.is_file());
     let calls = e.calls();
-    assert_eq!(calls.len(), 3, "{calls:?}");
-    assert!(calls[1].contains(&"--forms".to_owned()));
-    assert!(calls[2].contains(&"--info".to_owned()));
+    assert_eq!(calls.len(), 4, "{calls:?}");
+    assert!(calls[1].contains(&"--question".to_owned()));
+    assert!(calls[2].contains(&"--forms".to_owned()));
+    assert!(calls[3].contains(&"--info".to_owned()));
     assert!(joined(&calls).contains(enc.to_str().unwrap()));
     fs::rename(&file, e.work().join("original.txt")).unwrap();
     e.answer(&[(0, &format!("{p}\n")), (0, "")]);
@@ -60,13 +63,19 @@ fn mismatch_shows_error_and_can_be_abandoned() {
     let file = e.work().join("a.txt");
     fs::write(&file, b"x").unwrap();
     let (p, q) = (pass(), pass());
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{q}\n")), (0, ""), (1, "")]);
+    e.answer(&[
+        (0, "0\n"),
+        (1, ""),
+        (0, &format!("{p}\n{q}\n")),
+        (0, ""),
+        (1, ""),
+    ]);
     assert_ne!(e.context("encrypt", &file), 0);
     assert!(!e.work().join("a.txt.pqkf").exists());
     let calls = e.calls();
-    assert!(calls[2].contains(&"--error".to_owned()), "{calls:?}");
+    assert!(calls[3].contains(&"--error".to_owned()), "{calls:?}");
     assert!(joined(&calls).contains("do not match"));
-    assert!(calls[3].contains(&"--question".to_owned()));
+    assert!(calls[4].contains(&"--question".to_owned()));
 }
 
 #[test]
@@ -77,6 +86,7 @@ fn weak_passphrase_then_retry_succeeds() {
     let p = pass();
     e.answer(&[
         (0, "0\n"),
+        (1, ""),
         (0, "abc\nabc\n"),
         (0, ""),
         (0, ""),
@@ -85,7 +95,7 @@ fn weak_passphrase_then_retry_succeeds() {
     ]);
     assert_eq!(e.context("encrypt", &file), 0);
     assert!(e.work().join("b.txt.pqkf").is_file());
-    assert_eq!(e.calls().len(), 6);
+    assert_eq!(e.calls().len(), 7);
 }
 
 #[test]
@@ -93,10 +103,10 @@ fn cancel_in_password_window_starts_nothing() {
     let e = Env::new("zenity");
     let file = e.work().join("c.txt");
     fs::write(&file, b"x").unwrap();
-    e.answer(&[(0, "0\n"), (1, "")]);
+    e.answer(&[(0, "0\n"), (1, ""), (1, "")]);
     assert_eq!(e.context("encrypt", &file), 2);
     assert!(!e.work().join("c.txt.pqkf").exists());
-    assert_eq!(e.calls().len(), 2, "kein Fehlerfenster / no error window");
+    assert_eq!(e.calls().len(), 3, "kein Fehlerfenster / no error window");
     e.answer(&[(1, "")]);
     assert_eq!(e.context("encrypt", &file), 2);
 }
@@ -113,12 +123,13 @@ fn recipient_roundtrip_with_kdialog() {
     let file = e.work().join("plan.txt");
     fs::write(&file, b"Plan").unwrap();
     let public = e.work().join("anna.pub.json");
-    // DE: Auswahl, Datei, Fingerabdruck ja, kein weiterer Empfänger, Fertig-Fenster.
-    // EN: Choice, file, fingerprint yes, no further recipient, done window.
+    // DE: Auswahl, Datei, Fingerabdruck ja, kein weiterer Empfänger, nicht signieren, Fertig-Fenster.
+    // EN: Choice, file, fingerprint yes, no further recipient, do not sign, done window.
     e.answer(&[
         (0, "1\n"),
         (0, &format!("{}\n", public.display())),
         (0, ""),
+        (1, ""),
         (1, ""),
         (0, ""),
     ]);
@@ -170,10 +181,11 @@ fn two_recipients_with_zenity() {
         (0, &pick("ben.pub.json")),
         (0, ""),
         (1, ""),
+        (1, ""),
         (0, ""),
     ]);
     assert_eq!(e.context("encrypt", &file), 0);
-    assert_eq!(e.calls().len(), 8, "{:?}", e.calls());
+    assert_eq!(e.calls().len(), 9, "{:?}", e.calls());
     let enc = e.work().join("plan.txt.pqkf");
     let inspect = ["--lang", "en", "inspect", enc.to_str().unwrap()];
     let (_, shown, _) = common::pqkeep(&inspect, "", e.work());
@@ -202,9 +214,9 @@ fn kdialog_new_password_is_one_line() {
     let file = e.work().join("d.txt");
     fs::write(&file, b"x").unwrap();
     let p = pass();
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n")), (0, "")]);
+    e.answer(&[(0, "0\n"), (1, ""), (0, &format!("{p}\n")), (0, "")]);
     assert_eq!(e.context("encrypt", &file), 0);
-    assert!(e.calls()[1].contains(&"--newpassword".to_owned()));
+    assert!(e.calls()[2].contains(&"--newpassword".to_owned()));
 }
 
 #[test]
@@ -215,7 +227,7 @@ fn malicious_file_name_is_one_argument() {
     let file = e.work().join("--no-sandbox a'b; $(id) `id` & ä.txt");
     fs::write(&file, b"x").unwrap();
     let p = pass();
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
+    e.answer(&[(0, "0\n"), (1, ""), (0, &format!("{p}\n{p}\n")), (0, "")]);
     assert_eq!(e.context("encrypt", &file), 0, "{:?}", e.calls());
     let mut enc = file.into_os_string();
     enc.push(".pqkf");
@@ -230,10 +242,16 @@ fn control_characters_in_names_are_rejected_cleanly() {
     let file = e.work().join("zeile\nbruch.txt");
     fs::write(&file, b"x").unwrap();
     let p = pass();
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, ""), (1, "")]);
+    e.answer(&[
+        (0, "0\n"),
+        (1, ""),
+        (0, &format!("{p}\n{p}\n")),
+        (0, ""),
+        (1, ""),
+    ]);
     assert_ne!(e.context("encrypt", &file), 0);
     let calls = e.calls();
-    assert!(calls[2].contains(&"--error".to_owned()), "{calls:?}");
+    assert!(calls[3].contains(&"--error".to_owned()), "{calls:?}");
     assert!(joined(&calls).contains("'path'"));
     assert_eq!(
         fs::read_dir(e.work()).unwrap().count(),
@@ -268,7 +286,7 @@ fn skipped_entries_are_shown_as_warning_not_plain_success() {
     fs::write(dir.join("a.txt"), b"a").unwrap();
     std::os::unix::fs::symlink("/etc/hostname", dir.join("link")).unwrap();
     let p = pass();
-    e.answer(&[(0, "0\n"), (0, &format!("{p}\n{p}\n")), (0, "")]);
+    e.answer(&[(0, "0\n"), (1, ""), (0, &format!("{p}\n{p}\n")), (0, "")]);
     assert_eq!(e.context("encrypt", &dir), 0);
     assert!(e.work().join("ordner.pqkf").is_file());
     let calls = e.calls();

@@ -73,13 +73,40 @@ pub(super) fn ask_path(prompt: &str) -> CliResult<String> {
         .with_prompt(prompt)
         .interact_text()
         .map_err(|_| Failure::new(code::ERROR, ""))?;
+    Ok(normalize(&raw))
+}
+
+/// DE: Wie [`ask_path`], darf aber leer bleiben (leer = nein). EN: Like [`ask_path`] but may stay
+/// empty (empty = no).
+pub(super) fn ask_optional_path(prompt: &str) -> CliResult<String> {
+    let raw: String = Input::new()
+        .with_prompt(prompt)
+        .allow_empty(true)
+        .interact_text()
+        .map_err(|_| Failure::new(code::ERROR, ""))?;
+    Ok(if raw.trim().is_empty() {
+        String::new()
+    } else {
+        normalize(&raw)
+    })
+}
+
+fn normalize(raw: &str) -> String {
     let trimmed = raw.trim();
     let unquoted = trimmed
         .strip_prefix('\'')
         .and_then(|t| t.strip_suffix('\''))
         .or_else(|| trimmed.strip_prefix('"').and_then(|t| t.strip_suffix('"')))
         .unwrap_or(trimmed);
-    Ok(absolute(Path::new(unquoted)).to_string_lossy().into_owned())
+    absolute(Path::new(unquoted)).to_string_lossy().into_owned()
+}
+
+/// DE: Optional als Absender signieren (#287); die Passphrase fragt der Kindprozess im Terminal ab.
+/// EN: Optionally sign as sender (#287); the child process asks for the passphrase in the terminal.
+pub(super) fn sign_args(lang: Lang) -> CliResult<Vec<String>> {
+    let mut out = Vec::new();
+    super::signing::menu_args(lang, ask_optional_path, &mut out)?;
+    Ok(out)
 }
 
 /// DE: Schlüsseldatei bzw. Faktordatei abfragen. EN: Ask for the key file or the factor file.
@@ -119,16 +146,20 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
         let factor = (mode == 2)
             .then(|| ask_path(ui_texts(lang).existing))
             .transpose()?;
+        let sign = sign_args(lang)?;
         let mut args = vec!["encrypt"];
         if let Some(f) = &factor {
             args.extend([FLAG, f.as_str()]);
         }
+        args.extend(sign.iter().map(String::as_str));
         args.extend(["--out", &out, "--", path]);
         return child(lang, &args);
     }
     let to = super::recipients_ui::to_args(&super::context_many::recipients(s, lang)?);
+    let sign = sign_args(lang)?;
     let mut args = vec!["encrypt"];
     args.extend(to.iter().map(String::as_str));
+    args.extend(sign.iter().map(String::as_str));
     args.extend(["--out", &out, "--", path]);
     child(lang, &args)
 }

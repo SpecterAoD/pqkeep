@@ -9,7 +9,7 @@
 //! terminal there is only **one** passphrase source; if the file itself needs a passphrase,
 //! `--sign-with` is therefore only possible interactively (otherwise a clear usage error).
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{Arg, ArgMatches, value_parser};
 use pqkeep::crypto::factor::Factor;
@@ -31,19 +31,30 @@ pub const SIGN_FACTOR: &str = "sign-factor-file";
 pub const SIGNER: &str = "signer";
 /// DE: Passphrase-Datei des Signaturschlüssels (#286). EN: Passphrase file of the signing key (#286).
 pub const SIGN_PASS_FILE: &str = "sign-passphrase-file";
+/// DE: Intern (Kontextmenü, #287): Passphrase des Signaturschlüssels = nächste stdin-Zeile nach der
+/// Datei-Passphrase; beide kommen aus Passwortfenstern über dieselbe Pipe.
+/// EN: Internal (context menu, #287): signing key passphrase = next stdin line after the file
+/// passphrase; both come from password windows through the same pipe.
+pub const SIGN_PASS_NEXT: &str = "sign-passphrase-next-line";
 
 const ML_DSA_87: KeyAlgorithm = KeyAlgorithm::Dsa(DsaAlgorithm::MlDsa87);
 
-struct SignTexts {
+pub(super) struct SignTexts {
     arg_sign_with: &'static str,
     arg_sign_factor: &'static str,
     arg_signer: &'static str,
     arg_sign_pass: &'static str,
-    prompt: &'static str,
+    pub prompt: &'static str,
     signed_by: &'static str,
     unverified: &'static str,
     one_source: &'static str,
     need_dsa: &'static str,
+    /// DE: Menü und Kontextmenü (#287). EN: Menu and context menu (#287).
+    pub menu_key: &'static str,
+    pub menu_factor: &'static str,
+    pub ctx_question: &'static str,
+    pub ctx_pick: &'static str,
+    pub ctx_filter: &'static str,
 }
 
 const DE: SignTexts = SignTexts {
@@ -56,6 +67,11 @@ const DE: SignTexts = SignTexts {
     unverified: "Absender (ungeprüft, prüfen mit pqkeep check oder beim Entschlüsseln)",
     one_source: "--sign-with braucht eine eigene Passphrase; ohne Terminal zusammen mit einer Datei-Passphrase bitte --sign-passphrase-file angeben",
     need_dsa: "Für die Absender-Signatur wird ein ML-DSA-87-Schlüssel gebraucht (--sign-with: *.key.json, --signer: *.pub.json)",
+    menu_key: "Als Absender signieren? Eigener ML-DSA-87-Schlüssel (.key.json, leer = nicht signieren)",
+    menu_factor: "Faktordatei des Signaturschlüssels",
+    ctx_question: "Zusätzlich als Absender signieren (eigener ML-DSA-87-Schlüssel)? Empfänger können dann prüfen, dass die Datei von Ihnen stammt.",
+    ctx_pick: "Eigenen Signaturschlüssel wählen (ML-DSA-87)",
+    ctx_filter: "Schlüsseldateien (*.key.json)",
 };
 
 const EN: SignTexts = SignTexts {
@@ -68,9 +84,14 @@ const EN: SignTexts = SignTexts {
     unverified: "Sender (unverified, verify with pqkeep check or when decrypting)",
     one_source: "--sign-with needs its own passphrase; without a terminal together with a file passphrase please pass --sign-passphrase-file",
     need_dsa: "The sender signature needs an ML-DSA-87 key (--sign-with: *.key.json, --signer: *.pub.json)",
+    menu_key: "Sign as sender? Own ML-DSA-87 key (.key.json, empty = do not sign)",
+    menu_factor: "Factor file of the signing key",
+    ctx_question: "Additionally sign as sender (own ML-DSA-87 key)? Recipients can then verify that the file comes from you.",
+    ctx_pick: "Choose your own signing key (ML-DSA-87)",
+    ctx_filter: "Key files (*.key.json)",
 };
 
-fn texts(lang: Lang) -> &'static SignTexts {
+pub(super) fn texts(lang: Lang) -> &'static SignTexts {
     if lang == Lang::De { &DE } else { &EN }
 }
 
@@ -87,7 +108,7 @@ pub fn paths(m: &ArgMatches) -> Vec<PathBuf> {
 }
 
 /// DE: Optionen für `encrypt`. EN: Options for `encrypt`.
-pub fn encrypt_args(lang: Lang) -> [Arg; 3] {
+pub fn encrypt_args(lang: Lang) -> [Arg; 4] {
     let s = texts(lang);
     [
         opt(SIGN_WITH, s.arg_sign_with).value_parser(value_parser!(PathBuf)),
@@ -97,7 +118,41 @@ pub fn encrypt_args(lang: Lang) -> [Arg; 3] {
         opt(SIGN_PASS_FILE, s.arg_sign_pass)
             .value_parser(value_parser!(PathBuf))
             .requires(SIGN_WITH),
+        super::args::flag(SIGN_PASS_NEXT, "")
+            .hide(true)
+            .requires(SIGN_WITH)
+            .requires("passphrase-stdin"),
     ]
+}
+
+fn next_line(m: &ArgMatches) -> bool {
+    m.try_get_one::<bool>(SIGN_PASS_NEXT)
+        .ok()
+        .flatten()
+        .copied()
+        .unwrap_or(false)
+}
+
+/// DE: Menü (#287): fragt nach dem eigenen Signaturschlüssel (leer = nicht signieren) und – falls
+/// dieser sie verlangt – nach seiner Faktordatei; ergänzt `argv`.
+/// EN: Menu (#287): asks for the own signing key (empty = do not sign) and – if it requires one –
+/// its factor file; extends `argv`.
+pub fn menu_args(
+    lang: Lang,
+    mut ask: impl FnMut(&str) -> CliResult<String>,
+    argv: &mut Vec<String>,
+) -> CliResult {
+    let s = texts(lang);
+    let key = ask(s.menu_key)?;
+    if key.trim().is_empty() {
+        return Ok(());
+    }
+    let needs_factor = super::factor_ui::key_needs(Path::new(&key));
+    argv.extend([format!("--{SIGN_WITH}"), key]);
+    if needs_factor {
+        argv.extend([format!("--{SIGN_FACTOR}"), ask(s.menu_factor)?]);
+    }
+    Ok(())
 }
 
 /// DE: Option `--signer` für `decrypt` und `check`. EN: Option `--signer` for `decrypt` and `check`.
@@ -115,7 +170,7 @@ pub fn check_sources(lang: Lang, m: &ArgMatches, file_passphrase: bool) -> CliRe
     let non_interactive = m.get_flag("passphrase-stdin")
         || super::unattended::pass_file().is_some()
         || super::unattended::batch();
-    let own_source = path(m, SIGN_PASS_FILE).is_some();
+    let own_source = path(m, SIGN_PASS_FILE).is_some() || next_line(m);
     if path(m, SIGN_WITH).is_some() && file_passphrase && non_interactive && !own_source {
         return Err(Failure::new(code::USAGE, texts(lang).one_source));
     }
@@ -204,4 +259,10 @@ pub fn print_unverified(lang: Lang, signer: Option<&Signer>) {
             fingerprint(&envelope::hex_encode(&s.key_id()))
         );
     }
+}
+
+/// DE: Beschriftung der Absenderzeile (für das Fertig-Fenster des Kontextmenüs).
+/// EN: Label of the sender line (for the context menu's final window).
+pub fn signed_by_label(lang: Lang) -> &'static str {
+    texts(lang).signed_by
 }
