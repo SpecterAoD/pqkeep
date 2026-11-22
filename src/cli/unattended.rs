@@ -115,6 +115,12 @@ pub fn read_pass_file(lang: Lang, from_stdin: bool) -> Option<CliResult<Passphra
     Some(read_checked(path, lang))
 }
 
+/// DE: Liest eine weitere Passphrase-Datei mit denselben Regeln (z. B. `--sign-passphrase-file`, #286).
+/// EN: Reads another passphrase file with the same rules (e.g. `--sign-passphrase-file`, #286).
+pub fn read_file(path: &Path, lang: Lang) -> CliResult<Passphrase> {
+    read_checked(path, lang)
+}
+
 fn read_checked(path: &Path, lang: Lang) -> CliResult<Passphrase> {
     let s = texts(lang);
     let invalid = || Failure::new(code::USAGE, s.invalid);

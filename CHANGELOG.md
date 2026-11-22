@@ -7,6 +7,10 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **`--sign-passphrase-file` (#286):** `encrypt --sign-with` can now also sign passphrase-protected
+  files without a terminal: the signing key's passphrase comes from its own file (same rules as
+  `--passphrase-file`: regular file, one line, Linux `0600`). Without it the clear usage error stays.
+  **DE:** Signieren passphrasegeschützter Dateien auch ohne Terminal.
 - **Sender signature inside `.pqkf` (#44, U1):** `pqkeep encrypt --sign-with <key.key.json>`
   (optionally `--sign-factor-file`) embeds an ML-DSA-87 signature over the whole header (all
   recipients) and the ciphertext; such files use the new **format v3** (`docs/V3_SIGNED.md`, SPEC
