@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
-          "$py" scripts/ci_locked_exec.py cargo test --locked
+          "$py" scripts/ci_locked_exec.py test
       # DE: Laufzeit ohne API auf je einer nativen Linux-/Windows-Plattform (#151).
       # EN: Runtime without API on one native Linux/Windows platform each (#151).
       - name: Tests ohne API / tests without API
@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
-          "$py" scripts/ci_locked_exec.py cargo test --locked --no-default-features
+          "$py" scripts/ci_locked_exec.py test-no-api
       - name: Gepinnte Provider / pinned providers
         shell: bash
         run: |
@@ -91,12 +91,12 @@ jobs:
         run: |
           command -v jq
           cargo build --locked --bin pqkeep
-          python3 scripts/ci_locked_exec.py python3 -m unittest discover -s scripts -p 'test_backup_monitoring.py' -v
+          python3 scripts/ci_locked_exec.py monitoring
       - name: Verdeckte Terminaleingabe / hidden terminal input
         if: runner.os == 'Linux'
         run: |
           python3 -m unittest discover -s scripts -p 'test_ci_locked_exec.py' -v
-          python3 scripts/ci_locked_exec.py python3 -m unittest discover -s scripts -p 'test_terminal_secret.py' -v
+          python3 scripts/ci_locked_exec.py terminal
       - name: Backup-Monitoring (Windows / PowerShell)
         if: runner.os == 'Windows'
         shell: pwsh

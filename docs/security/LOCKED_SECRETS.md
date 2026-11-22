@@ -103,3 +103,11 @@ unprivilegiert. Container und Prozesslimits verschwinden nach dem Job.
 EN: The subsequent approval covers the presented container diff: ephemeral package-test
 containers receive the same 2 GiB process budget through `--ulimit`, with no added
 capabilities or privileged containers; usage tests remain unprivileged.
+
+DE: Der CI-Starter akzeptiert nur feste Testprofile; keine freien Befehle oder zusätzlichen
+Argumente. Unbekannte Profile werden vor sudo und vor Prozessstart abgewiesen. Test-,
+Monitoring-, Terminal-, Smoke- und Fuzz-Argumente sind im Code festgelegt; Fuzz-Toolchain
+und bestehende 60-/600-Sekunden-Budgets bleiben gepinnt. Root-Testprozesse werden abgewiesen.
+EN: CI runner accepts fixed test profiles only, rejecting unknown profiles/extra arguments
+before elevation or execution. Commands/arguments are fixed; pinned fuzz toolchain and
+existing 60/600-second budgets remain. Refuse root test processes.

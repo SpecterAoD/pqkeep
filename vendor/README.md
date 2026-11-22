@@ -42,3 +42,12 @@ separaten Fuzz-Workspace; kein nur im Root wirksames Cargo-Patch. Das Projekt bl
 über einen gesondert geprüften Veröffentlichungsweg verfügbar sein.
 EN: Direct versioned path dependencies also apply to external consumers and the separate
 fuzz workspace. Publishing remains disabled; #71 requires a reviewed provider publication path.
+
+DE: Für den unveränderten Sonar-Duplikationsgrenzwert wurden die byteidentischen
+BSD-Protection-Flag-Abbildungen samt identischen Tests einmalig in `bsd_protection.rs`
+zusammengeführt. Beide OS-Module inkludieren exakt denselben bisherigen Code; keine neue
+FFI, keine geänderte Abbildung, kein Linux-/Windows-Laufzeitpfad. Die Gleichheit beider
+ursprünglichen Kopien wurde vor der Extraktion geprüft. Native BSD-Abnahme wird nicht behauptet.
+EN: Consolidate byte-identical BSD protection mappings/tests into a shared include, preserving
+code and the unchanged duplication threshold. No new FFI, mapping or Linux/Windows behavior;
+verify both original copies identical before extraction. No native BSD test claim.

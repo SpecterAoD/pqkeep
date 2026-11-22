@@ -33,6 +33,18 @@
       "path": "src/lib.rs"
     },
     {
+      "sha256": "1d69f87df2e8d4a551294a91e5dc047203ceb01cf4df24e974b86249a6289ec4",
+      "path": "src/os/bsd_protection.rs"
+    },
+    {
+      "sha256": "31766da29b7ca6c0940cafb0de3db143aca2ebe93eb01e7dcd143ed01b6f5188",
+      "path": "src/os/freebsd.rs"
+    },
+    {
+      "sha256": "90e206e97c69b7b7f58f60cf15dbfeda6a5815aeca8f9c2d1e5381d7601b2c12",
+      "path": "src/os/netbsd.rs"
+    },
+    {
       "sha256": "f718e58dcb471b79182caa3db75bf73ce012f547960f2ca1f041f9bbb818287a",
       "path": "src/os/windows.rs"
     }
