@@ -1,0 +1,14 @@
+{
+  "hmac-0.13.0": {
+    "src/simple.rs": "d559d7eaaddd1234c5c093d14cced3c72b0ce292484029e173e8c71fe9225673"
+  },
+  "hkdf-0.13.0": {
+    "src/in_place.rs": "dece80ed8a1d7e135ea7fabc32719f38ec08a3166572fa2970693e124c2855ba",
+    "src/lib.rs": "4bdcd44f96cab18ab753094f5d7109e3e72ab47dee1a93e45bd2fcb99ee18657"
+  },
+  "region-4.0.1": {
+    "Cargo.toml": "0060a028891aabcf99ecd0c2e48b025dd87e04ed2330d2f9c7e16eac8921d397",
+    "src/lib.rs": "6dce58bd48179fd1a352e9c676df90d8840c2496a7561d7a40ef98fd1e50f23d",
+    "src/os/windows.rs": "f718e58dcb471b79182caa3db75bf73ce012f547960f2ca1f041f9bbb818287a"
+  }
+}

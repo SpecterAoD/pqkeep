@@ -73,11 +73,11 @@ pub(super) fn new_secret(algorithm: KeyAlgorithm) -> Result<(SecretBytes, Vec<u8
     Ok(match algorithm {
         KeyAlgorithm::Kem(a) => {
             let kp = kem::generate(a)?;
-            (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
+            (SecretBytes::from_slice(kp.seed().expose())?, kp.public_key)
         }
         KeyAlgorithm::Dsa(a) => {
             let kp = dsa::generate(a)?;
-            (SecretBytes::from_slice(kp.seed().expose()), kp.public_key)
+            (SecretBytes::from_slice(kp.seed().expose())?, kp.public_key)
         }
         KeyAlgorithm::Aes256 => (aead::generate_key()?, Vec::new()),
     })

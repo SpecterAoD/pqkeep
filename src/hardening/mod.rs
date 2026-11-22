@@ -1,13 +1,13 @@
 //! DE: Prozess- und Speicherhärtung (Spezifikation 3.1/5b), ohne eigenen
 //! `unsafe`-Code: Core-Dump-Sperre (Linux über `rustix`) und Sperren von
-//! Speicherseiten mit Geheimnissen (über `region`). Alles „best effort“:
-//! Fehlschläge brechen nicht ab, sondern werden im Bericht ausgewiesen.
+//! Speicherseiten mit Geheimnissen (über `region`). Secret-Speichersperren sind zwingend;
+//! die getrennte Prozesshärtung meldet OS-bedingte Grenzen im Bericht.
 //! CLI und API rufen [`harden_process`] als Erstes beim Start auf.
 //!
 //! EN: Process and memory hardening (specification 3.1/5b), without own
 //! `unsafe` code: core dump suppression (Linux via `rustix`) and locking of
-//! memory pages holding secrets (via `region`). All best effort: failures do
-//! not abort but are reported. CLI and API call [`harden_process`] first thing.
+//! memory pages holding secrets (via `region`). Secret locks are mandatory;
+//! separate process hardening reports OS-dependent limits. CLI and API call [`harden_process`] first thing.
 
 pub mod memlock;
 pub mod sandbox;

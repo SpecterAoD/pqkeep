@@ -23,6 +23,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   MSRV: "1.88"
+  # DE/EN: Begrenzte gleichzeitige KDF-Arbeitspuffer / bound concurrent locked KDF workspaces.
+  RUST_TEST_THREADS: "2"
 
 jobs:
   test:
@@ -63,6 +65,11 @@ jobs:
       - name: Tests ohne API / tests without API
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
         run: cargo test --locked --no-default-features
+      - name: Gepinnte Provider / pinned providers
+        shell: bash
+        run: |
+          if command -v python3 >/dev/null; then py=python3; else py=python; fi
+          "$py" scripts/check_vendor.py
       - name: Angriffsmatrix / attack matrix
         shell: bash
         run: |

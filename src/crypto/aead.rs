@@ -6,7 +6,9 @@
 //! Nonce: 96 bits, freshly drawn from the OS CSPRNG for every encryption.
 //! The tag comparison is constant-time inside the crate.
 
-use aes_gcm::aead::{Aead, Nonce, Payload};
+use aes_gcm::aead::{Aead, AeadInOut, Nonce, Payload};
+
+use super::secret_state::SecretState;
 use aes_gcm::{Aes256Gcm, KeyInit};
 
 use crate::crypto::{SecretBytes, rng};
@@ -38,8 +40,12 @@ pub fn generate_key() -> Result<SecretBytes> {
     rng::secret(KEY_LEN)
 }
 
-fn cipher(key: &[u8]) -> Result<Aes256Gcm> {
-    Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })
+pub(crate) fn cipher(key: &[u8]) -> Result<SecretState<Aes256Gcm>> {
+    let initial = Aes256Gcm::new_from_slice(&[0u8; KEY_LEN]).map_err(|_| Error::Crypto)?;
+    let mut state = SecretState::new(initial)?;
+    *state.get_mut() =
+        Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })?;
+    Ok(state)
 }
 
 /// DE: Verschlüsselt `plaintext` und authentifiziert zusätzlich `aad`.
@@ -51,6 +57,7 @@ pub fn seal(key: &[u8], plaintext: &[u8], aad: &[u8]) -> Result<Sealed> {
     let cipher = cipher(key)?;
     let nonce = rng::array::<NONCE_LEN>()?;
     let ciphertext = cipher
+        .get()
         .encrypt(
             &Nonce::<Aes256Gcm>::from(nonce),
             Payload {
@@ -75,6 +82,7 @@ pub(crate) fn seal_with_nonce(
     aad: &[u8],
 ) -> Result<Vec<u8>> {
     cipher(key)?
+        .get()
         .encrypt(
             &Nonce::<Aes256Gcm>::from(nonce),
             Payload {
@@ -98,14 +106,17 @@ pub fn open(key: &[u8], nonce: &[u8], ciphertext: &[u8], aad: &[u8]) -> Result<S
     if ciphertext.len() < TAG_LEN {
         return Err(Error::Decrypt);
     }
-    let plaintext = cipher
-        .decrypt(
+    let n = ciphertext.len() - TAG_LEN;
+    let mut plaintext = SecretBytes::from_slice(&ciphertext[..n])?;
+    let tag = <[u8; TAG_LEN]>::try_from(&ciphertext[n..]).map_err(|_| Error::Decrypt)?;
+    cipher
+        .get()
+        .decrypt_inout_detached(
             &Nonce::<Aes256Gcm>::from(nonce),
-            Payload {
-                msg: ciphertext,
-                aad,
-            },
+            aad,
+            plaintext.expose_mut().into(),
+            &tag.into(),
         )
         .map_err(|_| Error::Decrypt)?;
-    Ok(SecretBytes::new(plaintext))
+    Ok(plaintext)
 }

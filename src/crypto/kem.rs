@@ -65,7 +65,7 @@ pub fn from_seed(algorithm: KemAlgorithm, seed: &[u8]) -> Result<KemKeyPair> {
     Ok(KemKeyPair {
         algorithm,
         public_key,
-        seed: SecretBytes::from_slice(seed),
+        seed: SecretBytes::from_slice(seed)?,
     })
 }
 
@@ -112,8 +112,9 @@ fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated> {
     let ek = K::EncapsulationKey::new_from_slice(public_key).map_err(|_| Error::InvalidInput {
         field: "public_key",
     })?;
+    let mut shared_secret = SecretBytes::zeroed(32)?;
     let (ct, mut shared) = ek.encapsulate();
-    let shared_secret = SecretBytes::from_slice(&shared);
+    shared_secret.expose_mut().copy_from_slice(&shared);
     shared.zeroize();
     Ok(Encapsulated {
         ciphertext: ct.to_vec(),
@@ -129,12 +130,13 @@ where
     let mut seed = parse_seed::<K>(seed)?;
     let (dk, _ek) = K::from_seed(&seed);
     seed.zeroize();
+    let mut out = SecretBytes::zeroed(32)?;
     let mut shared = dk
         .decapsulate_slice(ciphertext)
         .map_err(|_| Error::InvalidInput {
             field: "ciphertext",
         })?;
-    let out = SecretBytes::from_slice(&shared);
+    out.expose_mut().copy_from_slice(&shared);
     shared.zeroize();
     Ok(out)
 }

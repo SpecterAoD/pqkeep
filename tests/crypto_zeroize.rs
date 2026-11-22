@@ -43,7 +43,7 @@ fn secret_bytes_zeroize_empties_content() {
 
 #[test]
 fn secret_bytes_keeps_content_until_dropped() {
-    let s = SecretBytes::from_slice(&[1, 2, 3]);
+    let s = SecretBytes::from_slice(&[1, 2, 3]).unwrap();
     assert_eq!(s.expose(), &[1, 2, 3]);
     assert_eq!(s.len(), 3);
 }

@@ -2,9 +2,10 @@
 
 **DE** | [EN](#english)
 
-Alle Maßnahmen sind **best effort**: Sie verkleinern die Angriffsfläche, garantieren aber nicht, dass
-Geheimnisse nie außerhalb des Arbeitsspeichers landen. Eigener `unsafe`-Code ist dafür nicht nötig
-(`#![forbid(unsafe_code)]` bleibt bestehen); genutzt werden `region` (Speichersperre) und `rustix`
+**Secret-Speichersperren sind zwingend**: Scheitert eine Sperre, wird die Operation verweigert.
+System-/Compilergrenzen bleiben: Die Maßnahmen garantieren nicht, dass
+Geheimnisse nie außerhalb des Arbeitsspeichers landen. Der Anwendungscode behält `#![forbid(unsafe_code)]`; der dokumentierte region-Provider enthält
+eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre) und `rustix`
 (Linux-Prozessrechte).
 
 ## 1. Speichersperre (kein Swap)
@@ -14,17 +15,20 @@ Geheimnisse nie außerhalb des Arbeitsspeichers landen. Eigener `unsafe`-Code is
 - Gesperrt wird pro Speicherseite. Ein **Seitenzähler** sorgt dafür, dass eine Seite erst entsperrt
   wird, wenn kein Geheimnis mehr darauf liegt.
 - Freigabe in fester Reihenfolge: **nullen → entsperren → Speicher freigeben**.
-- Schlägt das Sperren fehl, läuft das Programm weiter; `SecretBytes::is_locked()` und
-  `hardening::memlock::stats()` weisen das aus (Anzeige in der CLI ab Schritt 4).
+- Schlägt das Sperren fehl, liefert der Konstruktor `Error::MemoryLock`; keine ungesperrte Instanz.
+- Typisierte Argon2-Blöcke, HKDF/HMAC-Zustände und Zwischenwerte sowie app-eigene Klartextpuffer
+  sind gesperrt. Löschen bleibt zusätzlich erhalten. Details: [LOCKED_SECRETS](security/LOCKED_SECRETS.md).
 
 **Grenzen:**
 - Linux erlaubt normalen Benutzern meist nur wenige MiB gesperrten Speicher (`ulimit -l`, oft 8 MiB).
-  Unsere Geheimnisse sind klein; das reicht.
-- Der **Arbeitsspeicher von Argon2id** (256 MiB – 1 GiB) liegt in der Crate und wird nicht gesperrt.
-  Er enthält aus der Passphrase abgeleitete Werte; gelangt er in den Swap, kann das Angriffe auf die
-  Passphrase erleichtern.
+  Das Budget muss jetzt auch den gesamten KDF-Arbeitspuffer abdecken; sonst sicherer Fehler.
+  Das Programm erhöht unter Linux weder Limits noch Rechte. Windows fordert nur Working-Set-
+  Kapazität im eigenen Prozess an; Verweigerung führt ebenfalls zum Fehler.
+- Der **Arbeitsspeicher von Argon2id** (256 MiB – 1 GiB) liegt nun in typisiertem gesperrtem
+  Secret-Speicher des Aufrufers und wird vor dem Entsperren vollständig gelöscht.
 - Interne Puffer der Krypto-Crates (z. B. expandierte ML-KEM/ML-DSA-Schlüssel, AES-Schlüsselplan)
-  liegen außerhalb unserer Sperre; sie werden von den Crates selbst genullt.
+  können vorübergehende Stack-/Registerkopien erzeugen; AES-/HMAC-Dauerzustände sind gesperrt.
+  Die aktivierten Provider-zeroize-Merkmale bleiben zusätzlich erhalten.
 - Daten liegen kurz ungesperrt im Speicher, bevor sie in `SecretBytes` übernommen werden.
 - **Ruhezustand/Hibernation** schreibt auch gesperrten Speicher auf die Platte.
 
@@ -87,14 +91,16 @@ Sperren (`RLIMIT_MEMLOCK` = 0), Core-Dump-Grenze und „nicht dumpbar“ nach de
 
 ## English
 
-All measures are **best effort** and need no own `unsafe` code (`region` for memory locking, `rustix`
-for Linux process settings).
+Secret memory locking is **mandatory**, with no unlocked fallback. Application code retains
+`forbid(unsafe_code)`; documented provider FFI prepares Windows working-set capacity.
+System/compiler limits are distinct from the enforced lock policy. See [LOCKED_SECRETS](security/LOCKED_SECRETS.md).
 
 1. **Memory locking:** every `SecretBytes` buffer is locked on creation (`mlock`/`VirtualLock`), with a
    per-page reference counter so that releasing one secret never unlocks another on the same page.
-   Release order: zero → unlock → free. Failures are tolerated and reported (`is_locked()`,
-   `memlock::stats()`). Limits: small `RLIMIT_MEMLOCK` for normal users; Argon2id working memory and
-   internal buffers of the crypto crates are not locked; data is briefly unlocked before it enters
+   Release order: zero → unlock → free. Lock failure returns MemoryLock; no unlocked instance.
+   Argon2 blocks, HKDF/HMAC intermediates/state and application plaintext buffers are locked.
+   Linux requires sufficient existing RLIMIT_MEMLOCK; Windows requests current-process working-set
+   capacity and fails if denied. Temporary provider stack/register copies remain outside this guarantee; data is briefly unlocked before it enters
    `SecretBytes`; hibernation writes locked memory to disk. Recommendation: encrypted swap/page file,
    avoid hibernation or use full-disk encryption.
 2. **Core dumps:** `harden_process()` (called first by CLI and API) sets `RLIMIT_CORE` = 0 and

@@ -53,6 +53,7 @@ clap_mangen = "0.3.3"
 dialoguer = { version = "0.12.0", default-features = false, features = ["password"] }
 getrandom = { version = "0.4.3", features = ["sys_rng"] }
 hkdf = "0.13.0"
+hmac = { version = "0.13.0", features = ["zeroize"] }
 hyper = { version = "1.12.0", default-features = false, features = ["http1", "server"], optional = true }
 hyper-util = { version = "0.1.21", default-features = false, features = ["tokio"], optional = true }
 ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
@@ -60,7 +61,7 @@ ml-kem = { version = "0.3.4", default-features = false, features = ["zeroize", "
 region = "4.0.1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
-sha3 = "0.12.0"
+sha3 = { version = "0.12.0", features = ["zeroize"] }
 subtle = { version = "2.6.1", optional = true }
 sys-locale = "0.3.2"
 thiserror = "2.0.21"
@@ -129,3 +130,10 @@ api = ["dep:axum", "dep:hyper", "dep:hyper-util", "dep:tokio", "dep:tower", "dep
 #     Affects run time only, not semantics; own code stays unoptimised.
 [profile.dev.package."*"]
 opt-level = 3
+
+# DE: Eng begrenzte In-place-APIs; Herkunft und Änderungen: vendor/README.md.
+# EN: Narrow in-place APIs; provenance and patches: vendor/README.md.
+[patch.crates-io]
+hmac = { path = "vendor/hmac-0.13.0" }
+hkdf = { path = "vendor/hkdf-0.13.0" }
+region = { path = "vendor/region-4.0.1" }

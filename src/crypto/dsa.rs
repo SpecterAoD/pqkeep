@@ -63,7 +63,7 @@ pub fn from_seed(algorithm: DsaAlgorithm, seed: &[u8]) -> Result<DsaKeyPair> {
     Ok(DsaKeyPair {
         algorithm,
         public_key,
-        seed: SecretBytes::from_slice(seed),
+        seed: SecretBytes::from_slice(seed)?,
     })
 }
 

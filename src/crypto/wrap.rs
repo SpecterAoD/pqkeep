@@ -86,7 +86,7 @@ pub(crate) fn kek_from_shared(
     let mut info = Vec::with_capacity(HKDF_INFO.len() + recipient_id.len());
     info.extend_from_slice(HKDF_INFO);
     info.extend_from_slice(recipient_id);
-    let mut kek = SecretBytes::new(vec![0u8; aead::KEY_LEN]);
+    let mut kek = SecretBytes::new(vec![0u8; aead::KEY_LEN])?;
     hk.expand(&info, kek.expose_mut())
         .map_err(|_| Error::Crypto)?;
     Ok(kek)
