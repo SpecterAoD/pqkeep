@@ -17,8 +17,8 @@ use common::v2_header::{KEMS, header, mixed, nonce, pslot, rslot, salt};
 use pqkeep::Error;
 use pqkeep::crypto::kdf::KdfParams;
 use pqkeep::crypto::v2::Domain;
-use pqkeep::files::Content;
 use pqkeep::files::format_v2::{self, HEADER_LIMIT, HeaderV2, MAX_ENCODED_LEN, Slot, check_slots};
+use pqkeep::files::{Content, Signer};
 use sha3::{Digest, Sha3_256};
 
 const BAD: Error = Error::InvalidInput { field: "header" };
@@ -220,9 +220,21 @@ fn v04_recipient_and_header_limits() {
     let big: Vec<Slot> = (1..=64).map(|i| rslot(i, 2)).collect();
     let mut largest = header(Content::Directory, [0; 7], [vec![longest], big].concat());
     let full = largest.encode().unwrap();
-    assert_eq!(full.len(), MAX_ENCODED_LEN);
-    assert_eq!((MAX_ENCODED_LEN, HEADER_LIMIT), (106_530, 262_144));
+    // DE: Größter v2-Header unverändert; MAX_ENCODED_LEN deckt seit #44 auch den Absenderblock von
+    //     v3 ab (1 + 2592 + 32 Byte). EN: Largest v2 header unchanged; since #44 MAX_ENCODED_LEN
+    //     also covers the v3 sender block (1 + 2592 + 32 bytes).
+    assert_eq!(full.len(), 106_530);
+    assert_eq!((MAX_ENCODED_LEN, HEADER_LIMIT), (106_530 + 2625, 262_144));
     assert_eq!(parse(&full).unwrap(), largest);
+    let mut signed = largest.clone();
+    signed.signer = Some(Signer {
+        public_key: vec![5; 2592],
+        commit: [6; 32],
+    });
+    let signed_full = signed.encode().unwrap();
+    assert_eq!(signed_full.len(), MAX_ENCODED_LEN);
+    assert_eq!(u16::from_le_bytes([signed_full[8], signed_full[9]]), 3);
+    assert_eq!(parse(&signed_full).unwrap(), signed);
 
     // DE: Falsche Hüllenzahl. EN: Wrong number of wraps.
     largest.wraps.pop();

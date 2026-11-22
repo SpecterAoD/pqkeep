@@ -12,6 +12,7 @@
 use super::PassphraseAccess;
 use super::format::Content;
 use super::format_v2::{HeaderV2, MAX_RECIPIENTS, Slot};
+use super::signer_v3::{self, Signer};
 use crate::crypto::aead::{self, NONCE_LEN};
 use crate::crypto::kdf::SALT_LEN;
 use crate::crypto::stream::PREFIX_LEN;
@@ -90,8 +91,10 @@ fn nonce_of(slot: &Slot) -> [u8; NONCE_LEN] {
     }
 }
 
-/// DE: Baut den vollständigen v2-Header für `file_key`.
-/// EN: Builds the complete v2 header for `file_key`.
+/// DE: Baut den vollständigen v2-Header für `file_key`; mit `signer` (öffentlicher ML-DSA-87-
+/// Schlüssel des Absenders) Format v3 samt Schlüsselbindung (`docs/V3_SIGNED.md`).
+/// EN: Builds the complete v2 header for `file_key`; with `signer` (sender's public ML-DSA-87 key)
+/// format v3 including the key commitment (`docs/V3_SIGNED.md`).
 ///
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] (`recipient`, `duplicate`, `file_key`, `header`),
@@ -102,6 +105,7 @@ pub(super) fn build(
     passphrase: Option<&PassphraseAccess<'_>>,
     recipients: &[&PublicKeyFile],
     file_key: &SecretBytes,
+    signer: Option<&[u8]>,
 ) -> Result<HeaderV2> {
     if file_key.expose().len() != FILE_KEY_LEN {
         return Err(Error::InvalidInput { field: "file_key" });
@@ -124,6 +128,10 @@ pub(super) fn build(
         prefix,
         slots,
         wraps: Vec::with_capacity(keks.len()),
+        signer: signer.map(|public_key| Signer {
+            public_key: public_key.to_vec(),
+            commit: signer_v3::commit(file_key.expose()),
+        }),
     };
     let metadata = header.metadata()?;
     for (index, kek) in keks.iter().enumerate() {

@@ -69,6 +69,8 @@ pub(super) fn default_for(m: &ArgMatches, default: Option<PathBuf>) -> Option<Pa
 pub(super) struct OwnedProtection {
     passphrase: Option<(StrongPassphrase, KdfParams, Option<Factor>)>,
     recipients: Vec<envelope::PublicKeyFile>,
+    /// DE: Signaturschlüssel des Absenders (#44). EN: Sender's signing key (#44).
+    signer: Option<envelope::UnlockedKey>,
 }
 
 impl OwnedProtection {
@@ -91,6 +93,23 @@ impl OwnedProtection {
             recipients: &recipients,
         })
     }
+
+    /// DE: Verschlüsselt eine Quelle, mit `--sign-with` signiert (Format v3).
+    /// EN: Encrypts one source, signed with `--sign-with` (format v3).
+    pub(super) fn encrypt(&self, src: &Path, out: &Path) -> pqkeep::Result<Report> {
+        self.with(|p| match &self.signer {
+            Some(key) => files::encrypt_signed(src, out, p, key),
+            None => files::encrypt(src, out, p),
+        })
+    }
+
+    /// DE: Mehrere Quellen als ein Container. EN: Several sources as one container.
+    pub(super) fn encrypt_many(&self, list: &[&Path], out: &Path) -> pqkeep::Result<Report> {
+        self.with(|p| match &self.signer {
+            Some(key) => files::encrypt_many_signed(list, out, p, key),
+            None => files::encrypt_many(list, out, p),
+        })
+    }
 }
 
 /// DE: Empfänger laden und/oder neue Passphrase (zweimal) lesen und prüfen. Empfänger und
@@ -100,10 +119,15 @@ impl OwnedProtection {
 pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<OwnedProtection> {
     super::recipients::check_factor(m, lang)?;
     let recipients = super::recipients::load(m, lang)?;
-    if !recipients.is_empty() && !m.get_flag(super::recipients::WITH_PASSPHRASE) {
+    let file_passphrase = recipients.is_empty() || m.get_flag(super::recipients::WITH_PASSPHRASE);
+    super::signing::check_sources(lang, m, file_passphrase)?;
+    let pending = super::signing::prepare(t, lang, m)?;
+    if !file_passphrase {
+        let signer = pending.map(|k| k.unlock(t, lang, m)).transpose()?;
         return Ok(OwnedProtection {
             passphrase: None,
             recipients,
+            signer,
         });
     }
     let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
@@ -121,9 +145,11 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
         print_rejection(t, lang, &rejection);
         Failure::new(code::WEAK, "")
     })?;
+    let signer = pending.map(|k| k.unlock(t, lang, m)).transpose()?;
     Ok(OwnedProtection {
         passphrase: Some((strong, profile.params(), factor)),
         recipients,
+        signer,
     })
 }
 
@@ -167,7 +193,7 @@ pub(super) fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report
         };
         eprintln!("{}: {} ({reason})", t.msg_skipped, skipped.path);
     }
-    let _ = lang;
+    super::signing::print(lang, report.signer.as_ref());
 }
 
 /// DE: Verstecktes `--temp-tag` (vom Kontextmenü) an die Bibliothek geben.
@@ -190,7 +216,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let out = target(t, m, default_for(m, default_encrypted(&src)))?;
     let protection = read_protection(t, lang, m)?;
     let report = protection
-        .with(|p| files::encrypt(&src, &out, p))
+        .encrypt(&src, &out)
         .map_err(|e| Failure::from_error(&e, lang))?;
     print_report(t, lang, t.msg_encrypted, &out, &report);
     Ok(())
@@ -208,8 +234,9 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let access = super::unlock::Access::read(&src).map_err(fail)?;
     let out = target(t, m, default_for(m, default_decrypted(&src)))?;
     let use_key = access.use_key(m.get_one::<PathBuf>("key").is_some());
+    let expected = super::signing::load_expected(lang, m)?;
     let opened = super::unlock::for_decrypt(t, lang, m, use_key, access.passphrase)?;
-    let report = files::decrypt(&src, &out, &opened.get()).map_err(fail)?;
+    let report = files::decrypt_with(&src, &out, &opened.get(), expected.as_ref()).map_err(fail)?;
     drop(opened);
     print_report(t, lang, t.msg_decrypted, &out, &report);
     Ok(())

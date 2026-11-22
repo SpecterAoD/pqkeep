@@ -9,6 +9,7 @@ use std::path::Path;
 
 use super::{Report, Unlock, scan};
 use crate::Result;
+use crate::envelope::PublicKeyFile;
 
 /// DE: Prüft `source` vollständig, ohne etwas zu schreiben; der Bericht zählt wie `decrypt`.
 /// EN: Checks `source` completely without writing anything; the report counts like `decrypt`.
@@ -19,5 +20,20 @@ use crate::Result;
 /// Faktordatei / header, archive, path, checksum, key kind, factor file), [`Error::Unsupported`],
 /// [`Error::Io`].
 pub fn check(source: &Path, unlock: &Unlock<'_>) -> Result<Report> {
-    scan::read(source, unlock, |_| Ok(()))
+    check_with(source, unlock, None)
+}
+
+/// DE: Wie [`check`]; mit `signer` muss die Datei von genau diesem Absender signiert sein.
+/// Signierte Dateien (Format v3) werden immer geprüft; der Bericht nennt den Absender.
+/// EN: Like [`check`]; with `signer` the file must be signed by exactly this sender. Signed files
+/// (format v3) are always verified; the report names the sender.
+///
+/// # Errors
+/// DE/EN: wie [`check`]; [`crate::Error::InvalidSignature`].
+pub fn check_with(
+    source: &Path,
+    unlock: &Unlock<'_>,
+    signer: Option<&PublicKeyFile>,
+) -> Result<Report> {
+    scan::read(source, unlock, signer, |_| Ok(()))
 }

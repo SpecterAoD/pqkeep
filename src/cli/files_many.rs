@@ -97,7 +97,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
         let protection = read_protection(t, lang, m)?;
         let list: Vec<&Path> = sources.iter().map(PathBuf::as_path).collect();
         let report = protection
-            .with(|p| files::encrypt_many(&list, out, p))
+            .encrypt_many(&list, out)
             .map_err(|e| Failure::from_error(&e, lang))?;
         print_report(t, lang, t.msg_encrypted, out, &report);
         return Ok(());
@@ -110,9 +110,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
             tally.missing_target(src);
             continue;
         };
-        let r = protection
-            .with(|p| files::encrypt(src, &out, p))
-            .map(|r| (t.msg_encrypted, r));
+        let r = protection.encrypt(src, &out).map(|r| (t.msg_encrypted, r));
         tally.record(t, lang, src, &out, r);
     }
     tally.finish()
@@ -143,10 +141,25 @@ pub(super) fn open_many(
     super::unlock::for_decrypt(t, lang, m, use_key == Some(true), None)
 }
 
+/// DE: Wie [`open_many`], dazu der verlangte Absender (`--signer`, vor der Abfrage geladen).
+/// EN: Like [`open_many`], plus the required sender (`--signer`, loaded before the prompt).
+pub(super) fn open_many_signed(
+    t: &Texts,
+    lang: Lang,
+    m: &ArgMatches,
+    sources: &[PathBuf],
+) -> CliResult<(
+    super::unlock::Opened,
+    Option<pqkeep::envelope::PublicKeyFile>,
+)> {
+    let expected = super::signing::load_expected(lang, m)?;
+    Ok((open_many(t, lang, m, sources)?, expected))
+}
+
 /// DE: Mehrere `.pqkf` mit derselben Passphrase bzw. demselben Schlüssel entschlüsseln.
 /// EN: Decrypt several `.pqkf` with the same passphrase or the same key.
 pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> CliResult {
-    let opened = open_many(t, lang, m, sources)?;
+    let (opened, expected) = open_many_signed(t, lang, m, sources)?;
     let unlock = opened.get();
     let mut tally = Tally::new(many_texts(lang), m, sources.len());
     for src in sources {
@@ -155,7 +168,8 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
             tally.missing_target(src);
             continue;
         };
-        let r = files::decrypt(src, &out, &unlock).map(|r| (t.msg_decrypted, r));
+        let r = files::decrypt_with(src, &out, &unlock, expected.as_ref())
+            .map(|r| (t.msg_decrypted, r));
         tally.record(t, lang, src, &out, r);
     }
     tally.finish()

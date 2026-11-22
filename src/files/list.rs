@@ -88,7 +88,7 @@ impl Pending {
 /// [`Error::InvalidInput`] mit / with field `list_limit` bei / for listing limits.
 pub fn list(source: &Path, unlock: &Unlock<'_>) -> Result<Listing> {
     let mut pending = Pending::default();
-    let report = scan::read(source, unlock, |entry| pending.push(entry))?;
+    let report = scan::read(source, unlock, None, |entry| pending.push(entry))?;
     Ok(Listing {
         entries: pending.entries,
         report,

@@ -57,6 +57,7 @@ pub fn header(content: Content, prefix: [u8; 7], slots: Vec<Slot>) -> HeaderV2 {
         prefix,
         slots,
         wraps,
+        signer: None,
     }
 }
 

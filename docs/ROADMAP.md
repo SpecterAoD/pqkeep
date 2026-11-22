@@ -2,7 +2,7 @@
 
 Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
 
-**Stand / status (19.11.2026):** Schritte 0–7 abgeschlossen, Betas [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) und [`v0.1.0-beta.2`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2) veröffentlicht, `v0.1.0-beta.3` in Vorbereitung; U0, U1 (ohne Absender-Signatur in `.pqkf`), U2 und U4 umgesetzt. / Steps 0–7 done, two betas published, beta.3 in preparation; U0, U1 (except the sender signature in `.pqkf`), U2 and U4 implemented.
+**Stand / status (19.11.2026):** Schritte 0–7 abgeschlossen, Betas [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) und [`v0.1.0-beta.2`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2) veröffentlicht, `v0.1.0-beta.3` in Vorbereitung; U0, U1 (mit Absender-Signatur in `.pqkf`, #44), U2 und U4 umgesetzt. / Steps 0–7 done, two betas published, beta.3 in preparation; U0, U1 (including the sender signature in `.pqkf`, #44), U2 and U4 implemented.
 
 **Aktuelle Planung / current planning:** [Meilensteine M0–M7 / milestones](https://github.com/SpecterAoD/pqkeep/milestones) und [Project-Board](https://github.com/users/SpecterAoD/projects/1). Diese Datei zeigt den bisherigen Weg. / This file shows the way so far.
 
@@ -49,7 +49,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | Update | Inhalt | Issues |
 |---|---|---|
 | U0 | Zweiter Faktor als Faktordatei – Format v2 gemeinsam mit U2: [V2_DRAFT.md](V2_DRAFT.md); Core und Kommandozeile (`pqkeep factor`, `--factor-file`) sowie Menü, geführter Ablauf und Kontextmenü umgesetzt; TPM/FIDO2 als Recherche | #39–#41 |
-| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur; U1-1 Format `.pqsig` + Core und U1-2 `sign`/`verify` umgesetzt ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)) | #42–#44 |
+| U1 | Digitale Signaturen mit ML-DSA-87: `sign`/`verify`, Absender-Signatur für `.pqkf` – keine qualifizierte eIDAS-Signatur; U1-1 Format `.pqsig` + Core und U1-2 `sign`/`verify` umgesetzt ([SIGNATURE_FORMAT.md](SIGNATURE_FORMAT.md)); U1-3 Absender-Signatur in `.pqkf` als Format v3 umgesetzt ([V3_SIGNED.md](V3_SIGNED.md)) | #42–#44 |
 | U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) – Format v2: [V2_DRAFT.md](V2_DRAFT.md); Core, Kommandozeile (`--to` mehrfach, `--with-passphrase`), Menü und Kontextmenü umgesetzt | #45–#47 |
 | U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |
 | U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog; U4-1 Linux, U4-2 Windows und U4-3 Fenster unter Linux und Windows, U4-4 Mehrfachauswahl sowie U4-5 Thunar umgesetzt ([INTEGRATION.md](INTEGRATION.md)) | #51–#53, #72, #92 |

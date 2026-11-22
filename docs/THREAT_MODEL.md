@@ -20,6 +20,7 @@
 | Manipulierte Schlüsseldateien | AEAD mit vollständigem Header als AAD, strenger Parser, Downgrade-Schutz, Ableitung des öffentlichen Schlüssels beim Entsperren |
 | Manipulierte `.pqkf`-Dateien | STREAM-Konstruktion (Kippen, Vertauschen, Abschneiden, Anhängen), Header-Hash als AAD, Prüfsummen |
 | **Bösartige, korrekt verschlüsselte Archive** (Empfänger-Modus: jeder mit dem öffentlichen Schlüssel kann sie bauen) | Strenge Pfadregeln, keine Symlinks/Geräte, Grenzen, Ausgabe nur über Temporärordner, keine Teilausgabe, kein Überschreiben |
+| Gefälschter Absender einer `.pqkf` (Empfänger-Modus: jeder kann für einen öffentlichen Schlüssel verschlüsseln) | Optionale Absender-Signatur (Format v3, #44): ML-DSA-87 über Header samt Empfängern und Chiffrat, Schlüsselbindung gegen unterschiedliche Klartexte je Empfänger, Prüfung vor jeder Ausgabe, `--signer` erzwingt einen bestimmten Absender; die Identität hinter dem Fingerabdruck bleibt eine externe Vertrauensfrage |
 | Fehlerhafte/bösartige Eingaben (CLI, API) | Validierung, Größen- und Längengrenzen, Property-Tests „keine Panik“ |
 | Ressourcenerschöpfung über die API | Body ≤ 64 KiB, Header-Timeout 10 s, Gesamt-Timeout 30 s, kein Keep-Alive, max. 64 Verbindungen, Rate-Limit je Client, Speicherbudget für Argon2 (sonst 503); keine Dateiverschlüsselung über die API (`API.md`) |
 | Unbefugter API-Zugriff, Token-Raten | Standard nur 127.0.0.1, 256-Bit-Token nur als Hash gespeichert, Vergleich in konstanter Zeit, Sperre nach 5 Fehlversuchen; Netzwerkzugriff nur hinter Reverse Proxy mit TLS |
@@ -105,6 +106,10 @@ actions run as separate processes, see `SANDBOX.md`); the context menu passphras
 through a pipe from the password window into the sandboxed child, never via arguments/environment;
 limit: zenity/kdialog or PowerShell/.NET keep it briefly unzeroed in their own memory); secrets in swap/core dumps (page locking, core dump suppression on Linux, immediate zeroing –
 best effort); supply chain (locked dependencies, cargo-deny, weekly audit, signed commits/releases).
+A forged sender of a `.pqkf` is addressed by the optional sender signature (format v3, #44): ML-DSA-87 over
+the header including recipients and the ciphertext, a key commitment against different plaintexts per
+recipient, verification before any output and `--signer` to require a specific sender; who stands behind
+the fingerprint remains an out-of-band trust question.
 
 **Visible despite encryption:** key file metadata, public key, algorithm, creation time; `.pqkf`
 mode, KDF parameters or recipient ID, approximate total size.

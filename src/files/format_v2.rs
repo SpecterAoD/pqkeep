@@ -14,18 +14,24 @@
 //! sind „nicht unterstützt“. Strenger Parser: feste Werte, exakte Längen, KDF-Grenzen, nur
 //! Puffer fester Größe. Dieses Modul kodiert und prüft nur; es ver- und entschlüsselt nichts.
 //!
+//! Format v3 (`docs/V3_SIGNED.md`, #44) = v2 mit Version 3 und angehängtem Absenderblock in `M`
+//! (öffentlicher ML-DSA-87-Schlüssel, Schlüsselbindung); die Signatur steht am Dateiende.
+//!
 //! EN: Binary header of file format v2 (`docs/V2_DRAFT.md`): several access slots for one file
 //! key. Byte-exact like the reference `scripts/v2_reference.py` (little endian), layout above.
 //! Rules: 1–65 slots; at most one passphrase slot, first only; at most 64 recipients with
 //! strictly ascending IDs; types 3/4 (TPM/FIDO2, reserved) and unknown types are "unsupported".
 //! Strict parser: fixed values, exact lengths, KDF bounds, fixed-size buffers only. This module
 //! only encodes and validates; it does not encrypt or decrypt anything.
+//! Format v3 (`docs/V3_SIGNED.md`, #44) = v2 with version 3 and a sender block appended to `M`
+//! (public ML-DSA-87 key, key commitment); the signature is at the end of the file.
 
 use std::io::Read;
 
 use sha3::{Digest, Sha3_256};
 
 use super::format::{Content, MAGIC, Reader, bad};
+use super::signer_v3::{SIGNER_BLOCK_LEN, Signer};
 pub use super::slot_v2::{MAX_RECIPIENTS, MAX_SLOTS, Slot, check_slots};
 use crate::crypto::aead::NONCE_LEN;
 use crate::crypto::kdf::MAX_SALT_LEN;
@@ -36,6 +42,8 @@ use crate::{Error, Result};
 
 /// DE: Formatversion. EN: Format version.
 pub const VERSION: u16 = 2;
+/// DE: Formatversion mit Absender-Signatur. EN: Format version with sender signature.
+pub const VERSION_SIGNED: u16 = 3;
 /// DE: Obergrenze des gesamten Headers in Bytes (256 KiB). EN: Upper bound of the whole header.
 pub const HEADER_LIMIT: usize = 262_144;
 
@@ -51,7 +59,8 @@ const FIXED_LEN: usize = MAGIC.len() + 2 + 1 + 4 + PREFIX_LEN + 1;
 pub const MAX_ENCODED_LEN: usize = FIXED_LEN
     + (2 + 12 + 1 + MAX_SALT_LEN + NONCE_LEN)
     + MAX_RECIPIENTS * (2 + RECIPIENT_ID_LEN + 1568 + NONCE_LEN)
-    + MAX_SLOTS * WRAPPED_LEN;
+    + MAX_SLOTS * WRAPPED_LEN
+    + SIGNER_BLOCK_LEN;
 const _: () = assert!(MAX_ENCODED_LEN <= HEADER_LIMIT);
 
 /// DE: AAD der Hülle `index` (ab 0): Domäne, ganzes `M`, Index. Vertauschen oder Entfernen
@@ -83,6 +92,8 @@ pub struct HeaderV2 {
     /// DE: Je Zugang der eingepackte Dateischlüssel (Chiffrat + Tag).
     /// EN: Per slot the wrapped file key (ciphertext + tag).
     pub wraps: Vec<[u8; WRAPPED_LEN]>,
+    /// DE: Absender (nur Format v3). EN: Sender (format v3 only).
+    pub signer: Option<Signer>,
 }
 
 impl HeaderV2 {
@@ -94,7 +105,7 @@ impl HeaderV2 {
         check_slots(&self.slots)?;
         let mut out = Vec::with_capacity(FIXED_LEN);
         out.extend_from_slice(MAGIC);
-        out.extend_from_slice(&VERSION.to_le_bytes());
+        out.extend_from_slice(&self.version().to_le_bytes());
         out.push(match self.content {
             Content::File => 1,
             Content::Directory => 2,
@@ -105,7 +116,20 @@ impl HeaderV2 {
         for slot in &self.slots {
             out.extend_from_slice(&slot.encode()?);
         }
+        if let Some(signer) = &self.signer {
+            out.extend_from_slice(&signer.encode()?);
+        }
         Ok(out)
+    }
+
+    /// DE: 3 mit Absender, sonst 2. EN: 3 with a sender, else 2.
+    #[must_use]
+    pub fn version(&self) -> u16 {
+        if self.signer.is_some() {
+            VERSION_SIGNED
+        } else {
+            VERSION
+        }
     }
 
     /// DE: `H` = `M` und alle Hüllen; es muss genau eine Hülle je Zugang geben.
@@ -155,9 +179,11 @@ impl HeaderV2 {
         if &r.array::<8>()? != MAGIC {
             return Err(bad());
         }
-        if u16::from_le_bytes(r.array()?) != VERSION {
-            return Err(Error::Unsupported);
-        }
+        let has_sender = match u16::from_le_bytes(r.array()?) {
+            VERSION => false,
+            VERSION_SIGNED => true,
+            _ => return Err(Error::Unsupported),
+        };
         let content = match r.byte()? {
             1 => Content::File,
             2 => Content::Directory,
@@ -176,6 +202,11 @@ impl HeaderV2 {
             slots.push(Slot::read(&mut r)?);
             check_slots(&slots)?;
         }
+        let signer = if has_sender {
+            Some(Signer::read(&mut r)?)
+        } else {
+            None
+        };
         let mut wraps = Vec::with_capacity(count);
         for _ in 0..count {
             wraps.push(r.array::<WRAPPED_LEN>()?);
@@ -185,6 +216,7 @@ impl HeaderV2 {
             prefix,
             slots,
             wraps,
+            signer,
         })
     }
 }

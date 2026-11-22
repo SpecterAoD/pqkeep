@@ -47,7 +47,8 @@ nur mit neuer Schema-Kennung.
  "summary":{"total":2,"ok":1,"failed":1}}
 ```
 
-`exit_code` ist der erste Fehler der Liste (wie ohne `--json`).
+`exit_code` ist der erste Fehler der Liste (wie ohne `--json`). Erfolgreiche Einträge haben zusätzlich
+`signer`: Schlüssel-ID des **geprüften** Absenders bei signierten Dateien (Format v3, #44), sonst `null`.
 
 ## `inspect --json`
 
@@ -55,9 +56,10 @@ nur mit neuer Schema-Kennung.
   (`name`, `organization`, `company`, `department`, `account_type`; fehlende Werte `null`).
 - Schlüsseldatei: `type: "key_file"`, dieselben Felder plus `kdf` (`memory_kib`, `iterations`,
   `parallelism`), `factor_required`, `warnings` (Texte nach `--lang`).
-- Verschlüsselte Datei: `type: "encrypted_file"`, `format_version` (1 oder 2), `content`
+- Verschlüsselte Datei: `type: "encrypted_file"`, `format_version` (1, 2 oder 3), `content`
   (`file`/`directory`), `slots`: je Zugang `{"kind":"passphrase","kdf":{…},"factor_required":…}`
-  oder `{"kind":"recipient","algorithm":"ML-KEM-768","recipient_id":"…"}`.
+  oder `{"kind":"recipient","algorithm":"ML-KEM-768","recipient_id":"…"}`; `signer`: bei v3
+  `{"key_id":"…","verified":false}` (nur aus dem Header, **ungeprüft**), sonst `null`.
 - Immer zusätzlich `file` (der angegebene Pfad).
 
 ## `verify --json`
@@ -76,7 +78,8 @@ angegebenen Schlüssel?), Exit 7. Immer zusätzlich `file`.
 ```
 
 - `results`: je erzeugtem Ziel `source`, `target`, `ok`, dann `files`, `directories`, `bytes`,
-  `skipped` (Anzahl übersprungener Einträge wie Symlinks – ohne Pfade) oder `error`.
+  `skipped` (Anzahl übersprungener Einträge wie Symlinks – ohne Pfade), `signer` (beim
+  Entschlüsseln: Schlüssel-ID des geprüften Absenders oder `null`; beim Verschlüsseln `null`) oder `error`.
 - Beim Container (`encrypt` mit mehreren Quellen und `--out`) ist `source` eine **Liste**.
 - Mehrere Einträge gibt es nur bei `encrypt --each` und `decrypt` mit mehreren Dateien; dort läuft
   jede Datei, auch wenn eine scheitert, und `exit_code` ist der erste Fehler.
@@ -105,14 +108,16 @@ exit code 2, without JSON. The passphrase prompt still uses the terminal (or `--
 fields (new fields may be added without changing the schema identifier). **No secrets** and no paths
 from encrypted archive contents – only the given files, counters and header data.
 
-**`check --json`:** `results` (per source: `source`, `ok`, then `files`, `directories`, `bytes` or
-`error`) and `summary` (`total`, `ok`, `failed`); `exit_code` is the first error of the list.
+**`check --json`:** `results` (per source: `source`, `ok`, then `files`, `directories`, `bytes`,
+`signer` – key ID of the **verified** sender of a signed file (format v3, #44) or `null` – or `error`)
+and `summary` (`total`, `ok`, `failed`); `exit_code` is the first error of the list.
 
 **`inspect --json`:** public key (`type: "public_key"`, `algorithm`, `key_id`, `created_utc`,
 `metadata` with `null` for missing values); key file (`type: "key_file"`, same fields plus `kdf`,
-`factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version`, `content`,
+`factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version` 1–3, `content`,
 `slots` with `kind` `passphrase` – `kdf`, `factor_required` – or `recipient` – `algorithm`,
-`recipient_id`). Always `file` as well.
+`recipient_id`; `signer` for v3 `{"key_id":…,"verified":false}` – header only, **unverified** – else
+`null`). Always `file` as well.
 
 **`verify --json`:** valid → `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (claimed by
 the signer, not trusted), exit 0; invalid → `"valid": false`, `signer_matches`, exit 7. Always `file`.

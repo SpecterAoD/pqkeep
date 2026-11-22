@@ -70,6 +70,7 @@ pub fn command(lang: Lang) -> Command {
         )
         .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
         .arg(super::factor_cmd::arg(lang))
+        .arg(super::signing::signer_arg(lang))
         .arg(super::json_out::arg(lang))
 }
 
@@ -83,6 +84,7 @@ pub fn read_paths(m: &ArgMatches) -> Vec<PathBuf> {
         .filter(|p| p.exists())
         .collect();
     all.extend(m.get_one::<PathBuf>("key").cloned());
+    all.extend(super::signing::paths(m));
     all
 }
 
@@ -107,17 +109,26 @@ fn use_key(all: &[Result<Access, Failure>], key_given: bool, lang: Lang) -> CliR
     Ok(first)
 }
 
-fn print_line(t: &Texts, c: &CheckTexts, src: &Path, result: &Result<files::Report, Failure>) {
+fn print_line(
+    t: &Texts,
+    lang: Lang,
+    c: &CheckTexts,
+    src: &Path,
+    result: &Result<files::Report, Failure>,
+) {
     match result {
-        Ok(r) => println!(
-            "{}: {} ({}: {} / {} / {})",
-            c.ok,
-            src.display(),
-            t.msg_summary,
-            r.files,
-            r.directories,
-            r.bytes
-        ),
+        Ok(r) => {
+            println!(
+                "{}: {} ({}: {} / {} / {})",
+                c.ok,
+                src.display(),
+                t.msg_summary,
+                r.files,
+                r.directories,
+                r.bytes
+            );
+            super::signing::print(lang, r.signer.as_ref());
+        }
         Err(f) => eprintln!("{}: {}: {}", c.failed, src.display(), f.message),
     }
 }
@@ -137,7 +148,7 @@ pub fn run(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let c = check_texts(lang);
     let all = check_all(t, lang, m)?;
     for (src, result) in &all {
-        print_line(t, c, src, result);
+        print_line(t, lang, c, src, result);
     }
     let ok = all.iter().filter(|(_, r)| r.is_ok()).count();
     let n = all.len();
@@ -163,7 +174,8 @@ pub fn json(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Val
             let source = src.to_string_lossy();
             match r {
                 Ok(r) => json!({ "source": source, "ok": true, "files": r.files,
-                    "directories": r.directories, "bytes": r.bytes }),
+                    "directories": r.directories, "bytes": r.bytes,
+                    "signer": super::files_json::signer(r) }),
                 Err(f) => json!({ "source": source, "ok": false,
                     "error": super::json_out::error(f) }),
             }
@@ -192,6 +204,8 @@ fn check_all(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<Checked> {
         _ => None,
     };
     let key = use_key(&found, key_given, lang)?;
+    // DE: Verlangter Absender vor jeder Passphrase-Abfrage. EN: Required sender before any prompt.
+    let expected = super::signing::load_expected(lang, m)?;
     // DE: Ist kein Header lesbar, nichts abfragen – nur die Fehler je Datei melden.
     // EN: If no header is readable, ask for nothing – just report the per-file errors.
     let opened = if found.iter().any(Result::is_ok) {
@@ -205,7 +219,8 @@ fn check_all(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<Checked> {
             let unlock = opened
                 .as_ref()
                 .ok_or_else(|| Failure::new(code::ERROR, ""))?;
-            files::check(&src, &unlock.get()).map_err(|e| Failure::from_error(&e, lang))
+            files::check_with(&src, &unlock.get(), expected.as_ref())
+                .map_err(|e| Failure::from_error(&e, lang))
         });
         all.push((src, result));
     }

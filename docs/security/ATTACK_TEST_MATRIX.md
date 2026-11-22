@@ -18,6 +18,8 @@ attack is prevented. Reuse the [v2 catalogue](../V2_TESTS.md), [threat model](..
 #152 owns deterministic fault/crash/recovery injection, #153 expanded parser/IPC/permission
 fuzzing and sanitizer work, #154 reproducible builds, independent audit and the release gate.
 Approved #152 A–E finalizes 1.1.0: 59 cases; twelve new bounded cases have native execution proof.
+1.2.0 adds QA1-FMT-010 (#44, sender signature in `.pqkf`, format v3): 60 cases; its CI evidence
+follows with the next baseline run.
 [Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
@@ -177,6 +179,8 @@ Angriffsabwehr. [v2-Katalog](../V2_TESTS.md), [Bedrohungsmodell](../THREAT_MODEL
 #152 übernimmt deterministische Fault-/Crash-/Recovery-Injektion, #153 Parser-/IPC-/Permissions-
 Fuzzing und Sanitizer-Ausbau, #154 reproduzierbare Builds, unabhängigen Audit und Release-Gate.
 Freigegebenes #152-A–E finalisiert 1.1.0: 59 Fälle; zwölf neue begrenzte Fälle sind nativ belegt.
+1.2.0 ergänzt QA1-FMT-010 (#44, Absender-Signatur in `.pqkf`, Format v3): 60 Fälle; der
+CI-Nachweis folgt mit dem nächsten Baseline-Lauf.
 [Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung

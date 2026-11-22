@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.17: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.18: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -24,6 +24,8 @@
 > Änderung v2.16 (21.11.2026, Freigabe zur Fertigstellung von PR #281): neue Vorschauen mit Keyless Sigstore, Build-/SBOM-Attestationen und Verifikation vor Veröffentlichung; kein SignPath oder Release-Environment, keine Änderung bestehender Vorschauen.
 
 > Änderung v2.17 (21.11.2026, eigentümerseitig freigegebener Plan zu #117): authentisierte Archivliste ohne Extraktion; eigene JSON-Kennung und begrenzte Metadaten erst nach vollständiger Prüfung. Bestehende Formate/JSON-Befehle unverändert.
+
+> Änderung v2.18 (21.11.2026, freigegeben von SpecterAoD mit dem Auftrag zu #44): optionale Absender-Signatur in `.pqkf` (U1) als Format **v3** – ML-DSA-87-Signatur über Header und Chiffrat am Dateiende, öffentlicher Schlüssel des Absenders und Schlüsselbindung im Header, Prüfung vor jeder Ausgabe, `--sign-with`/`--signer`; unsignierte Dateien bleiben v1/v2 Byte für Byte (`docs/V3_SIGNED.md`).
 
 ## 0. Arbeitsweise (gilt für jeden Schritt)
 
@@ -282,6 +284,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 - Prüfen mit dem öffentlichen Schlüssel: Ausgabe eindeutig `[VERIFIED]` oder `[INVALID]` (Exit-Code 0 bzw. ≠ 0); Anzeige der Schlüssel-ID/des Fingerabdrucks des Signierers.
 - **Ehrliche Einordnung:** Die Signatur beweist, dass die Datei unverändert ist und vom Inhaber des privaten Schlüssels signiert wurde. Wer dieser Inhaber ist, muss über den Fingerabdruck auf einem zweiten Weg bestätigt werden. Sie ist **keine** qualifizierte elektronische Signatur nach eIDAS (dafür wären ein qualifiziertes Zertifikat und ein Vertrauensdiensteanbieter nötig); „rechtssicher“ im juristischen Sinn ist sie damit nicht.
 - Erweiterung für `.pqkf`: optionale Absender-Signatur im Container (ersetzt den bisherigen Eintrag „optionale ML-DSA-Signatur des Absenders“).
+  - DE: Umgesetzt (#44) als Format v3 ([V3_SIGNED.md](V3_SIGNED.md)): `pqkeep encrypt --sign-with <schlüssel>` (optional `--sign-factor-file`), `decrypt`/`check` prüfen immer und nennen den Absender, `--signer <pub>` verlangt einen bestimmten Absender (sonst Exit-Code 7, keine Ausgabe); `inspect` zeigt den Absender ungeprüft. Nicht über REST-API, Menü und Kontextmenü.
 
 ### U2: Mehrere Empfänger (Multi-Recipient-Container)
 - Ein zufälliger AES-256-GCM-Dateischlüssel (wie bisher); im Header pro Empfänger ein eigener Eintrag (ML-KEM-Kapselung, Standard ML-KEM-1024, Empfänger-ID, eingepackter Schlüssel). Jeder Empfänger öffnet mit seinem eigenen privaten Schlüssel; kein geteiltes Passwort.

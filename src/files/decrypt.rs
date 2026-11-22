@@ -20,10 +20,13 @@ use super::format::{Content, FileHeader, HeaderMode, MAGIC};
 use super::format_v2::{self, HeaderV2};
 use super::output::{self, TempOutput};
 use super::paths::{self, PathSet};
+use super::signed_io::{self, Body, SignatureCheck, SignedBody};
+use super::signer_v3::{FILE_SIGNATURE_LEN, check_commit};
 use super::{Report, Unlock};
 use crate::crypto::stream::{DecryptReader, PREFIX_LEN, read_full};
 use crate::crypto::wrap;
 use crate::crypto::{KeyAlgorithm, SecretBytes};
+use crate::envelope::PublicKeyFile;
 use crate::{Error, Result};
 
 /// DE: Entschlüsselt `source` nach `target` (Datei bzw. Ordner laut Header).
@@ -35,37 +38,80 @@ use crate::{Error, Result};
 /// header, archive, path, checksum, key kind, factor file), [`Error::Unsupported`]
 /// (Version, Zugangstyp / version, slot type), [`Error::Io`] (u. a. `AlreadyExists`).
 pub fn decrypt(source: &Path, target: &Path, unlock: &Unlock<'_>) -> Result<Report> {
-    let (archive, content) = open(source, unlock)?;
+    decrypt_with(source, target, unlock, None)
+}
+
+/// DE: Wie [`decrypt`]; mit `signer` muss die Datei von genau diesem Absender signiert sein
+/// (Format v3, geprüft vor jeder Ableitung). Signierte Dateien werden immer geprüft; der Bericht
+/// nennt den Absender.
+/// EN: Like [`decrypt`]; with `signer` the file must be signed by exactly this sender (format v3,
+/// checked before any derivation). Signed files are always verified; the report names the sender.
+///
+/// # Errors
+/// DE/EN: wie [`decrypt`]; [`Error::InvalidSignature`] (unsigniert, anderer Absender, Signatur
+/// ungültig / unsigned, other sender, invalid signature).
+pub fn decrypt_with(
+    source: &Path,
+    target: &Path,
+    unlock: &Unlock<'_>,
+    signer: Option<&PublicKeyFile>,
+) -> Result<Report> {
+    let (archive, content, check) = open(source, unlock, signer)?;
     match content {
-        Content::File => extract_file(archive, target),
-        Content::Directory => extract_dir(archive, target),
+        Content::File => extract_file(archive, target, check),
+        Content::Directory => extract_dir(archive, target, check),
     }
 }
 
 /// DE: Quelle nach dem Vorlesen von Magic und Version. EN: Source after pre-reading magic/version.
-pub(super) type Source = Chain<Cursor<Vec<u8>>, BufReader<File>>;
+pub(super) type Source = Body<Chain<Cursor<Vec<u8>>, BufReader<File>>>;
+
+/// DE: Prüft die Signatur (falls vorhanden) – vor dem Veröffentlichen aufrufen.
+/// EN: Verifies the signature (if any) – call before publishing.
+pub(super) fn verify(check: Option<SignatureCheck>, report: &mut Report) -> Result<()> {
+    if let Some(check) = check {
+        report.signer = Some(check.verify()?);
+    }
+    Ok(())
+}
 
 /// DE: Öffnet `source`: Header lesen, Dateischlüssel entsperren, Strom vorbereiten. Gemeinsam
 /// für `decrypt` und `check`.
 /// EN: Opens `source`: read the header, unlock the file key, prepare the stream. Shared by
 /// `decrypt` and `check`.
-pub(super) fn open(source: &Path, unlock: &Unlock<'_>) -> Result<(ArchiveReader<Source>, Content)> {
+pub(super) fn open(
+    source: &Path,
+    unlock: &Unlock<'_>,
+    signer: Option<&PublicKeyFile>,
+) -> Result<(ArchiveReader<Source>, Content, Option<SignatureCheck>)> {
     let mut file = BufReader::new(File::open(source)?);
+    let file_len = file.get_ref().metadata()?.len();
     // DE: Magic und Version vorab lesen und dem passenden Parser wieder voranstellen.
     // EN: Read magic and version up front and put them back in front of the matching parser.
     let mut start = [0u8; MAGIC.len() + 2];
     let filled = read_full(&mut file, &mut start)?;
     let is_v2 = is_v2(&start[..filled]);
     let mut reader = Cursor::new(start[..filled].to_vec()).chain(file);
+    let mut check = None;
     let opened = if is_v2 {
         let header = HeaderV2::read(&mut reader)?;
+        signed_io::require(signer, header.signer.as_ref())?;
+        let file_key = decrypt_v2::unwrap_key(&header, unlock)?;
+        if let Some(s) = &header.signer {
+            check_commit(s, file_key.expose())?;
+            let bytes = header.encode()?;
+            let fixed = (bytes.len() + FILE_SIGNATURE_LEN) as u64;
+            let body_len = file_len.checked_sub(fixed).ok_or(Error::Decrypt)?;
+            check = Some((SignatureCheck::new(bytes, s.clone()), body_len));
+        }
         Opened {
-            file_key: decrypt_v2::unwrap_key(&header, unlock)?,
+            file_key,
             stream_aad: header.stream_aad()?,
             prefix: header.prefix,
             content: header.content,
         }
     } else {
+        signed_io::require(signer, None)?;
         let header = FileHeader::read(&mut reader)?;
         Opened {
             file_key: unwrap_key(&header, unlock)?,
@@ -74,14 +120,18 @@ pub(super) fn open(source: &Path, unlock: &Unlock<'_>) -> Result<(ArchiveReader<
             content: header.content,
         }
     };
+    let (body, check) = match check {
+        Some((c, len)) => (Body::Signed(SignedBody::new(reader, len, &c)), Some(c)),
+        None => (Body::Plain(reader), None),
+    };
     let dec = DecryptReader::new(
         opened.file_key.expose(),
         opened.prefix,
         &opened.stream_aad,
-        reader,
+        body,
     )?;
     drop(opened.file_key);
-    Ok((ArchiveReader::new(dec), opened.content))
+    Ok((ArchiveReader::new(dec), opened.content, check))
 }
 
 /// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
@@ -92,12 +142,14 @@ struct Opened {
     content: Content,
 }
 
-/// DE: Nur Magic + Version 2 führt zum v2-Parser; alles andere prüft der v1-Parser wie bisher
-/// (unbekannte Version = „nicht unterstützt“).
-/// EN: Only magic + version 2 leads to the v2 parser; everything else is checked by the v1
+/// DE: Nur Magic + Version 2 oder 3 führt zum v2-Parser; alles andere prüft der v1-Parser wie
+/// bisher (unbekannte Version = „nicht unterstützt“).
+/// EN: Only magic + version 2 or 3 leads to the v2 parser; everything else is checked by the v1
 /// parser as before (unknown version = "unsupported").
 fn is_v2(start: &[u8]) -> bool {
-    start.strip_prefix(MAGIC) == Some(&format_v2::VERSION.to_le_bytes()[..])
+    [format_v2::VERSION, format_v2::VERSION_SIGNED]
+        .iter()
+        .any(|v| start.strip_prefix(MAGIC) == Some(&v.to_le_bytes()[..]))
 }
 
 fn unwrap_key(header: &FileHeader, unlock: &Unlock<'_>) -> Result<SecretBytes> {
@@ -140,7 +192,11 @@ fn unwrap_key(header: &FileHeader, unlock: &Unlock<'_>) -> Result<SecretBytes> {
     }
 }
 
-fn extract_file<R: Read>(mut archive: ArchiveReader<R>, target: &Path) -> Result<Report> {
+fn extract_file<R: Read>(
+    mut archive: ArchiveReader<R>,
+    target: &Path,
+    check: Option<SignatureCheck>,
+) -> Result<Report> {
     let Some(Entry::File(name, size)) = archive.next_entry()? else {
         return Err(Error::InvalidInput { field: "archive" });
     };
@@ -153,15 +209,21 @@ fn extract_file<R: Read>(mut archive: ArchiveReader<R>, target: &Path) -> Result
     }
     finish_file(out)?;
     archive.finish()?;
-    temp.publish()?;
-    Ok(Report {
+    let mut report = Report {
         files: 1,
         bytes: size,
         ..Report::default()
-    })
+    };
+    verify(check, &mut report)?;
+    temp.publish()?;
+    Ok(report)
 }
 
-fn extract_dir<R: Read>(mut archive: ArchiveReader<R>, target: &Path) -> Result<Report> {
+fn extract_dir<R: Read>(
+    mut archive: ArchiveReader<R>,
+    target: &Path,
+    check: Option<SignatureCheck>,
+) -> Result<Report> {
     let temp = TempOutput::dir(target)?;
     let mut seen = PathSet::default();
     let mut report = Report::default();
@@ -185,6 +247,7 @@ fn extract_dir<R: Read>(mut archive: ArchiveReader<R>, target: &Path) -> Result<
         }
     }
     archive.finish()?;
+    verify(check, &mut report)?;
     temp.publish()?;
     Ok(report)
 }

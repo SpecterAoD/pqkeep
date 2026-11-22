@@ -32,7 +32,8 @@ fn entry(source: &Value, out: Option<&Path>, r: &Outcome) -> Value {
     let target = out.map(|p| p.to_string_lossy().into_owned());
     match r {
         Ok(r) => json!({ "source": source, "target": target, "ok": true, "files": r.files,
-            "directories": r.directories, "bytes": r.bytes, "skipped": r.skipped.len() }),
+            "directories": r.directories, "bytes": r.bytes, "skipped": r.skipped.len(),
+            "signer": signer(r) }),
         Err(f) => json!({ "source": source, "target": target, "ok": false,
             "error": super::json_out::error(f) }),
     }
@@ -57,6 +58,14 @@ fn body(entries: &[(Value, Option<PathBuf>, Outcome)]) -> (Map<String, Value>, u
         json!({ "total": total, "ok": ok, "failed": total - ok }),
     );
     (map, exit)
+}
+
+/// DE: Geprüfter Absender als Schlüssel-ID (hex) oder `null` (#44). EN: Verified sender as key ID
+/// (hex) or `null` (#44).
+pub(super) fn signer(r: &Report) -> Value {
+    r.signer.as_ref().map_or(Value::Null, |s| {
+        pqkeep::envelope::hex_encode(&s.key_id).into()
+    })
 }
 
 fn path_value(p: &Path) -> Value {
@@ -87,9 +96,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
             .ok_or_else(|| Failure::new(code::USAGE, s.need_out))?;
         let protection = read_protection(t, lang, m).map_err(weak(t))?;
         let list: Vec<&Path> = all.iter().map(PathBuf::as_path).collect();
-        let report = protection
-            .with(|p| files::encrypt_many(&list, out, p))
-            .map_err(fail)?;
+        let report = protection.encrypt_many(&list, out).map_err(fail)?;
         let names = all.iter().map(|p| path_value(p)).collect::<Vec<_>>();
         return Ok(body(&[(names.into(), Some(out.clone()), Ok(report))]));
     }
@@ -97,9 +104,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
         let src = source(m);
         let out = target(t, m, default_for(m, default_encrypted(&src)))?;
         let protection = read_protection(t, lang, m).map_err(weak(t))?;
-        let report = protection
-            .with(|p| files::encrypt(&src, &out, p))
-            .map_err(fail)?;
+        let report = protection.encrypt(&src, &out).map_err(fail)?;
         return Ok(body(&[(path_value(&src), Some(out), Ok(report))]));
     }
     let protection = read_protection(t, lang, m).map_err(weak(t))?;
@@ -108,9 +113,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
         .map(|src| {
             let out = default_for(m, default_encrypted(src));
             let r = match &out {
-                Some(out) => protection
-                    .with(|p| files::encrypt(src, out, p))
-                    .map_err(fail),
+                Some(out) => protection.encrypt(src, out).map_err(fail),
                 None => Err(Failure::new(code::EXISTS, "")),
             };
             (path_value(src), out, r)
@@ -129,18 +132,22 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
         let access = super::unlock::Access::read(&src).map_err(fail)?;
         let out = target(t, m, default_for(m, default_decrypted(&src)))?;
         let use_key = access.use_key(m.get_one::<PathBuf>("key").is_some());
+        let expected = super::signing::load_expected(lang, m)?;
         let opened = super::unlock::for_decrypt(t, lang, m, use_key, access.passphrase)?;
-        let report = files::decrypt(&src, &out, &opened.get()).map_err(fail)?;
+        let report =
+            files::decrypt_with(&src, &out, &opened.get(), expected.as_ref()).map_err(fail)?;
         return Ok(body(&[(path_value(&src), Some(out), Ok(report))]));
     }
-    let opened = super::files_many::open_many(t, lang, m, &all)?;
+    let (opened, expected) = super::files_many::open_many_signed(t, lang, m, &all)?;
     let unlock = opened.get();
     let entries: Vec<_> = all
         .iter()
         .map(|src| {
             let out = default_for(m, default_decrypted(src));
             let r = match &out {
-                Some(out) => files::decrypt(src, out, &unlock).map_err(fail),
+                Some(out) => {
+                    files::decrypt_with(src, out, &unlock, expected.as_ref()).map_err(fail)
+                }
                 None => Err(Failure::new(code::EXISTS, "")),
             };
             (path_value(src), out, r)
