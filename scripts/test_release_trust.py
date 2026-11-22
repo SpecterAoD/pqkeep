@@ -25,6 +25,8 @@ class TrustTests(unittest.TestCase):
                                        ('--signer-digest', COMMIT), ('--source-ref', 'refs/heads/main')]:
                     self.assertEqual(expected, command[command.index(flag) + 1])
                 self.assertIn('--deny-self-hosted-runners', command)
+                self.assertNotIn('--signer-repo', command)
+                self.assertNotIn('--signer-workflow', command)
 
     def test_invalid_expectations_never_reach_tools(self):
         for field, invalid in [(2, '--help'), (3, 'refs/heads/feature'),

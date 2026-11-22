@@ -11,7 +11,7 @@ import release_manifest as manifest
 
 def validate(repo, ref, commit, workflow, version):
     """DE: Erwartungen kommen vom Aufrufer, nie aus Artefakten. EN: Independent expectations."""
-    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*', repo):
         raise ValueError('Invalid expected repository')
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('Invalid expected commit')
@@ -41,8 +41,7 @@ def verify(dist, version, repo, ref, commit, workflow='release'):
                  'https://token.actions.githubusercontent.com', name], dist)
     # DE: Auch SBOM-Attestationen müssen zu exakt diesem Commit/Ref/Workflow gehören.
     # EN: SBOM attestations must also bind the exact commit/ref/workflow.
-    flags = ['--repo', repo, '--signer-repo', repo, '--signer-workflow', workflow_path,
-             '--source-ref', ref, '--source-digest', commit, '--signer-digest', commit,
+    flags = ['--repo', repo, '--source-ref', ref, '--source-digest', commit, '--signer-digest', commit,
              '--cert-identity', identity, '--cert-oidc-issuer',
              'https://token.actions.githubusercontent.com', '--deny-self-hosted-runners']
     for name in artifacts:
