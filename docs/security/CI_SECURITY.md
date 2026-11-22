@@ -22,7 +22,7 @@ erzwungen).
 | `security-policy.yml` | Push/Pull Request bei Workflow-Änderungen, manuell | keine | keine |
 | `dependency-review.yml` | Pull Request | keine | keine |
 | `scorecard.yml` | Push auf `main`, wöchentlich, Änderung am Branch-Schutz, manuell – **nie** Pull Request | Job: `security-events: write`, `id-token: write`, `actions: read` | keine |
-| `release.yml` | Tag `v*`, manuell, Pull Request (Pfadfilter, ohne `publish`) | nur Job `publish`: `contents: write`, `id-token: write`, `attestations: write`; `verify`: `attestations: read` | keine (Signatur schlüssellos über OIDC) |
+| `release.yml` | Tag `v*`, manuell, Pull Request (Pfadfilter, ohne `publish`/`draft`) | `publish`: OIDC/Attestationsrechte, `contents: read`; `verify`: Lesen; nur `draft`: `contents: write` | keine (Signatur schlüssellos über OIDC) |
 
 Pull Requests aus Forks laufen mit Lesetoken und ohne Secrets. Code aus einem Pull Request
 (Build-Skripte, Tests) gilt als nicht vertrauenswürdig; deshalb gibt es keine
@@ -57,8 +57,8 @@ mit `curl`/`wget` ohne `sha256sum -c` bzw. `--require-hashes`.
 
 **Abflusswege** aus einem kompromittierten Job: HTTP(S) und DNS ins Internet, Artefakte, Caches,
 Protokolle. GitHub-gehostete Runner sind **nicht** netzwerkisoliert. Begrenzung bei PQKeep: Es gibt
-keine Secrets, die abfließen könnten; Schreibrechte und OIDC gibt es nur in `publish` (hinter dem
-Environment `release`) und `scorecard`, beide ohne Code aus Pull Requests. Was ein manipuliertes
+keine Secrets, die abfließen könnten; kurzlebige Schreib-/OIDC-Rechte sind auf `publish`, `draft`, `preview` und `scorecard`
+begrenzt; Release-Rechte verlangen das `release`-Environment, keine dieser Grenzen führt PR-Code aus. Was ein manipuliertes
 Werkzeug erreichen könnte, sind falsche Prüfergebnisse – nicht Schlüssel oder Signaturrechte
 anderer Jobs.
 
@@ -90,10 +90,11 @@ bestandenen Assertions. Nachweis-SHAs und tatsächliche Plattformgrenzen stehen 
 
 ## Offene Punkte
 
-1. **Release-Reihenfolge (#186):** `publish` legt den Release-**Entwurf** an, bevor `verify`
-   Manifest, Prüfsummen, Attestierungen und Signaturen geprüft hat. Der Entwurf ist nicht öffentlich
-   und wird erst nach grünem `verify` von Hand veröffentlicht ([RELEASE.md](../RELEASE.md)). Ein
-   Umbau braucht einen eigenen Pull Request mit Probelauf.
+1. **Release-Kette (#186):** `publish` signiert nur; `verify` prüft Manifest, Prüfsummen,
+   Signaturen und Build-/SBOM-Attestationen gegen erwartetes Repository, Workflow, Ref und Commit.
+   Erst danach darf `draft` mit `contents: write` das erneut geprüfte Bündel als privaten Entwurf
+   bereitstellen. Beide schreibenden/signierenden Grenzen behalten das `release`-Environment;
+   Veröffentlichung bleibt manuell. [Plan und Grenzen](RELEASE_CHAIN_DESIGN.md).
 2. **Nicht als Pflichtprüfung eintragen:** `Workflow-Prüfung / workflow policy` (läuft nur bei
    Workflow-Änderungen) – eine Pflichtprüfung, die nicht startet, blockiert jeden anderen PR.
    Dependency Review kann Pflichtprüfung werden, sobald sie sich einige Wochen bewährt hat.
@@ -142,7 +143,7 @@ permission is "read" as well. All actions are pinned to full commit SHAs (enforc
 | `security-policy.yml` | push/pull request on workflow changes, manual | none | none |
 | `dependency-review.yml` | pull request | none | none |
 | `scorecard.yml` | push to `main`, weekly, branch protection change, manual – **never** pull requests | job: `security-events: write`, `id-token: write`, `actions: read` | none |
-| `release.yml` | tag `v*`, manual, pull request (path filter, without `publish`) | job `publish` only: `contents: write`, `id-token: write`, `attestations: write`; `verify`: `attestations: read` | none (keyless signing via OIDC) |
+| `release.yml` | tag `v*`, manual, pull request (path filter, without `publish`/`draft`) | `publish`: OIDC/attestations, `contents: read`; `verify`: read; only `draft`: `contents: write` | none (keyless signing via OIDC) |
 
 Pull requests from forks run with a read token and without secrets. Code from a pull request
 (build scripts, tests) is untrusted; hence no `pull_request_target` or `workflow_run` triggers, and
@@ -176,8 +177,8 @@ without `sha256sum -c` or `--require-hashes`.
 
 **Exfiltration paths** from a compromised job: HTTP(S) and DNS to the internet, artefacts, caches,
 logs. GitHub-hosted runners are **not** network-isolated. Limitation in PQKeep: there are no
-secrets that could leak; write permissions and OIDC exist only in `publish` (behind the `release`
-environment) and `scorecard`, neither running code from pull requests. A manipulated tool could
+secrets that could leak; short-lived write/OIDC permissions are confined to `publish`, `draft`, `preview` and
+`scorecard`; release privileges require environment approval, never running PR code. A manipulated tool could
 produce wrong check results – not obtain keys or other jobs' signing rights.
 
 **Harden-Runner (egress allowlist): not used for now.** It would itself be a third-party action with
@@ -208,10 +209,11 @@ and actual platform limitations remain explicit in the catalogue.
 
 ### Open items
 
-1. **Release order (#186):** `publish` creates the release **draft** before `verify` has checked
-   the manifest, checksums, attestations and signatures. The draft is not public and is published by
-   hand only after `verify` is green ([RELEASE.md](../RELEASE.md)). Reordering needs its own pull
-   request with a trial run.
+1. **Release chain (#186):** signing/staging → complete verification → independently gated draft.
+   Verify repository/workflow/ref/source and signer commits, inventory, signatures and attestations;
+   reverify after the draft job downloads the bundle. Only draft gets release write permission;
+   both privileged boundaries retain the environment approval. Publication stays manual.
+   [Design and limits](RELEASE_CHAIN_DESIGN.md).
 2. **Do not make required:** `Workflow-Prüfung / workflow policy` (runs only on workflow changes) –
    a required check that never starts blocks every other PR. Dependency Review can become required
    once it has proven itself for a few weeks.

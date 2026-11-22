@@ -28,9 +28,9 @@ bricht das Verpacken ab. Mit SignPath wären beide zu signieren.
    git verify-tag v0.1.0-beta.1
    git push origin v0.1.0-beta.1
    ```
-   Der Workflow bricht ab, wenn die Signatur nicht zu `.github/allowed_signers` passt oder Tag und
+   Der Workflow bricht ab, wenn die Signatur nicht zu `.github/allowed_signers` aus dem geschützten `origin/main` passt oder Tag und
    `Cargo.toml` nicht übereinstimmen.
-3. Freigabe wie beim Trockenlauf (*Review deployments*).
+3. Freigaben für Signieren und Entwurf im bestehenden `release`-Environment (*Review deployments*).
 4. Wenn „Prüfung“ grün ist: *Releases* → Entwurf öffnen, Assets und Text prüfen (Betas sind als
    *Pre-release* markiert) → *Publish release*.
 5. Fehlgeschlagen: Entwurf löschen, Ursache beheben, Tag löschen (`git push --delete origin <tag>`,
@@ -127,7 +127,7 @@ identity only).
 
 **Release or beta:** set the version in `Cargo.toml` via PR; on current `main` run
 `git tag -s v<version> -m "PQKeep v<version>"`, `git verify-tag v<version>`,
-`git push origin v<version>`; approve the `release` environment; when verification is green, open
+`git push origin v<version>`; approve signing and drafting in the existing `release` environment; only after verification succeeds, open
 the draft under Releases, review it and publish. If something fails before publishing: delete the
 draft and the tag, fix, tag again.
 
@@ -192,3 +192,34 @@ but use identity `https://github.com/SpecterAoD/pqkeep/.github/workflows/preview
 Older previews do not gain signatures retroactively. No SignPath/Authenticode; signatures prove
 origin and integrity, not an independent security audit.
 Previews are **not independently audited** and not meant for data you cannot lose.
+
+
+## Verifizierte Release-Kette / Verified release chain (#186)
+
+DE: Bauen → Signieren/Bereitstellen (`publish`, nur OIDC/Attestationsschreiben) →
+Prüfen (`verify`, nur Lesen) → Entwurf (`draft`, nur Release-Schreiben). `draft` hängt von
+erfolgreichem `verify` ab und prüft das heruntergeladene Bündel erneut vor dem Schreibzugriff.
+Nur ein gültiger signierter Versionstag erzeugt einen Entwurf; main-Trockenläufe erzeugen keinen.
+Der Tag muss zum ausgecheckten Commit passen und gegen die Signiererliste aus geschütztem
+`origin/main` bestehen, nicht gegen eine möglicherweise im Tag geänderte Liste.
+
+EN: `scripts/release_ref.py` rejects untrusted events/refs, unsigned or moved tags, wrong
+versions/commits and tag-supplied signing roots. `scripts/release_trust.py` checks the exact
+manifest and hashes, six Sigstore signatures and fifteen build/bundle/SBOM attestation checks.
+Expected repository, exact workflow certificate identity, OIDC issuer, ref and source/signer
+digests come from trusted workflow context, never from downloaded metadata. Missing proof or
+network/tool failure stops the chain. No artifact executable is run during verification.
+
+DE: Beide privilegierten Jobs behalten die bestehenden Reviewer-/Refschutzregeln; daher können
+zwei Environment-Freigaben anfallen. Ein Feature-Branch erhält keinen Signier-/Veröffentlichungspfad.
+Reine Lese-Gegenproben können ein zuvor freigegebenes signiertes main-Bündel mit unabhängig
+bekannten Erwartungen prüfen: `python3 scripts/release_trust_probe.py` (Erwartungen aus `TRIAL_DIST`, `TRIAL_VERSION`,
+`TRIAL_REPO`, `TRIAL_REF`, `TRIAL_COMMIT`, keine CLI-Weitergabe).
+Sie verändern nur temporäre Kopien; ungültige Signaturen/Identitäten/Refs/Commits müssen scheitern.
+
+EN: A branch PR cannot exercise environment-gated signing/drafting without changing protections.
+Read-only replay tests the same verifier against real existing signed artifacts; it does not
+claim a new signing or draft-creation run. After the owner merges, run the normal approved main
+dry run before the next release tag. Existing shared builds, preview publication and package
+formats stay unchanged. Design, dependencies, test distinctions and rollback:
+[RELEASE_CHAIN_DESIGN.md](security/RELEASE_CHAIN_DESIGN.md).

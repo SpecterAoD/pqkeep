@@ -7,6 +7,11 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Security
+- Verify the complete release bundle before creating a draft (#186), then reverify at the
+  write boundary; bind signatures/attestations to repository, workflow, ref and source/signer
+  commit. Trust signed tags only against protected main signers; release writes confined to draft.
+  **DE:** Release-Verifikation technisch vor Entwurf erzwingen, Identität/Commit strikt prüfen,
+  keine tag-eigenen Vertrauensanker. Bestehende Freigaben und manuelle Veröffentlichung erhalten.
 - Mandatory locked secret memory (#148): fail closed on lock failure; typed locked Argon2
   workspace, locked HKDF/HMAC intermediates, AES state and plaintext buffers; bounded locked
   password input and generator. Existing v1/v2/v3 formats and derivation bytes unchanged.
