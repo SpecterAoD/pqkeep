@@ -95,3 +95,11 @@ Windows nutzt die vorhandene Console-Input-Event-API des Providers, keinen Zeile
 EN: Linux holds raw/no-echo mode from before the prompt across the whole input via the
 existing safe rustix termios API, checks restoration on normal error/success paths, and
 handles Ctrl-C as a key so guards run. Windows retains provider console-input events.
+
+DE: Die anschließende Freigabe „Weiter“ umfasst den vorgelegten Container-Diff:
+kurzlebige CI-Pakettestcontainer erhalten dasselbe 2-GiB-Prozessbudget via `--ulimit`;
+keine zusätzlichen Capabilities/privilegierten Container. Paket-Nutzungstests bleiben
+unprivilegiert. Container und Prozesslimits verschwinden nach dem Job.
+EN: The subsequent approval covers the presented container diff: ephemeral package-test
+containers receive the same 2 GiB process budget through `--ulimit`, with no added
+capabilities or privileged containers; usage tests remain unprivileged.

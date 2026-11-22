@@ -264,6 +264,9 @@ jobs:
     # Kurzlebige native Testcontainer; keine privilegierten Optionen oder gelockerten Filter.
     container:
       image: ${{ matrix.image }}
+      # DE: Nur das freigegebene Prozessbudget; keine neuen Capabilities/Privilegien.
+      # EN: Only the approved process budget; no added capabilities/privileges.
+      options: --ulimit memlock=2147483648:2147483648
     env:
       DEBIAN_FRONTEND: noninteractive
     steps:
