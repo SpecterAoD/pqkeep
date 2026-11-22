@@ -39,6 +39,8 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
             // EN: The factor file complements the passphrase, not the recipient key; with `--to`
             //     only together with `--with-passphrase` (checked before the passphrase prompt).
             .arg(super::factor_cmd::arg(lang))
+            // DE: Absender-Signatur (#44). EN: Sender signature (#44).
+            .args(super::signing::encrypt_args(lang))
             // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
             // EN: Internal for the context menu: read and compare two lines.
             .arg(
@@ -60,6 +62,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
             .arg(out_optional(lang))
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
             .arg(super::factor_cmd::arg(lang))
+            .arg(super::signing::signer_arg(lang))
             .arg(super::json_out::arg(lang)),
         super::check_cmd::command(lang),
     ]

@@ -74,6 +74,9 @@ today's common public-key encryption ("harvest now, decrypt later").
   64 recipients), streaming AEAD, safe extraction rules, no partial output.
 - **Optional second factor** (since beta.3): a factor file (`pqkeep factor`, `--factor-file`; also in
   the menu and the context menu) in addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
+- **Sender signature in `.pqkf`** (since #44): `encrypt --sign-with` signs the encrypted file itself;
+  `decrypt`/`check` verify it and name the sender, `--signer` requires a specific one
+  ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
 - **Backup checks** (since beta.3): `pqkeep check` verifies encrypted files completely without
@@ -280,6 +283,9 @@ sammeln, später entschlüsseln“).
 - **Optionaler zweiter Faktor** (seit beta.3): eine Faktordatei (`pqkeep factor`, `--factor-file`;
   auch im Menü und im Kontextmenü) zusätzlich zur Passphrase – siehe
   [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
+- **Absender-Signatur in `.pqkf`** (seit #44): `encrypt --sign-with` signiert die verschlüsselte Datei
+  selbst; `decrypt`/`check` prüfen sie und nennen den Absender, `--signer` verlangt einen bestimmten
+  ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
 - **Signaturen:** `sign`/`verify` mit ML-DSA-87 über den SHA3-512 der Datei (abgesetzte `.pqsig`;
   keine eIDAS-Signatur).
 - **Backup-Prüfung** (seit beta.3): `pqkeep check` prüft verschlüsselte Dateien vollständig, ohne

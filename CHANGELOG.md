@@ -7,6 +7,16 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Added
+- **Sender signature inside `.pqkf` (#44, U1):** `pqkeep encrypt --sign-with <key.key.json>`
+  (optionally `--sign-factor-file`) embeds an ML-DSA-87 signature over the whole header (all
+  recipients) and the ciphertext; such files use the new **format v3** (`docs/V3_SIGNED.md`, SPEC
+  v2.18). `decrypt`, `check` and `list` always verify signed files before any output and name the
+  verified sender (also in `--json` as `signer`); `--signer <pub.json>` requires a specific sender
+  (else exit code 7, no output). `inspect` shows the sender as unverified. A key commitment prevents
+  a malicious sender from showing recipients different plaintexts. Unsigned files stay v1/v2 byte for
+  byte; older releases report v3 files as unsupported. Not offered via the REST API, the menu or the
+  context menu yet. **DE:** Absender-Signatur in `.pqkf` (Format v3) mit `--sign-with`, Prüfung beim
+  Entschlüsseln/Prüfen, `--signer` erzwingt einen bestimmten Absender.
 - **Authenticated archive listing (#117):** explicit `pqkeep list` for current v1/v2 containers;
   bounded metadata after full verification, no extraction/spool, listing-only JSON schema.
   **DE:** Archivnamen/Größen ausdrücklich nach vollständiger Prüfung, ohne Extraktion/Spool;

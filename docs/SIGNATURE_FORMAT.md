@@ -7,6 +7,10 @@ Abgesetzte Signatur einer beliebigen Datei mit **ML-DSA-87** (FIPS 204) über de
 Datei. Befehle: `pqkeep sign --key k.key.json <datei>` und `pqkeep verify --pub k.pub.json <datei>`
 (Ausgabe `[VERIFIED]`/`[INVALID]`, Exit-Code 0 bzw. 7); Bibliothek: `pqkeep::sign`.
 
+> Eingebettet statt abgesetzt: Eine verschlüsselte `.pqkf` kann seit #44 selbst eine Absender-Signatur
+> tragen (`pqkeep encrypt --sign-with`, Format v3, [V3_SIGNED.md](V3_SIGNED.md)). `.pqsig` bleibt für
+> beliebige, auch unverschlüsselte Dateien.
+
 ## Was die Signatur beweist – und was nicht
 
 - **Beweist:** Die Datei ist seit dem Signieren unverändert, und signiert hat der Inhaber des privaten
@@ -72,6 +76,10 @@ Zeitstempel/Hash/Größe/Schlüssel-ID ausgetauscht, falscher Schlüssel), `test
 signierten Nachricht).
 
 ## English
+
+> Embedded instead of detached: since #44 an encrypted `.pqkf` can carry a sender signature itself
+> (`pqkeep encrypt --sign-with`, format v3, [V3_SIGNED.md](V3_SIGNED.md)). `.pqsig` remains for any
+> file, encrypted or not.
 
 Detached signature of any file with **ML-DSA-87** (FIPS 204) over the **SHA3-512** (FIPS 202) of its
 content (SPEC section 9, U1), usually stored as `<file>.pqsig`. Library only (`pqkeep::sign`);

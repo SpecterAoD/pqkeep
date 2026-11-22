@@ -163,3 +163,5 @@ it loses the data. With several slots the **weakest** slot defines security; rem
 re-encrypting. Visible IDs reveal and link recipients.
 
 **Next:** implementation in #40, #41, #46, #47 with their own plans; test catalogue: [V2_TESTS.md](V2_TESTS.md).
+
+**Format v3 (#44):** v2 plus an optional sender signature – [V3_SIGNED.md](V3_SIGNED.md). / v2 plus optionale Absender-Signatur.

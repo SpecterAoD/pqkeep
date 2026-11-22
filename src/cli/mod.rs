@@ -48,6 +48,7 @@ mod serve;
 mod serve_text;
 mod sign_cmd;
 mod sign_text;
+mod signing;
 mod text;
 mod text_de;
 mod text_en;

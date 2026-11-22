@@ -17,6 +17,7 @@ mod check;
 mod decrypt;
 mod decrypt_v2;
 mod encrypt;
+mod encrypt_header;
 mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
@@ -24,6 +25,8 @@ mod list;
 mod output;
 pub mod paths;
 mod scan;
+mod signed_io;
+mod signer_v3;
 mod slot_v2;
 mod walk;
 
@@ -32,12 +35,14 @@ use std::io::BufReader;
 use std::path::Path;
 
 pub use crate::fsutil::set_temp_tag;
-pub use check::check;
-pub use decrypt::decrypt;
-pub use encrypt::{encrypt, encrypt_many};
+pub use check::{check, check_with};
+pub use decrypt::{decrypt, decrypt_with};
+pub use encrypt::{encrypt, encrypt_many, encrypt_many_signed, encrypt_signed};
 pub use format::{Content, FileHeader, HeaderMode};
 pub use format_v2::{HeaderV2, Slot};
 pub use list::{EntryKind, ListEntry, Listing, MAX_LIST_ENTRIES, MAX_LIST_PATH_BYTES, list};
+pub use signed_io::SignedBy;
+pub use signer_v3::Signer;
 pub use slot_v2::MAX_RECIPIENTS;
 pub use walk::{SkipReason, Skipped};
 
@@ -116,6 +121,9 @@ pub struct Report {
     pub bytes: u64,
     /// DE: Übersprungene Einträge (nur beim Verschlüsseln). EN: Skipped entries (encrypting only).
     pub skipped: Vec<Skipped>,
+    /// DE: Geprüfter Absender (nur Format v3, beim Entschlüsseln/Prüfen).
+    /// EN: Verified sender (format v3 only, when decrypting/checking).
+    pub signer: Option<SignedBy>,
 }
 
 /// DE: Liest nur den Header (ohne Schlüssel): Inhaltstyp, Schutzart, KDF-Parameter

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.1.0",
-  "reviewed_source_commit": "ba52dcd99a7326f3bbb2add69dde25deab3dc94f",
+  "matrix_version": "1.2.0",
+  "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
       "id": "QA1-CRY-001",
@@ -5223,6 +5223,131 @@
         "B152-windows-latest-default",
         "B152-windows-latest-no-default"
       ],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-010",
+      "category": "Container",
+      "component_paths": [
+        "src/files/signer_v3.rs",
+        "src/files/signed_io.rs",
+        "src/files/decrypt.rs",
+        "src/cli/signing.rs"
+      ],
+      "scenario": {
+        "de": "Absender-Signatur in .pqkf (v3) entfernen, abschneiden, verändern oder Daten anhängen; Absender tauschen; v3 auf v2 zurückbauen; anderen Dateischlüssel unterschieben; verlangten Absender umgehen",
+        "en": "Strip, truncate or alter the sender signature in a .pqkf (v3) or append data; swap the sender; rewrite v3 to v2; substitute another file key; bypass a required sender."
+      },
+      "expected_behavior": {
+        "de": "Fehler ohne Ausgabe (Exit-Code 3 bzw. 7); verlangter Absender wird vor jeder Ableitung geprüft",
+        "en": "error without output (exit code 3 or 7); a required sender is checked before any derivation"
+      },
+      "boundary": {
+        "de": "Signatur belegt Schlüsselbesitz, nicht die Identität des Absenders; ein Empfänger kann den Inhalt unter eigenem Namen neu verschlüsseln.",
+        "en": "A signature demonstrates key possession, not the sender's identity; a recipient can re-encrypt the content under their own name."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "stripped_truncated_and_appended_signatures_fail_without_output",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "altered_signature_content_and_header_fail",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "swapped_sender_and_rewrite_to_v2_fail",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "required_sender_is_checked_before_unlocking",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "only_ml_dsa_87_can_sign",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_signed.rs",
+          "symbol": "unsigned_files_keep_v1_and_v2_and_carry_no_sender",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/signer_v3_tests.rs",
+          "symbol": "commitment_rejects_another_file_key",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/signer_v3_tests.rs",
+          "symbol": "commit_and_message_match_independent_reference",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_signed.rs",
+          "symbol": "wrong_sender_and_tampering_exit_7_without_output",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_signed.rs",
+          "symbol": "unsigned_file_with_signer_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        44,
+        151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
       "gap": null,
       "next_evidence": null,
       "retired": false,

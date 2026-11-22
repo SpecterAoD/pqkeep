@@ -1,7 +1,9 @@
-//! DE: `pqkeep inspect` für verschlüsselte Dateien im Format v2: Inhalt und alle Zugänge
-//! (Passphrase mit/ohne Faktordatei, Empfänger mit Fingerabdruck) – ohne Passphrase/Schlüssel.
-//! EN: `pqkeep inspect` for encrypted files in format v2: content and all access slots
-//! (passphrase with/without factor file, recipients with fingerprint) – no passphrase/key needed.
+//! DE: `pqkeep inspect` für verschlüsselte Dateien im Format v2/v3: Inhalt und alle Zugänge
+//! (Passphrase mit/ohne Faktordatei, Empfänger mit Fingerabdruck), bei v3 der Absender (ungeprüft)
+//! – ohne Passphrase/Schlüssel.
+//! EN: `pqkeep inspect` for encrypted files in format v2/v3: content and all access slots
+//! (passphrase with/without factor file, recipients with fingerprint), for v3 the sender
+//! (unverified) – no passphrase/key needed.
 
 use std::path::Path;
 
@@ -44,5 +46,6 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
             }
         }
     }
+    super::signing::print_unverified(lang, header.signer.as_ref());
     Ok(())
 }

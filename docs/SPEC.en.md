@@ -1,11 +1,11 @@
-# MASTER PROJECT SPECIFICATION v2.17: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.18: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.15. Both versions are maintained together; every change to one is made to the other in the
+> 2.18. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.15. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.18. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
@@ -30,6 +30,8 @@
 > Change v2.16 (2026-11-21, owner authorization to complete PR #281): new previews use keyless Sigstore, build/SBOM attestations and verification before publication; no SignPath or release environment, no change to existing previews.
 
 > Change v2.17 (2026-11-21, owner-approved #117 plan): authenticated archive listing without extraction; separate JSON schema and bounded metadata only after full verification. Existing formats/JSON commands unchanged.
+
+> Change v2.18 (2026-11-21, approved by SpecterAoD with the order for #44): optional sender signature inside `.pqkf` (U1) as format **v3** – ML-DSA-87 signature over header and ciphertext at the end of the file, the sender's public key and a key commitment in the header, verified before any output, `--sign-with`/`--signer`; unsigned files stay v1/v2 byte for byte (`docs/V3_SIGNED.md`).
 
 ## 0. Way of working (applies to every step)
 
@@ -286,6 +288,7 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 - Verify with the public key: output clearly `[VERIFIED]` or `[INVALID]` (exit code 0 or ≠ 0); display of the signer's key ID/fingerprint.
 - **Honest assessment:** The signature proves that the file is unchanged and was signed by the holder of the private key. Who that holder is must be confirmed via the fingerprint through a second channel. It is **not** a qualified electronic signature under eIDAS (that would require a qualified certificate and a trust service provider); it is therefore not "legally binding" in the legal sense.
 - Extension for `.pqkf`: optional sender signature in the container (replaces the earlier entry "optional ML-DSA signature of the sender").
+  - EN: Implemented (#44) as format v3 ([V3_SIGNED.md](V3_SIGNED.md)): `pqkeep encrypt --sign-with <key>` (optional `--sign-factor-file`), `decrypt`/`check` always verify and name the sender, `--signer <pub>` requires a specific sender (else exit code 7, no output); `inspect` shows the sender unverified. Not via the REST API, menu or context menu.
 
 ### U2: Multiple recipients (multi-recipient container)
 - One random AES-256-GCM file key (as before); in the header one entry per recipient (ML-KEM encapsulation, default ML-KEM-1024, recipient ID, wrapped key). Each recipient opens with their own private key; no shared password.

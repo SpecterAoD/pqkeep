@@ -8,18 +8,15 @@ use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
 
 use super::archive::ArchiveWriter;
-use super::encrypt_v2;
-use super::format::{Content, FileHeader, HeaderMode};
+use super::encrypt_header;
+use super::format::Content;
 use super::output::TempOutput;
+use super::signed_io::{HashingWriter, check_signing_key};
 use super::walk::{self, SourceEntry, SourceKind};
-use super::{PassphraseAccess, Protection, Report};
-use crate::crypto::kdf::KdfParams;
-use crate::crypto::kdf::SALT_LEN;
+use super::{Protection, Report};
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
-use crate::crypto::wrap::{self, Wrapped};
-use crate::crypto::{KeyAlgorithm, SecretBytes, aead, rng};
-use crate::envelope::{KEY_ID_LEN, PublicKeyFile};
-use crate::security::StrongPassphrase;
+use crate::crypto::{aead, rng};
+use crate::envelope::UnlockedKey;
 use crate::{Error, Result};
 
 /// DE: Verschlüsselt `source` (Datei oder Ordner) nach `target`.
@@ -29,6 +26,33 @@ use crate::{Error, Result};
 /// DE/EN: [`Error::Io`] (u. a. `AlreadyExists`), [`Error::InvalidInput`] (Quelle, Empfänger,
 /// geänderte Quelldatei / source, recipient, changed source file), [`Error::KdfParams`].
 pub fn encrypt(source: &Path, target: &Path, protection: &Protection<'_>) -> Result<Report> {
+    encrypt_with(source, target, protection, None)
+}
+
+/// DE: Wie [`encrypt`], zusätzlich mit der Absender-Signatur von `signer` (ML-DSA-87; Format v3,
+/// `docs/V3_SIGNED.md`).
+/// EN: Like [`encrypt`], additionally with the sender signature of `signer` (ML-DSA-87; format
+/// v3, `docs/V3_SIGNED.md`).
+///
+/// # Errors
+/// DE/EN: wie [`encrypt`]; [`Error::Unsupported`] (kein ML-DSA-87-Schlüssel / not ML-DSA-87),
+/// [`Error::Crypto`].
+pub fn encrypt_signed(
+    source: &Path,
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: &UnlockedKey,
+) -> Result<Report> {
+    check_signing_key(signer)?;
+    encrypt_with(source, target, protection, Some(signer))
+}
+
+fn encrypt_with(
+    source: &Path,
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: Option<&UnlockedKey>,
+) -> Result<Report> {
     let is_dir = fs::symlink_metadata(source)?.file_type().is_dir();
     let (entries, skipped, content) = if is_dir {
         let (e, s) = walk::collect_dir(source)?;
@@ -36,7 +60,7 @@ pub fn encrypt(source: &Path, target: &Path, protection: &Protection<'_>) -> Res
     } else {
         (vec![walk::collect_file(source)?], Vec::new(), Content::File)
     };
-    write_archive(&entries, skipped, content, target, protection)
+    write_archive(&entries, skipped, content, target, protection, signer)
 }
 
 /// DE: Verschlüsselt mehrere Quellen als **einen** Container nach `target` (Inhalt „Ordner“,
@@ -52,8 +76,39 @@ pub fn encrypt_many(
     target: &Path,
     protection: &Protection<'_>,
 ) -> Result<Report> {
+    encrypt_many_with(sources, target, protection, None)
+}
+
+/// DE: Wie [`encrypt_many`], zusätzlich mit Absender-Signatur (Format v3).
+/// EN: Like [`encrypt_many`], additionally with sender signature (format v3).
+///
+/// # Errors
+/// DE/EN: wie [`encrypt_many`] und [`encrypt_signed`] / as [`encrypt_many`] and [`encrypt_signed`].
+pub fn encrypt_many_signed(
+    sources: &[&Path],
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: &UnlockedKey,
+) -> Result<Report> {
+    check_signing_key(signer)?;
+    encrypt_many_with(sources, target, protection, Some(signer))
+}
+
+fn encrypt_many_with(
+    sources: &[&Path],
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: Option<&UnlockedKey>,
+) -> Result<Report> {
     let (entries, skipped) = walk::collect_many(sources)?;
-    write_archive(&entries, skipped, Content::Directory, target, protection)
+    write_archive(
+        &entries,
+        skipped,
+        Content::Directory,
+        target,
+        protection,
+        signer,
+    )
 }
 
 fn write_archive(
@@ -62,15 +117,23 @@ fn write_archive(
     content: Content,
     target: &Path,
     protection: &Protection<'_>,
+    signer: Option<&UnlockedKey>,
 ) -> Result<Report> {
     let file_key = aead::generate_key()?;
     let prefix = rng::array::<PREFIX_LEN>()?;
-    let (header, stream_aad) = build_header(content, prefix, protection, &file_key)?;
+    let public = signer.map(|key| key.public_key.as_slice());
+    let (header, stream_aad) =
+        encrypt_header::build(content, prefix, protection, &file_key, public)?;
 
     let (temp, file) = TempOutput::file(target)?;
     let mut out = BufWriter::new(file);
     out.write_all(&header)?;
-    let enc = EncryptWriter::new(file_key.expose(), prefix, &stream_aad, out)?;
+    let enc = EncryptWriter::new(
+        file_key.expose(),
+        prefix,
+        &stream_aad,
+        HashingWriter::new(out),
+    )?;
     drop(file_key);
     let mut archive = ArchiveWriter::new(enc);
     let mut report = Report {
@@ -80,10 +143,14 @@ fn write_archive(
     for entry in entries {
         write_entry(&mut archive, entry, &mut report)?;
     }
-    let file = archive
-        .finish()?
-        .into_inner()
-        .map_err(|e| Error::from(e.into_error()))?;
+    let body = archive.finish()?;
+    // DE: Ohne Absender bleibt die Datei Byte für Byte wie bisher (`H ‖ C`).
+    // EN: Without a sender the file stays byte for byte as before (`H ‖ C`).
+    let out = match signer {
+        Some(key) => body.append_signature(key, &header)?,
+        None => body.into_inner(),
+    };
+    let file = out.into_inner().map_err(|e| Error::from(e.into_error()))?;
     file.sync_all()?;
     drop(file);
     temp.publish()?;
@@ -108,114 +175,4 @@ fn write_entry<W: Write>(
         }
     }
     Ok(())
-}
-
-/// DE: Kodierter Header und Strom-AAD. Schreibt v1, wenn ein einzelner Zugang ohne Faktordatei
-/// genügt (ältere Versionen bleiben lesefähig), sonst v2.
-/// EN: Encoded header and stream AAD. Writes v1 if a single slot without factor file suffices
-/// (older versions can still read it), else v2.
-fn build_header(
-    content: Content,
-    prefix: [u8; PREFIX_LEN],
-    protection: &Protection<'_>,
-    file_key: &SecretBytes,
-) -> Result<(Vec<u8>, Vec<u8>)> {
-    let v1 = match protection {
-        Protection::Passphrase { passphrase, params }
-        | Protection::Slots {
-            passphrase:
-                Some(PassphraseAccess {
-                    passphrase,
-                    params,
-                    factor: None,
-                }),
-            recipients: [],
-        } => passphrase_header(content, prefix, passphrase, params, file_key)?,
-        Protection::Recipient(key)
-        | Protection::Slots {
-            passphrase: None,
-            recipients: [key],
-        } => recipient_header(content, prefix, key, file_key)?,
-        Protection::Slots {
-            passphrase,
-            recipients,
-        } => {
-            let header =
-                encrypt_v2::build(content, prefix, passphrase.as_ref(), recipients, file_key)?;
-            return Ok((header.encode()?, header.stream_aad()?));
-        }
-    };
-    Ok((v1.encode(), v1.stream_aad()))
-}
-
-fn placeholder() -> Wrapped {
-    Wrapped {
-        nonce: [0; 12],
-        ciphertext: Vec::new(),
-    }
-}
-
-fn passphrase_header(
-    content: Content,
-    prefix: [u8; PREFIX_LEN],
-    passphrase: &StrongPassphrase,
-    params: &KdfParams,
-    file_key: &SecretBytes,
-) -> Result<FileHeader> {
-    let salt = rng::array::<SALT_LEN>()?.to_vec();
-    let mut header = FileHeader {
-        content,
-        prefix,
-        mode: HeaderMode::Passphrase {
-            params: *params,
-            salt: salt.clone(),
-        },
-        wrapped: placeholder(),
-    };
-    let aad = header.wrap_aad();
-    header.wrapped =
-        wrap::wrap_with_passphrase(passphrase, params, &salt, file_key.expose(), &aad)?;
-    Ok(header)
-}
-
-fn recipient_header(
-    content: Content,
-    prefix: [u8; PREFIX_LEN],
-    key: &PublicKeyFile,
-    file_key: &SecretBytes,
-) -> Result<FileHeader> {
-    let KeyAlgorithm::Kem(algorithm) = key.algorithm() else {
-        return Err(Error::InvalidInput { field: "recipient" });
-    };
-    let recipient_id: [u8; KEY_ID_LEN] = key
-        .key_id()
-        .try_into()
-        .map_err(|_| Error::InvalidInput { field: "recipient" })?;
-    let mut header = FileHeader {
-        content,
-        prefix,
-        mode: HeaderMode::Recipient {
-            algorithm,
-            recipient_id,
-            kem_ciphertext: Vec::new(),
-        },
-        wrapped: placeholder(),
-    };
-    // DE: AAD ohne KEM-Chiffrat; dieses ist über HKDF (Salt) gebunden.
-    // EN: AAD without the KEM ciphertext; it is bound via HKDF (salt).
-    let aad = header.wrap_aad();
-    let r = wrap::wrap_for_recipient(
-        algorithm,
-        key.public_key(),
-        &recipient_id,
-        file_key.expose(),
-        &aad,
-    )?;
-    header.mode = HeaderMode::Recipient {
-        algorithm,
-        recipient_id,
-        kem_ciphertext: r.kem_ciphertext,
-    };
-    header.wrapped = r.wrapped;
-    Ok(header)
 }

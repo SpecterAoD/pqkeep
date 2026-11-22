@@ -76,13 +76,18 @@ fn file_access(
     Ok(None)
 }
 
-/// DE: Passphrase-Datei (global) und Faktordatei: jeweils nur diese eine Datei, nur lesen.
-/// EN: Passphrase file (global) and factor file: each just this one file, read only.
+/// DE: Passphrase-Datei (global), Faktordatei und Signatur-Dateien: jeweils nur diese Datei, nur lesen.
+/// EN: Passphrase file (global), factor file and signature files: each just this one file, read only.
 fn secret_files(m: &ArgMatches, lang: Lang, access: &mut CliAccess) -> CliResult {
     if let Some(p) = super::unattended::pass_file() {
         access.read.push(existing(p.to_path_buf(), lang)?);
     }
     if let Some(p) = super::factor_cmd::path(m) {
+        access.read.push(existing(p, lang)?);
+    }
+    // DE: Signaturschlüssel, seine Faktordatei und verlangter Absender (#44): nur lesen.
+    // EN: Signing key, its factor file and required sender (#44): read only.
+    for p in super::signing::paths(m) {
         access.read.push(existing(p, lang)?);
     }
     Ok(())

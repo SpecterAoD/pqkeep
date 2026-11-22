@@ -8,18 +8,22 @@ use super::archive::{ArchiveReader, Entry};
 use super::format::Content;
 use super::paths::{self, PathSet};
 use super::{Report, Unlock, decrypt};
+use crate::envelope::PublicKeyFile;
 use crate::{Error, Result};
 
 pub(super) fn read(
     source: &Path,
     unlock: &Unlock<'_>,
+    signer: Option<&PublicKeyFile>,
     mut visit: impl FnMut(&Entry) -> Result<()>,
 ) -> Result<Report> {
-    let (archive, content) = decrypt::open(source, unlock)?;
-    match content {
-        Content::File => file(archive, &mut visit),
-        Content::Directory => directory(archive, &mut visit),
-    }
+    let (archive, content, check) = decrypt::open(source, unlock, signer)?;
+    let mut report = match content {
+        Content::File => file(archive, &mut visit)?,
+        Content::Directory => directory(archive, &mut visit)?,
+    };
+    decrypt::verify(check, &mut report)?;
+    Ok(report)
 }
 
 fn file<R: Read>(
