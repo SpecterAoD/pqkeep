@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Changed
+- **Weekly preview build no longer runs on pull requests** (#269): only on its weekly schedule and
+  by hand; changes to the shared `build.yml` are still built and tested by `release.yml` in pull
+  requests. **DE:** Vorschau-Build läuft nicht mehr bei Pull Requests.
+
 ### Added
 - **`--sign-passphrase-file` (#286):** `encrypt --sign-with` can now also sign passphrase-protected
   files without a terminal: the signing key's passphrase comes from its own file (same rules as

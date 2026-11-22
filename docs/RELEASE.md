@@ -96,8 +96,8 @@ Installationstests, Manifest). Nur das Veröffentlichen unterscheidet sich.
 | Aufbewahrung | dauerhaft | die letzten vier |
 
 Ablauf: Der Zeitplan überspringt den Lauf, wenn es seit der letzten Vorschau keinen neuen Commit
-gibt oder die CI auf dem Commit nicht grün ist; von Hand startet er immer. Pull Requests, die
-`preview.yml` oder `build.yml` ändern, bauen nur und testen (kein Veröffentlichen).
+gibt oder die CI auf dem Commit nicht grün ist; von Hand startet er immer. Bei Pull Requests läuft
+`preview.yml` nicht; Änderungen an `build.yml` baut und testet `release.yml` im Pull Request.
 
 **Betas und Releases bleiben unberührt:** Die Kennzeichnung entsteht nur beim Bauen über
 `PQKEEP_CHANNEL=preview` und `PQKEEP_BUILD_ID`; Release-Builds setzen die Variablen gar nicht, und
@@ -177,8 +177,8 @@ installation tests, manifest). Only publishing differs.
 | Retention | permanent | the last four |
 
 Flow: the schedule skips the run when there is no new commit since the last preview or CI on the
-commit is not green; a manual start always runs. Pull requests changing `preview.yml` or
-`build.yml` only build and test (no publishing).
+commit is not green; a manual start always runs. `preview.yml` does not run on pull
+requests; changes to `build.yml` are built and tested by `release.yml` in the pull request.
 
 **Betas and releases stay untouched:** the marking exists only at build time through
 `PQKEEP_CHANNEL=preview` and `PQKEEP_BUILD_ID`; release builds do not set the variables at all, and
