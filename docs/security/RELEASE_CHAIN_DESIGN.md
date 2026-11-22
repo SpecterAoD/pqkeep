@@ -66,3 +66,21 @@ Versionstag prüfen. Reale temporäre SSH-Git-Tests decken gültige, unsigned/li
 signierte und auf einen anderen Commit zeigende Tags ab.
 EN: Tag verification uses protected-main signers, never a tag-supplied trust root. Real temporary
 Git/SSH tests cover valid, unsigned/lightweight, foreign and wrong-commit tags.
+
+## Pre-merge verification evidence / Vorab-Abnahme
+
+DE: Reale rein lesende Abnahme in [Run 45065367199, Job 137340557163](https://github.com/SpecterAoD/pqkeep/actions/runs/45065367199).
+Zweimal vollständige Prüfung des bereits autorisierten main-Bündels aus Run 44838948198
+(Commit `bc17cffa`): je sechs Sigstore-Signaturen und 15 Herkunfts-/SBOM-Prüfungen.
+Sieben echte Negativfälle abgewiesen: Repository, Ref, Commit, Workflow, verändertes Artefakt,
+umgeschriebene Hashes und ungültige Signatur. Abschließende Positivkontrolle erfolgreich.
+EN: Two complete real verifications and seven negative cases passed, without signing or
+publishing anything new. The temporary read-only fixture-download steps are removed from the
+final workflow so future CI does not depend on expiring historical artifacts. The tested
+verification scripts remain byte-identical; the replay log/hash proof is retained locally.
+
+DE: Lokale und native CI-/Scanner-Endnachweise werden im PR auf den endgültigen Commit
+bezogen. Ein neuer Environment-geschützter Signier-/Entwurflauf ist erst auf dem vom Eigentümer
+gemergten main vorgesehen; diese Vorab-Abnahme behauptet keinen solchen Lauf.
+EN: Final-head CI and scanning are reported in the PR. Owner merges, then performs the normal
+approved main dry run before a release tag. Existing environment restrictions are never bypassed.

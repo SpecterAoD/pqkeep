@@ -16,6 +16,8 @@ def contract(text):
     assert 'id-token: write' in jobs['publish']
     assert 'id-token: write' not in jobs['draft']
     for name in ['verify', 'draft']:
+        assert 'continue-on-error' not in jobs[name]
+        assert 'timeout-minutes: 10' in jobs[name]
         assert 'python3 scripts/release_trust.py' in jobs[name]
         assert 'RELEASE_DIST: dist' in jobs[name]
         assert 'run: python3 scripts/release_trust.py\n' in jobs[name]
@@ -35,6 +37,7 @@ class WorkflowTests(unittest.TestCase):
                           ('contents: read\n      id-token: write', 'contents: write\n      id-token: write'),
                           ('RELEASE_DIST: dist', 'RELEASE_DIST: unknown'),
                           ('scripts/release_ref.py', 'scripts/skip.py'),
+                          ('timeout-minutes: 10', 'timeout-minutes: 999'),
                           ("if: needs.prepare.outputs.is_tag == 'true'", 'if: always()')]:
             with self.subTest(old=old), self.assertRaises(AssertionError):
                 contract(text.replace(old, bad))
