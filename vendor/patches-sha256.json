@@ -1,0 +1,40 @@
+{
+  "hmac-0.13.0": [
+    {
+      "sha256": "91988f40858e1c3eab5071ecaf42e8f68be0a084cd98e535fd6516e562f892d8",
+      "path": "src/simple.rs"
+    }
+  ],
+  "hkdf-0.13.0": [
+    {
+      "sha256": "a25ca0c28a5e075bb7e7a7e4aeb014ff7be4b4a28d976341c587a4ccb116d0b4",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "f061ac13eb0f5e50f910fbe3bb663996a9487da9ea392c16134d7d83847ac3ca",
+      "path": "README.md"
+    },
+    {
+      "sha256": "79f560f3e002851d91afa910898a23a1f4b94f81e3e3d04811f6fbb727118b5c",
+      "path": "src/in_place.rs"
+    },
+    {
+      "sha256": "4bdcd44f96cab18ab753094f5d7109e3e72ab47dee1a93e45bd2fcb99ee18657",
+      "path": "src/lib.rs"
+    }
+  ],
+  "region-4.0.1": [
+    {
+      "sha256": "0060a028891aabcf99ecd0c2e48b025dd87e04ed2330d2f9c7e16eac8921d397",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "6dce58bd48179fd1a352e9c676df90d8840c2496a7561d7a40ef98fd1e50f23d",
+      "path": "src/lib.rs"
+    },
+    {
+      "sha256": "f718e58dcb471b79182caa3db75bf73ce012f547960f2ca1f041f9bbb818287a",
+      "path": "src/os/windows.rs"
+    }
+  ]
+}

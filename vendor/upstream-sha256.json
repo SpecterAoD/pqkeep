@@ -1,0 +1,156 @@
+{
+  "hmac-0.13.0": [
+    {
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "b4f4b988204282ae1e47df9f4353449afd5f389d588e4445f7c8df8e69586fab",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "00220f466dfde55fcb7679fe94547f896e30ace951dfedd4d8d64ae34cecce77",
+      "path": "README.md"
+    },
+    {
+      "sha256": "9e0dfd2dd4173a530e238cb6adb37aa78c34c6bc7444e0e10c1ab5d8881f63ba",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "ff05494d407bdfa1cdc58fec8c7109233b281eecf6ba8fbefef7c50ccd4fbad7",
+      "path": "src/simple_reset.rs"
+    },
+    {
+      "sha256": "168036c0f18746d5b1bbc11e3223d56f90c3b1a0ae1310d65124ec8d251797ad",
+      "path": "src/block_api.rs"
+    },
+    {
+      "sha256": "158b1393a95aceb0f827fb6428b7180ee487f06e5d108d3123b0d440b9983aec",
+      "path": "src/simple.rs"
+    },
+    {
+      "sha256": "cbac1e22f04ba06017be297e6fa539bb092c2d69ae6f7d549b88644f67751b9f",
+      "path": "src/lib.rs"
+    },
+    {
+      "sha256": "c319019fd2a948f0afdab177281136358e423c2d25d2d11740a84d56da529bda",
+      "path": "src/utils.rs"
+    }
+  ],
+  "hkdf-0.13.0": [
+    {
+      "sha256": "59013a5c8d3a19c26a457579105915a5d51bb0c09d579f8cdedf12e4203c3018",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "98856c5ab681142c6199ab7c5375731444cb7e0c6b7de54754e60d86ffe81f6a",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "888ed3a0087a6307c119cbf1517edb07b510a69600431e0376f2652d50a70644",
+      "path": "README.md"
+    },
+    {
+      "sha256": "d288f9c9b4590446ec18c22ead8f8b5a12a3d4025b68f62dc9015063eb9cca69",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "bf4a2c9632ce498a8ef3a4b147447c3fd449d7de273c61192311741358cbf6c1",
+      "path": "src/hmac_impl.rs"
+    },
+    {
+      "sha256": "11749cd8d24cd23569770f6b442ab537285139b8b7d103ab2d3abac0e5c892de",
+      "path": "src/lib.rs"
+    },
+    {
+      "sha256": "3726025c89f0b236ab1c33f9f22ce4765282f77f1aa9117132bb1cad9f9d899b",
+      "path": "src/errors.rs"
+    }
+  ],
+  "region-4.0.1": [
+    {
+      "sha256": "e2a8a2f43d6926ab9cfc47cffd7f78f8fced21d23e7b1896067b74036fd3bf2c",
+      "path": "LICENSE"
+    },
+    {
+      "sha256": "16fed5b54f639c9b58a1d32cb5dbbfcc11911c16c815168bc055d0565134a79b",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "bdbcf5992a22a2b3c57a717e43f66ac3ace141fa7689071a11845045611c06db",
+      "path": "README.md"
+    },
+    {
+      "sha256": "d8de0c1bc761c06f30a441dbbdf44fc06b091f7c7c33cf70d5845814eb76c714",
+      "path": "src/lock.rs"
+    },
+    {
+      "sha256": "91afed7ef7cc7ff96cc65849b166e0c7efc95c3b78af2a7fc40a00286c3038e3",
+      "path": "src/protect.rs"
+    },
+    {
+      "sha256": "d7fc67994a42bd8f19191d76412520eb75cd160516f5c558c78697b8670b98d5",
+      "path": "src/allocation.rs"
+    },
+    {
+      "sha256": "878b283dbcab0d323518706ccc5cb491547eb15303e27da9e28bd39d972d690e",
+      "path": "src/lib.rs"
+    },
+    {
+      "sha256": "227a7c9335316a044aa36a699e4b11f6bd938d764bf3737ef7f7d880bcd73824",
+      "path": "src/error.rs"
+    },
+    {
+      "sha256": "0261915d2060fe1d7de8ac3feb15ba7418cc71b3f9fef61527ea56b373ac5daa",
+      "path": "src/page.rs"
+    },
+    {
+      "sha256": "4fa716590921c084ea2d1b703ff4a84d7be6e05411a62fc7db8d2c563a1552a2",
+      "path": "src/query.rs"
+    },
+    {
+      "sha256": "c28cecd824f006ded25b0798772751202169afcf7d7c52be0b10d03de3510af9",
+      "path": "src/util.rs"
+    },
+    {
+      "sha256": "e8e00570a666f8bcda6ff32bcf06d79ef68595ab220d2a58333e3c291a836632",
+      "path": "src/os/linux.rs"
+    },
+    {
+      "sha256": "ba8683aa278df8dbe8ac2cc541668e8efc92a653ca1440271168ab5174fc5fae",
+      "path": "src/os/illumos.rs"
+    },
+    {
+      "sha256": "335bc221a2960b6f9ca274bf840fc44690a4b78d94bc16427df2c66f4e5d80b2",
+      "path": "src/os/mod.rs"
+    },
+    {
+      "sha256": "5add68fceaec92d817b378ab9e924664d05414c872fa26183406c3d851408330",
+      "path": "src/os/windows.rs"
+    },
+    {
+      "sha256": "ffe7d8791613dd1ee475a377ae1f85028d4568d16b7f97a776ed2ce4b14ccfa7",
+      "path": "src/os/macos.rs"
+    },
+    {
+      "sha256": "074487fef983ea651acaf316d7b0f179a010fba9b8fa14aa111a98be37b28ebe",
+      "path": "src/os/netbsd.rs"
+    },
+    {
+      "sha256": "afd3828db650f3e383e702615c40d0516742126512e74fa439e2f4cb31382dce",
+      "path": "src/os/redox.rs"
+    },
+    {
+      "sha256": "0327b66b1bed20aec168e3dcade5057430b584d08a4cafedc6738fa460ddaa80",
+      "path": "src/os/openbsd.rs"
+    },
+    {
+      "sha256": "af38e37c2c5b8563b09f925042c0d21c435d6dc2a05438bcef7f424cc5155725",
+      "path": "src/os/unix.rs"
+    },
+    {
+      "sha256": "0c5ca45a90a40ce40b4cb1d2cde3751d8de3fb95e32b0c472076c6f6924d5bdb",
+      "path": "src/os/freebsd.rs"
+    }
+  ]
+}

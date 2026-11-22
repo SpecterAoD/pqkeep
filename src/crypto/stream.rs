@@ -14,9 +14,9 @@
 
 use std::io::{Read, Write};
 
-use aes_gcm::aead::{Aead, Nonce, Payload};
-use aes_gcm::{Aes256Gcm, KeyInit};
-use zeroize::Zeroizing;
+use super::{SecretBytes, secret_state::SecretState};
+use aes_gcm::Aes256Gcm;
+use aes_gcm::aead::{Aead, AeadInOut, Nonce, Payload};
 
 use crate::crypto::aead::TAG_LEN;
 pub use crate::crypto::stream_io::{DecryptReader, EncryptWriter};
@@ -31,7 +31,7 @@ pub const ENCRYPTED_CHUNK_SIZE: usize = CHUNK_SIZE + TAG_LEN;
 
 /// DE: Gemeinsamer Zustand für Ver- und Entschlüsseln. EN: Shared state for both directions.
 pub(crate) struct Stream {
-    cipher: Aes256Gcm,
+    cipher: SecretState<Aes256Gcm>,
     prefix: [u8; PREFIX_LEN],
     counter: u32,
     aad: Vec<u8>,
@@ -39,8 +39,7 @@ pub(crate) struct Stream {
 
 impl Stream {
     pub(crate) fn new(key: &[u8], prefix: [u8; PREFIX_LEN], aad: &[u8]) -> Result<Self> {
-        let cipher =
-            Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })?;
+        let cipher = super::aead::cipher(key)?;
         Ok(Self {
             cipher,
             prefix,
@@ -70,23 +69,28 @@ impl Stream {
         };
         let out = self
             .cipher
+            .get()
             .encrypt(&self.nonce(last), payload)
             .map_err(|_| Error::Crypto)?;
         self.advance()?;
         Ok(out)
     }
 
-    pub(crate) fn open(&mut self, chunk: &[u8], last: bool) -> Result<Zeroizing<Vec<u8>>> {
-        let payload = Payload {
-            msg: chunk,
-            aad: &self.aad,
-        };
-        let out = self
-            .cipher
-            .decrypt(&self.nonce(last), payload)
+    pub(crate) fn open(&mut self, chunk: &[u8], last: bool) -> Result<SecretBytes> {
+        let n = chunk.len().checked_sub(TAG_LEN).ok_or(Error::Decrypt)?;
+        let mut out = SecretBytes::from_slice(&chunk[..n])?;
+        let tag = <[u8; TAG_LEN]>::try_from(&chunk[n..]).map_err(|_| Error::Decrypt)?;
+        self.cipher
+            .get()
+            .decrypt_inout_detached(
+                &self.nonce(last),
+                &self.aad,
+                out.expose_mut().into(),
+                &tag.into(),
+            )
             .map_err(|_| Error::Decrypt)?;
         self.advance()?;
-        Ok(Zeroizing::new(out))
+        Ok(out)
     }
 }
 
@@ -120,13 +124,13 @@ pub fn encrypt(
     writer: &mut impl Write,
 ) -> Result<u64> {
     let mut enc = EncryptWriter::new(key, prefix, aad, writer)?;
-    let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
+    let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
     loop {
-        let n = read_full(reader, &mut buf)?;
+        let n = read_full(reader, buf.expose_mut())?;
         if n == 0 {
             break;
         }
-        enc.push(&buf[..n])?;
+        enc.push(&buf.expose()[..n])?;
     }
     Ok(enc.finish()?.1)
 }
@@ -148,14 +152,14 @@ pub fn decrypt(
     writer: &mut impl Write,
 ) -> Result<u64> {
     let mut dec = DecryptReader::new(key, prefix, aad, reader)?;
-    let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
+    let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
     let mut total = 0u64;
     loop {
-        let n = dec.read(&mut buf)?;
+        let n = dec.read(buf.expose_mut())?;
         if n == 0 {
             return Ok(total);
         }
-        writer.write_all(&buf[..n])?;
+        writer.write_all(&buf.expose()[..n])?;
         total += n as u64;
     }
 }

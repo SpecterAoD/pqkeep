@@ -62,7 +62,7 @@ jobs:
           # EN: stream_tamper up to ~4 chunks (CHUNK_SIZE = 64 KiB) so that errors across chunks
           #     are reachable; otherwise 64 KiB.
           if [ "${{ matrix.target }}" = "stream_tamper" ]; then len=270000; else len=65536; fi
-          cargo +"$NIGHTLY" fuzz run "${{ matrix.target }}" -- \
+          python3 ../scripts/ci_locked_exec.py cargo +"$NIGHTLY" fuzz run "${{ matrix.target }}" -- \
             -max_total_time="$t" -rss_limit_mb=4096 -max_len="$len"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()

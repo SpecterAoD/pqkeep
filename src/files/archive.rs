@@ -10,8 +10,8 @@
 
 use std::io::{Read, Write};
 
+use crate::crypto::SecretBytes;
 use sha3::{Digest, Sha3_256};
-use zeroize::Zeroizing;
 
 use super::paths::{MAX_ENTRIES, MAX_PATH_BYTES};
 use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
@@ -56,21 +56,21 @@ impl<W: Write> ArchiveWriter<W> {
         self.entry_head(TAG_FILE, path)?;
         self.enc.push(&size.to_le_bytes())?;
         let mut hasher = Sha3_256::new();
-        let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
+        let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
         let mut left = size;
         while left > 0 {
             let want = usize::try_from(left.min(CHUNK_SIZE as u64)).unwrap_or(CHUNK_SIZE);
-            let n = reader.read(&mut buf[..want])?;
+            let n = reader.read(&mut buf.expose_mut()[..want])?;
             if n == 0 {
                 return Err(Error::InvalidInput {
                     field: "source_changed",
                 });
             }
-            hasher.update(&buf[..n]);
-            self.enc.push(&buf[..n])?;
+            hasher.update(&buf.expose()[..n]);
+            self.enc.push(&buf.expose()[..n])?;
             left -= n as u64;
         }
-        if reader.read(&mut buf[..1])? != 0 {
+        if reader.read(&mut buf.expose_mut()[..1])? != 0 {
             return Err(Error::InvalidInput {
                 field: "source_changed",
             });
@@ -144,13 +144,13 @@ impl<R: Read> ArchiveReader<R> {
     /// EN: Copies the current file's content and verifies the checksum.
     pub fn copy_file(&mut self, size: u64, out: &mut impl Write) -> Result<()> {
         let mut hasher = Sha3_256::new();
-        let mut buf = Zeroizing::new(vec![0u8; CHUNK_SIZE]);
+        let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
         let mut left = size;
         while left > 0 {
             let want = usize::try_from(left.min(CHUNK_SIZE as u64)).unwrap_or(CHUNK_SIZE);
-            self.dec.read_exact(&mut buf[..want])?;
-            hasher.update(&buf[..want]);
-            out.write_all(&buf[..want])?;
+            self.dec.read_exact(&mut buf.expose_mut()[..want])?;
+            hasher.update(&buf.expose()[..want]);
+            out.write_all(&buf.expose()[..want])?;
             left -= want as u64;
         }
         let expected = self.array::<32>()?;

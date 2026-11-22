@@ -8,7 +8,7 @@
 //! is discarded entirely and redrawn, keeping the distribution uniform over all
 //! valid passphrases.
 
-use zeroize::Zeroizing;
+use crate::crypto::SecretBytes;
 
 use super::entropy::formula_bits;
 use super::{MIN_BITS, Passphrase, StrongPassphrase};
@@ -116,7 +116,8 @@ pub fn generate_with(options: &Options, min_bits: u32) -> Result<StrongPassphras
     let alphabet = options.alphabet();
     for _ in 0..MAX_ATTEMPTS {
         let candidate = draw(&alphabet, options.length)?;
-        let passphrase = Passphrase::new(&candidate)?;
+        let text = std::str::from_utf8(candidate.expose()).map_err(|_| Error::Crypto)?;
+        let passphrase = Passphrase::new(text)?;
         if let Ok(strong) = StrongPassphrase::with_min_bits(passphrase, min_bits) {
             return Ok(strong);
         }
@@ -126,17 +127,20 @@ pub fn generate_with(options: &Options, min_bits: u32) -> Result<StrongPassphras
 
 /// DE: Zieht `length` Zeichen gleichverteilt aus `alphabet`.
 /// EN: Draws `length` characters uniformly from `alphabet`.
-fn draw(alphabet: &[char], length: usize) -> Result<Zeroizing<String>> {
-    let mut out = Zeroizing::new(String::with_capacity(length));
-    let mut pool = Zeroizing::new([0u8; 64]);
-    while out.len() < length {
-        rng::fill(pool.as_mut())?;
-        for &byte in pool.iter() {
-            if out.len() == length {
+fn draw(alphabet: &[char], length: usize) -> Result<SecretBytes> {
+    let mut out = SecretBytes::zeroed(length)?;
+    let mut pool = SecretBytes::zeroed(64)?;
+    let mut filled = 0;
+    while filled < length {
+        rng::fill(pool.expose_mut())?;
+        for &byte in pool.expose() {
+            if filled == length {
                 break;
             }
             if let Some(i) = uniform_index(byte, alphabet.len()) {
-                out.push(alphabet[i]);
+                out.expose_mut()[filled] =
+                    u8::try_from(u32::from(alphabet[i])).map_err(|_| Error::Crypto)?;
+                filled += 1;
             }
         }
     }

@@ -70,17 +70,22 @@ impl Passphrase {
             });
         }
         let len: usize = input.nfkc().map(char::len_utf8).sum();
-        let mut normalized = String::with_capacity(len);
-        normalized.extend(input.nfkc());
-        let chars = normalized.chars().count();
+        let mut normalized = SecretBytes::zeroed(len)?;
+        let mut offset = 0;
+        let mut chars = 0;
+        for ch in input.nfkc() {
+            let n = ch.len_utf8();
+            ch.encode_utf8(&mut normalized.expose_mut()[offset..offset + n]);
+            offset += n;
+            chars += 1;
+        }
         if chars == 0 || chars > INPUT_LIMIT_CHARS {
-            normalized.zeroize();
             return Err(Error::InvalidInput {
                 field: "passphrase",
             });
         }
         Ok(Self {
-            bytes: SecretBytes::new(normalized.into_bytes()),
+            bytes: normalized,
             chars,
         })
     }

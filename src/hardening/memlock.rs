@@ -2,14 +2,12 @@
 //! `VirtualLock`) über die Crate `region` – ohne eigenen `unsafe`-Code.
 //! Gesperrt wird pro Seite, nicht pro Variable. Ein Seitenzähler verhindert, dass
 //! das Freigeben eines Geheimnisses die Sperre eines anderen auf derselben Seite
-//! aufhebt. Best effort: Schlägt das Sperren fehl (z. B. Grenze `RLIMIT_MEMLOCK`),
-//! läuft das Programm weiter und der Fehlschlag wird gezählt.
+//! aufhebt. Unvollständige Sperren werden gemeldet; Secret-Konstruktoren verweigern die Nutzung.
 //!
 //! EN: Locking memory pages holding secrets (Linux `mlock`, Windows
 //! `VirtualLock`) via the `region` crate – without own `unsafe` code.
 //! Locking is per page, not per variable. A page counter prevents releasing one
-//! secret from unlocking another one on the same page. Best effort: if locking
-//! fails (e.g. `RLIMIT_MEMLOCK`), the program continues and the failure is counted.
+//! secret from unlocking another on the same page. Secret constructors reject incomplete locks.
 
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -63,7 +61,7 @@ impl LockedRange {
     /// DE: `true`, wenn alle Seiten gesperrt werden konnten.
     /// EN: `true` if all pages could be locked.
     pub fn complete(&self, addr: usize, len: usize) -> bool {
-        self.pages.len() == page_span(addr, len).count()
+        len == 0 || self.pages.len() == page_span(addr, len).count()
     }
 }
 
@@ -83,20 +81,23 @@ pub(crate) fn lock_range(addr: usize, len: usize) -> LockedRange {
     }
     let size = region::page::size();
     let mut reg = registry();
+    let total = reg.len().checked_mul(size).and_then(|n| n.checked_add(len));
+    if total.is_none_or(|n| region::prepare_lock_capacity(n).is_err()) {
+        FAILED.fetch_add(1, Ordering::Relaxed);
+        return LockedRange { pages };
+    }
     for page in page_span(addr, len) {
         if let Some(entry) = reg.get_mut(&page) {
             entry.0 += 1;
             pages.push(page);
             continue;
         }
-        match region::lock(std::ptr::without_provenance::<u8>(page), size) {
-            Ok(guard) => {
-                reg.insert(page, (1, guard));
-                pages.push(page);
-            }
-            Err(_) => {
-                FAILED.fetch_add(1, Ordering::Relaxed);
-            }
+        if let Ok(guard) = region::lock(std::ptr::without_provenance::<u8>(page), size) {
+            reg.insert(page, (1, guard));
+            pages.push(page);
+        } else {
+            FAILED.fetch_add(1, Ordering::Relaxed);
+            break;
         }
     }
     LockedRange { pages }

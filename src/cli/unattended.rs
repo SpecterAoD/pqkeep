@@ -16,8 +16,8 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use clap::ArgMatches;
+use pqkeep::crypto::SecretBytes;
 use pqkeep::security::{Lang, Passphrase};
-use zeroize::Zeroizing;
 
 use super::io::{CliResult, Failure, code};
 
@@ -142,29 +142,33 @@ fn read_checked(path: &Path, lang: Lang) -> CliResult<Passphrase> {
     if !permissions_ok(&meta) {
         return Err(Failure::new(code::USAGE, s.perms));
     }
-    let mut buf = Zeroizing::new(Vec::new());
-    file.take(MAX_FILE + 1).read_to_end(&mut buf).map_err(io)?;
-    let mut len = buf.len();
+    let mut buf = SecretBytes::zeroed(usize::try_from(MAX_FILE + 1).map_err(|_| invalid())?)
+        .map_err(|e| Failure::from_error(&e, lang))?;
+    let mut file = file;
+    let mut len = 0;
+    while len < buf.len() {
+        match file.read(&mut buf.expose_mut()[len..]) {
+            Ok(0) => break,
+            Ok(n) => len += n,
+            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(io(e)),
+        }
+    }
     if len as u64 > MAX_FILE {
         return Err(invalid());
     }
-    if buf[..len].ends_with(b"\n") {
+    if buf.expose()[..len].ends_with(b"\n") {
         len -= 1;
-        if buf[..len].ends_with(b"\r") {
+        if buf.expose()[..len].ends_with(b"\r") {
             len -= 1;
         }
     }
-    let line = &buf[..len];
+    let line = &buf.expose()[..len];
     if line.contains(&b'\n') || line.contains(&b'\r') {
         return Err(invalid());
     }
-    let text = String::from_utf8(line.to_vec()).map_err(|e| {
-        // DE: Auch fehlerhafte Bytes nullen. EN: Zero invalid bytes too.
-        let mut bytes = e.into_bytes();
-        zeroize::Zeroize::zeroize(&mut bytes);
-        invalid()
-    })?;
-    Passphrase::from_string(text).map_err(|e| Failure::from_error(&e, lang))
+    let text = std::str::from_utf8(line).map_err(|_| invalid())?;
+    Passphrase::new(text).map_err(|e| Failure::from_error(&e, lang))
 }
 
 #[cfg(test)]

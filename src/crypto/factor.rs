@@ -45,7 +45,7 @@ impl Factor {
         if bytes.len() != FACTOR_LEN {
             return Err(FIELD);
         }
-        Ok(Self(SecretBytes::from_slice(bytes)))
+        Ok(Self(SecretBytes::from_slice(bytes)?))
     }
 
     /// DE: Liest eine Faktordatei. Der Pfad darf kein Link sein; geprüft wird die geöffnete
@@ -71,7 +71,7 @@ impl Factor {
         }
         // DE: Ein Byte mehr als nötig lesen, um zu große Dateien zu erkennen.
         // EN: Read one byte more than needed to detect files that are too large.
-        let mut buffer = SecretBytes::new(vec![0u8; FACTOR_LEN + 1]);
+        let mut buffer = SecretBytes::new(vec![0u8; FACTOR_LEN + 1])?;
         let mut filled = 0;
         while filled < buffer.len() {
             match file.read(&mut buffer.expose_mut()[filled..])? {

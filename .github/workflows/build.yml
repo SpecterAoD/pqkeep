@@ -128,7 +128,7 @@ jobs:
       - name: Rauchtest / smoke test
         run: |
           if command -v python3 >/dev/null; then py=python3; else py=python; fi
-          "$py" scripts/release_smoke.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
+          "$py" scripts/ci_locked_exec.py "$py" scripts/ci_locked_exec.py "$py" scripts/release_smoke.py "target/${{ matrix.target }}/release/${{ matrix.exe }}"
       # DE: Vorschauen tragen `+preview.` in der Versionszeile, Betas und Releases nie.
       # EN: Previews carry `+preview.` in the version line, betas and releases never do.
       - name: Kanal prüfen / check channel

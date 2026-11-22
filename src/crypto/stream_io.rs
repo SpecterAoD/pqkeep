@@ -9,7 +9,8 @@
 
 use std::io::{Read, Write};
 
-use zeroize::Zeroizing;
+use super::SecretBytes;
+use zeroize::Zeroize;
 
 use crate::crypto::aead::TAG_LEN;
 use crate::crypto::stream::{CHUNK_SIZE, ENCRYPTED_CHUNK_SIZE, PREFIX_LEN, Stream, read_full};
@@ -23,7 +24,8 @@ use crate::{Error, Result};
 pub struct EncryptWriter<W: Write> {
     stream: Stream,
     inner: W,
-    buf: Zeroizing<Vec<u8>>,
+    buf: SecretBytes,
+    used: usize,
     total: u64,
 }
 
@@ -36,7 +38,8 @@ impl<W: Write> EncryptWriter<W> {
         Ok(Self {
             stream: Stream::new(key, prefix, aad)?,
             inner,
-            buf: Zeroizing::new(Vec::with_capacity(CHUNK_SIZE)),
+            buf: SecretBytes::zeroed(CHUNK_SIZE)?,
+            used: 0,
             total: 0,
         })
     }
@@ -47,13 +50,15 @@ impl<W: Write> EncryptWriter<W> {
     /// DE/EN: [`Error::Io`], [`Error::Crypto`].
     pub fn push(&mut self, mut data: &[u8]) -> Result<()> {
         while !data.is_empty() {
-            if self.buf.len() == CHUNK_SIZE {
-                let sealed = self.stream.seal(&self.buf, false)?;
+            if self.used == CHUNK_SIZE {
+                let sealed = self.stream.seal(&self.buf.expose()[..self.used], false)?;
                 self.inner.write_all(&sealed)?;
-                self.buf.clear();
+                self.buf.expose_mut().zeroize();
+                self.used = 0;
             }
-            let take = (CHUNK_SIZE - self.buf.len()).min(data.len());
-            self.buf.extend_from_slice(&data[..take]);
+            let take = (CHUNK_SIZE - self.used).min(data.len());
+            self.buf.expose_mut()[self.used..self.used + take].copy_from_slice(&data[..take]);
+            self.used += take;
             self.total += take as u64;
             data = &data[take..];
         }
@@ -66,7 +71,7 @@ impl<W: Write> EncryptWriter<W> {
     /// # Errors
     /// DE/EN: [`Error::Io`], [`Error::Crypto`].
     pub fn finish(mut self) -> Result<(W, u64)> {
-        let sealed = self.stream.seal(&self.buf, true)?;
+        let sealed = self.stream.seal(&self.buf.expose()[..self.used], true)?;
         self.inner.write_all(&sealed)?;
         self.inner.flush()?;
         Ok((self.inner, self.total))
@@ -80,7 +85,7 @@ impl<W: Write> EncryptWriter<W> {
 pub struct DecryptReader<R: Read> {
     stream: Stream,
     inner: R,
-    plain: Zeroizing<Vec<u8>>,
+    plain: SecretBytes,
     pos: usize,
     pending: Vec<u8>,
     pending_len: usize,
@@ -98,7 +103,7 @@ impl<R: Read> DecryptReader<R> {
         Ok(Self {
             stream: Stream::new(key, prefix, aad)?,
             inner,
-            plain: Zeroizing::new(Vec::new()),
+            plain: SecretBytes::zeroed(0)?,
             pos: 0,
             pending,
             pending_len,
@@ -138,7 +143,7 @@ impl<R: Read> DecryptReader<R> {
             self.refill()?;
         }
         let n = buf.len().min(self.plain.len() - self.pos);
-        buf[..n].copy_from_slice(&self.plain[self.pos..self.pos + n]);
+        buf[..n].copy_from_slice(&self.plain.expose()[self.pos..self.pos + n]);
         self.pos += n;
         Ok(n)
     }

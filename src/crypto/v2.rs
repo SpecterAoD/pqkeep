@@ -16,12 +16,9 @@
 //! never coincide. `F` is the content of the factor file or empty. Without a factor file the
 //! result still differs from v1 (domain and HKDF step). Formulas: see above.
 
-use hkdf::SimpleHkdf;
-use sha3::Sha3_256;
-
+use crate::crypto::SecretBytes;
 use crate::crypto::factor::Factor;
 use crate::crypto::kdf::{self, KdfParams};
-use crate::crypto::{SecretBytes, aead};
 use crate::security::Passphrase;
 use crate::{Error, Result};
 
@@ -62,11 +59,7 @@ fn info(domain: Domain, label: &[u8], tail: &[u8]) -> Vec<u8> {
 /// EN: HKDF-SHA3-256 with 32 bytes of output. `SimpleHkdf` because SHA3 (sponge) offers no
 /// block-core interface for `Hmac`.
 fn hkdf(salt: &[u8], ikm: &[u8], info: &[u8]) -> Result<SecretBytes> {
-    let mut key = SecretBytes::new(vec![0u8; aead::KEY_LEN]);
-    SimpleHkdf::<Sha3_256>::new(Some(salt), ikm)
-        .expand(info, key.expose_mut())
-        .map_err(|_| Error::Crypto)?;
-    Ok(key)
+    super::hkdf_locked::derive(salt, ikm, info)
 }
 
 /// DE: Zweiter Schritt des Passphrase-Zugangs: aus dem Argon2id-Ergebnis `B` wird `Wpass`.
@@ -99,7 +92,7 @@ pub fn passphrase_kek(
     }
     let secret = factor.map_or(&[][..], Factor::expose);
     let ad = info(domain, b"argon2\0", &[]);
-    let mut b = SecretBytes::new(vec![0u8; kdf::OUTPUT_LEN]);
+    let mut b = SecretBytes::new(vec![0u8; kdf::OUTPUT_LEN])?;
     kdf::argon2id(
         passphrase.expose(),
         salt,

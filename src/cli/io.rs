@@ -3,12 +3,12 @@
 //! EN: CLI input/output: passphrase hidden or from stdin (never argument/
 //! environment variable), confirmations, exit codes, localised error messages.
 
-use std::io::{BufRead, IsTerminal};
+use std::io::IsTerminal;
 use std::path::Path;
 use std::process::ExitCode;
 
+use dialoguer::Confirm;
 use dialoguer::theme::Theme;
-use dialoguer::{Confirm, Password};
 use pqkeep::Error;
 use pqkeep::security::{Lang, Passphrase};
 use zeroize::Zeroize;
@@ -25,6 +25,12 @@ impl Theme for LocalTheme {
     fn format_error(&self, f: &mut dyn std::fmt::Write, err: &str) -> std::fmt::Result {
         write!(f, "{}: {err}", self.0)
     }
+}
+
+pub(super) fn confirmation_error(t: &Texts) -> String {
+    let mut out = String::new();
+    let _ = LocalTheme(t.msg_error).format_error(&mut out, t.prompt_mismatch);
+    out
 }
 
 /// DE: Exit-Codes (siehe Hilfe). EN: Exit codes (see help).
@@ -138,15 +144,9 @@ pub fn read_passphrase_as(
     if let Some(result) = super::unattended::read_pass_file(lang, from_stdin) {
         return result;
     }
-    let text = if from_stdin {
-        let mut line = String::new();
-        std::io::stdin()
-            .lock()
-            .read_line(&mut line)
-            .map_err(|e| Failure::from_error(&Error::from(e), lang))?;
-        let trimmed_len = line.trim_end_matches(['\n', '\r']).len();
-        line.truncate(trimmed_len);
-        line
+    if from_stdin {
+        let bytes = super::secret_input::stdin_line(lang)?;
+        super::secret_input::passphrase(&bytes, lang)
     } else {
         if super::unattended::batch() {
             return Err(super::unattended::batch_failure(lang));
@@ -154,16 +154,8 @@ pub fn read_passphrase_as(
         if !std::io::stdin().is_terminal() {
             return Err(Failure::new(code::USAGE, t.msg_no_tty));
         }
-        let theme = LocalTheme(t.msg_error);
-        let mut prompt = Password::with_theme(&theme).with_prompt(prompt_text);
-        if confirm {
-            prompt = prompt.with_confirmation(t.prompt_confirm, t.prompt_mismatch);
-        }
-        prompt
-            .interact()
-            .map_err(|_| Failure::new(code::ERROR, t.msg_aborted))?
-    };
-    Passphrase::from_string(text).map_err(|e| Failure::from_error(&e, lang))
+        super::terminal_secret::password(t, lang, prompt_text, confirm)
+    }
 }
 
 /// DE: Liest eine neue Passphrase zweimal von stdin (je eine Zeile) und vergleicht im eigenen
@@ -171,26 +163,12 @@ pub fn read_passphrase_as(
 /// EN: Reads a new passphrase twice from stdin (one line each) and compares in this own
 /// (sandboxed) process – for the context menu's password window.
 pub fn read_confirmed_stdin(t: &Texts, lang: Lang) -> CliResult<Passphrase> {
-    let read = || -> CliResult<String> {
-        let mut line = String::new();
-        std::io::stdin()
-            .lock()
-            .read_line(&mut line)
-            .map_err(|e| Failure::from_error(&Error::from(e), lang))?;
-        let len = line.trim_end_matches(['\n', '\r']).len();
-        line.truncate(len);
-        Ok(line)
-    };
-    let first = read()?;
-    let mut second = read()?;
-    let same = first == second;
-    second.zeroize();
-    if !same {
-        let mut first = first;
-        first.zeroize();
+    let first = super::secret_input::stdin_line(lang)?;
+    let second = super::secret_input::stdin_line(lang)?;
+    if first.expose() != second.expose() {
         return Err(Failure::new(code::USAGE, t.prompt_mismatch));
     }
-    Passphrase::from_string(first).map_err(|e| Failure::from_error(&e, lang))
+    super::secret_input::passphrase(&first, lang)
 }
 
 /// DE: Klärt, ob ein vorhandenes Ziel ersetzt werden darf. EN: Decides whether an existing target may be replaced.
