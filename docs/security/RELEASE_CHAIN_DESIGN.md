@@ -59,3 +59,10 @@ auf exakten Ausgangsbaum prüfen. Keine Schlüssel-/Format-/Datenmigration. Issu
 bis Eigentümerreview/Merge offen beziehungsweise In progress; Auto-Merge bleibt aus.
 EN: Update release/security docs and roadmap. Verify exact-tree rollback in an isolated worktree.
 Keep issue open/In progress and auto-merge off until owner review and merge.
+
+DE: Review-Ergänzung: Die Tag-eigene Signiererliste darf keinen fremden Schlüssel selbst
+legitimieren. Trust Root aus geschütztem `origin/main`, erwarteter Checkout-Commit und exaktes
+Versionstag prüfen. Reale temporäre SSH-Git-Tests decken gültige, unsigned/lightweight, fremd
+signierte und auf einen anderen Commit zeigende Tags ab.
+EN: Tag verification uses protected-main signers, never a tag-supplied trust root. Real temporary
+Git/SSH tests cover valid, unsigned/lightweight, foreign and wrong-commit tags.

@@ -48,6 +48,19 @@ class RefTests(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             metadata('push', 'refs/tags/v1.2.3', self.commit, '1.2.3')
 
+    def test_unsigned_annotated_tag_is_rejected(self):
+        self.git('tag', '-a', 'v1.2.3', '-m', 'Unsigned')
+        with self.assertRaises(subprocess.CalledProcessError):
+            metadata('push', 'refs/tags/v1.2.3', self.commit, '1.2.3')
+
+    def test_tag_pointing_to_other_commit_is_rejected(self):
+        self.tag()
+        Path('public.txt').write_text('public new commit')
+        self.git('add', 'public.txt')
+        self.git('commit', '-qm', 'New source')
+        with self.assertRaises(ValueError):
+            metadata('push', 'refs/tags/v1.2.3', self.git('rev-parse', 'HEAD'), '1.2.3')
+
     def test_tag_cannot_supply_its_own_trusted_signer(self):
         subprocess.run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', 'foreign'], check=True)
         Path('.github/allowed_signers').write_text('test@example.invalid ' + Path('foreign.pub').read_text())
