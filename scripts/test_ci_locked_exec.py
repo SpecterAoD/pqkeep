@@ -33,15 +33,18 @@ class LockedRunnerTests(unittest.TestCase):
             ], check=True)
             execute.assert_called_once_with('cargo', ['cargo', 'test'])
 
-    def test_windows_never_invokes_sudo(self):
+    def test_windows_waits_and_propagates_failure_without_sudo(self):
         with patch.dict(os.environ, {'GITHUB_ACTIONS': 'true'}, clear=True), \
                 patch.object(runner.sys, 'platform', 'win32'), \
                 patch.object(runner.sys, 'argv', ['runner', 'cargo', 'test']), \
-                patch.object(runner.subprocess, 'run') as privileged, \
-                patch.object(runner.os, 'execvp') as execute:
-            runner.main()
-            privileged.assert_not_called()
-            execute.assert_called_once()
+                patch.object(runner.subprocess, 'run') as execute, \
+                patch.object(runner.os, 'execvp') as replace:
+            execute.return_value.returncode = 7
+            with self.assertRaises(SystemExit) as raised:
+                runner.main()
+            self.assertEqual(raised.exception.code, 7)
+            execute.assert_called_once_with(['cargo', 'test'], check=False)
+            replace.assert_not_called()
 
 
 if __name__ == '__main__':

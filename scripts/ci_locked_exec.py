@@ -24,6 +24,10 @@ def main():
         if resource.getrlimit(resource.RLIMIT_MEMLOCK) != (BUDGET, BUDGET):
             raise SystemExit("CI memlock budget was not applied")
     # DE: Keine Shell, keine Tests mit sudo. EN: No shell, no tests under sudo.
+    if sys.platform == "win32":
+        # DE: Windows-exec wartet nicht zuverlässig auf Kindprozesse.
+        # EN: Explicitly wait on Windows and propagate the real test exit status.
+        raise SystemExit(subprocess.run(sys.argv[1:], check=False).returncode)
     os.execvp(sys.argv[1], sys.argv[1:])
 
 

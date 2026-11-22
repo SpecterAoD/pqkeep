@@ -20,7 +20,6 @@ pub use policy::{
 };
 
 use unicode_normalization::UnicodeNormalization;
-use zeroize::Zeroize;
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -100,10 +99,10 @@ impl Passphrase {
     ///
     /// # Errors
     /// DE/EN: siehe / see [`Passphrase::new`].
-    pub fn from_string(mut input: String) -> Result<Self> {
-        let result = Self::new(&input);
-        input.zeroize();
-        result
+    pub fn from_string(input: String) -> Result<Self> {
+        let input = SecretBytes::new(input.into_bytes())?;
+        let text = std::str::from_utf8(input.expose()).map_err(|_| Error::Crypto)?;
+        Self::new(text)
     }
 
     /// DE: Normalisierte UTF-8-Bytes (für die Schlüsselableitung). Nicht loggen!

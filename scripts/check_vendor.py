@@ -14,7 +14,7 @@ def verify():
     for package, files in original.items():
         expected = {row["path"]: row["sha256"] for row in files}
         expected.update({row["path"]: row["sha256"] for row in patched.get(package, [])})
-        actual = {str(p.relative_to(ROOT / package)): hashlib.sha256(p.read_bytes()).hexdigest()
+        actual = {p.relative_to(ROOT / package).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in (ROOT / package).rglob("*") if p.is_file()}
         if actual != expected:
             raise ValueError(f"Providerdateien abweichend / provider files differ: {package}")
