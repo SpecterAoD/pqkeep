@@ -3,6 +3,7 @@
     "src/simple.rs": "d559d7eaaddd1234c5c093d14cced3c72b0ce292484029e173e8c71fe9225673"
   },
   "hkdf-0.13.0": {
+    "README.md": "f061ac13eb0f5e50f910fbe3bb663996a9487da9ea392c16134d7d83847ac3ca",
     "src/in_place.rs": "dece80ed8a1d7e135ea7fabc32719f38ec08a3166572fa2970693e124c2855ba",
     "src/lib.rs": "4bdcd44f96cab18ab753094f5d7109e3e72ab47dee1a93e45bd2fcb99ee18657"
   },
