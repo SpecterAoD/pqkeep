@@ -87,5 +87,21 @@ class TerminalSecretTests(unittest.TestCase):
             self.assertEqual(termios.tcgetattr(slave), original, 'cancel did not restore mode')
             self.assertFalse((Path(tmp) / 'key.json').exists())
 
+    def test_redirected_prompt_stream_fails_without_reading_input(self):
+        import pty
+        binary = str(Path(os.environ.get('PQKEEP_BINARY', 'target/debug/pqkeep')).resolve())
+        with tempfile.TemporaryDirectory(prefix='pqkeep-terminal-redirect-') as tmp:
+            master, slave = pty.openpty()
+            self.addCleanup(os.close, master)
+            self.addCleanup(os.close, slave)
+            child = subprocess.Popen([binary, '--lang', 'en', 'generate', '--algorithm',
+                                      'aes-256', '--name', 'PTY redirected', '--out', 'key.json'],
+                                     stdin=slave, stderr=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, cwd=tmp)
+            self.addCleanup(lambda: child.kill() if child.poll() is None else None)
+            child.communicate(timeout=15)
+            self.assertNotEqual(child.returncode, 0, 'redirected prompt accepted')
+            self.assertFalse((Path(tmp) / 'key.json').exists())
+
 if __name__ == '__main__':
     unittest.main()

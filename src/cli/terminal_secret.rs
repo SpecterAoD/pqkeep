@@ -66,6 +66,9 @@ pub(super) fn password(
     confirm: bool,
 ) -> CliResult<Passphrase> {
     let term = Term::stderr();
+    if !term.is_term() {
+        return Err(Failure::new(code::USAGE, t.msg_no_tty));
+    }
     loop {
         let first = read(&term, prompt, lang)?;
         if confirm {
