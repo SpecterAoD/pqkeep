@@ -85,8 +85,9 @@ today's common public-key encryption ("harvest now, decrypt later").
 - **Interfaces:** CLI with interactive menu and bilingual help (English/German); right-click menu
   in Nemo, Nautilus, Dolphin, Thunar and Windows Explorer; local REST API (`/v1/generate`,
   `/v1/validate`, `/v1/health`) bound to 127.0.0.1 by default.
-- **Hardening:** no own `unsafe` code, memory locking, core dumps disabled, zeroisation (best
-  effort); on Linux a Landlock and seccomp sandbox per command.
+- **Hardening:** `unsafe` forbidden in the application crate, mandatory secret memory locking
+  (including KDF workspace; operation fails if unavailable), wiping before release and Linux
+  Landlock/seccomp. Narrow provider FFI and OS limits: [locked secrets](docs/security/LOCKED_SECRETS.md).
 
 ### Command overview
 
@@ -294,8 +295,9 @@ sammeln, später entschlüsseln“).
 - **Bedienung:** CLI mit interaktivem Menü und zweisprachiger Hilfe (Deutsch/Englisch);
   Rechtsklick-Menü in Nemo, Nautilus, Dolphin, Thunar und im Windows-Explorer; lokale REST-API
   (`/v1/generate`, `/v1/validate`, `/v1/health`), standardmäßig nur an 127.0.0.1.
-- **Härtung:** kein eigener `unsafe`-Code, Speichersperre, keine Core-Dumps, Nullen von
-  Geheimnissen (nach bestem Bemühen); unter Linux eine Landlock- und Seccomp-Sandbox je Befehl.
+- **Härtung:** `unsafe` im Anwendungscode verboten, Secret-Speichersperren einschließlich
+  KDF-Arbeitspuffer zwingend (sonst Abbruch), Löschen vor Freigabe und Linux-Landlock/Seccomp.
+  Begrenzte Provider-FFI und OS-Grenzen: [Secret-Speicher](docs/security/LOCKED_SECRETS.md).
 
 ### Befehlsübersicht
 

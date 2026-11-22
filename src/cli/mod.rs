@@ -43,6 +43,7 @@ mod rekey_cmd;
 mod rekey_input;
 mod rekey_text;
 mod sandbox;
+mod secret_input;
 #[cfg(feature = "api")]
 mod serve;
 #[cfg(feature = "api")]
@@ -50,6 +51,9 @@ mod serve_text;
 mod sign_cmd;
 mod sign_text;
 mod signing;
+#[cfg(target_os = "linux")]
+mod terminal_mode;
+mod terminal_secret;
 mod text;
 mod text_de;
 mod text_en;

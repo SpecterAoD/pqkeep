@@ -39,8 +39,8 @@ Register, kein vertrauenswürdiger Frischezähler und kein globaler Mindestversi
 Nonces verhindern kein Replay der gesamten Datei. Versionsumschreiben/KDF-Absenken/Slot-Manipulation
 werden separat geprüft; v1 bleibt unterstützt. Neuverschlüsselung widerruft keine alten Kopien.
 Normales Fehler-Cleanup beweist keine Crash-/OOM-/Stromausfall-Recovery: bei Abort/SIGKILL läuft
-Drop nicht, temporärer Klartext kann bleiben. Windows ohne Sandbox/eigene ACL-Prüfung; Landlock-
-und mlock-Best-effort-Ausnahmen gelten weiterhin. Source-/Publish-/FAT-Rennen siehe FILE_FORMAT.md
+Drop nicht, temporärer Klartext kann bleiben. Windows ohne Sandbox/eigene ACL-Prüfung; Landlock bleibt kernelabhängig.
+Secret-Speicher muss vollständig gesperrt sein, sonst Fehler (siehe security/LOCKED_SECRETS.md). Source-/Publish-/FAT-Rennen siehe FILE_FORMAT.md
 und FORMAT.md. STREAM-Puffer sind begrenzt, Source-/Pfadlisten und Argon2 benötigen weiteren Speicher.
 
 Der freigegebene [Fault-/Recovery-Testentwurf](security/FAULT_RECOVERY.md) (#152) definiert
@@ -79,8 +79,8 @@ register, trusted freshness counter or global minimum-version state. Fresh nonce
 whole-file replay. Version relabelling, reduced KDF parameters and slot tampering are checked
 separately; v1 remains supported. Re-encryption cannot revoke old copies. Ordinary error cleanup
 does not prove crash/OOM/power-loss recovery: abort/SIGKILL skips Drop and temporary plaintext may
-remain. Windows lacks an equivalent sandbox/dedicated ACL validation; Landlock/mlock best-effort
-exceptions remain. See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races. STREAM buffers
+remain. Windows lacks an equivalent sandbox/dedicated ACL validation; Landlock remains kernel-dependent.
+Secret memory must be fully locked or processing fails (see security/LOCKED_SECRETS.md). See FILE_FORMAT.md/FORMAT.md for source/publication/FAT races. STREAM buffers
 are bounded, but source/path bookkeeping and Argon2 require additional memory.
 
 The approved [fault/recovery test design](security/FAULT_RECOVERY.md) (#152) defines the

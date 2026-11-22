@@ -1,12 +1,14 @@
-# MASTER PROJECT SPECIFICATION v2.18: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.19: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.18. Both versions are maintained together; every change to one is made to the other in the
+> 2.19. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.18. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.19. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
+
+> Change v2.19 (2026-11-22, owner-authorized autonomous security fix through main): mandatory secret locking including KDF/HKDF workspaces; fail on unavailable locks, bounded input, wipe before release. Format/derivation bytes unchanged. See [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
 > Change v2.2 (2026-11-06, approved by SpecterAoD): memory hardening (step 2a), build hardening (`panic = "abort"`, checks for PIE/RELRO/NX and ASLR/DEP/CFG), weekly audit, sandboxing (step 5a), root warning (step 4), timing equalisation for `/v1/validate` (step 5).
@@ -69,7 +71,7 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - `#![forbid(unsafe_code)]` in the project. If unavoidable for platform functions (e.g. memory locking): isolated in a single, commented module with justification.
 - Secrets (private keys, seeds, derived keys, passphrase) in `Zeroizing<...>` or types with `ZeroizeOnDrop` / `secrecy`. These types implement **no** `Debug`, `Display`, `Clone` or `Serialize` with plaintext output.
 - No logging of secrets or request bodies. Secrets/tags compared in constant time (`subtle`).
-- Documentation note: zeroisation is "best effort" (copies by the compiler, swap, core dumps). Optional and documented: disable core dumps, lock memory pages.
+- Documentation note: zeroisation is "best effort" (copies by the compiler, swap, core dumps). Secret memory pages including Argon2/HKDF must be fully locked or the operation fails. Document core-dump/compiler/OS limits separately.
 
 ### 3.2 Cryptography
 - **Key exchange:** ML-KEM (FIPS 203), default **ML-KEM-768**, selectable ML-KEM-512/1024.
@@ -190,7 +192,7 @@ All published artefacts (release, beta, release candidate) must be signed and ve
 - **Downgrade protection:** Containers with too old a `format_version` or too weak KDF parameters are rejected or opened only with an explicit warning/confirmation.
 - **Check file permissions on loading:** On Linux a warning for `group/world`-readable containers. On Windows storage in the user profile with a restricted ACL.
 - **No clipboard, no history:** Passphrases are never copied to the clipboard automatically, never passed as an argument (shell history) and not shown in the terminal (exception: generator, only on explicit request).
-- **Core dumps and swap:** Disable core dumps for the process and lock memory pages holding secrets (`mlock`/`VirtualLock`), only in an isolated, commented module. Document honestly: this is best effort.
+- **Core dumps and swap:** Disable core dumps for the process and lock memory pages holding secrets (`mlock`/`VirtualLock`), in isolated documented modules. Memory locking is mandatory (no fallback); document process/OS/compiler limits separately.
 - **Compiler/linker hardening:** `overflow-checks = true` also in release, `lto`, `codegen-units = 1`, `strip`, `panic = "abort"` (release only; destructors do not run on panic – acceptable because core dumps are disabled). Linux: PIE, full RELRO (`-z relro -z now`), NX stack. Windows: ASLR (high entropy), DEP, Control Flow Guard. A CI job checks these properties on the built release binary (`scripts/check_binary.py`).
 - **Supply chain:** `cargo deny` with allowlists for licences and sources, plus a weekly scheduled advisory run (`.github/workflows/audit.yml`), as few dependencies as possible, optionally `cargo vet`, OpenSSF Scorecard workflow, Dependabot, 2FA for all maintainers.
 - **Fuzzing:** `cargo-fuzz` for container parsers and API input, regularly via a scheduled workflow.

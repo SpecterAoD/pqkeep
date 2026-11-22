@@ -135,7 +135,7 @@ Known limits remain explicit in each case: valid whole-file replay is accepted; 
 freshness register/global version floor exists. Relabelled versions, weak KDF settings and modified
 slots are rejected within existing tests. Old copies remain readable after recipient changes.
 Windows has no equivalent sandbox or dedicated ACL checks; WER suppression is not guaranteed.
-Locking and zeroization are best effort; abort skips Drop. Ordinary cleanup tests do not prove
+Locking is mandatory (see LOCKED_SECRETS.md); zeroization retains compiler/OS limits; abort skips Drop. Ordinary cleanup tests do not prove
 SIGKILL/OOM/power-loss recovery. Source/publish/FAT races are documented. STREAM buffers are bounded,
 but source/path bookkeeping and Argon2 memory are not constant total process memory.
 ARM64 evidence uses 4-KiB pages; 64-KiB kernels need separate controlled verification.
@@ -276,7 +276,7 @@ oder Pflichtcheck. Fuzz-Auslöser/Budgets unverändert; Katalogänderung allein 
 Grenzen in jedem Fall: gültiges Replay wird akzeptiert, kein Frischeregister/globaler Versionsboden.
 Versionsumschreiben, schwache KDF und Slot-Manipulation werden im konkreten Testscope abgewiesen.
 Alte Kopien bleiben nach Empfängerwechsel lesbar. Windows ohne gleichwertige Sandbox/eigene ACL-
-Prüfung, WER-Sperre nicht garantiert. Locking/Zeroize best effort; Abort ohne Drop. Normales Cleanup
+Prüfung, WER-Sperre nicht garantiert. Sperren zwingend (siehe LOCKED_SECRETS.md); Zeroize mit Compiler-/OS-Grenzen; Abort ohne Drop. Normales Cleanup
 beweist keine SIGKILL-/OOM-/Stromausfall-Recovery. Source-/Publish-/FAT-Rennen dokumentiert.
 STREAM-Puffer begrenzt, Gesamtprozess mit Source-/Pfadlisten und Argon2 nicht konstant im Speicher.
 ARM64 nur 4-KiB-Seiten belegt; 64 KiB benötigt Sonderprüfung. Windows ARM64 kein aktuelles CI-/Releaseziel.

@@ -52,7 +52,7 @@ Beispiel:\n  pqkeep encrypt Ordner --to anna.pub.json\n  pqkeep decrypt Ordner.p
         "security",
         "SICHERHEIT UND GRENZEN\n\n\
   - Speicherseiten mit Geheimnissen werden gesperrt (kein Swap), Core Dumps unter Linux\n\
-    abgeschaltet, Geheimnisse nach Gebrauch genullt – alles nach bestem Bemühen.\n\
+    abgeschaltet. Unvollständige Sperre führt zum Fehler; Nullen hat Compiler-/OS-Grenzen.\n\
   - Schutz gilt gegen Diebstahl von Dateien, nicht gegen Schadsoftware auf dem Rechner.\n\
   - Empfohlen: Festplattenverschlüsselung, verschlüsselter Swap, kein Ruhezustand.\n\
   - Fingerabdruck öffentlicher Schlüssel immer auf einem zweiten Weg abgleichen.\n\

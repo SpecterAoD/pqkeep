@@ -8,7 +8,9 @@
 //! hardware. Bounds protect against weak parameters and against DoS via
 //! tampered headers.
 
-use argon2::{Algorithm, Argon2, AssociatedData, ParamsBuilder, Version};
+use argon2::{Algorithm, Argon2, AssociatedData, Block, ParamsBuilder, Version};
+
+use super::secret_buffer::SecretBuffer;
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -118,7 +120,7 @@ pub fn derive(passphrase: &[u8], salt: &[u8], params: &KdfParams) -> Result<Secr
             field: "passphrase",
         });
     }
-    let mut key = SecretBytes::new(vec![0u8; OUTPUT_LEN]);
+    let mut key = SecretBytes::zeroed(OUTPUT_LEN)?;
     argon2id(passphrase, salt, params, &[], &[], key.expose_mut())?;
     Ok(key)
 }
@@ -153,7 +155,14 @@ pub(crate) fn argon2id(
         Argon2::new_with_secret(secret, Algorithm::Argon2id, Version::V0x13, argon_params)
             .map_err(|_| Error::KdfParams)?
     };
+    let count = argon.params().block_count();
+    let mut blocks = Vec::new();
+    blocks
+        .try_reserve_exact(count)
+        .map_err(|_| Error::MemoryLock)?;
+    blocks.resize(count, Block::new());
+    let mut blocks = SecretBuffer::new(blocks)?;
     argon
-        .hash_password_into(passphrase, salt, out)
+        .hash_password_into_with_memory(passphrase, salt, out, blocks.expose_mut())
         .map_err(|_| Error::Crypto)
 }

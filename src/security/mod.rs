@@ -10,6 +10,7 @@ mod blocklist;
 pub mod dictionary;
 mod entropy;
 pub mod generator;
+mod locked;
 mod patterns;
 mod policy;
 
@@ -19,7 +20,6 @@ pub use policy::{
 };
 
 use unicode_normalization::UnicodeNormalization;
-use zeroize::Zeroize;
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -47,6 +47,7 @@ pub enum Lang {
 pub struct Passphrase {
     bytes: SecretBytes,
     chars: usize,
+    evaluation: policy::Evaluation,
 }
 
 impl Passphrase {
@@ -70,18 +71,26 @@ impl Passphrase {
             });
         }
         let len: usize = input.nfkc().map(char::len_utf8).sum();
-        let mut normalized = String::with_capacity(len);
-        normalized.extend(input.nfkc());
-        let chars = normalized.chars().count();
+        let mut normalized = SecretBytes::zeroed(len)?;
+        let mut offset = 0;
+        let mut chars = 0;
+        for ch in input.nfkc() {
+            let n = ch.len_utf8();
+            ch.encode_utf8(&mut normalized.expose_mut()[offset..offset + n]);
+            offset += n;
+            chars += 1;
+        }
         if chars == 0 || chars > INPUT_LIMIT_CHARS {
-            normalized.zeroize();
             return Err(Error::InvalidInput {
                 field: "passphrase",
             });
         }
+        let text = std::str::from_utf8(normalized.expose()).map_err(|_| Error::Crypto)?;
+        let evaluation = policy::evaluate(text)?;
         Ok(Self {
-            bytes: SecretBytes::new(normalized.into_bytes()),
+            bytes: normalized,
             chars,
+            evaluation,
         })
     }
 
@@ -90,10 +99,10 @@ impl Passphrase {
     ///
     /// # Errors
     /// DE/EN: siehe / see [`Passphrase::new`].
-    pub fn from_string(mut input: String) -> Result<Self> {
-        let result = Self::new(&input);
-        input.zeroize();
-        result
+    pub fn from_string(input: String) -> Result<Self> {
+        let input = SecretBytes::new(input.into_bytes())?;
+        let text = std::str::from_utf8(input.expose()).map_err(|_| Error::Crypto)?;
+        Self::new(text)
     }
 
     /// DE: Normalisierte UTF-8-Bytes (für die Schlüsselableitung). Nicht loggen!
@@ -115,8 +124,8 @@ impl Passphrase {
     /// request. Do not log!
     #[must_use]
     pub fn expose_str(&self) -> &str {
-        // DE: Stammt immer aus einem `String`, ist also gültiges UTF-8.
-        // EN: Always originates from a `String`, hence valid UTF-8.
+        // DE: Wird ausschließlich aus UTF-8-Zeichen aufgebaut.
+        // EN: Constructed exclusively from UTF-8 characters.
         std::str::from_utf8(self.bytes.expose()).unwrap_or_default()
     }
 
@@ -124,11 +133,7 @@ impl Passphrase {
     /// EN: Assesses the passphrase (all reasons, estimated entropy).
     #[must_use]
     pub fn assess(&self) -> Assessment {
-        let (reasons, entropy_bits) = policy::assess(self.expose_str());
-        Assessment {
-            reasons,
-            entropy_bits,
-        }
+        self.evaluation.assess(MIN_ENTROPY_BITS)
     }
 
     /// DE: Wie [`Passphrase::assess`], mit höherem Mindestwert (128–256 Bit; kleinere Werte
@@ -137,11 +142,7 @@ impl Passphrase {
     #[must_use]
     pub fn assess_with(&self, min_bits: u32) -> Assessment {
         let min = f64::from(min_bits.min(MAX_MIN_BITS));
-        let (reasons, entropy_bits) = policy::assess_with(self.expose_str(), min);
-        Assessment {
-            reasons,
-            entropy_bits,
-        }
+        self.evaluation.assess(min)
     }
 }
 

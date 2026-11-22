@@ -15,6 +15,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, ThisError, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
+    /// DE: Secret-Speicher konnte nicht gesperrt werden; keine Verarbeitung.
+    /// EN: Secret memory could not be locked; processing is refused.
+    #[error("Geheimer Speicher konnte nicht gesperrt werden / secret memory could not be locked")]
+    MemoryLock,
     /// DE: Ungültige Eingabe; `field` ist ein fester Name, nie der Wert.
     /// EN: Invalid input; `field` is a fixed name, never the value.
     #[error("Ungültige Eingabe im Feld „{field}“ / invalid input in field '{field}'")]

@@ -38,14 +38,14 @@ fn material(algorithm: KeyAlgorithm) -> (SecretBytes, Vec<u8>) {
         KeyAlgorithm::Kem(a) => {
             let pair = kem::generate(a).unwrap();
             (
-                SecretBytes::from_slice(pair.seed().expose()),
+                SecretBytes::from_slice(pair.seed().expose()).unwrap(),
                 pair.public_key,
             )
         }
         KeyAlgorithm::Dsa(a) => {
             let pair = dsa::generate(a).unwrap();
             (
-                SecretBytes::from_slice(pair.seed().expose()),
+                SecretBytes::from_slice(pair.seed().expose()).unwrap(),
                 pair.public_key,
             )
         }

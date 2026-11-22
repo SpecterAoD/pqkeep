@@ -30,7 +30,7 @@ fn secrets_are_locked_and_released() {
 
     // DE: 3 Seiten großes Geheimnis. EN: Secret spanning 3 pages.
     let size = 3 * region::page::size();
-    let secret = SecretBytes::new(vec![0x5A; size]);
+    let secret = SecretBytes::new(vec![0x5A; size]).unwrap();
     let during = memlock::stats();
     assert!(secret.is_locked(), "{during:?}");
     assert!(during.locked_pages >= before.locked_pages + 3);

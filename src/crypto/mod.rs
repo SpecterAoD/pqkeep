@@ -7,12 +7,15 @@
 pub mod aead;
 pub mod dsa;
 pub mod factor;
+mod hkdf_locked;
 pub mod kdf;
 pub mod kem;
 pub mod protect;
 pub mod protect_v2;
 pub mod rng;
 mod secret;
+pub(crate) mod secret_buffer;
+mod secret_state;
 pub mod stream;
 mod stream_io;
 pub mod v2;
@@ -126,3 +129,10 @@ impl KeyAlgorithm {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "hkdf_locked_tests.rs"]
+mod hkdf_locked_tests;
+#[cfg(test)]
+#[path = "secret_buffer_tests.rs"]
+mod secret_buffer_tests;

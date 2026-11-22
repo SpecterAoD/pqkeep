@@ -17,9 +17,6 @@
 //! rejection; unwrapping then reliably fails with [`Error::Decrypt`]. The AAD
 //! (header fields) is chosen by the caller.
 
-use hkdf::SimpleHkdf;
-use sha3::Sha3_256;
-
 use crate::crypto::aead::{self, NONCE_LEN, TAG_LEN};
 use crate::crypto::kdf::{self, KdfParams};
 use crate::crypto::{KemAlgorithm, SecretBytes, kem};
@@ -82,14 +79,10 @@ pub(crate) fn kek_from_shared(
 ) -> Result<SecretBytes> {
     // DE: `SimpleHkdf`, da SHA3 (Sponge) keine Block-Kern-Schnittstelle für `Hmac` bietet.
     // EN: `SimpleHkdf` because SHA3 (sponge) offers no block-core interface for `Hmac`.
-    let hk = SimpleHkdf::<Sha3_256>::new(Some(kem_ciphertext), shared);
     let mut info = Vec::with_capacity(HKDF_INFO.len() + recipient_id.len());
     info.extend_from_slice(HKDF_INFO);
     info.extend_from_slice(recipient_id);
-    let mut kek = SecretBytes::new(vec![0u8; aead::KEY_LEN]);
-    hk.expand(&info, kek.expose_mut())
-        .map_err(|_| Error::Crypto)?;
-    Ok(kek)
+    super::hkdf_locked::derive(kem_ciphertext, shared, &info)
 }
 
 /// DE: Packt mit einer Passphrase ein. EN: Wraps with a passphrase.

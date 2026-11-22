@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Security
+- Mandatory locked secret memory (#148): fail closed on lock failure; typed locked Argon2
+  workspace, locked HKDF/HMAC intermediates, AES state and plaintext buffers; bounded locked
+  password input and generator. Existing v1/v2/v3 formats and derivation bytes unchanged.
+  Linux needs sufficient existing memlock budget; Windows requests its own working-set capacity.
+  Application unsafe prohibition retained; narrow provider patches documented in vendor/README.md.
+  **DE:** Secret-Speicher zwingend sperren, keine ungesperrten Fallbacks; KDF-/HKDF-Zwischenwerte,
+  Klartext und Passphrase-Eingaben abgesichert, bei Ressourcenfehler sicher abbrechen.
+
 ### Changed
 - **Weekly preview build no longer runs on pull requests** (#269): only on its weekly schedule and
   by hand; changes to the shared `build.yml` are still built and tested by `release.yml` in pull

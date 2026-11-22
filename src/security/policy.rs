@@ -3,7 +3,7 @@
 
 use std::fmt;
 
-use zeroize::Zeroizing;
+use crate::Result;
 
 use super::{Lang, entropy, patterns};
 
@@ -154,20 +154,38 @@ impl std::error::Error for Rejection {}
 /// DE: Prädikat für eine Zeichenklasse. EN: Predicate for a character class.
 pub(super) type CharPred = fn(char) -> bool;
 
-/// DE: Prüft alle Regeln mit dem Standard-Mindestwert. EN: Checks all rules with the default minimum.
-pub(super) fn assess(text: &str) -> (Vec<Reason>, f64) {
-    assess_with(text, MIN_ENTROPY_BITS)
+// DE: Einmalige fallible Prüfung bei der Passphrase-Konstruktion; nur Metadaten behalten.
+// EN: Evaluate once, fallibly, when constructing the passphrase; retain metadata only.
+pub(super) struct Evaluation {
+    reasons: Vec<Reason>,
+    bits: f64,
+    word_model: bool,
 }
 
-/// DE: Prüft alle Regeln mit Mindestwert `min_bits` (nie unter [`MIN_ENTROPY_BITS`]) und liefert
-/// Gründe sowie geschätzte Entropie.
-/// EN: Checks all rules with minimum `min_bits` (never below [`MIN_ENTROPY_BITS`]) and returns
-/// reasons and estimated entropy.
-pub(super) fn assess_with(text: &str, min_bits: f64) -> (Vec<Reason>, f64) {
-    let min_bits = min_bits.max(MIN_ENTROPY_BITS);
-    // DE: Zeichenkopie der Passphrase – wird beim Verlassen genullt.
-    // EN: Character copy of the passphrase – zeroed when leaving scope.
-    let chars: Zeroizing<Vec<char>> = Zeroizing::new(text.chars().collect());
+impl Evaluation {
+    pub(super) fn assess(&self, min_bits: f64) -> super::Assessment {
+        let min_bits = min_bits.max(MIN_ENTROPY_BITS);
+        let mut reasons = self.reasons.clone();
+        if self.bits < min_bits && self.word_model {
+            reasons.push(Reason::DictionaryWords);
+        }
+        if self.bits < min_bits {
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            reasons.push(Reason::LowEntropy {
+                bits: self.bits.floor() as u32,
+                min: min_bits.ceil() as u32,
+            });
+        }
+        super::Assessment {
+            reasons,
+            entropy_bits: self.bits,
+        }
+    }
+}
+
+pub(super) fn evaluate(text: &str) -> Result<Evaluation> {
+    let chars = super::locked::chars(text.chars())?;
+    let chars = chars.expose();
     let mut reasons = Vec::new();
     if chars.len() < MIN_CHARS {
         reasons.push(Reason::TooShort { chars: chars.len() });
@@ -190,25 +208,15 @@ pub(super) fn assess_with(text: &str, min_bits: f64) -> (Vec<Reason>, f64) {
     if has(char::is_control) {
         reasons.push(Reason::ControlCharacter);
     }
-    let found = patterns::find(&chars);
+    let found = patterns::find(chars)?;
     reasons.extend(found.reasons.iter().copied());
-    let low: Zeroizing<Vec<char>> =
-        Zeroizing::new(chars.iter().map(|&c| patterns::lower(c)).collect());
-    let estimate = entropy::estimate(&chars, &low, &found.marked);
-    let bits = estimate.bits;
-    if bits < min_bits && estimate.word_model {
-        reasons.push(Reason::DictionaryWords);
-    }
-    if bits < min_bits {
-        // DE: Abrunden für die Anzeige; Werte sind klein und nicht negativ.
-        // EN: Round down for display; values are small and non-negative.
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        reasons.push(Reason::LowEntropy {
-            bits: bits.floor() as u32,
-            min: min_bits.ceil() as u32,
-        });
-    }
-    (reasons, bits)
+    let low = super::locked::chars(chars.iter().map(|&c| patterns::lower(c)))?;
+    let estimate = entropy::estimate(chars, low.expose(), &found.marked)?;
+    Ok(Evaluation {
+        reasons,
+        bits: estimate.bits,
+        word_model: estimate.word_model,
+    })
 }
 
 /// DE: Sonderzeichen = weder Buchstabe/Ziffer noch Steuerzeichen (inkl. Leerzeichen).

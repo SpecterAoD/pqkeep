@@ -2412,12 +2412,12 @@
         "en": "Observe swapped secrets or force memory locking to fail."
       },
       "expected_behavior": {
-        "de": "Lock/Release nachweisen; Fehlschlag gezählt, Weiterlauf dokumentiert",
-        "en": "lock/release, recorded best-effort failure"
+        "de": "Lock/Release nachweisen; ohne vollständige Sperre keine Secret-Verarbeitung",
+        "en": "lock/release; refuse secret processing without complete page locks"
       },
       "boundary": {
-        "de": "mlock-Fehler erlauben Weiterlauf und werden gezählt; Limit-Test kehrt als root zurück.",
-        "en": "Lock failures allow continued execution and are counted; the limit test returns early as root."
+        "de": "Sperrfehler werden gezählt und verweigern Secret-Instanzen. Linux-Limit-null-Test ohne root-Ausnahme; kein nativer Windows-Limit-Verweigerungstest.",
+        "en": "Count lock failures and refuse secret instances. Linux zero-limit test has no root exception; native Windows lock-limit denial is not tested."
       },
       "implementation_state": "implemented",
       "coverage_status": "partial",
@@ -2444,7 +2444,7 @@
         },
         {
           "path": "tests/hardening_memlock_limit.rs",
-          "symbol": "locking_failure_is_tolerated_and_reported",
+          "symbol": "locking_failure_refuses_secret_processing",
           "kind": "rust-integration",
           "stage": "existing"
         }
@@ -2475,8 +2475,8 @@
         "B1-linux-arm64"
       ],
       "gap": {
-        "de": "mlock-Fehler erlauben Weiterlauf und werden gezählt; Limit-Test kehrt als root zurück.",
-        "en": "Lock failures allow continued execution and are counted; the limit test returns early as root."
+        "de": "Sperrfehler werden gezählt und verweigern Secret-Instanzen. Linux-Limit-null-Test ohne root-Ausnahme; kein nativer Windows-Limit-Verweigerungstest.",
+        "en": "Count lock failures and refuse secret instances. Linux zero-limit test has no root exception; native Windows lock-limit denial is not tested."
       },
       "next_evidence": {
         "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",

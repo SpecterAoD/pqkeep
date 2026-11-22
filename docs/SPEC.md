@@ -1,6 +1,8 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.18: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.19: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
+
+> Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -63,7 +65,7 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - `#![forbid(unsafe_code)]` im Projekt. Falls für Plattformfunktionen (z. B. Speicher-Locking) unvermeidbar: isoliert in einem einzigen, kommentierten Modul mit Begründung.
 - Geheimnisse (private Schlüssel, Seeds, abgeleitete Schlüssel, Passphrase) in `Zeroizing<...>` bzw. Typen mit `ZeroizeOnDrop` / `secrecy`. Diese Typen implementieren **kein** `Debug`, `Display`, `Clone` oder `Serialize` mit Klartext-Ausgabe.
 - Kein Logging von Geheimnissen oder Request-Bodies. Vergleich von Geheimnissen/Tags in konstanter Zeit (`subtle`).
-- Doku-Hinweis: Zeroization ist „best effort“ (Kopien durch Compiler, Swap, Core Dumps). Optional und dokumentiert: Core Dumps deaktivieren, Speicherseiten sperren.
+- Doku-Hinweis: Zeroization ist „best effort“ (Kopien durch Compiler, Swap, Core Dumps). Secret-Speicherseiten einschließlich Argon2/HKDF müssen vollständig gesperrt sein, sonst Fehler. Core-Dump-/Compiler-/OS-Grenzen getrennt dokumentieren.
 
 ### 3.2 Kryptografie
 - **Schlüsselaustausch:** ML-KEM (FIPS 203), Standard **ML-KEM-768**, wählbar ML-KEM-512/1024.
@@ -186,7 +188,7 @@ Alle veröffentlichten Artefakte (Release, Beta, Release Candidate) müssen sign
 - **Downgrade-Schutz:** Container mit zu alter `format_version` oder zu schwachen KDF-Parametern werden abgelehnt oder nur mit expliziter Warnung/Bestätigung geöffnet.
 - **Dateirechte beim Laden prüfen:** Unter Linux Warnung bei `group/world`-lesbaren Containern. Unter Windows Ablage im Benutzerprofil mit eingeschränkter ACL.
 - **Kein Clipboard, keine Historie:** Passphrasen werden nie automatisch in die Zwischenablage kopiert, nie als Argument übergeben (Shell-History) und im Terminal nicht angezeigt (Ausnahme: Generator, nur auf ausdrücklichen Wunsch).
-- **Core Dumps und Swap:** Core Dumps für den Prozess deaktivieren und Speicherseiten mit Geheimnissen sperren (`mlock`/`VirtualLock`), nur in einem isolierten, kommentierten Modul. Ehrlich dokumentieren: Das ist best effort.
+- **Core Dumps und Swap:** Core Dumps für den Prozess deaktivieren und Speicherseiten mit Geheimnissen sperren (`mlock`/`VirtualLock`), in isolierten, kommentierten Modulen. Speichersperren sind zwingend (kein Fallback); Prozess-/OS-/Compilergrenzen bleiben ehrlich dokumentiert.
 - **Compiler-/Linker-Härtung:** `overflow-checks = true` auch im Release, `lto`, `codegen-units = 1`, `strip`, `panic = "abort"` (nur Release; Destruktoren laufen bei Panik nicht – vertretbar, da Core Dumps gesperrt sind). Linux: PIE, Full RELRO (`-z relro -z now`), NX-Stack. Windows: ASLR (High Entropy), DEP, Control Flow Guard. Ein CI-Job prüft diese Merkmale am gebauten Release-Binary (`scripts/check_binary.py`).
 - **Lieferkette:** `cargo deny` mit Allowlist für Lizenzen und Quellen, zusätzlich wöchentlicher geplanter Advisory-Lauf (`.github/workflows/audit.yml`), möglichst wenige Abhängigkeiten, optional `cargo vet`, OpenSSF-Scorecard-Workflow, Dependabot, 2FA für alle Maintainer.
 - **Fuzzing:** `cargo-fuzz` für Container-Parser und API-Eingaben, regelmäßig per geplantem Workflow.
