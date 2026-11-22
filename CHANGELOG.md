@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+### Changed
+- **Weekly preview build no longer runs on pull requests** (#269): only on its weekly schedule and
+  by hand; changes to the shared `build.yml` are still built and tested by `release.yml` in pull
+  requests. **DE:** Vorschau-Build läuft nicht mehr bei Pull Requests.
+
 ### Added
 - **Sender signature inside `.pqkf` (#44, U1):** `pqkeep encrypt --sign-with <key.key.json>`
   (optionally `--sign-factor-file`) embeds an ML-DSA-87 signature over the whole header (all

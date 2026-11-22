@@ -5,7 +5,7 @@
 #     - übersprungen, wenn es seit der letzten Vorschau keinen neuen Commit gibt oder die CI auf
 #       dem Commit nicht grün ist (nur beim Zeitplan; von Hand startet immer);
 #     - es bleiben die letzten vier Vorschauen, ältere werden samt Tag gelöscht;
-#     - Pull Requests, die diesen Workflow oder build.yml ändern: nur Build und Tests (kein Publish).
+#     - kein Lauf bei Pull Requests; Änderungen an build.yml baut und testet release.yml im PR.
 #     Releases und Betas bleiben davon unberührt: Tags `v*` lösen nur release.yml aus.
 # EN: Weekly preview of `main` (#269). Uses the same build as the releases (build.yml) but only
 #     publishes a GitHub pre-release `preview-<date>.<commit>`:
@@ -14,7 +14,7 @@
 #     - skipped when there is no new commit since the last preview or CI on the commit is not
 #       green (schedule only; a manual start always runs);
 #     - the last four previews are kept, older ones are deleted together with their tag;
-#     - pull requests changing this workflow or build.yml: build and tests only (no publish).
+#     - no run on pull requests; changes to build.yml are built and tested by release.yml in the PR.
 #     Releases and betas stay untouched: tags `v*` trigger release.yml only.
 name: Preview
 
@@ -22,10 +22,6 @@ on:
   schedule:
     - cron: "41 3 * * 0"
   workflow_dispatch:
-  pull_request:
-    paths:
-      - ".github/workflows/preview.yml"
-      - ".github/workflows/build.yml"
 
 permissions:
   contents: read
@@ -73,10 +69,10 @@ jobs:
           skip=false
           reason="build"
           # DE: Vorschauen nur von `main`; ein Handstart auf einem anderen Branch baut und
-          #     veröffentlicht nichts (Pull Requests bauen weiter zum Testen, ohne Veröffentlichung).
+          #     veröffentlicht nichts.
           # EN: Previews from `main` only; a manual start on another branch builds and publishes
-          #     nothing (pull requests still build for testing, without publishing).
-          if [ "$GITHUB_EVENT_NAME" != "pull_request" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+          #     nothing.
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             skip=true; reason="nicht main / not main ($GITHUB_REF)"
           elif [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
             last=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" \
