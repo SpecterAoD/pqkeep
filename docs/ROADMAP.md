@@ -21,6 +21,14 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
+## In Bearbeitung / In progress
+
+- [ ] [#186](https://github.com/SpecterAoD/pqkeep/issues/186): Release-Vertrauenskette – vollständige
+  Verifikation vor Release-Entwurf, Negativtests und Repository-/Workflow-/Ref-/Commit-Bindung.
+  / Verify the complete release chain before drafting, with negative identity/binding tests.
+  [Plan / design](security/RELEASE_CHAIN_DESIGN.md). Merge ausschließlich durch den Eigentümer.
+  / Main merge reserved for the owner; no release publication or protection-setting changes.
+
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
 - [x] [#117](https://github.com/SpecterAoD/pqkeep/issues/117): `pqkeep list` – authentisierte v1/v2-Archivliste ohne Extraktion; begrenzte Metadaten erst nach vollständiger Prüfung, eigenes List-JSON. / Authenticated v1/v2 archive listing without extraction; bounded metadata after full verification, dedicated listing JSON. ([PR #283](https://github.com/SpecterAoD/pqkeep/pull/283), 21.11.2026)
