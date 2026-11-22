@@ -133,11 +133,12 @@ fn class(c: char) -> u8 {
 /// Ziffernfolgen nach dem Wort-Modell. `low` = Kleinbuchstaben-Kopie von `chars`.
 /// EN: Estimated bits; marked characters (patterns) do not count, letter and digit
 /// runs follow the word model. `low` = lowercase copy of `chars`.
-pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> Estimate {
+pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> crate::Result<Estimate> {
     let per = per_char(chars);
-    let words = dictionary::find(low, marked);
+    let words = dictionary::find(low, marked)?;
     let (mut bits, mut word_model, mut i) = (0.0, false, 0);
-    let mut seen: Vec<char> = Vec::new();
+    let mut seen = crate::crypto::secret_buffer::SecretBuffer::new(vec!['\0'; chars.len()])?;
+    let mut used = 0;
     while i < chars.len() {
         if marked[i] {
             i += 1;
@@ -158,10 +159,11 @@ pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> Estimat
             _ => chars[i..j]
                 .iter()
                 .map(|c| {
-                    if seen.contains(c) {
+                    if seen.expose()[..used].contains(c) {
                         REPEAT_BITS.min(per)
                     } else {
-                        seen.push(*c);
+                        seen.expose_mut()[used] = *c;
+                        used += 1;
                         per
                     }
                 })
@@ -169,5 +171,5 @@ pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> Estimat
         };
         i = j;
     }
-    Estimate { bits, word_model }
+    Ok(Estimate { bits, word_model })
 }

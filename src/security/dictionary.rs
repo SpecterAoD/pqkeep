@@ -13,7 +13,8 @@ use std::collections::HashSet;
 use std::ops::Range;
 use std::sync::OnceLock;
 
-use zeroize::Zeroizing;
+use crate::crypto::SecretBytes;
+use crate::{Error, Result};
 
 /// DE: Kürzeste berücksichtigte Wortlänge (Zeichen). EN: Shortest word length considered.
 pub(super) const MIN_WORD_CHARS: usize = 4;
@@ -69,17 +70,21 @@ pub fn len() -> usize {
 /// übersprungen. Ergebnis: nicht überlappende Zeichenbereiche.
 /// EN: Finds words in `low` (lowercase); marked characters (patterns) are skipped.
 /// Result: non-overlapping character ranges.
-pub(super) fn find(low: &[char], marked: &[bool]) -> Vec<Range<usize>> {
+pub(super) fn find(low: &[char], marked: &[bool]) -> Result<Vec<Range<usize>>> {
     // DE: Zusammenhängender Text mit Byte-Grenzen je Zeichen; wird beim Verlassen genullt.
     // EN: Contiguous text with byte offsets per character; zeroed when leaving scope.
     let capacity = low.iter().map(|c| c.len_utf8()).sum();
-    let mut text = Zeroizing::new(String::with_capacity(capacity));
+    let mut text = SecretBytes::zeroed(capacity)?;
+    let mut written = 0;
     let mut offsets = Vec::with_capacity(low.len() + 1);
     for &c in low {
-        offsets.push(text.len());
-        text.push(c);
+        offsets.push(written);
+        let n = c.len_utf8();
+        c.encode_utf8(&mut text.expose_mut()[written..written + n]);
+        written += n;
     }
-    offsets.push(text.len());
+    offsets.push(written);
+    let text = std::str::from_utf8(text.expose()).map_err(|_| Error::Crypto)?;
 
     let mut found = Vec::new();
     let mut i = 0;
@@ -97,5 +102,5 @@ pub(super) fn find(low: &[char], marked: &[bool]) -> Vec<Range<usize>> {
             None => i += 1,
         }
     }
-    found
+    Ok(found)
 }

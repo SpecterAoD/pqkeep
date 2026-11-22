@@ -36,6 +36,7 @@ deployment, host privilege change or repository-protection change.
 | password files | Existing owner/type/mode checks, bounded direct reads into locked storage; no growing Vec/String. |
 | terminal | Existing console provider reads keys without echo; full input and confirmation stay in locked buffers. |
 | generated password | Locked output and RNG pool; no intermediate password String. |
+| password assessment | Character/lowercase/leet/special-character and dictionary text copies use locked typed/byte buffers; evaluate fallibly during construction, retain only non-secret assessment metadata. |
 | normalization | Existing NFKC behavior retained; normalized output goes directly into pre-locked storage. |
 
 DE: Provider-Lokalpatches sind vollständig in `vendor/README.md` dokumentiert. Kein eigener

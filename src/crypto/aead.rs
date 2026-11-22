@@ -43,7 +43,7 @@ pub fn generate_key() -> Result<SecretBytes> {
 // DE: Öffentlicher Zustand vor dem Sperren und nach dem Löschen.
 // EN: Public state before locking and after wiping the secret state.
 fn public_cipher() -> Aes256Gcm {
-    Aes256Gcm::new(&Default::default())
+    Aes256Gcm::new(&aes_gcm::Key::<Aes256Gcm>::default())
 }
 
 pub(crate) fn cipher(key: &[u8]) -> Result<SecretState<Aes256Gcm>> {

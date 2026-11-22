@@ -52,7 +52,7 @@ Example:\n  pqkeep encrypt folder --to anna.pub.json\n  pqkeep decrypt folder.pq
         "security",
         "SECURITY AND LIMITS\n\n\
   - Memory pages holding secrets are locked (no swap), core dumps are disabled on\n\
-    Linux, secrets are zeroed after use – all best effort.\n\
+    Linux. Incomplete page locking fails; wiping retains compiler/OS limits.\n\
   - Protection covers stolen files, not malware on the computer.\n\
   - Recommended: full-disk encryption, encrypted swap, no hibernation.\n\
   - Always compare public key fingerprints through a second channel.\n\

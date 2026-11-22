@@ -6,7 +6,7 @@
 //! blocklisted words (also in leetspeak). Matched characters are marked and do
 //! not count towards the entropy estimate.
 
-use zeroize::Zeroizing;
+use crate::Result;
 
 use super::Reason;
 use super::blocklist::{BLOCKLIST, KEYBOARD_ROWS};
@@ -44,24 +44,26 @@ fn unleet(c: char) -> char {
 }
 
 /// DE: Sucht alle Muster. EN: Searches all patterns.
-pub(super) fn find(chars: &[char]) -> Found {
+pub(super) fn find(chars: &[char]) -> Result<Found> {
     // DE: Abgeleitete Kopien der Passphrase – werden beim Verlassen genullt.
     // EN: Derived copies of the passphrase – zeroed when leaving scope.
-    let low: Zeroizing<Vec<char>> = Zeroizing::new(chars.iter().map(|&c| lower(c)).collect());
-    let leet: Zeroizing<Vec<char>> = Zeroizing::new(low.iter().map(|&c| unleet(c)).collect());
+    let low = super::locked::chars(chars.iter().map(|&c| lower(c)))?;
+    let low = low.expose();
+    let leet = super::locked::chars(low.iter().map(|&c| unleet(c)))?;
+    let leet = leet.expose();
     let mut marked = vec![false; chars.len()];
-    let repetition = mark_runs(&low, &mut marked, |a, b| a == b);
-    let sequence = mark_runs(&low, &mut marked, |a, b| {
+    let repetition = mark_runs(low, &mut marked, |a, b| a == b);
+    let sequence = mark_runs(low, &mut marked, |a, b| {
         a.is_alphanumeric() && b.is_alphanumeric() && (a as u32).abs_diff(b as u32) == 1
     });
-    let keyboard = mark_substrings(&low, KEYBOARD_ROWS, true, &mut marked);
+    let keyboard = mark_substrings(low, KEYBOARD_ROWS, true, &mut marked);
     // DE: Blocklist-Wörter mindern immer die Entropie; abgelehnt wird erst, wenn sie
     //     mindestens ein Drittel ausmachen (sonst träfe es normale Sätze wie „… Test …“).
     // EN: Blocklisted words always reduce entropy; rejection only if they make up at
     //     least a third (otherwise ordinary sentences such as "... test ..." would fail).
     let mut words = vec![false; chars.len()];
-    mark_substrings(&low, BLOCKLIST, false, &mut words);
-    mark_substrings(&leet, BLOCKLIST, false, &mut words);
+    mark_substrings(low, BLOCKLIST, false, &mut words);
+    mark_substrings(leet, BLOCKLIST, false, &mut words);
     let covered = words.iter().filter(|w| **w).count();
     let blocklisted = covered > 0 && covered * 3 >= chars.len();
     marked.iter_mut().zip(&words).for_each(|(m, w)| *m |= *w);
@@ -74,7 +76,7 @@ pub(super) fn find(chars: &[char]) -> Found {
     .into_iter()
     .filter_map(|(hit, reason)| hit.then_some(reason))
     .collect();
-    Found { marked, reasons }
+    Ok(Found { marked, reasons })
 }
 
 /// DE: Markiert Läufe ≥ `MIN_RUN`, in denen benachbarte Zeichen `rel` erfüllen.

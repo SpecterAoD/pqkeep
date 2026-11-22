@@ -10,6 +10,7 @@ mod blocklist;
 pub mod dictionary;
 mod entropy;
 pub mod generator;
+mod locked;
 mod patterns;
 mod policy;
 
@@ -47,6 +48,7 @@ pub enum Lang {
 pub struct Passphrase {
     bytes: SecretBytes,
     chars: usize,
+    evaluation: policy::Evaluation,
 }
 
 impl Passphrase {
@@ -84,9 +86,12 @@ impl Passphrase {
                 field: "passphrase",
             });
         }
+        let text = std::str::from_utf8(normalized.expose()).map_err(|_| Error::Crypto)?;
+        let evaluation = policy::evaluate(text)?;
         Ok(Self {
             bytes: normalized,
             chars,
+            evaluation,
         })
     }
 
@@ -120,8 +125,8 @@ impl Passphrase {
     /// request. Do not log!
     #[must_use]
     pub fn expose_str(&self) -> &str {
-        // DE: Stammt immer aus einem `String`, ist also gültiges UTF-8.
-        // EN: Always originates from a `String`, hence valid UTF-8.
+        // DE: Wird ausschließlich aus UTF-8-Zeichen aufgebaut.
+        // EN: Constructed exclusively from UTF-8 characters.
         std::str::from_utf8(self.bytes.expose()).unwrap_or_default()
     }
 
@@ -129,11 +134,7 @@ impl Passphrase {
     /// EN: Assesses the passphrase (all reasons, estimated entropy).
     #[must_use]
     pub fn assess(&self) -> Assessment {
-        let (reasons, entropy_bits) = policy::assess(self.expose_str());
-        Assessment {
-            reasons,
-            entropy_bits,
-        }
+        self.evaluation.assess(MIN_ENTROPY_BITS)
     }
 
     /// DE: Wie [`Passphrase::assess`], mit höherem Mindestwert (128–256 Bit; kleinere Werte
@@ -142,11 +143,7 @@ impl Passphrase {
     #[must_use]
     pub fn assess_with(&self, min_bits: u32) -> Assessment {
         let min = f64::from(min_bits.min(MAX_MIN_BITS));
-        let (reasons, entropy_bits) = policy::assess_with(self.expose_str(), min);
-        Assessment {
-            reasons,
-            entropy_bits,
-        }
+        self.evaluation.assess(min)
     }
 }
 
