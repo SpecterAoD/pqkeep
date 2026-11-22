@@ -55,6 +55,10 @@ gegenprüfen → Σ anhängen → atomar veröffentlichen (wie bisher, nie über
 berechneten Länge lesen, entschlüsseln und hashen → Σ lesen, Dateiende prüfen → Signatur prüfen →
 erst dann wird die Ausgabe veröffentlicht. Ergebnis: Schlüssel-ID des Absenders.
 
+**Ohne Terminal:** Bekommt die Datei selbst eine Passphrase, braucht der Signaturschlüssel eine eigene
+Quelle: `--sign-passphrase-file <datei>` (Regeln wie `--passphrase-file`, #286). Ohne diese Option ist
+das ein Bedienfehler; für Empfänger (`--to`) genügt die übliche Passphrase-Quelle.
+
 **`inspect`:** zeigt, dass die Datei signiert ist, und Schlüssel-ID/Fingerabdruck des Absenders –
 ausdrücklich **ungeprüft** (es wird kein Inhalt gelesen). Geprüft wird mit `check` oder beim
 Entschlüsseln.
@@ -127,6 +131,8 @@ while hashing C, sign and cross-check, append Σ, publish atomically. Decrypting
 header, unwrap as in v2, check the commitment (no early exit), read C exactly up to the computed length
 while decrypting and hashing, read Σ and require end of file, verify; only then is the output published.
 `inspect` shows that the file is signed and the sender's key ID/fingerprint, explicitly **unverified**.
+Without a terminal, a file that gets its own passphrase needs a separate source for the signing key:
+`--sign-passphrase-file <file>` (rules as `--passphrase-file`, #286); otherwise this is a usage error.
 
 **Compatibility:** see the table above – unsigned files unchanged; v3 files are "unsupported" in
 0.1.0-beta.1 to -beta.3 (never silently unverified); stripped, truncated, altered or appended data,

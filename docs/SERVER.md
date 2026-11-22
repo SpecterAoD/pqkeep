@@ -84,6 +84,7 @@ PQKeep selbst läuft unter Linux zusätzlich in seiner Sandbox (Landlock, seccom
 | `--batch` | fragt **nie** nach; fehlt eine Eingabe, Abbruch mit Exit-Code 2 |
 | `--passphrase-file <pfad>` | Passphrase aus Datei: reguläre Datei, keine Verknüpfung, ≤ 4 KiB, eine Zeile; Linux: nur für den Eigentümer lesbar (`chmod 600`/`400`), Eigentümer = aufrufender Benutzer oder root (systemd-Credentials) |
 | `--passphrase-stdin` | eine Zeile von stdin (nicht zusammen mit `--passphrase-file`) |
+| `--sign-passphrase-file <pfad>` | nur mit `encrypt --sign-with`: Passphrase des Signaturschlüssels (Absender-Signatur, #44/#286), gleiche Regeln wie `--passphrase-file`; nötig, wenn die Datei selbst eine Passphrase bekommt |
 
 - **Keine Umgebungsvariablen** für Passphrasen: sie sind über `/proc`, Absturzberichte und Kindprozesse
   sichtbar. Unter Windows prüft PQKeep die Rechte der Passphrase-Datei nicht (keine ACL-Prüfung ohne
@@ -303,7 +304,8 @@ these examples do not install a service.
 **Unattended options:** `--batch` never prompts (missing input → exit code 2); `--passphrase-file <path>`
 reads one line from a regular, non-link file ≤ 4 KiB, on Linux readable by the owner only (`chmod 600`/`400`)
 and owned by the calling user or root (systemd credentials); `--passphrase-stdin` reads one line (not
-together with `--passphrase-file`). **No environment variables** for passphrases (visible via `/proc`, crash
+together with `--passphrase-file`); `encrypt --sign-with … --sign-passphrase-file <path>` reads the signing
+key's passphrase with the same rules (needed when the file itself gets a passphrase, #286). **No environment variables** for passphrases (visible via `/proc`, crash
 reports, child processes). Windows: no permission check of the file (no ACL check without `unsafe`).
 A passphrase on the server is weaker than recipient mode – prefer recipient mode for backups.
 

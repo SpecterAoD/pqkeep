@@ -174,7 +174,7 @@ fn usage_rules_come_before_any_prompt() {
     ];
     let (code, _, err) = run(d, &both, &anna);
     assert_eq!(code, 2);
-    assert!(err.contains("only interactively"), "{err}");
+    assert!(err.contains("--sign-passphrase-file"), "{err}");
     // DE: Falsche Schlüsselarten. EN: Wrong key kinds.
     let kem_sign = [
         "encrypt",
@@ -229,4 +229,58 @@ fn signing_key_with_factor_file_and_several_sources() {
         let bytes = fs::read(d.join(name)).unwrap();
         assert_eq!(u16::from_le_bytes([bytes[8], bytes[9]]), 3, "{name}");
     }
+}
+
+/// DE: #286: Datei-Passphrase und Signaturschlüssel ohne Terminal über `--sign-passphrase-file`.
+/// EN: #286: file passphrase and signing key without a terminal via `--sign-passphrase-file`.
+// DE: Rechteprüfung gibt es nur unter Linux. EN: Permission checks exist on Linux only.
+#[cfg(target_os = "linux")]
+#[test]
+fn sign_passphrase_file_enables_batch_signing() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    let anna = key(d, "anna", "ml-dsa-87", &[]);
+    key(d, "eve", "ml-dsa-87", &[]);
+    fs::write(d.join("a.txt"), b"geheim").unwrap();
+    let file_pass = pass();
+    for (name, text) in [("file.pass", &file_pass), ("sign.pass", &anna)] {
+        fs::write(d.join(name), text).unwrap();
+        fs::set_permissions(d.join(name), fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    let enc = [
+        "--batch",
+        "--passphrase-file",
+        "file.pass",
+        "encrypt",
+        "a.txt",
+        "--sign-with",
+        "anna.key.json",
+        "--sign-passphrase-file",
+        "sign.pass",
+    ];
+    let (code, out, err) = run(d, &enc, "");
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains("a.txt.pqkf"), "{out}");
+    let check = [
+        "--batch",
+        "--passphrase-file",
+        "file.pass",
+        "check",
+        "a.txt.pqkf",
+        "--signer",
+        "anna.pub.json",
+    ];
+    assert_eq!(run(d, &check, "").0, 0);
+    let other = [&check[..6], &["eve.pub.json"]].concat();
+    assert_eq!(run(d, &other, "").0, 7);
+    // DE: Zu offene Rechte → Bedienfehler, nichts geschrieben. EN: Too open permissions → usage error.
+    fs::remove_file(d.join("a.txt.pqkf")).unwrap();
+    fs::set_permissions(d.join("sign.pass"), fs::Permissions::from_mode(0o644)).unwrap();
+    let (code, _, err) = run(d, &enc, "");
+    assert_eq!(code, 2, "{err}");
+    assert!(!d.join("a.txt.pqkf").exists());
+    // DE: Nur zusammen mit `--sign-with`. EN: Only together with `--sign-with`.
+    let lone = ["encrypt", "a.txt", "--sign-passphrase-file", "sign.pass"];
+    assert_eq!(run(d, &lone, "").0, 2);
 }

@@ -29,6 +29,8 @@ pub const SIGN_WITH: &str = "sign-with";
 pub const SIGN_FACTOR: &str = "sign-factor-file";
 /// DE: Verlangter Absender. EN: Required sender.
 pub const SIGNER: &str = "signer";
+/// DE: Passphrase-Datei des Signaturschlüssels (#286). EN: Passphrase file of the signing key (#286).
+pub const SIGN_PASS_FILE: &str = "sign-passphrase-file";
 
 const ML_DSA_87: KeyAlgorithm = KeyAlgorithm::Dsa(DsaAlgorithm::MlDsa87);
 
@@ -36,6 +38,7 @@ struct SignTexts {
     arg_sign_with: &'static str,
     arg_sign_factor: &'static str,
     arg_signer: &'static str,
+    arg_sign_pass: &'static str,
     prompt: &'static str,
     signed_by: &'static str,
     unverified: &'static str,
@@ -47,10 +50,11 @@ const DE: SignTexts = SignTexts {
     arg_sign_with: "Datei zusätzlich mit diesem ML-DSA-87-Schlüssel signieren (Absender-Signatur, Format v3)",
     arg_sign_factor: "Faktordatei des Signaturschlüssels (nur wenn dieser eine verlangt)",
     arg_signer: "Datei muss von diesem Absender signiert sein (öffentlicher ML-DSA-87-Schlüssel); sonst Fehler, keine Ausgabe",
+    arg_sign_pass: "Passphrase des Signaturschlüssels aus dieser Datei (Regeln wie --passphrase-file: eine Zeile, Linux 0600) – für den Betrieb ohne Terminal",
     prompt: "Passphrase des Signaturschlüssels",
     signed_by: "Signiert von (geprüft)",
     unverified: "Absender (ungeprüft, prüfen mit pqkeep check oder beim Entschlüsseln)",
-    one_source: "--sign-with braucht eine eigene Passphrase; zusammen mit einer Datei-Passphrase nur im Dialog (ohne --passphrase-stdin/--passphrase-file/--batch)",
+    one_source: "--sign-with braucht eine eigene Passphrase; ohne Terminal zusammen mit einer Datei-Passphrase bitte --sign-passphrase-file angeben",
     need_dsa: "Für die Absender-Signatur wird ein ML-DSA-87-Schlüssel gebraucht (--sign-with: *.key.json, --signer: *.pub.json)",
 };
 
@@ -58,10 +62,11 @@ const EN: SignTexts = SignTexts {
     arg_sign_with: "Additionally sign the file with this ML-DSA-87 key (sender signature, format v3)",
     arg_sign_factor: "Factor file of the signing key (only if it requires one)",
     arg_signer: "File must be signed by this sender (public ML-DSA-87 key); otherwise error, no output",
+    arg_sign_pass: "Passphrase of the signing key from this file (rules as --passphrase-file: one line, Linux 0600) – for use without a terminal",
     prompt: "Passphrase of the signing key",
     signed_by: "Signed by (verified)",
     unverified: "Sender (unverified, verify with pqkeep check or when decrypting)",
-    one_source: "--sign-with needs its own passphrase; together with a file passphrase only interactively (without --passphrase-stdin/--passphrase-file/--batch)",
+    one_source: "--sign-with needs its own passphrase; without a terminal together with a file passphrase please pass --sign-passphrase-file",
     need_dsa: "The sender signature needs an ML-DSA-87 key (--sign-with: *.key.json, --signer: *.pub.json)",
 };
 
@@ -75,18 +80,21 @@ fn path(m: &ArgMatches, id: &str) -> Option<PathBuf> {
 
 /// DE: Alle angegebenen Pfade (für die Sandbox, nur lesen). EN: All given paths (sandbox, read only).
 pub fn paths(m: &ArgMatches) -> Vec<PathBuf> {
-    [SIGN_WITH, SIGN_FACTOR, SIGNER]
+    [SIGN_WITH, SIGN_FACTOR, SIGN_PASS_FILE, SIGNER]
         .iter()
         .filter_map(|id| path(m, id))
         .collect()
 }
 
 /// DE: Optionen für `encrypt`. EN: Options for `encrypt`.
-pub fn encrypt_args(lang: Lang) -> [Arg; 2] {
+pub fn encrypt_args(lang: Lang) -> [Arg; 3] {
     let s = texts(lang);
     [
         opt(SIGN_WITH, s.arg_sign_with).value_parser(value_parser!(PathBuf)),
         opt(SIGN_FACTOR, s.arg_sign_factor)
+            .value_parser(value_parser!(PathBuf))
+            .requires(SIGN_WITH),
+        opt(SIGN_PASS_FILE, s.arg_sign_pass)
             .value_parser(value_parser!(PathBuf))
             .requires(SIGN_WITH),
     ]
@@ -107,7 +115,8 @@ pub fn check_sources(lang: Lang, m: &ArgMatches, file_passphrase: bool) -> CliRe
     let non_interactive = m.get_flag("passphrase-stdin")
         || super::unattended::pass_file().is_some()
         || super::unattended::batch();
-    if path(m, SIGN_WITH).is_some() && file_passphrase && non_interactive {
+    let own_source = path(m, SIGN_PASS_FILE).is_some();
+    if path(m, SIGN_WITH).is_some() && file_passphrase && non_interactive && !own_source {
         return Err(Failure::new(code::USAGE, texts(lang).one_source));
     }
     Ok(())
@@ -121,10 +130,15 @@ pub struct PendingKey {
 }
 
 impl PendingKey {
-    /// DE: Fragt die Passphrase ab und entsperrt. EN: Asks for the passphrase and unlocks.
+    /// DE: Passphrase aus `--sign-passphrase-file` oder (sonst) wie gewohnt abfragen; entsperren.
+    /// EN: Passphrase from `--sign-passphrase-file` or (otherwise) as usual; unlocks.
     pub fn unlock(self, t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<UnlockedKey> {
-        let stdin = m.get_flag("passphrase-stdin");
-        let pass = read_passphrase_as(t, lang, stdin, false, texts(lang).prompt)?;
+        let pass = if let Some(p) = path(m, SIGN_PASS_FILE) {
+            super::unattended::read_file(&p, lang)?
+        } else {
+            let stdin = m.get_flag("passphrase-stdin");
+            read_passphrase_as(t, lang, stdin, false, texts(lang).prompt)?
+        };
         let unlocked: Result<UnlockedKey> = match &self.factor {
             Some(f) => self.key.unlock_with_factor(&pass, f),
             None => self.key.unlock(&pass),
