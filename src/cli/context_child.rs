@@ -26,10 +26,12 @@ pub(super) enum Outcome {
     /// DE: Erfolg mit Ausgabe und Warnungen (z. B. übersprungene Einträge).
     /// EN: Success with output and warnings (e.g. skipped entries).
     /// `done`: DE: fertige Ziele (Dateinamen, nur mit `--progress`). EN: finished targets.
+    /// `signers`: DE: geprüfte Absender (Schlüssel-ID hex) aus `@@signer`. EN: verified senders.
     Done {
         out: String,
         warn: String,
         done: Vec<String>,
+        signers: Vec<String>,
     },
     /// DE: Abgebrochen; `started` = Arbeit lief schon (Fortschrittsfenster).
     /// EN: Cancelled; `started` = work was already running (progress window).
@@ -87,16 +89,26 @@ fn drain(pipe: Option<impl Read + Send + 'static>) -> thread::JoinHandle<String>
     })
 }
 
-/// DE: Normale Ausgabe und fertige Ziele. EN: Normal output and finished targets.
-type Lines = (String, Vec<String>);
+/// DE: Normale Ausgabe, fertige Ziele, geprüfte Absender. EN: Normal output, finished targets,
+/// verified senders.
+type Lines = (String, Vec<String>, Vec<String>);
+
+/// DE: `@@signer <64 Hex>` – nur exakt dieses Format (#287). EN: Only exactly this format.
+fn signer_id(rest: &str) -> Option<String> {
+    (rest.len() == 64
+        && rest
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)))
+    .then(|| rest.to_owned())
+}
 
 /// DE: Liest stdout zeilenweise: `@@progress i n` → Kanal, `@@done name` → Liste, Rest → Text.
 /// EN: Reads stdout line by line: `@@progress i n` → channel, `@@done name` → list, rest → text.
 fn lines(pipe: Option<impl Read + Send + 'static>, tx: Sender<(u32, u32)>) -> JoinHandle<Lines> {
     thread::spawn(move || {
-        let (mut text, mut done) = (Vec::new(), Vec::new());
+        let (mut text, mut done, mut signers) = (Vec::new(), Vec::new(), Vec::new());
         let Some(pipe) = pipe else {
-            return (String::new(), done);
+            return (String::new(), done, signers);
         };
         for line in BufReader::new(pipe).lines().map_while(Result::ok) {
             if let Some(rest) = line.strip_prefix("@@progress ") {
@@ -106,17 +118,24 @@ fn lines(pipe: Option<impl Read + Send + 'static>, tx: Sender<(u32, u32)>) -> Jo
                 }
             } else if let Some(name) = line.strip_prefix("@@done ") {
                 done.push(name.to_owned());
+            } else if let Some(rest) = line.strip_prefix("@@signer ") {
+                signers.extend(signer_id(rest));
             } else {
                 text.push(line);
             }
         }
-        (text.join("\n").trim().to_owned(), done)
+        (text.join("\n").trim().to_owned(), done, signers)
     })
 }
 
-fn outcome(status: ExitStatus, (out, done): Lines, warn: String) -> Outcome {
+fn outcome(status: ExitStatus, (out, done, signers): Lines, warn: String) -> Outcome {
     if status.success() {
-        Outcome::Done { out, warn, done }
+        Outcome::Done {
+            out,
+            warn,
+            done,
+            signers,
+        }
     } else {
         let code = status
             .code()

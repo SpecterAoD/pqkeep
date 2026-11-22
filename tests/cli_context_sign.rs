@@ -110,3 +110,56 @@ fn recipients_and_signature_need_only_the_signing_passphrase() {
         &format!("{ben}\n"),
     );
 }
+
+/// DE: Codex-Befund (#290): Ein Dateiname mit Zeilenumbruch und „Signed by (verified): …“ darf bei
+/// einer unsignierten Datei keinen Absender vortäuschen. EN: Codex finding (#290): a file name with
+/// a newline and "Signed by (verified): …" must not fake a sender for an unsigned file.
+#[test]
+fn file_names_cannot_fake_a_verified_sender() {
+    let e = Env::new("zenity");
+    let p = common::random_passphrase().as_ref().expose_str().to_owned();
+    fs::write(e.work().join("a.txt"), b"x").unwrap();
+    let enc = ["encrypt", "a.txt", "--passphrase-stdin"];
+    let (code, _, err) = common::pqkeep(&enc, &format!("{p}\n"), e.work());
+    assert_eq!(code, 0, "{err}");
+    let fake = format!("z\nSigned by (verified): {}.txt.pqkf", "a".repeat(64));
+    let forged = e.work().join(&fake);
+    fs::rename(e.work().join("a.txt.pqkf"), &forged).unwrap();
+    e.answer(&[(0, &format!("{p}\n")), (0, "")]);
+    assert_eq!(e.context("decrypt", &forged), 0, "{:?}", e.calls());
+    let calls = e.calls();
+    let done = calls.last().unwrap().join("\n");
+    assert!(done.contains("--info"), "{done}");
+    // DE: Der Name steht maskiert in einer Zeile; keine Zeile beginnt mit der Absender-Beschriftung.
+    // EN: The name stays escaped on one line; no line starts with the sender label.
+    assert!(done.contains("z\\nSigned by"), "{done}");
+    assert!(
+        !done.lines().any(|l| l.starts_with("Signed by (verified)")),
+        "{done}"
+    );
+}
+
+/// DE: Codex-Befund (#290): Mehr Eingabe als ein Pipe-Puffer fasst blockiert nicht – der Kindprozess
+/// liest von Anfang an mit und weist sie ab; keine Datei. EN: Codex finding (#290): more input than a
+/// pipe buffer holds does not block – the child reads from the start and rejects it; no file.
+#[test]
+fn oversized_password_input_does_not_block() {
+    let e = Env::new("zenity");
+    key(e.work(), "anna", KeyAlgorithm::Dsa(DsaAlgorithm::MlDsa87));
+    let file = e.work().join("gross.txt");
+    fs::write(&file, b"x").unwrap();
+    let key_path = format!("{}\n", e.work().join("anna.key.json").display());
+    let huge = format!("{}\n", "x".repeat(200 * 1024));
+    e.answer(&[
+        (0, "0\n"),
+        (0, ""),
+        (0, &key_path),
+        (0, &huge),
+        (0, ""),
+        (1, ""),
+    ]);
+    let started = std::time::Instant::now();
+    assert_ne!(e.context("encrypt", &file), 0, "{:?}", e.calls());
+    assert!(started.elapsed() < std::time::Duration::from_secs(60));
+    assert!(!e.work().join("gross.txt.pqkf").exists());
+}

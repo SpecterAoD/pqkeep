@@ -46,13 +46,20 @@ fn summary(out: &str, done: &[String]) -> String {
 fn show(ui: &Ui<'_>, m: &ManyTexts, outcome: Outcome) -> Option<CliResult> {
     let d = ui.d;
     match outcome {
-        Outcome::Done { out, warn, done } if warn.is_empty() => {
-            let signer = super::context_sign::signer_lines(ui.lang, &out);
+        Outcome::Done {
+            out,
+            warn,
+            done,
+            signers,
+        } if warn.is_empty() => {
+            let signer = super::context_sign::signer_lines(ui.lang, &signers);
             ui.dlg
                 .info(&format!("{}\n{}{signer}", m.ctx_done, summary(&out, &done)));
             Some(Ok(()))
         }
-        Outcome::Done { out, warn, done } => {
+        Outcome::Done {
+            out, warn, done, ..
+        } => {
             let text = format!(
                 "{}\n{}\n\n{}\n{warn}",
                 m.ctx_done,

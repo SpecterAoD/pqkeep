@@ -115,13 +115,14 @@ impl Ui<'_> {
         out: &str,
         mut step: impl FnMut() -> CliResult<Outcome>,
     ) -> CliResult {
+        // DE: Pfad maskiert anzeigen – ein Zeilenumbruch im Namen täuscht sonst eigene Zeilen vor.
+        // EN: Show the path escaped – a newline in the name would otherwise fake own lines.
+        let out = &super::files_cmd::shown(Path::new(out));
         for _ in 0..ATTEMPTS {
             match step()? {
-                Outcome::Done {
-                    warn, out: text, ..
-                } if warn.is_empty() => {
+                Outcome::Done { warn, signers, .. } if warn.is_empty() => {
                     // DE: Geprüften Absender nennen (#287). EN: Name the verified sender (#287).
-                    let signer = super::context_sign::signer_lines(self.lang, &text);
+                    let signer = super::context_sign::signer_lines(self.lang, &signers);
                     self.dlg.info(&format!("{}\n{out}{signer}", self.d.done));
                     return Ok(());
                 }

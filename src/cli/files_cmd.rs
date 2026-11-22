@@ -178,8 +178,24 @@ pub(super) fn target(t: &Texts, m: &ArgMatches, default: Option<PathBuf>) -> Cli
         .ok_or_else(|| Failure::new(code::USAGE, t.arg_out_optional))
 }
 
+/// DE: Pfad für die Ausgabe: Steuerzeichen (z. B. Zeilenumbruch) maskiert, damit ein Dateiname
+/// keine weiteren Ausgabezeilen vortäuschen kann (#287, Codex-Befund).
+/// EN: Path for output: control characters (e.g. newline) escaped so a file name cannot fake
+/// further output lines (#287, Codex finding).
+pub(super) fn shown(path: &Path) -> String {
+    let mut out = String::new();
+    for c in path.to_string_lossy().chars() {
+        if c.is_control() {
+            out.extend(c.escape_default());
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 pub(super) fn print_report(t: &Texts, lang: Lang, verb: &str, out: &Path, report: &Report) {
-    println!("{verb}: {}", out.display());
+    println!("{verb}: {}", shown(out));
     println!(
         "{}: {} / {} / {}",
         t.msg_summary, report.files, report.directories, report.bytes

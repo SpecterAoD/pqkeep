@@ -200,3 +200,19 @@ fn fs009_cleanup_sharing_lock_leaves_temp_until_handle_release() {
         b"committed"
     );
 }
+
+/// DE: `@@signer` nur mit genau 64 kleinen Hex-Zeichen (#287). EN: Only exactly 64 lowercase hex.
+#[test]
+fn signer_control_line_is_strict() {
+    let ok = "0123456789abcdef".repeat(4);
+    assert_eq!(super::signer_id(&ok), Some(ok.clone()));
+    for bad in [
+        ok[..63].to_owned(),
+        format!("{ok}0"),
+        ok.to_uppercase(),
+        format!("{} x", &ok[..62]),
+        String::new(),
+    ] {
+        assert_eq!(super::signer_id(&bad), None, "{bad}");
+    }
+}

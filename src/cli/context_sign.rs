@@ -94,31 +94,36 @@ pub(super) fn two_passphrases(
         .dlg
         .password_into(ui.d.new_pass, confirm, first)
         .ok_or_else(no_tool)?;
-    if !tool.wait().is_ok_and(|s| s.success()) {
-        return Ok(Outcome::Cancelled { started: false });
-    }
-    // DE: `writer` wandert in das zweite Fenster; danach hält dieser Prozess kein Schreibende mehr,
-    //     der Kindprozess sieht nach dem zweiten Fenster das Ende der Eingabe.
-    // EN: `writer` moves into the second window; afterwards this process holds no write end, the
-    //     child sees end of input after the second window.
-    let (mut tool, _) = ui
-        .dlg
-        .password_into(texts(ui.lang).prompt, None, writer)
-        .ok_or_else(no_tool)?;
-    if !tool.wait().is_ok_and(|s| s.success()) {
-        return Ok(Outcome::Cancelled { started: false });
-    }
+    // DE: Der Kindprozess liest von Anfang an mit (Codex-Befund): Ein volles Pipe-Puffer kann so
+    //     kein Passwortfenster blockieren. EN: The child reads from the start (Codex finding): a
+    //     full pipe buffer can thus not block a password window.
     let tag = new_tag(ui.lang)?;
+    let next = format!("--{SIGN_PASS_NEXT}");
     let mut args = with_tag(cmd, &tag);
     args.push("--passphrase-stdin");
     if two_lines {
         args.push("--confirm-stdin");
     }
-    let next = format!("--{SIGN_PASS_NEXT}");
-    args.push(&next);
-    args.push("--");
+    args.extend([next.as_str(), "--"]);
     args.extend_from_slice(paths);
-    let child = spawn(ui.lang, &args, Stdio::from(reader))?;
+    let mut child = spawn(ui.lang, &args, Stdio::from(reader))?;
+    if !tool.wait().is_ok_and(|s| s.success()) {
+        return Ok(stop(child));
+    }
+    // DE: Hat der Kindprozess schon aufgegeben (z. B. ungleiche Wiederholung), entfällt das zweite
+    //     Fenster. `writer` wandert ins zweite Fenster; danach hält dieser Prozess kein Schreibende.
+    // EN: If the child already gave up (e.g. mismatching repeat), the second window is skipped.
+    //     `writer` moves into the second window; afterwards this process holds no write end.
+    if matches!(child.try_wait(), Ok(None)) {
+        let prompt = texts(ui.lang).prompt;
+        let Some((mut tool, _)) = ui.dlg.password_into(prompt, None, writer) else {
+            let _ = stop(child);
+            return Err(no_tool());
+        };
+        if !tool.wait().is_ok_and(|s| s.success()) {
+            return Ok(stop(child));
+        }
+    }
     finish(
         &ui.dlg,
         &ui.watch(step),
@@ -129,22 +134,34 @@ pub(super) fn two_passphrases(
     )
 }
 
-/// DE: Zeilen „Signiert von (geprüft): …“ aus der Ausgabe des Kindprozesses (gleiche Sprache), jeder
-/// Absender einmal; leer ohne signierte Dateien. Mit führender Leerzeile für das Fertig-Fenster.
-/// EN: Lines "Signed by (verified): …" from the child's output (same language), each sender once;
-/// empty without signed files. With a leading blank line for the final window.
-pub(super) fn signer_lines(lang: pqkeep::security::Lang, out: &str) -> String {
+/// DE: Bricht den Kindprozess vor jeder Arbeit ab (er wartete noch auf Passphrasen).
+/// EN: Stops the child before any work (it was still waiting for passphrases).
+fn stop(mut child: std::process::Child) -> Outcome {
+    let _ = child.kill();
+    let _ = child.wait();
+    Outcome::Cancelled { started: false }
+}
+
+/// DE: Zeilen „Signiert von (geprüft): …“ für das Fertig-Fenster aus den `@@signer`-Steuerzeilen des
+/// Kindprozesses (nie aus dem Ausgabetext), jeder Absender einmal; leer ohne signierte Dateien.
+/// EN: Lines "Signed by (verified): …" for the final window from the child's `@@signer` control
+/// lines (never from output text), each sender once; empty without signed files.
+pub(super) fn signer_lines(lang: pqkeep::security::Lang, signers: &[String]) -> String {
     let label = super::signing::signed_by_label(lang);
     let mut seen: Vec<&str> = Vec::new();
-    for line in out.lines().filter(|l| l.starts_with(label)) {
-        if !seen.contains(&line) {
-            seen.push(line);
+    for id in signers {
+        if !seen.contains(&id.as_str()) {
+            seen.push(id);
         }
     }
-    if seen.is_empty() {
+    let lines: Vec<String> = seen
+        .iter()
+        .map(|id| format!("{label}: {}", super::io::fingerprint(id)))
+        .collect();
+    if lines.is_empty() {
         String::new()
     } else {
-        format!("\n\n{}", seen.join("\n"))
+        format!("\n\n{}", lines.join("\n"))
     }
 }
 
