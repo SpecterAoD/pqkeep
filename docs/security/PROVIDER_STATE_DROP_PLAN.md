@@ -45,3 +45,17 @@ and locked-execution-profile changes. Preserve the complete eight-target matrix,
 60-second PR/600-second manual budgets and read-only permissions. Verify workflow
 policy and the actual new PR-triggered execution, without a new test-only bypass.
 The already dispatched runs retain their original exact source heads as evidence.
+
+## Destructor panic follow-up / Ergänzung für Destruktor-Panik
+
+DE: Vor abschließender Codeänderung: Ein panikender Provider-Destruktor darf beim
+normalen Unwind den vollständigen Wipe oder Unlock vor Freigabe nicht überspringen.
+Wipe als lokalen Drop-Guard um Vec::clear legen; die Sperre im äußeren Drop in eine
+lokale Variable übernehmen, die bis nach diesem Guard lebt. Vec::clear entfernt die
+Länge vor dem Element-Drop; erst nach dessen Unwind-Cleanup uninitialisierte volle
+Kapazität löschen, dann entsperren, dann Speicher freigeben. Keine ungültigen T-Werte
+erzeugen und keine bereits freigegebenen Bytes beobachten.
+EN: Add a safe allocation-wipe guard and retain the lock across normal and panicking
+provider destruction. Test a deliberate destructor unwind with live storage/resource
+observations and keep existing normal/unwind/crypto/lock-denial tests. This is not an
+abort, double-panic, SIGKILL or OS-crash cleanup guarantee. Native full CI must rerun.
