@@ -16,7 +16,10 @@ fuzz_target!(|data: &[u8]| {
         assert_eq!(back.key_id(), key.key_id());
         // DE: Version und Faktorpflicht gehören zusammen und bleiben erhalten.
         // EN: Version and factor requirement belong together and are preserved.
-        assert_eq!(key.needs_factor(), key.format_version() == FORMAT_VERSION_V2);
+        assert_eq!(
+            key.needs_factor(),
+            key.format_version() == FORMAT_VERSION_V2
+        );
         assert_eq!(back.format_version(), key.format_version());
         assert_eq!(back, key);
         assert_eq!(back.to_json().expect("serialise again"), again);

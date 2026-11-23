@@ -16,7 +16,7 @@ use std::io::{Read, Write};
 
 use super::{SecretBytes, secret_state::SecretState};
 use aes_gcm::Aes256Gcm;
-use aes_gcm::aead::{Aead, AeadInOut, Nonce, Payload};
+use aes_gcm::aead::{AeadInOut, Nonce};
 
 use crate::crypto::aead::TAG_LEN;
 pub use crate::crypto::stream_io::{DecryptReader, EncryptWriter};
@@ -63,15 +63,8 @@ impl Stream {
     }
 
     pub(crate) fn seal(&mut self, chunk: &[u8], last: bool) -> Result<Vec<u8>> {
-        let payload = Payload {
-            msg: chunk,
-            aad: &self.aad,
-        };
-        let out = self
-            .cipher
-            .get()
-            .encrypt(&self.nonce(last), payload)
-            .map_err(|_| Error::Crypto)?;
+        let out =
+            super::aead::seal_locked(self.cipher.get(), self.nonce(last).into(), chunk, &self.aad)?;
         self.advance()?;
         Ok(out)
     }

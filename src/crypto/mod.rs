@@ -10,6 +10,7 @@ pub mod factor;
 mod hkdf_locked;
 pub mod kdf;
 pub mod kem;
+pub(crate) mod locked_hash;
 pub mod protect;
 pub mod protect_v2;
 pub mod rng;

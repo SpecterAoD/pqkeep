@@ -6,6 +6,20 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: #147 Laufzeitnacharbeit: direkte Klartext-Datei-I/O, gesperrter Hash-Eingabepuffer,
+  In-place-AEAD ohne allokierende Klartext-Zwischenkopie, gesperrtes Rekey-Framing und
+  Token-Erzeugung; HTTP/1-/JSON-Speicheradapter und vertrauliche Archivnamen/Konfliktschlüssel.
+  Listen-JSON unverändert, Rust-Pfad-/Tokenhash-Zugriffe explizit/fallibel. Provider-Konstruktoren
+  und Prozess-/Helper-Unterstützung weiterhin offen, keine vollständige Schließungsbehauptung.
+  EN: Locked runtime buffers, protected ingress owners/parser scratch and confidential
+  metadata; strict failures and wire/JSON compatibility preserved. Provider construction
+  and platform/helper verification remain open.
+  DE: Listen-Datensätze einschließlich Typ/Größe vor Sammlung fest gesperrt; auch
+  frühere Ownerbytes vor Unlock löschen. EN: ConfidentialEntries locks fixed record
+  storage before collection and wipes former owner bytes before unlocking.
+  Generated API tokens now require explicit borrowed exposure instead of a clonable String.
+
+
 ### Security
 - Secret-lifetime audit (#147): inventory and synthetic std/provider copy probes, explicit
   remaining I/O/AEAD/rekey/hash/HTTP/token findings and scoped remediation/test proposals.

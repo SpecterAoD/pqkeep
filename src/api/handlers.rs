@@ -14,7 +14,12 @@ use serde::{Deserialize, Serialize};
 use tokio::time::Instant;
 
 use super::AppState;
-use crate::security::{Assessment, Lang, Passphrase, Reason};
+use super::locked_json::LockedJson;
+use crate::security::{Assessment, Lang, Reason};
+
+#[cfg(test)]
+#[path = "handlers_secret_tests.rs"]
+mod tests;
 
 /// DE: Generische Fehler der API. EN: Generic API errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,7 +110,7 @@ pub async fn method_not_allowed() -> ApiError {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ValidateRequest {
-    passphrase: String,
+    passphrase: super::secret_input::SecretInput,
     #[serde(default)]
     lang: Option<ReqLang>,
 }
@@ -188,8 +193,7 @@ pub fn to_response(assessment: &Assessment, lang: Lang) -> ValidateResponse {
 async fn assess(req: ValidateRequest) -> Result<ValidateResponse, ApiError> {
     let lang = lang_of(req.lang);
     let job = move || {
-        // DE: `from_string` nullt die Eingabe. EN: `from_string` zeroes the input.
-        let pass = Passphrase::from_string(req.passphrase).map_err(|_| ApiError::BadRequest)?;
+        let pass = req.passphrase.0;
         Ok(to_response(&pass.assess(), lang))
     };
     tokio::task::spawn_blocking(job)
@@ -203,12 +207,12 @@ async fn assess(req: ValidateRequest) -> Result<ValidateResponse, ApiError> {
 /// run time reveals nothing about the structure of the passphrase.
 pub async fn validate(
     State(state): State<Arc<AppState>>,
-    body: Result<Json<ValidateRequest>, JsonRejection>,
+    body: Result<LockedJson<ValidateRequest>, ApiError>,
 ) -> Response {
     let deadline = Instant::now() + state.limits.validate_min;
     let result = match body {
-        Ok(Json(req)) => assess(req).await,
-        Err(rejection) => Err(ApiError::from(rejection)),
+        Ok(LockedJson(req)) => assess(req).await,
+        Err(rejection) => Err(rejection),
     };
     tokio::time::sleep_until(deadline).await;
     match result {

@@ -10,9 +10,10 @@
 
 use std::io::{Read, Write};
 
-use crate::crypto::SecretBytes;
-use sha3::{Digest, Sha3_256};
+use crate::crypto::{SecretBytes, locked_hash::LockedHash};
+use sha3::Sha3_256;
 
+use super::ConfidentialText;
 use super::paths::{MAX_ENTRIES, MAX_PATH_BYTES};
 use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
 use crate::{Error, Result};
@@ -20,6 +21,10 @@ use crate::{Error, Result};
 const TAG_END: u8 = 0;
 const TAG_DIR: u8 = 1;
 const TAG_FILE: u8 = 2;
+
+#[cfg(test)]
+#[path = "archive_locked_tests.rs"]
+mod tests;
 
 fn bad() -> Error {
     Error::InvalidInput { field: "archive" }
@@ -55,7 +60,7 @@ impl<W: Write> ArchiveWriter<W> {
     pub fn file(&mut self, path: &str, reader: &mut impl Read, size: u64) -> Result<()> {
         self.entry_head(TAG_FILE, path)?;
         self.enc.push(&size.to_le_bytes())?;
-        let mut hasher = Sha3_256::new();
+        let mut hasher = LockedHash::<Sha3_256>::new()?;
         let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
         let mut left = size;
         while left > 0 {
@@ -75,7 +80,7 @@ impl<W: Write> ArchiveWriter<W> {
                 field: "source_changed",
             });
         }
-        self.enc.push(&hasher.finalize())?;
+        self.enc.push(hasher.finalize()?.expose())?;
         Ok(())
     }
 
@@ -87,10 +92,10 @@ impl<W: Write> ArchiveWriter<W> {
 }
 
 /// DE: Eintrag im Archiv. EN: Archive entry.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum Entry {
-    Dir(String),
-    File(String, u64),
+    Dir(ConfidentialText),
+    File(ConfidentialText, u64),
 }
 
 /// DE: Liest Einträge und prüft Inhalte. EN: Reads entries and verifies contents.
@@ -130,9 +135,9 @@ impl<R: Read> ArchiveReader<R> {
         if len == 0 || len > MAX_PATH_BYTES {
             return Err(bad());
         }
-        let mut raw = vec![0u8; len];
-        self.dec.read_exact(&mut raw)?;
-        let path = String::from_utf8(raw).map_err(|_| Error::InvalidInput { field: "path" })?;
+        let mut raw = SecretBytes::zeroed(len)?;
+        self.dec.read_exact(raw.expose_mut())?;
+        let path = ConfidentialText::from_locked(raw)?;
         Ok(Some(if tag == TAG_DIR {
             Entry::Dir(path)
         } else {
@@ -143,7 +148,7 @@ impl<R: Read> ArchiveReader<R> {
     /// DE: Kopiert den Inhalt der aktuellen Datei und prüft die Prüfsumme.
     /// EN: Copies the current file's content and verifies the checksum.
     pub fn copy_file(&mut self, size: u64, out: &mut impl Write) -> Result<()> {
-        let mut hasher = Sha3_256::new();
+        let mut hasher = LockedHash::<Sha3_256>::new()?;
         let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
         let mut left = size;
         while left > 0 {
@@ -153,8 +158,9 @@ impl<R: Read> ArchiveReader<R> {
             out.write_all(&buf.expose()[..want])?;
             left -= want as u64;
         }
-        let expected = self.array::<32>()?;
-        if hasher.finalize().as_slice() == expected {
+        let mut expected = SecretBytes::zeroed(32)?;
+        self.dec.read_exact(expected.expose_mut())?;
+        if hasher.finalize()?.expose() == expected.expose() {
             Ok(())
         } else {
             Err(Error::InvalidInput { field: "checksum" })

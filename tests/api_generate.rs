@@ -26,7 +26,8 @@ fn app(kdf_budget_mib: u32) -> Router {
         ..Limits::default()
     };
     let addr: SocketAddr = "127.0.0.1:1".parse().unwrap();
-    api::router(AppState::new(TokenHash::of(TOKEN), limits)).layer(Extension(ConnectInfo(addr)))
+    api::router(AppState::new(TokenHash::of(TOKEN).unwrap(), limits))
+        .layer(Extension(ConnectInfo(addr)))
 }
 
 fn req(token: &str, body: &Value) -> Request<Body> {

@@ -319,3 +319,20 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 - [ ] Keine hartcodierten Geheimnisse, keine `unwrap()`/`expect()` in Produktionscode
 - [ ] Negativ- und Grenzwerttests vorhanden, nicht nur der Erfolgsfall
 - [ ] Kurze Zusammenfassung: was gebaut, was getestet, bekannte Einschränkungen
+
+
+Laufzeitnacharbeit #147: Zusätzliche Klartext-Dateipuffer entfernt; Signatur-Eingabe,
+In-place-AEAD, Rekey-Framing und erzeugte API-Tokens verwenden gesperrten Speicher.
+HTTP/1-Eingang mit gesperrten Hyper-Ownern und gesperrtem serde_json-Scratch umgesetzt;
+externe Router-Caller verantworten ihre vorgelagerten Allokationen. Entschlüsselte
+Archivnamen und Konfliktschlüssel liegen in ConfidentialText; ListEntry.path erfordert
+explizites expose(), keine automatische Klartext-Serialisierung/Clone/Debug-Ausgabe.
+Listing.entries verwendet ConfidentialEntries: vor dem ersten Datensatz vollständig
+gesperrte feste Kapazität, keine Reallokation privater Typ-/Größen-/Owner-Datensätze.
+Caller-eigene Vec-Konvertierung ist fallibel und bleibt eine explizite äußere Grenze.
+Listen-JSON bleibt pqkeep-list/1 und wird nach vollständiger Authentisierung direkt
+aus geliehenen Pfaden ausgegeben. TokenHash::of/verify sind wegen zwingender Sperren
+fallibel. Typisierte Seeds und private Hashzustände werden vor privater Befüllung gesperrt.
+Provider-Konstruktoren und Prozess-/Helper-Unterstützung bleiben offen; siehe
+[Plattformplan](security/PLATFORM_SUPPORT_PLAN.md). Keine vollständige Schließung behauptet.
+Geprüfte Main-Merges sind freigegeben; Host-/Registry-/Rechteänderungen weiterhin separat.

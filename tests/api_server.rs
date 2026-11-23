@@ -23,7 +23,7 @@ type Server = (
 async fn start(limits: Limits) -> Server {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
-    let state = AppState::new(TokenHash::of("pqk1_x"), limits);
+    let state = AppState::new(TokenHash::of("pqk1_x").unwrap(), limits);
     let (tx, rx) = oneshot::channel::<()>();
     let handle = tokio::spawn(api::serve(listener, state, async {
         let _ = rx.await;

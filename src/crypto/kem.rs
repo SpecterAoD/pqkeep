@@ -8,8 +8,13 @@ use ml_kem::kem::{Decapsulate, Encapsulate, FromSeed, Kem, KeyExport, TryKeyInit
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
 
+use super::secret_buffer::SecretBuffer;
 use crate::crypto::{KemAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
+
+#[cfg(test)]
+#[path = "kem_seed_tests.rs"]
+mod tests;
 
 /// DE: Länge des Seeds (d ‖ z) in Bytes. EN: Seed length (d ‖ z) in bytes.
 pub const SEED_LEN: usize = 64;
@@ -57,15 +62,16 @@ pub fn generate(algorithm: KemAlgorithm) -> Result<KemKeyPair> {
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] bei falscher Seed-Länge / on wrong seed length.
 pub fn from_seed(algorithm: KemAlgorithm, seed: &[u8]) -> Result<KemKeyPair> {
+    let seed = SecretBytes::from_slice(seed)?;
     let public_key = match algorithm {
-        KemAlgorithm::MlKem512 => public_from_seed::<MlKem512>(seed)?,
-        KemAlgorithm::MlKem768 => public_from_seed::<MlKem768>(seed)?,
-        KemAlgorithm::MlKem1024 => public_from_seed::<MlKem1024>(seed)?,
+        KemAlgorithm::MlKem512 => public_from_seed::<MlKem512>(seed.expose())?,
+        KemAlgorithm::MlKem768 => public_from_seed::<MlKem768>(seed.expose())?,
+        KemAlgorithm::MlKem1024 => public_from_seed::<MlKem1024>(seed.expose())?,
     };
     Ok(KemKeyPair {
         algorithm,
         public_key,
-        seed: SecretBytes::from_slice(seed)?,
+        seed,
     })
 }
 
@@ -97,14 +103,20 @@ pub fn decapsulate(algorithm: KemAlgorithm, seed: &[u8], ciphertext: &[u8]) -> R
     }
 }
 
-fn parse_seed<K: FromSeed>(seed: &[u8]) -> Result<ml_kem::kem::Seed<K>> {
-    ml_kem::kem::Seed::<K>::try_from(seed).map_err(|_| Error::InvalidInput { field: "seed" })
+fn parse_seed<K: FromSeed>(seed: &[u8]) -> Result<SecretBuffer<ml_kem::kem::Seed<K>>> {
+    let public = ml_kem::kem::Seed::<K>::default();
+    if seed.len() != public.len() {
+        return Err(Error::InvalidInput { field: "seed" });
+    }
+    let mut out = SecretBuffer::new(vec![public])?;
+    out.expose_mut()[0].as_mut_slice().copy_from_slice(seed);
+    Ok(out)
 }
 
 fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>> {
     let mut seed = parse_seed::<K>(seed)?;
-    let (_dk, ek) = K::from_seed(&seed);
-    seed.zeroize();
+    let (_dk, ek) = K::from_seed(&seed.expose()[0]);
+    seed.expose_mut()[0].zeroize();
     Ok(ek.to_bytes().to_vec())
 }
 
@@ -127,10 +139,10 @@ where
     K: FromSeed,
     K::DecapsulationKey: Decapsulate,
 {
-    let mut seed = parse_seed::<K>(seed)?;
-    let (dk, _ek) = K::from_seed(&seed);
-    seed.zeroize();
     let mut out = SecretBytes::zeroed(32)?;
+    let mut seed = parse_seed::<K>(seed)?;
+    let (dk, _ek) = K::from_seed(&seed.expose()[0]);
+    seed.expose_mut()[0].zeroize();
     let mut shared = dk
         .decapsulate_slice(ciphertext)
         .map_err(|_| Error::InvalidInput {

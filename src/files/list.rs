@@ -4,8 +4,9 @@
 use std::path::Path;
 
 use super::archive::Entry;
-use super::{Report, Unlock, scan};
+use super::{ConfidentialEntries, ConfidentialText, Report, Unlock, scan};
 use crate::{Error, Result};
+use zeroize::Zeroize;
 
 /// DE: List-Grenze; check/decrypt behalten ihre Grenzen. EN: Listing-only entry cap.
 pub const MAX_LIST_ENTRIES: usize = 10_000;
@@ -23,10 +24,10 @@ pub enum EntryKind {
 
 /// DE: Geprüfte Metadaten; nur nach ausdrücklicher Anforderung anzeigen.
 /// EN: Verified metadata; display only when explicitly requested.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct ListEntry {
     /// DE: Relativer UTF-8-Archivpfad. EN: Relative UTF-8 archive path.
-    pub path: String,
+    pub path: ConfidentialText,
     /// DE: Datei oder Ordner. EN: File or directory.
     pub kind: EntryKind,
     /// DE: Dateigröße; bei Ordnern None. EN: File size; None for directories.
@@ -35,17 +36,17 @@ pub struct ListEntry {
 
 /// DE: Vollständig geprüfte Liste in Archivreihenfolge, keine Absenderidentität.
 /// EN: Fully checked listing in archive order, not proof of sender identity.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Listing {
     /// DE: Validierte Einträge. EN: Validated entries.
-    pub entries: Vec<ListEntry>,
+    pub entries: ConfidentialEntries,
     /// DE: Derselbe Bericht wie check. EN: Same report as check.
     pub report: Report,
 }
 
 #[derive(Default)]
 struct Pending {
-    entries: Vec<ListEntry>,
+    entries: ConfidentialEntries,
     path_bytes: usize,
 }
 
@@ -61,16 +62,19 @@ impl Pending {
             Entry::Dir(path) => (path, EntryKind::Directory, None),
             Entry::File(path, size) => (path, EntryKind::File, Some(*size)),
         };
-        let total = self.path_bytes.checked_add(path.len()).ok_or_else(limit)?;
+        let total = self
+            .path_bytes
+            .checked_add(path.bytes().len())
+            .ok_or_else(limit)?;
         if self.entries.len() >= MAX_LIST_ENTRIES || total > MAX_LIST_PATH_BYTES {
             return Err(limit());
         }
-        self.entries.try_reserve(1).map_err(|_| limit())?;
+        self.entries.prepare()?;
         self.entries.push(ListEntry {
-            path: path.clone(),
+            path: path.try_duplicate()?,
             kind,
             bytes,
-        });
+        })?;
         self.path_bytes = total;
         Ok(())
     }
@@ -98,3 +102,28 @@ pub fn list(source: &Path, unlock: &Unlock<'_>) -> Result<Listing> {
 #[cfg(test)]
 #[path = "list_tests.rs"]
 mod tests;
+
+impl std::fmt::Debug for ListEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ListEntry([REDACTED])")
+    }
+}
+impl std::fmt::Debug for Listing {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Listing([REDACTED])")
+    }
+}
+
+impl Zeroize for ListEntry {
+    fn zeroize(&mut self) {
+        self.path.zeroize();
+        self.bytes.zeroize();
+        self.kind = EntryKind::Directory;
+    }
+}
+
+impl Drop for ListEntry {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}

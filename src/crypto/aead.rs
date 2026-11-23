@@ -6,7 +6,7 @@
 //! Nonce: 96 bits, freshly drawn from the OS CSPRNG for every encryption.
 //! The tag comparison is constant-time inside the crate.
 
-use aes_gcm::aead::{Aead, AeadInOut, Nonce, Payload};
+use aes_gcm::aead::{AeadInOut, Nonce, consts};
 
 use super::secret_state::SecretState;
 use aes_gcm::{Aes256Gcm, KeyInit};
@@ -61,16 +61,7 @@ pub(crate) fn cipher(key: &[u8]) -> Result<SecretState<Aes256Gcm>> {
 pub fn seal(key: &[u8], plaintext: &[u8], aad: &[u8]) -> Result<Sealed> {
     let cipher = cipher(key)?;
     let nonce = rng::array::<NONCE_LEN>()?;
-    let ciphertext = cipher
-        .get()
-        .encrypt(
-            &Nonce::<Aes256Gcm>::from(nonce),
-            Payload {
-                msg: plaintext,
-                aad,
-            },
-        )
-        .map_err(|_| Error::Crypto)?;
+    let ciphertext = seal_locked(cipher.get(), nonce, plaintext, aad)?;
     Ok(Sealed { nonce, ciphertext })
 }
 
@@ -86,16 +77,33 @@ pub(crate) fn seal_with_nonce(
     plaintext: &[u8],
     aad: &[u8],
 ) -> Result<Vec<u8>> {
-    cipher(key)?
-        .get()
-        .encrypt(
-            &Nonce::<Aes256Gcm>::from(nonce),
-            Payload {
-                msg: plaintext,
-                aad,
-            },
-        )
-        .map_err(|_| Error::Crypto)
+    seal_locked(cipher(key)?.get(), nonce, plaintext, aad)
+}
+
+// DE: Keine ungesperrte Klartextkopie im allokierenden AEAD-Komfortadapter.
+// EN: Never pass plaintext through the allocating AEAD convenience adapter.
+pub(crate) fn seal_locked<C>(
+    cipher: &C,
+    nonce: [u8; NONCE_LEN],
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>>
+where
+    C: AeadInOut<NonceSize = consts::U12, TagSize = consts::U16>,
+{
+    let mut work = SecretBytes::from_slice(plaintext)?;
+    let tag = cipher
+        .encrypt_inout_detached(&Nonce::<C>::from(nonce), aad, work.expose_mut().into())
+        .map_err(|_| Error::Crypto)?;
+    // DE: Erst nach erfolgreicher Verschlüsselung in öffentlichen Speicher kopieren.
+    // EN: Copy to public storage only after successful encryption.
+    let mut ciphertext = Vec::new();
+    ciphertext
+        .try_reserve_exact(work.len().checked_add(TAG_LEN).ok_or(Error::Crypto)?)
+        .map_err(|_| Error::Crypto)?;
+    ciphertext.extend_from_slice(work.expose());
+    ciphertext.extend_from_slice(&tag);
+    Ok(ciphertext)
 }
 
 /// DE: Entschlüsselt und prüft den Tag. Jede Abweichung (Schlüssel, Nonce,
@@ -125,3 +133,7 @@ pub fn open(key: &[u8], nonce: &[u8], ciphertext: &[u8], aad: &[u8]) -> Result<S
         .map_err(|_| Error::Decrypt)?;
     Ok(plaintext)
 }
+
+#[cfg(test)]
+#[path = "aead_locked_tests.rs"]
+mod tests;

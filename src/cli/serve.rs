@@ -62,7 +62,12 @@ pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
         };
         let token = token::create(path, overwrite).map_err(|e| Failure::from_error(&e, lang))?;
         eprintln!("{}", s.msg_token_created);
-        println!("{}", token.as_str());
+        let text = token.expose().map_err(|e| Failure::from_error(&e, lang))?;
+        let mut out =
+            super::secret_input::stdout_file().map_err(|e| Failure::from_error(&e.into(), lang))?;
+        std::io::Write::write_all(&mut out, text.as_bytes())
+            .and_then(|()| std::io::Write::write_all(&mut out, b"\n"))
+            .map_err(|e| Failure::from_error(&e.into(), lang))?;
         return Ok(());
     }
     let addr: SocketAddr = m

@@ -29,7 +29,7 @@ fn fast_limits() -> Limits {
 }
 
 fn app_with(limits: Limits, ip: &str) -> Router {
-    let state: Arc<AppState> = AppState::new(TokenHash::of(TOKEN), limits);
+    let state: Arc<AppState> = AppState::new(TokenHash::of(TOKEN).unwrap(), limits);
     let addr: SocketAddr = format!("{ip}:40000").parse().unwrap();
     api::router(state).layer(Extension(ConnectInfo(addr)))
 }
@@ -204,7 +204,7 @@ async fn rate_limit_per_client() {
         requests_per_window: 3,
         ..fast_limits()
     };
-    let state = AppState::new(TokenHash::of(TOKEN), limits);
+    let state = AppState::new(TokenHash::of(TOKEN).unwrap(), limits);
     let health = || Request::get("/v1/health").body(Body::empty()).unwrap();
     let a = api::router(state.clone()).layer(Extension(ConnectInfo(addr("10.0.0.1"))));
     let b = api::router(state).layer(Extension(ConnectInfo(addr("10.0.0.2"))));
@@ -223,7 +223,7 @@ fn addr(ip: &str) -> SocketAddr {
 
 #[tokio::test]
 async fn lockout_after_failed_tokens_even_with_correct_token() {
-    let state = AppState::new(TokenHash::of(TOKEN), fast_limits());
+    let state = AppState::new(TokenHash::of(TOKEN).unwrap(), fast_limits());
     let a = api::router(state.clone()).layer(Extension(ConnectInfo(addr("10.0.0.1"))));
     let b = api::router(state).layer(Extension(ConnectInfo(addr("10.0.0.2"))));
     let body = pass_body("kurz");

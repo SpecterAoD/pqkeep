@@ -4,7 +4,7 @@
 //! Fresh file key and nonce prefix for every operation.
 
 use std::fs::{self, File};
-use std::io::{BufReader, BufWriter, Write};
+use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use super::archive::ArchiveWriter;
@@ -168,7 +168,7 @@ fn write_entry<W: Write>(
             report.directories += 1;
         }
         SourceKind::File(size) => {
-            let mut reader = BufReader::new(File::open(&entry.abs)?);
+            let mut reader = File::open(&entry.abs)?;
             archive.file(&entry.rel, &mut reader, size)?;
             report.files += 1;
             report.bytes += size;

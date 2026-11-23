@@ -37,8 +37,11 @@ fuzz_target!(|input: (bool, Vec<u8>)| {
         ..Limits::default()
     };
     let addr: SocketAddr = "127.0.0.1:1".parse().expect("addr");
-    let app = api::router(AppState::new(TokenHash::of(TOKEN), limits))
-        .layer(Extension(ConnectInfo(addr)));
+    let app = api::router(AppState::new(
+        TokenHash::of(TOKEN).expect("locked token hash"),
+        limits,
+    ))
+    .layer(Extension(ConnectInfo(addr)));
     let path = if generate {
         "/v1/generate"
     } else {
