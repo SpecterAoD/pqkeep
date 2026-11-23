@@ -32,3 +32,16 @@ reviewed source/provenance checks and a practical reverse-diff rollback before m
 DE/EN: Abhängig von PR302 und dessen Main-Abgleich / depends on PR302 and its Main
 integration. Rollback: separate reviewed code revert, no data migration or release.
 Issue147 and roadmap remain In progress; provider internals/password helpers open.
+
+## Fuzz acceptance follow-up / Ergänzung zur Fuzz-Abnahme
+
+DE: Der anschließende CI-Abgleich zeigt eine Prüflücke: fuzz.yml startet bei PRs nur
+für fuzz/-Änderungen. Änderungen an Normalisierung, Krypto und Providerquellen lösen
+keinen Fuzz-Lauf aus. Vor Workflow-Codeänderung: bestehende Pfadfilter um src/**,
+platform/**, vendor/**, Cargo.toml/Cargo.lock und scripts/ci_locked_exec.py erweitern.
+Alle acht Ziele, Pins, Budgets, Rechte und Fehlerartefakte unverändert behalten.
+EN: Extend the existing PR trigger to production Rust/platform/provider/dependency
+and locked-execution-profile changes. Preserve the complete eight-target matrix,
+60-second PR/600-second manual budgets and read-only permissions. Verify workflow
+policy and the actual new PR-triggered execution, without a new test-only bypass.
+The already dispatched runs retain their original exact source heads as evidence.
