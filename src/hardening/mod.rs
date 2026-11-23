@@ -21,6 +21,9 @@ pub struct HardeningReport {
     /// DE: Prozess nicht dumpbar (auch kein ptrace durch denselben Benutzer).
     /// EN: Process not dumpable (also no ptrace by the same user).
     pub not_dumpable: bool,
+    /// DE: Windows-WER-NOHEAP bestätigt, keine vollständige Dumpsperre.
+    /// EN: Windows WER NOHEAP confirmed, not a complete dump barrier.
+    pub wer_heap_reporting_disabled: bool,
 }
 
 impl HardeningReport {
@@ -33,10 +36,12 @@ impl HardeningReport {
 
 /// DE: Sperrt Core Dumps für diesen Prozess (Linux). Unter Windows lässt sich die
 /// Fehlerberichterstattung (WER) nicht zuverlässig vom Programm abschalten; siehe
-/// `docs/MEMORY_HARDENING.md`. Mehrfacher Aufruf ist unschädlich.
+/// `docs/MEMORY_HARDENING.md`. NOHEAP wird separat ergänzt und nachgeprüft.
+/// Mehrfacher Aufruf ist unschädlich; beim Start vor anderen Policy-Änderungen aufrufen.
 /// EN: Disables core dumps for this process (Linux). On Windows, error reporting
 /// (WER) cannot be reliably disabled by the program; see `docs/MEMORY_HARDENING.md`.
-/// Calling it more than once is harmless.
+/// NOHEAP is added and verified separately. Repeated calls are harmless; invoke during
+/// startup before other host policy changes. Direct library calls do not harden implicitly.
 #[must_use]
 pub fn harden_process() -> HardeningReport {
     platform::harden()
@@ -56,11 +61,12 @@ mod platform {
         HardeningReport {
             core_dumps_disabled: setrlimit(Resource::Core, zero).is_ok(),
             not_dumpable: set_dumpable_behavior(DumpableBehavior::NotDumpable).is_ok(),
+            wer_heap_reporting_disabled: false,
         }
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(windows)]
 mod platform {
     use super::HardeningReport;
 
@@ -68,6 +74,20 @@ mod platform {
         HardeningReport {
             core_dumps_disabled: false,
             not_dumpable: false,
+            wer_heap_reporting_disabled: pqkeep_platform::suppress_wer_heap_reporting().is_ok(),
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux", windows)))]
+mod platform {
+    use super::HardeningReport;
+
+    pub(super) fn harden() -> HardeningReport {
+        HardeningReport {
+            core_dumps_disabled: false,
+            not_dumpable: false,
+            wer_heap_reporting_disabled: false,
         }
     }
 }
