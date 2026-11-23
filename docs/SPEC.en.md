@@ -339,3 +339,8 @@ private hash state are locked before private population. Provider constructors a
 process/helper support remain open; see the [platform plan](security/PLATFORM_SUPPORT_PLAN.md).
 No complete closure claimed. Verified Main merges are authorized; machine policy changes
 remain separately gated.
+
+Partial R7 capability: explicit harden_process adds/verifies current-process Windows
+WER NOHEAP, reported separately from complete/core_dumps_disabled/not_dumpable, which
+remain false. External host policy and password helpers remain open; no registry, ACL
+or system changes. A partial mitigation never satisfies the complete-process contract.
