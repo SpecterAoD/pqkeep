@@ -21,7 +21,11 @@ fn hresult(result: i32) -> io::Result<()> {
     if result == 0 {
         Ok(())
     } else {
-        Err(io::Error::other("WER operation failed"))
+        // DE: Nur öffentlicher Statuscode, keine privaten Eingaben im Fehlertext.
+        // EN: Public status code only; never include private inputs in errors.
+        Err(io::Error::other(format!(
+            "WER operation failed (HRESULT {result:#010x})"
+        )))
     }
 }
 

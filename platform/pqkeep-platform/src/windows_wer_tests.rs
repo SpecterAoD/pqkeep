@@ -3,8 +3,29 @@
 #![allow(clippy::unwrap_used)]
 
 use super::*;
-use std::os::windows::io::AsRawHandle;
+use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle};
 use windows_sys::Win32::System::ErrorReporting::WER_FAULT_REPORTING_FLAG_NOHEAP;
+use windows_sys::Win32::System::Threading::{
+    GetCurrentProcessId, OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
+};
+
+#[test]
+fn native_wer_query_with_real_current_process_handle() {
+    // DE: Nur eigenes Prozesshandle mit den dokumentierten Leserechten öffnen.
+    // SAFETY: No pointers; opens only this process with query/read rights, no inheritance.
+    let handle = unsafe {
+        OpenProcess(
+            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+            0,
+            GetCurrentProcessId(),
+        )
+    };
+    assert!(!handle.is_null());
+    // SAFETY: Successful OpenProcess returned a fresh owned handle, closed exactly once.
+    let owned = unsafe { OwnedHandle::from_raw_handle(handle) };
+    let result = wer_flags(owned.as_raw_handle());
+    assert!(result.is_ok(), "real current-process WER query: {result:?}");
+}
 
 #[test]
 fn native_wer_noheap_is_confirmed_preserves_flags_and_is_idempotent() {
