@@ -11,7 +11,6 @@ pub mod dictionary;
 mod entropy;
 pub mod generator;
 mod locked;
-mod normalize;
 pub mod output;
 mod patterns;
 mod policy;
@@ -20,6 +19,8 @@ pub use entropy::{GENERIC_WORD_BITS, LIST_WORD_BITS, formula_bits};
 pub use policy::{
     MAX_CHARS, MAX_MIN_BITS, MIN_BITS, MIN_CHARS, MIN_ENTROPY_BITS, Reason, Rejection,
 };
+
+use unicode_normalization::UnicodeNormalization;
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -70,7 +71,16 @@ impl Passphrase {
                 field: "passphrase",
             });
         }
-        let (normalized, chars) = normalize::nfkc(input)?;
+        let len: usize = input.nfkc().map(char::len_utf8).sum();
+        let mut normalized = SecretBytes::zeroed(len)?;
+        let mut offset = 0;
+        let mut chars = 0;
+        for ch in input.nfkc() {
+            let n = ch.len_utf8();
+            ch.encode_utf8(&mut normalized.expose_mut()[offset..offset + n]);
+            offset += n;
+            chars += 1;
+        }
         if chars == 0 || chars > INPUT_LIMIT_CHARS {
             return Err(Error::InvalidInput {
                 field: "passphrase",

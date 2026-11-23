@@ -336,8 +336,3 @@ fallibel. Typisierte Seeds und private Hashzustände werden vor privater Befüll
 Provider-Konstruktoren und Prozess-/Helper-Unterstützung bleiben offen; siehe
 [Plattformplan](security/PLATFORM_SUPPORT_PLAN.md). Keine vollständige Schließung behauptet.
 Geprüfte Main-Merges sind freigegeben; Host-/Registry-/Rechteänderungen weiterhin separat.
-
-R6-Teilbehebung: NFKC verwendet bestehende gepinnte Unicode-Primitiven mit gesperrten
-Zeichen-/Sortierbereichen und Klassenzählern statt TinyVec/Standard-Sort-Scratch.
-Passphrase-Bytes und Grenzen bleiben gleich; alle Unicode-Skalare und der vollständige
-Unicode18-Konformitätskorpus dienen als Gegenprobe. Andere Providerzustände bleiben offen.
