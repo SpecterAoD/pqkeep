@@ -95,3 +95,16 @@ Flags; portabler Ablauf mit simulierten Read-/Set-/Read-back-Fehlern. Native CI 
 bestehende vollständige Kompatibilitäts-/Security-Prüfungen bleiben unverändert nötig.
 EN: Preserve existing policy flags and expose sanitized failures without a success fallback.
 Rollback is a reviewed code revert; the mitigation lasts only for the invoking process.
+
+DE: Nativer Abgleich626e8bd: frischer Prozess liefert für Pseudo- und echtes eigenes
+Handle HRESULT0x80070490 (WER_E_NOT_FOUND). Dies wird als expliziter Zustand Absent
+modelliert, niemals als erfolgreich gelesene Nullflags. Nur dieser benannte Zustand
+führt zur Initialisierung mit NOHEAP; danach zwingend erfolgreicher Read-back mit
+Present(NOHEAP). Jede andere Abfrage-/Set-Fehlerart und weiterhin fehlender Eintrag
+verweigert die Bestätigung. Bereits vorhandene Flags werden weiterhin erhalten.
+EN: Native evidence distinguishes absent per-process configuration from query failure.
+The postcondition always requires actual returned flags; no zero-value error fallback.
+[Microsoft WER error codes](https://learn.microsoft.com/en-us/windows/win32/wer/wer-error-codes)
+defines WER_E_NOT_FOUND as element not found; the fresh-process behavior is native test
+observation, not an additional documented Windows guarantee. Native read/set/read-back
+and retained pre-existing flags remain required before acceptance.

@@ -33,8 +33,11 @@ fn native_wer_noheap_is_confirmed_preserves_flags_and_is_idempotent() {
     let before = current_wer_flags().unwrap();
     suppress_wer_heap_reporting().unwrap();
     let after = current_wer_flags().unwrap();
-    assert_eq!(after & before, before);
-    assert_ne!(after & WER_FAULT_REPORTING_FLAG_NOHEAP, 0);
+    assert!(matches!(after, WerFlags::Present(flags)
+        if flags & WER_FAULT_REPORTING_FLAG_NOHEAP != 0));
+    if let (WerFlags::Present(previous), WerFlags::Present(actual)) = (before, after) {
+        assert_eq!(actual & previous, previous);
+    }
     suppress_wer_heap_reporting().unwrap();
     assert_eq!(current_wer_flags().unwrap(), after);
 }

@@ -1,20 +1,26 @@
 //! DE: Einzige produktive FFI-Grenze, keine Allokation oder Secret-Kopie.
 //! EN: Single production FFI boundary, without allocation or secret copying.
 
+use crate::WerFlags;
 use std::io;
 use std::os::windows::io::{AsRawHandle, BorrowedHandle};
 use windows_sys::Win32::System::Console::{GetConsoleMode, WriteConsoleW};
 use windows_sys::Win32::System::ErrorReporting::{WerGetFlags, WerSetFlags};
 use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
-fn wer_flags(handle: windows_sys::Win32::Foundation::HANDLE) -> io::Result<u32> {
+fn wer_flags(handle: windows_sys::Win32::Foundation::HANDLE) -> io::Result<WerFlags> {
     let mut flags = 0;
     // DE: Initialisierte Ausgabe; Win32 prüft das Prozesshandle, keine Zeigerspeicherung.
     // SAFETY: Exclusive initialized output; Win32 validates the process handle and
     // does not retain the pointer. Invalid handles produce an HRESULT failure.
     let result = unsafe { WerGetFlags(handle, &raw mut flags) };
+    // DE: WER_E_NOT_FOUND ist Abwesenheit, kein erfolgreicher Null-Flagsatz.
+    // EN: WER_E_NOT_FOUND denotes absence, never a successful zero flag set.
+    if result.cast_unsigned() == 0x8007_0490 {
+        return Ok(WerFlags::Absent);
+    }
     hresult(result)?;
-    Ok(flags)
+    Ok(WerFlags::Present(flags))
 }
 
 fn hresult(result: i32) -> io::Result<()> {
@@ -33,7 +39,7 @@ fn hresult(result: i32) -> io::Result<()> {
 /// EN: Read this process's WER flags without changing policy.
 /// # Errors
 /// DE/EN: Nicht erfolgreiche WER-Abfrage / unsuccessful WER query.
-pub fn current_wer_flags() -> io::Result<u32> {
+pub fn current_wer_flags() -> io::Result<WerFlags> {
     // DE: Pseudohandle, nicht schließen. EN: Pseudo-handle, must not be closed.
     // SAFETY: No arguments or pointers; returns the current process pseudo-handle.
     wer_flags(unsafe { GetCurrentProcess() })

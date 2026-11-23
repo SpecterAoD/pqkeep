@@ -27,7 +27,8 @@ fn harden_process_applies_and_is_idempotent() {
     #[cfg(windows)]
     {
         assert!(first.wer_heap_reporting_disabled);
-        assert_ne!(pqkeep_platform::current_wer_flags().unwrap() & 1, 0);
+        assert!(matches!(pqkeep_platform::current_wer_flags().unwrap(),
+            pqkeep_platform::WerFlags::Present(flags) if flags & 1 != 0));
         assert!(!first.core_dumps_disabled && !first.not_dumpable);
     }
     #[cfg(not(target_os = "linux"))]

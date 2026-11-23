@@ -2,8 +2,8 @@
 //! EN: Isolated platform FFI; root retains ownership of protected secret storage.
 #![deny(unsafe_op_in_unsafe_fn)]
 
-#[cfg(any(windows, test))]
 mod wer;
+pub use wer::WerFlags;
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
