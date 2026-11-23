@@ -9,7 +9,7 @@
 //! encrypted for the recipient) are rejected without leaving anything behind.
 
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Chain, Cursor, Read};
+use std::io::{BufReader, Chain, Cursor, Read};
 use std::path::Path;
 
 use sha3::{Digest, Sha3_256};
@@ -200,9 +200,9 @@ fn extract_file<R: Read>(
     let Some(Entry::File(name, size)) = archive.next_entry()? else {
         return Err(Error::InvalidInput { field: "archive" });
     };
-    paths::validate(&name)?;
+    paths::validate(name.expose()?)?;
     let (temp, file) = TempOutput::file(target)?;
-    let mut out = BufWriter::new(file);
+    let mut out = file;
     archive.copy_file(size, &mut out)?;
     if archive.next_entry()?.is_some() {
         return Err(Error::InvalidInput { field: "archive" });
@@ -230,15 +230,15 @@ fn extract_dir<R: Read>(
     while let Some(entry) = archive.next_entry()? {
         match entry {
             Entry::Dir(path) => {
-                let parts = paths::validate(&path)?;
+                let parts = paths::validate(path.expose()?)?;
                 seen.insert(&parts, false)?;
                 output::create_dir(temp.path(), &parts)?;
                 report.directories += 1;
             }
             Entry::File(path, size) => {
-                let parts = paths::validate(&path)?;
+                let parts = paths::validate(path.expose()?)?;
                 seen.insert(&parts, true)?;
-                let mut out = BufWriter::new(output::create_file(temp.path(), &parts)?);
+                let mut out = output::create_file(temp.path(), &parts)?;
                 archive.copy_file(size, &mut out)?;
                 finish_file(out)?;
                 report.files += 1;
@@ -252,8 +252,8 @@ fn extract_dir<R: Read>(
     Ok(report)
 }
 
-fn finish_file(out: BufWriter<crate::fsutil::OutputFile>) -> Result<()> {
-    let file = out.into_inner().map_err(|e| Error::from(e.into_error()))?;
-    file.sync_all()?;
+fn finish_file(out: crate::fsutil::OutputFile) -> Result<()> {
+    out.sync_all()?;
+    drop(out);
     Ok(())
 }

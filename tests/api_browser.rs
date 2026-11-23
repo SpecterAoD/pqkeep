@@ -27,7 +27,8 @@ fn app(hosts: Option<Vec<String>>) -> Router {
         ..Limits::default()
     };
     let addr: SocketAddr = "127.0.0.1:40000".parse().unwrap();
-    api::router(AppState::new(TokenHash::of(TOKEN), limits)).layer(Extension(ConnectInfo(addr)))
+    api::router(AppState::new(TokenHash::of(TOKEN).unwrap(), limits))
+        .layer(Extension(ConnectInfo(addr)))
 }
 
 fn validate(token: Option<&str>, extra: &[(&str, &str)]) -> Request<Body> {

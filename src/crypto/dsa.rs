@@ -12,6 +12,7 @@ use ml_dsa::{EncodedVerifyingKey, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signat
 use ml_dsa::{SigningKey, VerifyingKey};
 use zeroize::Zeroize;
 
+use super::secret_buffer::SecretBuffer;
 use crate::crypto::{DsaAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
 
@@ -55,15 +56,16 @@ pub fn generate(algorithm: DsaAlgorithm) -> Result<DsaKeyPair> {
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] bei falscher Seed-Länge / on wrong seed length.
 pub fn from_seed(algorithm: DsaAlgorithm, seed: &[u8]) -> Result<DsaKeyPair> {
+    let seed = SecretBytes::from_slice(seed)?;
     let public_key = match algorithm {
-        DsaAlgorithm::MlDsa44 => public_from_seed::<MlDsa44>(seed)?,
-        DsaAlgorithm::MlDsa65 => public_from_seed::<MlDsa65>(seed)?,
-        DsaAlgorithm::MlDsa87 => public_from_seed::<MlDsa87>(seed)?,
+        DsaAlgorithm::MlDsa44 => public_from_seed::<MlDsa44>(seed.expose())?,
+        DsaAlgorithm::MlDsa65 => public_from_seed::<MlDsa65>(seed.expose())?,
+        DsaAlgorithm::MlDsa87 => public_from_seed::<MlDsa87>(seed.expose())?,
     };
     Ok(DsaKeyPair {
         algorithm,
         public_key,
-        seed: SecretBytes::from_slice(seed)?,
+        seed,
     })
 }
 
@@ -109,9 +111,13 @@ pub fn verify(
 }
 
 fn signing_key<P: MlDsaParams>(seed: &[u8]) -> Result<SigningKey<P>> {
-    let mut xi = ml_dsa::Seed::try_from(seed).map_err(|_| Error::InvalidInput { field: "seed" })?;
-    let sk = SigningKey::<P>::from_seed(&xi);
-    xi.zeroize();
+    if seed.len() != SEED_LEN {
+        return Err(Error::InvalidInput { field: "seed" });
+    }
+    let mut xi = SecretBuffer::new(vec![ml_dsa::Seed::default()])?;
+    xi.expose_mut()[0].as_mut_slice().copy_from_slice(seed);
+    let sk = SigningKey::<P>::from_seed(&xi.expose()[0]);
+    xi.expose_mut()[0].zeroize();
     Ok(sk)
 }
 

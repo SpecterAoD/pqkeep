@@ -11,17 +11,23 @@ use pqkeep::{Error, Result};
 use super::io::{CliResult, Failure};
 
 #[cfg(unix)]
-fn stdin_file() -> std::io::Result<File> {
+pub(super) fn stdin_file() -> std::io::Result<File> {
     use std::os::fd::AsFd;
     Ok(File::from(std::io::stdin().as_fd().try_clone_to_owned()?))
 }
 
 #[cfg(windows)]
-fn stdin_file() -> std::io::Result<File> {
+pub(super) fn stdin_file() -> std::io::Result<File> {
     use std::os::windows::io::AsHandle;
     Ok(File::from(
         std::io::stdin().as_handle().try_clone_to_owned()?,
     ))
+}
+
+// DE: Absichtliche Ausgabe direkt ans OS, ohne stdout-Zwischenpuffer.
+// EN: Intentional disclosure directly to the OS, without stdout staging.
+pub(super) fn stdout_file() -> std::io::Result<impl std::io::Write> {
+    pqkeep::security::output::stdout()
 }
 
 pub(super) fn read_line(reader: &mut impl Read, limit: usize) -> Result<SecretBytes> {

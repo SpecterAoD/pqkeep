@@ -20,6 +20,7 @@ use sha3::{Digest, Sha3_256, Sha3_512};
 
 use super::format::{Reader, bad};
 use crate::crypto::DsaAlgorithm;
+use crate::crypto::locked_hash::LockedHash;
 use crate::envelope::fingerprint;
 use crate::{Error, Result};
 
@@ -91,12 +92,17 @@ impl Signer {
 }
 
 /// DE: Schlüsselbindung für `file_key`. EN: Key commitment for `file_key`.
-#[must_use]
-pub fn commit(file_key: &[u8]) -> [u8; COMMIT_LEN] {
-    let mut hasher = Sha3_256::new();
+/// # Errors
+/// DE/EN: [`Error::MemoryLock`] bei fehlender Sperre / unavailable lock.
+pub fn commit(file_key: &[u8]) -> Result<[u8; COMMIT_LEN]> {
+    let mut hasher = LockedHash::<Sha3_256>::new()?;
     hasher.update(COMMIT_TAG);
     hasher.update(file_key);
-    hasher.finalize().into()
+    hasher
+        .finalize()?
+        .expose()
+        .try_into()
+        .map_err(|_| Error::Crypto)
 }
 
 /// DE: Prüft die Schlüsselbindung ohne frühen Abbruch; Abweichung = [`Error::Decrypt`].
@@ -105,7 +111,7 @@ pub fn commit(file_key: &[u8]) -> [u8; COMMIT_LEN] {
 /// # Errors
 /// DE/EN: [`Error::Decrypt`].
 pub fn check_commit(signer: &Signer, file_key: &[u8]) -> Result<()> {
-    let expected = commit(file_key);
+    let expected = commit(file_key)?;
     let diff = expected
         .iter()
         .zip(signer.commit.iter())

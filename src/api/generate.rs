@@ -15,7 +15,6 @@ use std::sync::Arc;
 
 use axum::Json;
 use axum::extract::State;
-use axum::extract::rejection::JsonRejection;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
@@ -24,10 +23,11 @@ use tokio::sync::OwnedSemaphorePermit;
 
 use super::AppState;
 use super::handlers::{ApiError, ReqLang, lang_of, to_response};
+use super::locked_json::LockedJson;
 use crate::crypto::KeyAlgorithm;
 use crate::crypto::kdf::KdfProfile;
 use crate::envelope::{KeyFile, Metadata};
-use crate::security::{Lang, Passphrase, Rejection, StrongPassphrase};
+use crate::security::{Lang, Rejection, StrongPassphrase};
 
 /// DE: Metadaten in der Anfrage. EN: Metadata in the request.
 #[derive(Deserialize)]
@@ -44,7 +44,7 @@ struct MetaIn {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GenerateRequest {
-    passphrase: String,
+    passphrase: super::secret_input::SecretInput,
     metadata: MetaIn,
     #[serde(default)]
     algorithm: Option<String>,
@@ -140,8 +140,7 @@ async fn run(state: &AppState, req: GenerateRequest) -> Result<Response, ApiErro
         Some(ProfileIn::Hardened) => KdfProfile::Hardened,
         _ => KdfProfile::Standard,
     };
-    // DE: `from_string` nullt die Eingabe. EN: `from_string` zeroes the input.
-    let pass = Passphrase::from_string(req.passphrase).map_err(|_| ApiError::BadRequest)?;
+    let pass = req.passphrase.0;
     // DE: Erst prüfen, dann Budget reservieren. EN: Check first, then reserve the budget.
     let strong = match StrongPassphrase::try_from(pass) {
         Ok(p) => p,
@@ -162,11 +161,11 @@ async fn run(state: &AppState, req: GenerateRequest) -> Result<Response, ApiErro
 /// DE: `POST /v1/generate`. EN: `POST /v1/generate`.
 pub async fn generate(
     State(state): State<Arc<AppState>>,
-    body: Result<Json<GenerateRequest>, JsonRejection>,
+    body: Result<LockedJson<GenerateRequest>, ApiError>,
 ) -> Response {
     let result = match body {
-        Ok(Json(req)) => run(&state, req).await,
-        Err(rejection) => Err(ApiError::from(rejection)),
+        Ok(LockedJson(req)) => run(&state, req).await,
+        Err(rejection) => Err(rejection),
     };
     result.unwrap_or_else(IntoResponse::into_response)
 }

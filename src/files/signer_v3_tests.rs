@@ -12,7 +12,7 @@ use crate::files::format::Reader;
 fn commit_and_message_match_independent_reference() {
     let key: Vec<u8> = (0u8..32).collect();
     assert_eq!(
-        hex::encode(commit(&key)),
+        hex::encode(commit(&key).unwrap()),
         "7bee0981a894478a670dda184e32374f3c49a0414e14c3ea8c554ed51cd1c16c"
     );
     let msg = message(b"header", &Sha3_512::digest(b"body"), 12_345);
@@ -30,7 +30,7 @@ fn commitment_rejects_another_file_key() {
     let key = [7u8; 32];
     let signer = Signer {
         public_key: vec![1; SIGNER_KEY_LEN],
-        commit: commit(&key),
+        commit: commit(&key).unwrap(),
     };
     assert_eq!(check_commit(&signer, &key), Ok(()));
     let mut other = key;

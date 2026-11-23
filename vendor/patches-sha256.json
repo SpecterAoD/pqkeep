@@ -48,5 +48,61 @@
       "sha256": "f718e58dcb471b79182caa3db75bf73ce012f547960f2ca1f041f9bbb818287a",
       "path": "src/os/windows.rs"
     }
+  ],
+  "hyper-1.12.0": [
+    {
+      "path": "src/proto/h1/conn.rs",
+      "sha256": "12a32435772bb6fe11cfaedac5488611cd794f13ba4f0c97b22b56ef9eaaef59"
+    },
+    {
+      "path": "src/proto/h1/decode.rs",
+      "sha256": "8a8049a9b3967c93a1d2ae1cf89963b4208b67ff206e816ccaaa02a1bcc655f1"
+    },
+    {
+      "path": "src/proto/h1/io.rs",
+      "sha256": "6a97650fe4906c5ea891194502469c23c6f679f62d33e66f808753911713f040"
+    },
+    {
+      "path": "src/proto/h1/mod.rs",
+      "sha256": "d9fff4f070354c15b51c411b1ceadcca673ee3b1fbf4c4917aa2eef7f4cc0116"
+    },
+    {
+      "path": "src/proto/h1/role.rs",
+      "sha256": "a7e063af2481367ab6bdf16c74dd96e44275a5c7061de9446e737f127dbf8bac"
+    },
+    {
+      "path": "src/rt/mod.rs",
+      "sha256": "ec68410788301696109637d9b37b1326c9820b2381be6d5eec49c0e56d33b0f8"
+    },
+    {
+      "path": "src/rt/protected.rs",
+      "sha256": "f53d0a8efc251fb0b71cf4660aeefe2a8c21d0b43512fbfd9a8ac7070518c9c4"
+    },
+    {
+      "path": "src/server/conn/http1.rs",
+      "sha256": "5f033bd6003c5e16bf487e0cbd2b3373d26060c820b5d25adf6923caed9fa322"
+    }
+  ],
+  "serde_json-1.0.154": [
+    {
+      "path": "src/de.rs",
+      "sha256": "528f26e12f22d468e139cb8ea52844b23120086745ac8c288616c11a60abd365"
+    }
+  ],
+  "axum-0.8.9": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "ba5eb2921b0a0164a7a57bc7fe18a9a8593b359198d25984aca4d01fb657d9aa"
+    },
+    {
+      "path": "src/extract/mod.rs",
+      "sha256": "34735fd80aa5988c742718384dded820326e15c94a456c5178bd7e4e05025ead"
+    }
+  ],
+  "hyper-util-0.1.21": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "9af98989e6738e13ae8b735aeff0547e96b04bf107d07d6dd0ac51805ba34696"
+    }
   ]
 }

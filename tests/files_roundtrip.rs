@@ -20,7 +20,20 @@ fn single_file_sizes_with_passphrase() {
         passphrase: &pass,
         params: common::min_params(),
     };
-    for size in [0usize, 1, 65_535, 65_536, 65_537, 3 * 1024 * 1024 + 7] {
+    for size in [
+        0usize,
+        1,
+        4095,
+        4096,
+        4097,
+        8191,
+        8192,
+        8193,
+        65_535,
+        65_536,
+        65_537,
+        3 * 1024 * 1024 + 7,
+    ] {
         let data: Vec<u8> = (0..size).map(|i| u8::try_from(i % 249).unwrap()).collect();
         let src = dir.path().join(format!("in-{size}.bin"));
         let enc = dir.path().join(format!("in-{size}.pqkf"));

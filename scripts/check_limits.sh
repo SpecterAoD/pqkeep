@@ -35,6 +35,9 @@ check_file() { # file, max
   fi
 }
 
+# DE/EN: Eigene Plattformcrate denselben Regeln unterwerfen / apply identical rules.
+source_roots=(src)
+if [[ -d platform ]]; then source_roots+=(platform); fi
 while IFS= read -r -d '' f; do
   case "$f" in
     *_tests.rs)
@@ -49,7 +52,7 @@ while IFS= read -r -d '' f; do
       fi
       ;;
   esac
-done < <(find src -name '*.rs' -print0)
+done < <(find "${source_roots[@]}" -name '*.rs' -print0)
 
 if [[ -d tests ]]; then
   while IFS= read -r -d '' f; do

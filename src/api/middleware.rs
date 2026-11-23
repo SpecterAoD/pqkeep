@@ -70,14 +70,16 @@ pub async fn auth(State(state): State<Arc<AppState>>, req: Request, next: Next) 
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "));
-    match presented {
-        Some(token) if state.token.verify(token) => {
+    match presented.map(|token| state.token.verify(token)) {
+        Some(Ok(true)) => {
             state.guard.record_success(ip);
             next.run(req).await
         }
-        // DE: Ohne Token kein Rateversuch – nicht zählen (#253). EN: No token, no guess – not counted.
+        // DE: Ressourcenfehler sind keine falschen Tokenversuche.
+        // EN: Resource failures are not failed authentication guesses.
+        Some(Err(_)) => ApiError::Busy.into_response(),
         None => ApiError::Unauthorized.into_response(),
-        Some(_) => {
+        Some(Ok(false)) => {
             state.guard.record_failure(ip);
             ApiError::Unauthorized.into_response()
         }

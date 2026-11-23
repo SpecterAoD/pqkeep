@@ -54,7 +54,9 @@ fn factor_checks(
         files::list(enc, &pass_unlock(pass, Some(factor)))
             .unwrap()
             .entries[0]
-            .path,
+            .path
+            .expose()
+            .unwrap(),
         "quelle.txt"
     );
     assert!(files::list(enc, &Unlock::Passphrase(pass.as_ref())).is_err());
@@ -90,7 +92,7 @@ fn v1_and_v2_directory_metadata_matches_extraction_and_check_without_writes() {
             .into_iter()
             .map(|e| {
                 assert_eq!(e.kind == EntryKind::File, e.bytes.is_some());
-                (e.path, e.bytes)
+                (e.path.expose().unwrap().to_owned(), e.bytes)
             })
             .collect::<BTreeMap<_, _>>();
         assert_eq!(actual, expected);

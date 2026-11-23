@@ -11,6 +11,7 @@ pub mod dictionary;
 mod entropy;
 pub mod generator;
 mod locked;
+pub mod output;
 mod patterns;
 mod policy;
 

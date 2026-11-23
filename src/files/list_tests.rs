@@ -8,11 +8,16 @@ use super::*;
 fn entry_cap_accepts_exactly_then_rejects_without_mutation() {
     let mut pending = Pending::default();
     for _ in 0..MAX_LIST_ENTRIES {
-        pending.push(&Entry::Dir("d".into())).unwrap();
+        pending
+            .push(&Entry::Dir(ConfidentialText::from_text("d").unwrap()))
+            .unwrap();
     }
     assert_eq!(pending.entries.len(), MAX_LIST_ENTRIES);
     let before = pending.path_bytes;
-    assert_eq!(pending.push(&Entry::Dir("x".into())), Err(limit()));
+    assert_eq!(
+        pending.push(&Entry::Dir(ConfidentialText::from_text("x").unwrap())),
+        Err(limit())
+    );
     assert_eq!(pending.entries.len(), MAX_LIST_ENTRIES);
     assert_eq!(pending.path_bytes, before);
 }
@@ -23,9 +28,14 @@ fn utf8_byte_budget_accepts_exactly_and_rejects_one_byte_more() {
         path_bytes: MAX_LIST_PATH_BYTES - 2,
         ..Pending::default()
     };
-    pending.push(&Entry::Dir("ä".into())).unwrap();
+    pending
+        .push(&Entry::Dir(ConfidentialText::from_text("ä").unwrap()))
+        .unwrap();
     assert_eq!(pending.path_bytes, MAX_LIST_PATH_BYTES);
-    assert_eq!(pending.push(&Entry::Dir("a".into())), Err(limit()));
+    assert_eq!(
+        pending.push(&Entry::Dir(ConfidentialText::from_text("a").unwrap())),
+        Err(limit())
+    );
     assert_eq!(pending.entries.len(), 1);
     assert_eq!(pending.path_bytes, MAX_LIST_PATH_BYTES);
 }
@@ -37,7 +47,10 @@ fn overflow_fails_without_collecting_metadata() {
         ..Pending::default()
     };
     assert_eq!(
-        pending.push(&Entry::File("a".into(), u64::MAX)),
+        pending.push(&Entry::File(
+            ConfidentialText::from_text("a").unwrap(),
+            u64::MAX
+        )),
         Err(limit())
     );
     assert_eq!(pending.entries, []);

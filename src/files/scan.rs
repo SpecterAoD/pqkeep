@@ -37,7 +37,7 @@ fn file<R: Read>(
         return Err(Error::InvalidInput { field: "archive" });
     };
     visit(&entry)?;
-    paths::validate(name)?;
+    paths::validate(name.expose()?)?;
     archive.copy_file(size, &mut sink())?;
     if archive.next_entry()?.is_some() {
         return Err(Error::InvalidInput { field: "archive" });
@@ -62,11 +62,11 @@ fn directory<R: Read>(
         visit(&entry)?;
         match entry {
             Entry::Dir(path) => {
-                seen.insert(&paths::validate(&path)?, false)?;
+                seen.insert(&paths::validate(path.expose()?)?, false)?;
                 report.directories += 1;
             }
             Entry::File(path, size) => {
-                seen.insert(&paths::validate(&path)?, true)?;
+                seen.insert(&paths::validate(path.expose()?)?, true)?;
                 archive.copy_file(size, &mut sink())?;
                 report.files += 1;
                 report.bytes = report
