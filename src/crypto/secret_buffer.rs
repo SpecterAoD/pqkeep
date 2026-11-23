@@ -20,6 +20,7 @@ impl<T: Zeroize> SecretBuffer<T> {
         let lock = memlock::lock_range(inner.as_ptr().addr(), bytes);
         if !lock.complete(inner.as_ptr().addr(), bytes) {
             inner.zeroize();
+            inner.spare_capacity_mut().zeroize();
             return Err(Error::MemoryLock);
         }
         Ok(Self {
@@ -36,6 +37,15 @@ impl<T: Zeroize> SecretBuffer<T> {
         &mut self.inner
     }
 
+    pub(crate) fn push_preallocated(&mut self, mut value: T) -> Result<()> {
+        if self.inner.len() == self.inner.capacity() {
+            value.zeroize();
+            return Err(Error::MemoryLock);
+        }
+        self.inner.push(value);
+        Ok(())
+    }
+
     pub(crate) fn truncate(&mut self, len: usize) {
         if len < self.inner.len() {
             self.inner[len..].iter_mut().for_each(Zeroize::zeroize);
@@ -47,12 +57,15 @@ impl<T: Zeroize> SecretBuffer<T> {
 impl<T: Zeroize> Zeroize for SecretBuffer<T> {
     fn zeroize(&mut self) {
         self.inner.zeroize();
+        // DE: Erst Owner zerstören, dann sämtliche früheren Datensatzbytes löschen.
+        // EN: Destroy owners first, then wipe all previously occupied record bytes.
+        self.inner.spare_capacity_mut().zeroize();
     }
 }
 
 impl<T: Zeroize> Drop for SecretBuffer<T> {
     fn drop(&mut self) {
-        self.inner.zeroize();
+        self.zeroize();
         self.lock.take();
     }
 }

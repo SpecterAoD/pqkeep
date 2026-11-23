@@ -3,10 +3,17 @@
 
 use crate::{Error, Result, crypto::SecretBytes};
 use std::{borrow::Borrow, cmp::Ordering, fmt};
+use zeroize::Zeroize;
 
 /// DE: Vertraulicher Archivtext; kein Clone/Display/Serialize, Debug bleibt redigiert.
 /// EN: Confidential archive text; no Clone/Display/Serialize, Debug stays redacted.
 pub struct ConfidentialText(SecretBytes);
+
+impl Zeroize for ConfidentialText {
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
 
 impl ConfidentialText {
     /// DE: Ziel vor der Kopie sperren; Quell-Ownership bleibt beim Caller.

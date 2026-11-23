@@ -4,8 +4,9 @@
 use std::path::Path;
 
 use super::archive::Entry;
-use super::{ConfidentialText, Report, Unlock, scan};
+use super::{ConfidentialEntries, ConfidentialText, Report, Unlock, scan};
 use crate::{Error, Result};
+use zeroize::Zeroize;
 
 /// DE: List-Grenze; check/decrypt behalten ihre Grenzen. EN: Listing-only entry cap.
 pub const MAX_LIST_ENTRIES: usize = 10_000;
@@ -38,14 +39,14 @@ pub struct ListEntry {
 #[derive(PartialEq, Eq)]
 pub struct Listing {
     /// DE: Validierte Einträge. EN: Validated entries.
-    pub entries: Vec<ListEntry>,
+    pub entries: ConfidentialEntries,
     /// DE: Derselbe Bericht wie check. EN: Same report as check.
     pub report: Report,
 }
 
 #[derive(Default)]
 struct Pending {
-    entries: Vec<ListEntry>,
+    entries: ConfidentialEntries,
     path_bytes: usize,
 }
 
@@ -68,12 +69,12 @@ impl Pending {
         if self.entries.len() >= MAX_LIST_ENTRIES || total > MAX_LIST_PATH_BYTES {
             return Err(limit());
         }
-        self.entries.try_reserve(1).map_err(|_| limit())?;
+        self.entries.prepare()?;
         self.entries.push(ListEntry {
             path: path.try_duplicate()?,
             kind,
             bytes,
-        });
+        })?;
         self.path_bytes = total;
         Ok(())
     }
@@ -110,5 +111,19 @@ impl std::fmt::Debug for ListEntry {
 impl std::fmt::Debug for Listing {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Listing([REDACTED])")
+    }
+}
+
+impl Zeroize for ListEntry {
+    fn zeroize(&mut self) {
+        self.path.zeroize();
+        self.bytes.zeroize();
+        self.kind = EntryKind::Directory;
+    }
+}
+
+impl Drop for ListEntry {
+    fn drop(&mut self) {
+        self.zeroize();
     }
 }

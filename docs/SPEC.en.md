@@ -329,7 +329,10 @@ in-place AEAD workspaces, rekey framing and generated API tokens use locked stor
 HTTP/1 ingress uses protected Hyper owners and locked serde_json scratch; external
 router callers retain responsibility for their upstream allocations. Decrypted archive
 names and conflict keys use ConfidentialText; ListEntry.path requires explicit expose(),
-without automatic plaintext serialization, Clone or Debug disclosure. Listing JSON
+without automatic plaintext serialization, Clone or Debug disclosure. Listing.entries
+uses ConfidentialEntries for records: fixed capacity locked before the first private
+record, without reallocating kind/size/owner data. Conversion from caller-owned Vec
+storage is fallible and remains an explicit external ownership boundary. Listing JSON
 retains pqkeep-list/1 and writes borrowed paths after complete authentication.
 TokenHash::of/verify are fallible because memory locking is mandatory. Typed seeds and
 private hash state are locked before private population. Provider constructors and

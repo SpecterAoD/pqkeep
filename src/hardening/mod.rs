@@ -2,12 +2,13 @@
 //! `unsafe`-Code: Core-Dump-Sperre (Linux über `rustix`) und Sperren von
 //! Speicherseiten mit Geheimnissen (über `region`). Secret-Speichersperren sind zwingend;
 //! die getrennte Prozesshärtung meldet OS-bedingte Grenzen im Bericht.
-//! CLI und API rufen [`harden_process`] als Erstes beim Start auf.
+//! CLI-Start ruft [`harden_process`] auf; Bibliotheks-Embedder wählen ihre Host-Policy selbst.
 //!
 //! EN: Process and memory hardening (specification 3.1/5b), without own
 //! `unsafe` code: core dump suppression (Linux via `rustix`) and locking of
 //! memory pages holding secrets (via `region`). Secret locks are mandatory;
-//! separate process hardening reports OS-dependent limits. CLI and API call [`harden_process`] first thing.
+//! separate process hardening reports OS-dependent limits. CLI startup calls [`harden_process`];
+//! library embedders explicitly choose their own host policy.
 
 pub mod memlock;
 pub mod sandbox;

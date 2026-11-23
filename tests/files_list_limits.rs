@@ -83,6 +83,6 @@ fn empty_directory_is_a_valid_empty_listing() {
     let enc = dir.path().join("empty.pqkf");
     build(&key, Content::Directory, &end(0), &enc);
     let listing = files::list(&enc, &Unlock::Key(&key.unlocked)).unwrap();
-    assert_eq!(listing.entries, []);
+    assert!(listing.entries.is_empty());
     assert_eq!(listing.report, files::Report::default());
 }

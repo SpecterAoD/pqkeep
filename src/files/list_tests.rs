@@ -53,6 +53,47 @@ fn overflow_fails_without_collecting_metadata() {
         )),
         Err(limit())
     );
-    assert_eq!(pending.entries, []);
+    assert!(pending.entries.is_empty());
     assert_eq!(pending.path_bytes, usize::MAX);
+}
+
+/// DE: Typ/Größe und Owner bleiben im vollständig gesperrten festen Bereich.
+/// EN: Kind/size and owners stay within the fully locked fixed arena.
+#[test]
+fn listing_record_arena_is_locked_before_private_collection_and_never_moves() {
+    use crate::hardening::memlock;
+    let mut pending = Pending::default();
+    pending.entries.prepare().unwrap();
+    let base = pending.entries.as_ptr().addr();
+    let end = base + MAX_LIST_ENTRIES * size_of::<ListEntry>() - 1;
+    assert!(memlock::is_locked(base));
+    assert!(memlock::is_locked(end));
+    for size in [0, 17, u64::MAX] {
+        pending
+            .push(&Entry::File(
+                ConfidentialText::from_text("name").unwrap(),
+                size,
+            ))
+            .unwrap();
+        assert_eq!(pending.entries.as_ptr().addr(), base);
+        assert!(memlock::is_locked(end));
+        assert_eq!(pending.entries.last().unwrap().bytes, Some(size));
+    }
+    assert_eq!(
+        format!("{:?}", pending.entries),
+        "ConfidentialEntries([REDACTED])"
+    );
+}
+
+#[test]
+fn listing_entry_zeroize_clears_owned_name_and_scalar_metadata() {
+    let mut entry = ListEntry {
+        path: ConfidentialText::from_text("name").unwrap(),
+        kind: EntryKind::File,
+        bytes: Some(u64::MAX),
+    };
+    entry.zeroize();
+    assert_eq!(entry.path.expose().unwrap(), "");
+    assert_eq!(entry.bytes, None);
+    assert_eq!(entry.kind, EntryKind::Directory);
 }

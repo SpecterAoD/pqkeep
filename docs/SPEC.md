@@ -327,6 +327,9 @@ HTTP/1-Eingang mit gesperrten Hyper-Ownern und gesperrtem serde_json-Scratch umg
 externe Router-Caller verantworten ihre vorgelagerten Allokationen. Entschlüsselte
 Archivnamen und Konfliktschlüssel liegen in ConfidentialText; ListEntry.path erfordert
 explizites expose(), keine automatische Klartext-Serialisierung/Clone/Debug-Ausgabe.
+Listing.entries verwendet ConfidentialEntries: vor dem ersten Datensatz vollständig
+gesperrte feste Kapazität, keine Reallokation privater Typ-/Größen-/Owner-Datensätze.
+Caller-eigene Vec-Konvertierung ist fallibel und bleibt eine explizite äußere Grenze.
 Listen-JSON bleibt pqkeep-list/1 und wird nach vollständiger Authentisierung direkt
 aus geliehenen Pfaden ausgegeben. TokenHash::of/verify sind wegen zwingender Sperren
 fallibel. Typisierte Seeds und private Hashzustände werden vor privater Befüllung gesperrt.

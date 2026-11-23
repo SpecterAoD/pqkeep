@@ -25,7 +25,7 @@ impl Write for FailedWriter {
 #[test]
 fn text_and_json_propagate_write_and_flush_errors() {
     let listing = Listing {
-        entries: Vec::new(),
+        entries: files::ConfidentialEntries::default(),
         report: files::Report::default(),
     };
     for flush in [false, true] {
@@ -45,7 +45,9 @@ fn borrowed_list_output_preserves_the_existing_envelope() {
             path: files::ConfidentialText::from_text("ä/b\u{202e}").unwrap(),
             kind: EntryKind::File,
             bytes: Some(17),
-        }],
+        }]
+        .try_into()
+        .unwrap(),
         report: files::Report {
             files: 1,
             directories: 0,
@@ -76,7 +78,9 @@ fn text_quotes_names_and_json_is_one_line() {
             path: files::ConfidentialText::from_text("a\u{202e}b").unwrap(),
             kind: EntryKind::File,
             bytes: Some(0),
-        }],
+        }]
+        .try_into()
+        .unwrap(),
         report: files::Report::default(),
     };
     let mut out = Vec::new();

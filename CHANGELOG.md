@@ -14,6 +14,9 @@ German release notes: see `docs/releases/`.
   EN: Locked runtime buffers, protected ingress owners/parser scratch and confidential
   metadata; strict failures and wire/JSON compatibility preserved. Provider construction
   and platform/helper verification remain open.
+  DE: Listen-Datensätze einschließlich Typ/Größe vor Sammlung fest gesperrt; auch
+  frühere Ownerbytes vor Unlock löschen. EN: ConfidentialEntries locks fixed record
+  storage before collection and wipes former owner bytes before unlocking.
   Generated API tokens now require explicit borrowed exposure instead of a clonable String.
 
 

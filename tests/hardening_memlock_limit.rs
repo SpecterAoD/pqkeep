@@ -66,7 +66,11 @@ fn locking_failure_refuses_secret_processing() {
 
 #[cfg(target_os = "linux")]
 fn assert_metadata_refused() {
-    use pqkeep::files::{ConfidentialText, paths::PathSet};
+    use pqkeep::files::{ConfidentialEntries, ConfidentialText, ListEntry, paths::PathSet};
+    assert!(matches!(
+        ConfidentialEntries::try_from(Vec::<ListEntry>::with_capacity(1)),
+        Err(pqkeep::Error::MemoryLock)
+    ));
     assert!(matches!(
         ConfidentialText::from_text("fixture"),
         Err(pqkeep::Error::MemoryLock)

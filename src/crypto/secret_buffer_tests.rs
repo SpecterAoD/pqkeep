@@ -53,3 +53,24 @@ fn typed_buffers_wipe_while_locked_during_unwinding() {
     assert!(result.is_err());
     assert!(checked.load(Ordering::SeqCst));
 }
+
+#[test]
+fn typed_preallocated_push_refuses_growth_and_keeps_existing_storage() {
+    use super::secret_buffer::SecretBuffer;
+    let mut buffer = SecretBuffer::new(Vec::<u64>::with_capacity(1)).unwrap();
+    let address = buffer.expose().as_ptr().addr();
+    buffer.push_preallocated(17).unwrap();
+    assert!(matches!(
+        buffer.push_preallocated(23),
+        Err(crate::Error::MemoryLock)
+    ));
+    assert_eq!(buffer.expose(), &[17]);
+    assert_eq!(buffer.expose().as_ptr().addr(), address);
+    assert!(memlock::is_locked(address));
+    buffer.zeroize();
+    assert_eq!(buffer.expose(), &[] as &[u64]);
+    assert!(memlock::is_locked(address));
+    buffer.push_preallocated(29).unwrap();
+    assert_eq!(buffer.expose(), &[29]);
+    assert_eq!(buffer.expose().as_ptr().addr(), address);
+}
