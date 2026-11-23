@@ -6,6 +6,13 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: #147 Laufzeitnacharbeit: direkte Klartext-Datei-I/O, gesperrter Hash-Eingabepuffer,
+  In-place-AEAD ohne allokierende Klartext-Zwischenkopie, gesperrtes Rekey-Framing und
+  Token-Erzeugung. HTTP-/Provider-/Prozessgrenzen weiterhin gesondert in Umsetzung.
+  EN: Locked runtime buffers replace plaintext staging; strict failure handling preserved.
+  Generated API tokens now require explicit borrowed exposure instead of a clonable String.
+
+
 ### Security
 - Secret-lifetime audit (#147): inventory and synthetic std/provider copy probes, explicit
   remaining I/O/AEAD/rekey/hash/HTTP/token findings and scoped remediation/test proposals.

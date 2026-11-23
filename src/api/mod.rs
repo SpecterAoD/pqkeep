@@ -17,6 +17,7 @@ mod generate;
 mod guard;
 mod handlers;
 mod middleware;
+mod secret_input;
 mod server;
 pub mod token;
 

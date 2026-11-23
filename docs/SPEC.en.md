@@ -322,3 +322,6 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 - [ ] No hard-coded secrets, no `unwrap()`/`expect()` in production code
 - [ ] Negative and boundary tests present, not only the success case
 - [ ] Short summary: what was built, what was tested, known limitations
+
+
+Runtime follow-up #147: plaintext file staging is removed; detached-hash input, in-place AEAD workspaces, rekey framing and generated API tokens use locked storage. HTTP/provider/process/metadata boundaries remain under implementation and must not be represented as fully closed. Main merge remains separate.

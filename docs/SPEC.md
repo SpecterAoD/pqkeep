@@ -319,3 +319,6 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 - [ ] Keine hartcodierten Geheimnisse, keine `unwrap()`/`expect()` in Produktionscode
 - [ ] Negativ- und Grenzwerttests vorhanden, nicht nur der Erfolgsfall
 - [ ] Kurze Zusammenfassung: was gebaut, was getestet, bekannte Einschränkungen
+
+
+Laufzeitnacharbeit #147: Zusätzliche Klartext-Dateipuffer entfernt; Signatur-Eingabe, In-place-AEAD, Rekey-Framing und erzeugte API-Tokens verwenden gesperrten Speicher. HTTP-/Provider-/Prozess-/Metadatengrenzen sind weiter in Umsetzung und dürfen nicht als vollständig geschlossen gelten. Main-Merge bleibt separat.

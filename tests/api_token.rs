@@ -15,14 +15,17 @@ fn created_token_verifies_and_file_holds_only_hash() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("api.token");
     let tok = token::create(&path, Overwrite::No).unwrap();
-    assert!(tok.starts_with(TOKEN_PREFIX));
-    assert_eq!(tok.len(), TOKEN_PREFIX.len() + 43);
+    assert!(tok.expose().unwrap().starts_with(TOKEN_PREFIX));
+    assert_eq!(tok.expose().unwrap().len(), TOKEN_PREFIX.len() + 43);
+    assert!(pqkeep::hardening::memlock::is_locked(
+        tok.expose().unwrap().as_ptr().addr()
+    ));
     let text = std::fs::read_to_string(&path).unwrap();
     assert!(text.starts_with("pqkeep-token-v1 sha3-256 "));
-    assert!(!text.contains(&tok[TOKEN_PREFIX.len()..]));
+    assert!(!text.contains(&tok.expose().unwrap()[TOKEN_PREFIX.len()..]));
     let hash = TokenHash::load(&path).unwrap();
-    assert!(hash.verify(&tok));
-    assert!(!hash.verify(&format!("{}x", tok.as_str())));
+    assert!(hash.verify(tok.expose().unwrap()));
+    assert!(!hash.verify(&format!("{}x", tok.expose().unwrap())));
     assert!(!hash.verify(""));
     assert!(!hash.verify(&"a".repeat(10_000)));
 }
@@ -32,7 +35,8 @@ fn tokens_are_unique() {
     let dir = tempfile::tempdir().unwrap();
     let a = token::create(&dir.path().join("a"), Overwrite::No).unwrap();
     let b = token::create(&dir.path().join("b"), Overwrite::No).unwrap();
-    assert_ne!(a, b);
+    let distinct = a.expose().unwrap() != b.expose().unwrap();
+    assert!(distinct, "Independent generated tokens must differ");
 }
 
 #[test]
@@ -40,13 +44,17 @@ fn existing_file_is_not_overwritten_without_force() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("api.token");
     let first = token::create(&path, Overwrite::No).unwrap();
-    let err = token::create(&path, Overwrite::No).unwrap_err();
+    let err = token::create(&path, Overwrite::No).err().unwrap();
     assert_eq!(err, Error::Io(std::io::ErrorKind::AlreadyExists));
-    assert!(TokenHash::load(&path).unwrap().verify(&first));
+    assert!(
+        TokenHash::load(&path)
+            .unwrap()
+            .verify(first.expose().unwrap())
+    );
     let second = token::create(&path, Overwrite::Yes).unwrap();
     let hash = TokenHash::load(&path).unwrap();
-    assert!(hash.verify(&second));
-    assert!(!hash.verify(&first));
+    assert!(hash.verify(second.expose().unwrap()));
+    assert!(!hash.verify(first.expose().unwrap()));
 }
 
 #[cfg(unix)]

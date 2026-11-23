@@ -62,7 +62,10 @@ pub fn serve(lang: Lang, m: &ArgMatches, sandboxed: bool) -> CliResult {
         };
         let token = token::create(path, overwrite).map_err(|e| Failure::from_error(&e, lang))?;
         eprintln!("{}", s.msg_token_created);
-        println!("{}", token.as_str());
+        println!(
+            "{}",
+            token.expose().map_err(|e| Failure::from_error(&e, lang))?
+        );
         return Ok(());
     }
     let addr: SocketAddr = m

@@ -1,10 +1,10 @@
 //! DE: Begrenzte, genullte Rekey-Eingabe, keine Passphrase-Argumente/Umgebung.
 //! EN: Bounded, zeroized rekey input; no passphrase arguments/environment.
-use std::io::{BufRead, Read};
+use std::io::Read;
 
 use clap::ArgMatches;
+use pqkeep::crypto::SecretBytes;
 use pqkeep::security::{Lang, Passphrase, StrongPassphrase};
-use zeroize::Zeroizing;
 
 use super::io::{self, CliResult, Failure, code};
 use super::{rekey_text, text::Texts, validate};
@@ -32,16 +32,17 @@ pub(super) fn read(
 }
 
 fn stdin(t: &Texts, lang: Lang) -> CliResult<(Passphrase, Passphrase)> {
-    let mut reader = std::io::stdin().lock();
+    let mut reader =
+        super::secret_input::stdin_file().map_err(|e| Failure::from_error(&e.into(), lang))?;
+    let mut extra = SecretBytes::zeroed(1).map_err(|e| Failure::from_error(&e, lang))?;
     let old = line(&mut reader, lang)?;
     let new = line(&mut reader, lang)?;
     let confirm = line(&mut reader, lang)?;
-    if new.as_slice() != confirm.as_slice() {
+    if new.expose() != confirm.expose() {
         return Err(Failure::new(code::USAGE, t.prompt_mismatch));
     }
-    let mut extra = Zeroizing::new([0; 1]);
     if reader
-        .read(&mut *extra)
+        .read(extra.expose_mut())
         .map_err(|e| Failure::from_error(&e.into(), lang))?
         != 0
     {
@@ -51,30 +52,45 @@ fn stdin(t: &Texts, lang: Lang) -> CliResult<(Passphrase, Passphrase)> {
         let text = std::str::from_utf8(bytes).map_err(|_| invalid(lang))?;
         Passphrase::new(text).map_err(|e| Failure::from_error(&e, lang))
     };
-    Ok((pass(&old)?, pass(&new)?))
+    Ok((pass(old.expose())?, pass(new.expose())?))
 }
 
 fn invalid(lang: Lang) -> Failure {
     Failure::new(code::USAGE, rekey_text::texts(lang).input)
 }
 
-fn line(reader: &mut impl BufRead, lang: Lang) -> CliResult<Zeroizing<Vec<u8>>> {
-    // DE: Vorab reservieren: keine ungenullten alten Puffer durch Reallokation.
-    // EN: Reserve up front: no unzeroized old buffers from reallocation.
-    let mut bytes = Zeroizing::new(Vec::with_capacity(MAX_LINE + 1));
-    reader
-        .take((MAX_LINE + 1) as u64)
-        .read_until(b'\n', &mut bytes)
-        .map_err(|e| Failure::from_error(&e.into(), lang))?;
-    if bytes.len() > MAX_LINE || !bytes.ends_with(b"\n") {
+fn line(reader: &mut impl Read, lang: Lang) -> CliResult<SecretBytes> {
+    // DE: Feste Sperre vor dem ersten Byte, kein Read-ahead oder Reallokation.
+    // EN: Fixed lock before the first byte, no read-ahead or reallocation.
+    let mut bytes = SecretBytes::zeroed(MAX_LINE + 1).map_err(|e| Failure::from_error(&e, lang))?;
+    let mut len = 0;
+    loop {
+        match reader.read(&mut bytes.expose_mut()[len..=len]) {
+            Ok(0) => return Err(invalid(lang)),
+            Ok(_) => {
+                len += 1;
+                if len > MAX_LINE {
+                    return Err(invalid(lang));
+                }
+                if bytes.expose()[len - 1] == b'\n' {
+                    break;
+                }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(Failure::from_error(&e.into(), lang)),
+        }
+    }
+    len -= 1;
+    if len > 0 && bytes.expose()[len - 1] == b'\r' {
+        len -= 1;
+    }
+    if bytes.expose()[..len].contains(&b'\r') {
         return Err(invalid(lang));
     }
-    bytes.pop();
-    if bytes.ends_with(b"\r") {
-        bytes.pop();
-    }
-    if bytes.contains(&b'\r') {
-        return Err(invalid(lang));
-    }
+    bytes.truncate(len);
     Ok(bytes)
 }
+
+#[cfg(test)]
+#[path = "rekey_input_tests.rs"]
+mod tests;
