@@ -341,3 +341,8 @@ R6-Teilbehebung: NFKC verwendet bestehende gepinnte Unicode-Primitiven mit gespe
 Zeichen-/Sortierbereichen und Klassenzählern statt TinyVec/Standard-Sort-Scratch.
 Passphrase-Bytes und Grenzen bleiben gleich; alle Unicode-Skalare und der vollständige
 Unicode18-Konformitätskorpus dienen als Gegenprobe. Andere Providerzustände bleiben offen.
+
+R7-Teilbaustein: harden_process ergänzt/verifiziert unter Windows prozesslokales
+WER-NOHEAP. Der zusätzliche Berichtswert ist keine vollständige Dumpsperre;
+complete/core_dumps_disabled/not_dumpable bleiben falsch. Host-Policy und externe
+Passworthelfer bleiben getrennt und offen. Keine Registry-/ACL-/Systemänderung.

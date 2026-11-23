@@ -27,9 +27,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   Inventar, synthetische Kopierproben, Dump-/Prozessgrenzen und priorisierte Nacharbeit.
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
-  Auditphase in PR298 nach Main gemergt (f9a983f); Laufzeitbehebung ausdrücklich beauftragt
-  und in [PR300](https://github.com/SpecterAoD/pqkeep/pull/300) in Umsetzung (ersetzt PR299). / Audit merged;
-  authorized runtime remediation in progress, [runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
+  Auditphase PR298, geschützte Laufzeitpuffer [PR300](https://github.com/SpecterAoD/pqkeep/pull/300)
+  und begrenzte WER-Fähigkeit [PR301](https://github.com/SpecterAoD/pqkeep/pull/301) nach Main gemergt.
+  / Audit, protected runtime buffers and partial WER capability merged; authorized remediation continues.
+  Gesperrte NFKC-Arbeitsbereiche in [PR302](https://github.com/SpecterAoD/pqkeep/pull/302);
+  weitere Providerzustände und verifizierte Passworthelfer bleiben offen. / Locked NFKC workspaces
+  in PR302; other provider states and verified password helpers remain open.
+  [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.
 

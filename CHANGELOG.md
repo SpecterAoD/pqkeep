@@ -11,6 +11,11 @@ German release notes: see `docs/releases/`.
   EN: Lock normalization workspaces before use, preserving the pinned Unicode tables
   and passphrase derivation bytes. Other provider lifetime gaps remain open.
 
+- DE: Windows-WER-NOHEAP im eigenen Prozess setzen/nachprüfen, bestehende Flags erhalten;
+  separater Berichtswert statt falscher vollständiger Dumpsperre.
+  EN: Verify current-process WER NOHEAP while preserving flags; report the partial
+  mitigation separately. Complete process/helper coverage remains open (#147 R7).
+
 - DE: #147 Laufzeitnacharbeit: direkte Klartext-Datei-I/O, gesperrter Hash-Eingabepuffer,
   In-place-AEAD ohne allokierende Klartext-Zwischenkopie, gesperrtes Rekey-Framing und
   Token-Erzeugung; HTTP/1-/JSON-Speicheradapter und vertrauliche Archivnamen/Konfliktschlüssel.

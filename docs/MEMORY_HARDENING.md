@@ -49,10 +49,16 @@ derzeit keinen Abbruch; die Ausgabe erfolgt mit `--verbose` (Audit A8).
 - **Linux:** `RLIMIT_CORE` = 0 (keine Core-Dateien) und `PR_SET_DUMPABLE` = 0. Letzteres verhindert
   zusätzlich, dass andere Prozesse desselben Benutzers ohne root-Rechte den Speicher per `ptrace`
   lesen (z. B. Debugger, `/proc/<pid>/mem`).
-- **Windows:** Keine automatische WER-/Dump-Policy durch PQKeep. `DumpType=0` bedeutet
+- **Windows:** Der explizite Aufruf von `harden_process()` ergänzt im eigenen Prozess
+  WER-NOHEAP und prüft die Flags erneut. Der Berichtswert `wer_heap_reporting_disabled`
+  bestätigt ausschließlich diese Heap-Berichtsminderung, keine vollständige Dumpsperre.
+  `complete`, `core_dumps_disabled` und `not_dumpable` bleiben falsch. Vorhandene Flags
+  bleiben erhalten; keine Registry-/ACL-/Systemänderung. `DumpType=0` bedeutet
   **Custom Dump**, nicht „aus“. LocalDumps sind von der WER-Abschaltung unabhängig.
   Globale und anwendungsspezifische Dump-/Debugger-Policies müssen für den konkreten
   Betrieb administrativ geprüft werden; keine Registry-Änderung allein aus diesem Hinweis.
+  Verträge: [WerSetFlags](https://learn.microsoft.com/en-us/windows/win32/api/werapi/nf-werapi-wersetflags),
+  [WerGetFlags](https://learn.microsoft.com/en-us/windows/win32/api/werapi/nf-werapi-wergetflags).
   Quelle: [Microsoft LocalDumps](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps).
 
 ## 3. Sofortiges Nullen
@@ -115,7 +121,10 @@ System/compiler limits are distinct from the enforced lock policy. See [LOCKED_S
 2. **Core dumps:** CLI startup, including `serve`, attempts `RLIMIT_CORE` = 0 and
    `PR_SET_DUMPABLE` = 0 on Linux. Failed process hardening does not currently gate execution;
    direct library/router callers own their process policy (audit A8). Windows dump policies
-   are not managed by PQKeep. `DumpType=0` selects a custom dump; LocalDumps operate independently
+   remain externally managed. An explicit harden_process() call adds and verifies current-process
+   WER NOHEAP while preserving existing flags; wer_heap_reporting_disabled reports only this
+   partial mitigation. Complete/core_dumps_disabled/not_dumpable remain false on Windows.
+   No registry/ACL/system change. `DumpType=0` selects a custom dump; LocalDumps operate independently
    of disabled WER. Review effective global/per-app/debugger policy for the actual deployment;
    do not edit the registry based on this note. See [Microsoft](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps).
 3. **Immediate zeroing:** managed secret types wipe on drop; the inventory identifies remaining

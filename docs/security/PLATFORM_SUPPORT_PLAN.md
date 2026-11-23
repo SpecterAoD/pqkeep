@@ -74,3 +74,37 @@ Der separate Lockfile wird entsprechend abgeglichen; die fallible Token-Hash-API
 wird auch im API-Fuzz-Ziel behandelt. Lokaler Build ist kein Fuzz-Laufnachweis.
 EN: Align the separate fuzz dependency graph with production, compile all targets,
 and retain the existing CI fuzz executions and unchanged security gates.
+
+## Verified WER capability / Verifizierte WER-Fähigkeit
+
+DE: Nächster kleiner R7-Schritt im separaten Folgebranch: Win32-Wrapper im vorhandenen
+FFI-Modul lesen aktuelle WER-Flags, ergänzen ausschließlich NOHEAP und prüfen danach
+die tatsächlich gesetzten Flags. Vorhandene Flags erhalten, HRESULT korrekt behandeln;
+kein fremder Prozess, kein Registry-/ACL-/Systemeingriff. Ein neuer Berichtswert benennt
+nur diese Heap-Berichtsminderung; complete/core_dumps_disabled/not_dumpable bleiben
+unter Windows falsch. Nur der explizite harden_process-Aufruf ändert den eigenen Prozess.
+EN: Add a narrowly verified current-process WER mitigation, not a complete dump barrier.
+Use existing windows-sys0.61.2 ErrorReporting/Threading features, without new versions.
+Keep embedding opt-in and all existing CLI/GUI functionality. LocalDumps/debuggers,
+provider workspaces and protected password helpers remain open.
+
+DE: Dateien: platform Cargo.toml/lib.rs/windows.rs + separate WER-Tests; Root-
+HardeningReport/CLI-Diagnose/Prozesstests und DE/EN SPEC/Memory-Doku. Tests: native
+read/set/read-back, wiederholter Aufruf, falsches Handle, keine falschen vollständigen
+Flags; portabler Ablauf mit simulierten Read-/Set-/Read-back-Fehlern. Native CI und
+bestehende vollständige Kompatibilitäts-/Security-Prüfungen bleiben unverändert nötig.
+EN: Preserve existing policy flags and expose sanitized failures without a success fallback.
+Rollback is a reviewed code revert; the mitigation lasts only for the invoking process.
+
+DE: Nativer Abgleich626e8bd: frischer Prozess liefert für Pseudo- und echtes eigenes
+Handle HRESULT0x80070490 (WER_E_NOT_FOUND). Dies wird als expliziter Zustand Absent
+modelliert, niemals als erfolgreich gelesene Nullflags. Nur dieser benannte Zustand
+führt zur Initialisierung mit NOHEAP; danach zwingend erfolgreicher Read-back mit
+Present(NOHEAP). Jede andere Abfrage-/Set-Fehlerart und weiterhin fehlender Eintrag
+verweigert die Bestätigung. Bereits vorhandene Flags werden weiterhin erhalten.
+EN: Native evidence distinguishes absent per-process configuration from query failure.
+The postcondition always requires actual returned flags; no zero-value error fallback.
+[Microsoft WER error codes](https://learn.microsoft.com/en-us/windows/win32/wer/wer-error-codes)
+defines WER_E_NOT_FOUND as element not found; the fresh-process behavior is native test
+observation, not an additional documented Windows guarantee. Native read/set/read-back
+and retained pre-existing flags remain required before acceptance.
