@@ -340,6 +340,11 @@ process/helper support remain open; see the [platform plan](security/PLATFORM_SU
 No complete closure claimed. Verified Main merges are authorized; machine policy changes
 remain separately gated.
 
+Partial R6 remediation: NFKC reuses pinned Unicode primitives with locked character,
+sorting and class-count workspaces instead of TinyVec/standard-sort scratch. Preserve
+passphrase bytes and limits; compare every Unicode scalar and the complete Unicode18
+conformance corpus. Other private provider construction/workspaces remain open.
+
 Partial R7 capability: explicit harden_process adds/verifies current-process Windows
 WER NOHEAP, reported separately from complete/core_dumps_disabled/not_dumpable, which
 remain false. External host policy and password helpers remain open; no registry, ACL
