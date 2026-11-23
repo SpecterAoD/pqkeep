@@ -26,3 +26,17 @@ EN: Preserve KDF parameters, parallelism, arithmetic, wire/derivation bytes and 
 unsafe prohibition. Feature activation does not replace SecretBytes/SecretBuffer,
 prelock ordinary provider workspaces or justify a full R6/R7/R8 closure. No host,
 Registry, rights or process-policy changes. Issue147/roadmap stay In progress.
+
+## Korrigierter Typabgleich vor Abnahme / Corrected type review before acceptance
+
+DE: Die erste lokale Übersetzung widerlegt die geplante Annahme, Blake2b512
+implementiere selbst ZeroizeOnDrop. Der feste buffer_fixed!-Wrapper besitzt Core
+und Buffer, stellt dieses Merkmal aber nicht bereit. Keine erfundene Implementierung
+oder Ausnahme hinzufügen: die tatsächlich verwendeten Bestandteile Blake2bVarCore
+und LazyBuffer<U128> separat auf ZeroizeOnDrop prüfen. Der aktivierte Core-Drop
+löscht h/t; der Buffer hat unter dem bereits aktiven Blockbuffer-Feature seinen
+eigenen Drop. Automatische Felddestruktion und Quellabgleich getrennt dokumentieren.
+EN: Preserve the failed compile log. Test actual component contracts and both
+production graphs; never claim a marker or complete workspace lock guarantee for
+the fixed wrapper. This correction changes the inaccurate proposed test assumption,
+not the requirement for private core destruction or mandatory locked root owners.
