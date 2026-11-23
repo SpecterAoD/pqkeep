@@ -21,15 +21,19 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
-## In Bearbeitung / In progress
-
-- [ ] [#186](https://github.com/SpecterAoD/pqkeep/issues/186): Release-Vertrauenskette – vollständige
-  Verifikation vor Release-Entwurf, Negativtests und Repository-/Workflow-/Ref-/Commit-Bindung.
-  / Verify the complete release chain before drafting, with negative identity/binding tests.
-  [Plan / design](security/RELEASE_CHAIN_DESIGN.md). Merge ausschließlich durch den Eigentümer.
-  / Main merge reserved for the owner; no release publication or protection-setting changes.
-
 ## Abgeschlossene Ergänzungen / Completed follow-ups
+
+- [x] [#186](https://github.com/SpecterAoD/pqkeep/issues/186): Release-Vertrauenskette – vollständige
+  Verifikation vor Release-Entwurf, erneute Prüfung an der Schreibgrenze und strikte
+  Repository-/Workflow-/Ref-/Commit-Bindung. / Complete verification before drafting,
+  revalidation at the write boundary and strict identity/source binding.
+  - Mit ausdrücklicher Eigentümerfreigabe signiert gemergt: [PR #296](https://github.com/SpecterAoD/pqkeep/pull/296).
+    / Signed main merge with explicit owner approval; [plan and test boundaries](security/RELEASE_CHAIN_DESIGN.md).
+  - [Main-CI](https://github.com/SpecterAoD/pqkeep/actions/runs/45083995533),
+    [geschützter Trockenlauf / protected dry run](https://github.com/SpecterAoD/pqkeep/actions/runs/45084015723).
+    Kein Release/Tag oder Schutzregelwechsel. / No release/tag or protection changes.
+  - Historische Reproduzierbarkeit/Preview-Gating, unabhängiges Audit, TUF und SignPath bleiben
+    #269/#154/#143/#88. / Separate follow-ups retain their scope.
 
 - [x] [#117](https://github.com/SpecterAoD/pqkeep/issues/117): `pqkeep list` – authentisierte v1/v2-Archivliste ohne Extraktion; begrenzte Metadaten erst nach vollständiger Prüfung, eigenes List-JSON. / Authenticated v1/v2 archive listing without extraction; bounded metadata after full verification, dedicated listing JSON. ([PR #283](https://github.com/SpecterAoD/pqkeep/pull/283), 21.11.2026)
   - Mit Eigentümerfreigabe signiert nach main übernommen; [DE/EN-Anleitung](LIST.md), [Plan/Testzuordnung und Grenzen](security/LIST_DESIGN.md). #116/#86 abgeschlossen, #118 konsolidiert. / Owner-authorized signed main merge; bilingual usage, design, test mapping and limits linked; dependencies complete.
