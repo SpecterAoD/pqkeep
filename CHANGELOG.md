@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Archiv-Framing und interne Eintragsowner vor privater Befüllung sperren;
+  entschlüsselte Framingarrays und gewöhnliche Eintragsdatensätze entfernen (#147 R8).
+  EN: Prelock archive framing/counts and temporary entry records; preserve the wire
+  format, authenticated listing and extraction behavior. Fail on unavailable locking.
+
 - DE: Interne UTF-8-Positionen, Wörterbuchbereiche und Mustermasken der
   Passphrasenbewertung vor Befüllung sperren und vor Unlock löschen (#147 R6).
   EN: Prelock and wipe internal assessment offsets, word spans and pattern masks;

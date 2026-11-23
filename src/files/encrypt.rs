@@ -135,7 +135,7 @@ fn write_archive(
         HashingWriter::new(out),
     )?;
     drop(file_key);
-    let mut archive = ArchiveWriter::new(enc);
+    let mut archive = ArchiveWriter::new(enc)?;
     let mut report = Report {
         skipped,
         ..Report::default()

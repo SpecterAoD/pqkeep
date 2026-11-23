@@ -58,9 +58,11 @@ fn limit() -> Error {
 
 impl Pending {
     fn push(&mut self, entry: &Entry) -> Result<()> {
-        let (path, kind, bytes) = match entry {
-            Entry::Dir(path) => (path, EntryKind::Directory, None),
-            Entry::File(path, size) => (path, EntryKind::File, Some(*size)),
+        let path = entry.path()?;
+        let (kind, bytes) = if entry.is_file() {
+            (EntryKind::File, Some(entry.size()))
+        } else {
+            (EntryKind::Directory, None)
         };
         let total = self
             .path_bytes

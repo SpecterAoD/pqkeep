@@ -361,3 +361,11 @@ Partial R7 capability: explicit harden_process adds/verifies current-process Win
 WER NOHEAP, reported separately from complete/core_dumps_disabled/not_dumpable, which
 remain false. External host policy and password helpers remain open; no registry, ACL
 or system changes. A partial mitigation never satisfies the complete-process contract.
+
+Partial R8 remediation: internal archive framing bytes/counts and temporary entry
+records use fixed SecretBuffer owners locked before private population. Archive
+paths no longer return decrypted arrays or use to_le_bytes scratch arrays. Reader,
+writer and entry preparation propagate lock failures; consumers borrow metadata.
+Preserve archive wire format and public list/check/extraction contracts. This does
+not eliminate all compiler/register copies or OS filesystem metadata; provider and
+helper gaps remain open. See the [plan](security/ARCHIVE_METADATA_PLAN.md).

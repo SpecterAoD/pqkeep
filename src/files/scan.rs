@@ -33,11 +33,12 @@ fn file<R: Read>(
     let entry = archive
         .next_entry()?
         .ok_or(Error::InvalidInput { field: "archive" })?;
-    let Entry::File(ref name, size) = entry else {
+    if !entry.is_file() {
         return Err(Error::InvalidInput { field: "archive" });
-    };
+    }
+    let size = entry.size();
     visit(&entry)?;
-    paths::validate(name.expose()?)?;
+    paths::validate(entry.path()?.expose()?)?;
     archive.copy_file(size, &mut sink())?;
     if archive.next_entry()?.is_some() {
         return Err(Error::InvalidInput { field: "archive" });
@@ -60,20 +61,16 @@ fn directory<R: Read>(
         // DE: List-Budget vor PathSet/Kopien prüfen; kein öffentlicher Callback.
         // EN: Check listing budget before PathSet/copies; no public callback.
         visit(&entry)?;
-        match entry {
-            Entry::Dir(path) => {
-                seen.insert(&paths::validate(path.expose()?)?, false)?;
-                report.directories += 1;
-            }
-            Entry::File(path, size) => {
-                seen.insert(&paths::validate(path.expose()?)?, true)?;
-                archive.copy_file(size, &mut sink())?;
-                report.files += 1;
-                report.bytes = report
-                    .bytes
-                    .checked_add(size)
-                    .ok_or(Error::InvalidInput { field: "archive" })?;
-            }
+        seen.insert(&paths::validate(entry.path()?.expose()?)?, entry.is_file())?;
+        if entry.is_file() {
+            archive.copy_file(entry.size(), &mut sink())?;
+            report.files += 1;
+            report.bytes = report
+                .bytes
+                .checked_add(entry.size())
+                .ok_or(Error::InvalidInput { field: "archive" })?;
+        } else {
+            report.directories += 1;
         }
     }
     archive.finish()?;

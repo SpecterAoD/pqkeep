@@ -32,10 +32,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   / Audit, protected runtime buffers and partial WER capability merged; authorized remediation continues.
   Gesperrte NFKC-Arbeitsbereiche [PR302](https://github.com/SpecterAoD/pqkeep/pull/302) gemergt;
   vollständiger eigener Provider-Drop in [PR303](https://github.com/SpecterAoD/pqkeep/pull/303).
-  / Locked NFKC workspaces merged; complete owned-state destruction under validation.
+  / Locked NFKC workspaces and complete owned-state destruction merged.
   [Interne Bewertungsmetadaten / internal assessment metadata](security/ASSESSMENT_METADATA_PLAN.md)
-  werden gesperrt; weitere Providerzustände und verifizierte Passworthelfer bleiben offen.
-  / Internal assessment metadata remediation continues; other providers/helpers remain open.
+  nach Main gemergt ([PR304](https://github.com/SpecterAoD/pqkeep/pull/304)).
+  / Internal assessment metadata merged; Main acceptance tracked separately.
+  [Archiv-Framing und interne Einträge / archive framing and entry records](security/ARCHIVE_METADATA_PLAN.md)
+  in Bearbeitung; weitere Providerzustände und verifizierte Passworthelfer bleiben offen.
+  / Archive metadata remediation in progress; other providers/helpers remain open.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.

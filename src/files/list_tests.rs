@@ -9,13 +9,13 @@ fn entry_cap_accepts_exactly_then_rejects_without_mutation() {
     let mut pending = Pending::default();
     for _ in 0..MAX_LIST_ENTRIES {
         pending
-            .push(&Entry::Dir(ConfidentialText::from_text("d").unwrap()))
+            .push(&Entry::fixture(ConfidentialText::from_text("d").unwrap(), None).unwrap())
             .unwrap();
     }
     assert_eq!(pending.entries.len(), MAX_LIST_ENTRIES);
     let before = pending.path_bytes;
     assert_eq!(
-        pending.push(&Entry::Dir(ConfidentialText::from_text("x").unwrap())),
+        pending.push(&Entry::fixture(ConfidentialText::from_text("x").unwrap(), None).unwrap()),
         Err(limit())
     );
     assert_eq!(pending.entries.len(), MAX_LIST_ENTRIES);
@@ -29,11 +29,11 @@ fn utf8_byte_budget_accepts_exactly_and_rejects_one_byte_more() {
         ..Pending::default()
     };
     pending
-        .push(&Entry::Dir(ConfidentialText::from_text("ä").unwrap()))
+        .push(&Entry::fixture(ConfidentialText::from_text("ä").unwrap(), None).unwrap())
         .unwrap();
     assert_eq!(pending.path_bytes, MAX_LIST_PATH_BYTES);
     assert_eq!(
-        pending.push(&Entry::Dir(ConfidentialText::from_text("a").unwrap())),
+        pending.push(&Entry::fixture(ConfidentialText::from_text("a").unwrap(), None).unwrap()),
         Err(limit())
     );
     assert_eq!(pending.entries.len(), 1);
@@ -47,10 +47,9 @@ fn overflow_fails_without_collecting_metadata() {
         ..Pending::default()
     };
     assert_eq!(
-        pending.push(&Entry::File(
-            ConfidentialText::from_text("a").unwrap(),
-            u64::MAX
-        )),
+        pending.push(
+            &Entry::fixture(ConfidentialText::from_text("a").unwrap(), Some(u64::MAX)).unwrap()
+        ),
         Err(limit())
     );
     assert!(pending.entries.is_empty());
@@ -70,10 +69,9 @@ fn listing_record_arena_is_locked_before_private_collection_and_never_moves() {
     assert!(memlock::is_locked(end));
     for size in [0, 17, u64::MAX] {
         pending
-            .push(&Entry::File(
-                ConfidentialText::from_text("name").unwrap(),
-                size,
-            ))
+            .push(
+                &Entry::fixture(ConfidentialText::from_text("name").unwrap(), Some(size)).unwrap(),
+            )
             .unwrap();
         assert_eq!(pending.entries.as_ptr().addr(), base);
         assert!(memlock::is_locked(end));

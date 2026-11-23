@@ -18,6 +18,11 @@ use super::paths::{MAX_ENTRIES, MAX_PATH_BYTES};
 use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
 use crate::{Error, Result};
 
+#[path = "archive_metadata.rs"]
+mod metadata;
+pub(crate) use metadata::Entry;
+use metadata::Framing;
+
 const TAG_END: u8 = 0;
 const TAG_DIR: u8 = 1;
 const TAG_FILE: u8 = 2;
@@ -33,20 +38,23 @@ fn bad() -> Error {
 /// DE: Schreibt Einträge verschlüsselt. EN: Writes entries encrypted.
 pub(crate) struct ArchiveWriter<W: Write> {
     enc: EncryptWriter<W>,
-    count: u64,
+    framing: Framing,
 }
 
 impl<W: Write> ArchiveWriter<W> {
-    pub fn new(enc: EncryptWriter<W>) -> Self {
-        Self { enc, count: 0 }
+    pub fn new(enc: EncryptWriter<W>) -> Result<Self> {
+        Ok(Self {
+            enc,
+            framing: Framing::new()?,
+        })
     }
 
     fn entry_head(&mut self, tag: u8, path: &str) -> Result<()> {
         let len = u16::try_from(path.len()).map_err(|_| Error::InvalidInput { field: "path" })?;
-        self.enc.push(&[tag])?;
-        self.enc.push(&len.to_le_bytes())?;
+        self.framing.write(&mut self.enc, u64::from(tag), 1)?;
+        self.framing.write(&mut self.enc, u64::from(len), 2)?;
         self.enc.push(path.as_bytes())?;
-        self.count += 1;
+        self.framing.advance(u64::MAX)?;
         Ok(())
     }
 
@@ -59,7 +67,7 @@ impl<W: Write> ArchiveWriter<W> {
     /// aborts if the source changes while being read.
     pub fn file(&mut self, path: &str, reader: &mut impl Read, size: u64) -> Result<()> {
         self.entry_head(TAG_FILE, path)?;
-        self.enc.push(&size.to_le_bytes())?;
+        self.framing.write(&mut self.enc, size, 8)?;
         let mut hasher = LockedHash::<Sha3_256>::new()?;
         let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
         let mut left = size;
@@ -85,41 +93,32 @@ impl<W: Write> ArchiveWriter<W> {
     }
 
     pub fn finish(mut self) -> Result<W> {
-        self.enc.push(&[TAG_END])?;
-        self.enc.push(&self.count.to_le_bytes())?;
+        self.framing.write(&mut self.enc, u64::from(TAG_END), 1)?;
+        self.framing.write(&mut self.enc, self.framing.count(), 8)?;
         Ok(self.enc.finish()?.0)
     }
-}
-
-/// DE: Eintrag im Archiv. EN: Archive entry.
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) enum Entry {
-    Dir(ConfidentialText),
-    File(ConfidentialText, u64),
 }
 
 /// DE: Liest Einträge und prüft Inhalte. EN: Reads entries and verifies contents.
 pub(crate) struct ArchiveReader<R: Read> {
     dec: DecryptReader<R>,
-    count: u64,
+    framing: Framing,
 }
 
 impl<R: Read> ArchiveReader<R> {
-    pub fn new(dec: DecryptReader<R>) -> Self {
-        Self { dec, count: 0 }
-    }
-
-    fn array<const N: usize>(&mut self) -> Result<[u8; N]> {
-        let mut out = [0u8; N];
-        self.dec.read_exact(&mut out)?;
-        Ok(out)
+    pub fn new(dec: DecryptReader<R>) -> Result<Self> {
+        Ok(Self {
+            dec,
+            framing: Framing::new()?,
+        })
     }
 
     /// DE: Nächster Eintrag; `None` nach geprüftem Ende. EN: Next entry; `None` after a verified end.
     pub fn next_entry(&mut self) -> Result<Option<Entry>> {
-        let [tag] = self.array::<1>()?;
+        let mut entry = Entry::prepare()?;
+        let tag = u8::try_from(self.framing.read(&mut self.dec, 1)?).map_err(|_| bad())?;
         if tag == TAG_END {
-            if u64::from_le_bytes(self.array()?) != self.count {
+            if self.framing.read(&mut self.dec, 8)? != self.framing.count() {
                 return Err(bad());
             }
             return Ok(None);
@@ -127,22 +126,21 @@ impl<R: Read> ArchiveReader<R> {
         if tag != TAG_DIR && tag != TAG_FILE {
             return Err(bad());
         }
-        self.count += 1;
-        if self.count > MAX_ENTRIES {
-            return Err(bad());
-        }
-        let len = usize::from(u16::from_le_bytes(self.array()?));
+        self.framing.advance(MAX_ENTRIES)?;
+        let len = usize::try_from(self.framing.read(&mut self.dec, 2)?).map_err(|_| bad())?;
         if len == 0 || len > MAX_PATH_BYTES {
             return Err(bad());
         }
         let mut raw = SecretBytes::zeroed(len)?;
         self.dec.read_exact(raw.expose_mut())?;
         let path = ConfidentialText::from_locked(raw)?;
-        Ok(Some(if tag == TAG_DIR {
-            Entry::Dir(path)
-        } else {
-            Entry::File(path, u64::from_le_bytes(self.array()?))
-        }))
+        let record = entry.record_mut();
+        record.kind = tag;
+        record.path = Some(path);
+        if tag == TAG_FILE {
+            record.size = self.framing.read(&mut self.dec, 8)?;
+        }
+        Ok(Some(entry))
     }
 
     /// DE: Kopiert den Inhalt der aktuellen Datei und prüft die Prüfsumme.

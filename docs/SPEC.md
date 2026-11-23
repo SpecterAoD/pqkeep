@@ -358,3 +358,11 @@ R7-Teilbaustein: harden_process ergänzt/verifiziert unter Windows prozesslokale
 WER-NOHEAP. Der zusätzliche Berichtswert ist keine vollständige Dumpsperre;
 complete/core_dumps_disabled/not_dumpable bleiben falsch. Host-Policy und externe
 Passworthelfer bleiben getrennt und offen. Keine Registry-/ACL-/Systemänderung.
+
+R8-Teilbehebung: Interne Archiv-Framingbytes/Zähler und temporäre Eintragsdatensätze
+liegen vor privater Befüllung in festen SecretBuffer-Ownern. Keine entschlüsselten
+Array-Rückgaben oder to_le_bytes-Scratcharrays im Archivpfad. Reader/Writer und
+Eintragsvorbereitung propagieren Sperrfehler; Verbraucher leihen Name/Typ/Größe.
+Archivformat und öffentliche List-/Prüf-/Extraktionsverträge bleiben erhalten.
+Keine Aussage über sämtliche Compiler-/Registerkopien oder OS-Dateisystemmetadaten;
+Provider-/Helper-Grenzen bleiben offen. Siehe [Plan](security/ARCHIVE_METADATA_PLAN.md).
