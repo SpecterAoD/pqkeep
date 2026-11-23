@@ -342,6 +342,11 @@ Zeichen-/Sortierbereichen und Klassenzählern statt TinyVec/Standard-Sort-Scratc
 Passphrase-Bytes und Grenzen bleiben gleich; alle Unicode-Skalare und der vollständige
 Unicode18-Konformitätskorpus dienen als Gegenprobe. Andere Providerzustände bleiben offen.
 
+Der eigene Provider-Wrapper hält eine feste, vollständig gesperrte Allokation.
+Beim Drop zuerst den Provider an Ort und Stelle zerstören, anschließend sämtliche
+früheren Belegungs-/Paddingbytes löschen und erst dann entsperren/freigeben.
+Kein Ersatzkonstruktor im Drop; interne Provider-Arbeitsbereiche bleiben offen.
+
 R7-Teilbaustein: harden_process ergänzt/verifiziert unter Windows prozesslokales
 WER-NOHEAP. Der zusätzliche Berichtswert ist keine vollständige Dumpsperre;
 complete/core_dumps_disabled/not_dumpable bleiben falsch. Host-Policy und externe
