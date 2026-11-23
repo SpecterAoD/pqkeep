@@ -36,6 +36,32 @@ pub trait ScratchProtection: Send {
     fn wipe(&mut self, scratch: &mut Vec<u8>);
 }
 
+#[cfg(feature = "std")]
+#[path = "protected_error.rs"]
+mod protected_error;
+
+#[cfg(feature = "std")]
+pub(crate) fn private_errors_active() -> bool {
+    protected_error::active()
+}
+
+/// DE: Synchroner Parser mit geschütztem Scratch und redigierten Fehlerkonstruktoren.
+/// EN: Synchronous protected-scratch parsing without formatting rejected private values.
+/// Ordinary parsing APIs retain their previous error behavior. The scope cannot escape
+/// to another thread or async task; it is restored on success, error and unwind.
+#[cfg(feature = "std")]
+pub fn from_slice_with_protection<'a, T: de::Deserialize<'a>>(
+    input: &'a [u8],
+    scratch: Vec<u8>,
+    protection: alloc::boxed::Box<dyn ScratchProtection>,
+) -> Result<T> {
+    let _scope = protected_error::Guard::enter();
+    let mut parser = Deserializer::from_slice_with_protection(input, scratch, protection)?;
+    let value = T::deserialize(&mut parser)?;
+    parser.end()?;
+    Ok(value)
+}
+
 /// A structure that deserializes JSON into Rust values.
 pub struct Deserializer<R> {
     read: R,

@@ -17,6 +17,10 @@ use super::AppState;
 use super::locked_json::LockedJson;
 use crate::security::{Assessment, Lang, Reason};
 
+#[cfg(test)]
+#[path = "handlers_secret_tests.rs"]
+mod tests;
+
 /// DE: Generische Fehler der API. EN: Generic API errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApiError {

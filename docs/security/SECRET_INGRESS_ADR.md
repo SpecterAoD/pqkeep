@@ -19,6 +19,11 @@ claiming that wrapping a final String protects earlier copies. No new network ex
   A narrow pinned serde_json scratch injection keeps escape-decoding/parser scratch locked
   before use and wipes its complete allocation before releasing its guard. Preserve the
   existing parser, UTF-8/escape handling, depth and duplicate/unknown-field rejection.
+  A synchronous scoped error guard must reject custom deserialization errors before
+  formatting their Display values: rejected input must not become an unlocked error
+  String. Restore the previous thread-local scope on success, error and unwind; never
+  retain this scope in a movable/async deserializer. Ordinary serde_json callers keep
+  their existing error behavior. Verify a live visitor and a formatter-not-called probe.
 - Request fields: deserialize passphrases directly into Passphrase; partial request
   failures, early metadata/algorithm rejection and blocking queues own guarded values.
   String-consuming visitors use the existing wiping constructor, no secret error echo.

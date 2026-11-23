@@ -6,8 +6,9 @@ use super::*;
 use std::os::windows::io::{AsHandle, FromRawHandle, OwnedHandle};
 use windows_sys::Win32::Foundation::{GENERIC_READ, GENERIC_WRITE, INVALID_HANDLE_VALUE};
 use windows_sys::Win32::System::Console::{
-    AllocConsole, CONSOLE_TEXTMODE_BUFFER, COORD, CreateConsoleScreenBuffer,
-    ReadConsoleOutputCharacterW, SetConsoleCursorPosition,
+    AllocConsole, CONSOLE_SCREEN_BUFFER_INFO, CONSOLE_TEXTMODE_BUFFER, COORD,
+    CreateConsoleScreenBuffer, GetConsoleScreenBufferInfo, ReadConsoleOutputCharacterW,
+    SetConsoleCursorPosition, SetConsoleScreenBufferSize,
 };
 
 fn screen_buffer() -> OwnedHandle {
@@ -29,7 +30,29 @@ fn screen_buffer() -> OwnedHandle {
     assert_ne!(raw, INVALID_HANDLE_VALUE);
     assert!(!raw.is_null());
     // SAFETY: Successful CreateConsoleScreenBuffer returns a unique owned handle.
-    unsafe { OwnedHandle::from_raw_handle(raw) }
+    let buffer = unsafe { OwnedHandle::from_raw_handle(raw) };
+    configure_buffer(&buffer);
+    buffer
+}
+
+fn configure_buffer(buffer: &OwnedHandle) {
+    let mut info = CONSOLE_SCREEN_BUFFER_INFO::default();
+    // SAFETY: Live owned buffer; initialized exclusive output pointer is not retained.
+    let read = unsafe { GetConsoleScreenBufferInfo(buffer.as_raw_handle(), &raw mut info) };
+    assert_ne!(read, 0);
+    eprintln!(
+        "Native fixture geometry: {}x{}",
+        info.dwSize.X, info.dwSize.Y
+    );
+    // DE: Eigener versteckter Testpuffer muss Platz für breite Unicode-Zeichen haben.
+    // EN: Own hidden test buffer must have room for wide Unicode characters.
+    let size = COORD {
+        X: info.dwSize.X.max(128),
+        Y: info.dwSize.Y.max(32),
+    };
+    // SAFETY: Live own test buffer, dimensions never shrink below its existing window.
+    let changed = unsafe { SetConsoleScreenBufferSize(buffer.as_raw_handle(), size) };
+    assert_ne!(changed, 0);
 }
 
 #[test]
@@ -53,20 +76,22 @@ fn native_console_roundtrips_unicode_and_rejects_file_handles() {
 }
 
 fn first_cell(buffer: &OwnedHandle) -> u16 {
-    let mut actual = 0u16;
+    let mut actual = [0u16; 4];
     let mut read = 0;
-    // SAFETY: Live owned screen buffer; initialized exclusive outputs cover one unit.
-    // The OS does not retain pointers. Read a cell, not a presumed string offset.
+    // DE: Genug Zellen für ein breites Zeichen lesen, keine abgeschnittene Hälfte.
+    // EN: Read enough cells for a wide character, not a clipped half.
+    // SAFETY: Live owned screen buffer; initialized exclusive outputs cover four units.
+    // The OS does not retain pointers. Read a glyph, not a presumed string offset.
     let result = unsafe {
         ReadConsoleOutputCharacterW(
             buffer.as_raw_handle(),
-            &raw mut actual,
-            1,
+            actual.as_mut_ptr(),
+            4,
             COORD { X: 0, Y: 0 },
             &raw mut read,
         )
     };
     assert_ne!(result, 0);
-    assert_eq!(read, 1);
-    actual
+    assert_eq!(read, 4);
+    actual[0]
 }

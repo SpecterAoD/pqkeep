@@ -31,6 +31,10 @@ impl serde_json::de::ScratchProtection for ScratchLock {
 #[path = "locked_json_tests.rs"]
 mod tests;
 
+#[cfg(test)]
+#[path = "parser_error_tests.rs"]
+mod error_tests;
+
 fn content_type(headers: &HeaderMap) -> bool {
     headers
         .get(header::CONTENT_TYPE)
@@ -57,12 +61,8 @@ pub(super) fn decode<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, ApiError> {
         return Err(ApiError::Busy);
     }
     let protection = Box::new(ScratchLock { _lock: lock });
-    let mut parser =
-        serde_json::Deserializer::from_slice_with_protection(bytes, scratch, protection)
-            .map_err(|_| ApiError::Internal)?;
-    let value = T::deserialize(&mut parser).map_err(|_| ApiError::BadRequest)?;
-    parser.end().map_err(|_| ApiError::BadRequest)?;
-    Ok(value)
+    serde_json::de::from_slice_with_protection(bytes, scratch, protection)
+        .map_err(|_| ApiError::BadRequest)
 }
 
 impl<S, T> FromRequest<S> for LockedJson<T>

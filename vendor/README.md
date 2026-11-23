@@ -84,3 +84,10 @@ part of PQKeep's existing HTTP/JSON contract; requesting the absent ws feature
 fails at Cargo resolution. Retain licenses and exact provenance for included files.
 The full original import remains preserved in PR299 and a verified protected bundle;
 see docs/security/SOURCE_MINIMIZATION_PLAN.md. No history rewriting or hidden omission.
+
+DE: Der synchrone geschützte serde_json-Eingang redigiert nun auch Fehler, bevor ein
+Display-Wert in einen normalen Fehler-String formatiert werden könnte. Threadgebundener
+RAII-Scope wird bei Erfolg/Fehler/Unwind wiederhergestellt; normale Parseraufrufe behalten
+ihre bisherigen Fehlermeldungen. Kein beweglicher/async gespeicherter Schutz-Scope.
+EN: Protected parsing prevents pre-sanitization error-message copies; formatter probes
+and ordinary-error restoration tests exercise the actual provider error constructor.

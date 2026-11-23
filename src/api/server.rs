@@ -29,6 +29,10 @@ use super::{AppState, router};
 /// DE: Puffergröße für Header (hyper-Minimum ist 8 KiB). EN: Header buffer size.
 const MAX_BUF: usize = 16 * 1024;
 
+#[cfg(test)]
+#[path = "server_locked_tests.rs"]
+mod tests;
+
 /// DE: Nimmt Verbindungen an, bis `shutdown` fertig ist.
 /// EN: Accepts connections until `shutdown` completes.
 ///

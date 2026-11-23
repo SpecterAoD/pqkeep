@@ -433,6 +433,12 @@ impl Debug for Error {
 impl de::Error for Error {
     #[cold]
     fn custom<T: Display>(msg: T) -> Error {
+        // DE: Vor Display/Allokation prüfen; nachträgliches Redigieren wäre zu spät.
+        // EN: Check before Display/allocation; redacting the finished String is too late.
+        #[cfg(feature = "std")]
+        if crate::de::private_errors_active() {
+            return make_error("invalid protected JSON value".into());
+        }
         make_error(msg.to_string())
     }
 

@@ -86,7 +86,15 @@
   "serde_json-1.0.154": [
     {
       "path": "src/de.rs",
-      "sha256": "528f26e12f22d468e139cb8ea52844b23120086745ac8c288616c11a60abd365"
+      "sha256": "efddf906a69d0d42a95f5313c570e86802f9b598598957b81539de568a7a70e7"
+    },
+    {
+      "path": "src/error.rs",
+      "sha256": "81afa1934e2599ee29fc6e4d4fb47785022474b68d1d92427e1283737805e7f4"
+    },
+    {
+      "path": "src/protected_error.rs",
+      "sha256": "f53687c578a9d514e69e7159238838beec760318b4b7afc946313a0bb57d4828"
     }
   ],
   "axum-0.8.9": [
