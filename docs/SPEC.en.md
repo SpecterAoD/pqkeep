@@ -72,6 +72,10 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - Secrets (private keys, seeds, derived keys, passphrase) in `Zeroizing<...>` or types with `ZeroizeOnDrop` / `secrecy`. These types implement **no** `Debug`, `Display`, `Clone` or `Serialize` with plaintext output.
 - No logging of secrets or request bodies. Secrets/tags compared in constant time (`subtle`).
 - Documentation note: zeroisation is "best effort" (copies by the compiler, swap, core dumps). Secret memory pages including Argon2/HKDF must be fully locked or the operation fails. Document core-dump/compiler/OS limits separately.
+- Audit status #147 (2026-11-23): this requirement is not proof of complete implementation.
+  The [secret-lifetime audit](security/SECRET_LIFETIME_AUDIT.md) records open I/O/AEAD/rekey/
+  signature/HTTP/token copies and platform limits with remediation proposals; the audit PR
+  changes no production memory path.
 
 ### 3.2 Cryptography
 - **Key exchange:** ML-KEM (FIPS 203), default **ML-KEM-768**, selectable ML-KEM-512/1024.

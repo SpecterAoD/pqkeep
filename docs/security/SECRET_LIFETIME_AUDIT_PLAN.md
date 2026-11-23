@@ -45,7 +45,11 @@ DE: DE/EN-Auditbericht, Inventar und Test-/Grenzenmatrix unter `docs/security/`;
 CHANGELOG und bestehende Sicherheitsdokumentation nur entsprechend tatsächlicher Ergebnisse
 ergänzen. `src/`, Provider, Cargo-Dateien und CI-Laufzeitverhalten bleiben unverändert.
 EN: Add bilingual audit/inventory/test evidence and factual roadmap/changelog/security links.
-No production/provider/dependency or CI runtime change in this phase.
+No production/provider/dependency or CI security/workflow change in this phase.
+DE: Eine isolierte Testdatei darf synthetische Standard-/Providerkopien reproduzieren;
+sie läuft in der vorhandenen nativen CI, ändert aber keine Anwendungspfade.
+EN: An isolated test file may reproduce synthetic std/provider copies in existing native CI,
+without changing application paths or asserting that the reported gaps are repaired.
 
 DE: Nur synthetische, nicht geheime Daten in lokalen Proben. Keine fremden Speicherbereiche,
 Swap-/Dump-Extraktion, echten Credentials oder geheimen Logs. Isolation/Lock-Status anhand
