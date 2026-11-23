@@ -34,3 +34,8 @@ Sources / Quellen:
 
 DE/EN: Rollback: reviewed code revert, no migration or persisted data change. Full R6
 still needs provider constructor/expanded-state and algorithm workspace verification.
+
+DE/EN: Zusätzlich vollständiger unveränderter Unicode18-NormalizationTest-Korpus in
+ tests/fixtures/unicode18, mit Herkunft/öffentlichen SHA256-Werten und Unicode License V3
+ (bereits bestehende erlaubte Lizenz). Alle fünf Spalten gegen Spalte4 prüfen; keine
+ Netzwerkabhängigkeit der Tests. Der Fixture-Inhalt gelangt ausschließlich in Testbuilds.

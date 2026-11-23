@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: NFKC-Zeichen-/Sortierarbeitsbereiche vor Befüllung sperren; bisherige Passphrase-Bytes
+  gegen alle Unicode-Skalare und den vollständigen Unicode18-Korpus prüfen (#147 R6).
+  EN: Lock normalization workspaces before use, preserving the pinned Unicode tables
+  and passphrase derivation bytes. Other provider lifetime gaps remain open.
+
 - DE: #147 Laufzeitnacharbeit: direkte Klartext-Datei-I/O, gesperrter Hash-Eingabepuffer,
   In-place-AEAD ohne allokierende Klartext-Zwischenkopie, gesperrtes Rekey-Framing und
   Token-Erzeugung; HTTP/1-/JSON-Speicheradapter und vertrauliche Archivnamen/Konfliktschlüssel.
