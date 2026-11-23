@@ -347,6 +347,13 @@ Beim Drop zuerst den Provider an Ort und Stelle zerstören, anschließend sämtl
 früheren Belegungs-/Paddingbytes löschen und erst dann entsperren/freigeben.
 Kein Ersatzkonstruktor im Drop; interne Provider-Arbeitsbereiche bleiben offen.
 
+Interne UTF-8-Zeichenpositionen, nicht überlappende Wörterbuchbereiche und
+positionsgenaue Mustermasken der Passphrasenbewertung liegen vor erster Befüllung
+in festen gesperrten Puffern. Vollständige Allokationen vor Unlock löschen;
+Sperrfehler weitergeben, keine ungesperrte Ersatzbewertung. Wörterbuchauswahl,
+Entropieformel und bewusst öffentliche grobe Bewertungsergebnisse bleiben gleich.
+Siehe [ASSESSMENT_METADATA_PLAN.md](security/ASSESSMENT_METADATA_PLAN.md).
+
 R7-Teilbaustein: harden_process ergänzt/verifiziert unter Windows prozesslokales
 WER-NOHEAP. Der zusätzliche Berichtswert ist keine vollständige Dumpsperre;
 complete/core_dumps_disabled/not_dumpable bleiben falsch. Host-Policy und externe
