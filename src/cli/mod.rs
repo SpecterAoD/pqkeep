@@ -116,10 +116,11 @@ fn run_child(argv: &[String], lang: Lang) -> CliResult {
 fn print_hardening(t: &Texts, report: HardeningReport) {
     let lock = memlock::stats();
     eprintln!(
-        "{}: core_dumps_disabled={} not_dumpable={} locked_pages={} failed_locks={}",
+        "{}: core_dumps_disabled={} not_dumpable={} wer_heap_reporting_disabled={} locked_pages={} failed_locks={}",
         t.msg_hardening,
         report.core_dumps_disabled,
         report.not_dumpable,
+        report.wer_heap_reporting_disabled,
         lock.locked_pages,
         lock.failed_attempts
     );

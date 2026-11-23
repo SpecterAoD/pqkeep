@@ -22,11 +22,19 @@ fn harden_process_applies_and_is_idempotent() {
         assert_eq!(core.current, Some(0));
         assert_eq!(core.maximum, Some(0));
         assert_eq!(dumpable_behavior().unwrap(), DumpableBehavior::NotDumpable);
+        assert!(!first.wer_heap_reporting_disabled);
+    }
+    #[cfg(windows)]
+    {
+        assert!(first.wer_heap_reporting_disabled);
+        assert!(matches!(pqkeep_platform::current_wer_flags().unwrap(),
+            pqkeep_platform::WerFlags::Present(flags) if flags & 1 != 0));
+        assert!(!first.core_dumps_disabled && !first.not_dumpable);
     }
     #[cfg(not(target_os = "linux"))]
     {
-        // DE: Außerhalb von Linux nur dokumentiert (siehe docs/MEMORY_HARDENING.md).
-        // EN: Outside Linux only documented (see docs/MEMORY_HARDENING.md).
+        // DE: Teilminderung unter Windows ist keine vollständige Dumpsperre.
+        // EN: Partial Windows mitigation is not a complete dump barrier.
         assert!(!first.complete());
     }
 }
