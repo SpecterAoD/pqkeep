@@ -93,14 +93,19 @@ fn generic(n: usize, per: f64) -> f64 {
 /// DE: Kosten einer Buchstabenfolge: Minimum aus Einzelzeichen, unbekanntem Wort und
 /// Zerlegung in Listenwörter. EN: Cost of a letter run: minimum of single characters,
 /// unknown word and decomposition into listed words.
-fn letter_run(chars: &[char], run: Range<usize>, words: &[Range<usize>], per: f64) -> (f64, bool) {
+fn letter_run(
+    chars: &[char],
+    run: Range<usize>,
+    words: &[dictionary::WordSpan],
+    per: f64,
+) -> (f64, bool) {
     let plain = count(run.len()) * per;
     let (mut dict, mut left, mut any) = (0.0, 0usize, false);
     let mut k = run.start;
     while k < run.end {
         if let Some(w) = words.iter().find(|w| w.start == k && w.end <= run.end) {
             dict += generic(left, per) + LIST_WORD_BITS;
-            if chars[w.clone()].iter().any(|c| c.is_uppercase()) {
+            if chars[w.range()].iter().any(|c| c.is_uppercase()) {
                 dict += 1.0;
             }
             left = 0;
@@ -151,7 +156,7 @@ pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> crate::
         }
         bits += match kind {
             0 => {
-                let (cost, used) = letter_run(chars, i..j, &words, per);
+                let (cost, used) = letter_run(chars, i..j, words.expose(), per);
                 word_model |= used;
                 cost
             }

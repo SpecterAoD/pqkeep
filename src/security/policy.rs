@@ -211,7 +211,7 @@ pub(super) fn evaluate(text: &str) -> Result<Evaluation> {
     let found = patterns::find(chars)?;
     reasons.extend(found.reasons.iter().copied());
     let low = super::locked::chars(chars.iter().map(|&c| patterns::lower(c)))?;
-    let estimate = entropy::estimate(chars, low.expose(), &found.marked)?;
+    let estimate = entropy::estimate(chars, low.expose(), found.marked.expose())?;
     Ok(Evaluation {
         reasons,
         bits: estimate.bits,

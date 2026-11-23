@@ -7,6 +7,11 @@
 //! not count towards the entropy estimate.
 
 use crate::Result;
+use crate::crypto::secret_buffer::SecretBuffer;
+
+#[cfg(test)]
+#[path = "patterns_tests.rs"]
+mod tests;
 
 use super::Reason;
 use super::blocklist::{BLOCKLIST, KEYBOARD_ROWS};
@@ -17,7 +22,7 @@ pub(super) const MIN_RUN: usize = 4;
 /// DE: Gefundene Muster. EN: Patterns found.
 pub(super) struct Found {
     /// DE: Pro Zeichen: Teil eines Musters? EN: Per character: part of a pattern?
-    pub marked: Vec<bool>,
+    pub marked: SecretBuffer<bool>,
     /// DE: Gründe in fester Reihenfolge. EN: Reasons in fixed order.
     pub reasons: Vec<Reason>,
 }
@@ -51,22 +56,26 @@ pub(super) fn find(chars: &[char]) -> Result<Found> {
     let low = low.expose();
     let leet = super::locked::chars(low.iter().map(|&c| unleet(c)))?;
     let leet = leet.expose();
-    let mut marked = vec![false; chars.len()];
-    let repetition = mark_runs(low, &mut marked, |a, b| a == b);
-    let sequence = mark_runs(low, &mut marked, |a, b| {
+    let mut marked = mask(chars.len())?;
+    let repetition = mark_runs(low, marked.expose_mut(), |a, b| a == b);
+    let sequence = mark_runs(low, marked.expose_mut(), |a, b| {
         a.is_alphanumeric() && b.is_alphanumeric() && (a as u32).abs_diff(b as u32) == 1
     });
-    let keyboard = mark_substrings(low, KEYBOARD_ROWS, true, &mut marked);
+    let keyboard = mark_substrings(low, KEYBOARD_ROWS, true, marked.expose_mut());
     // DE: Blocklist-Wörter mindern immer die Entropie; abgelehnt wird erst, wenn sie
     //     mindestens ein Drittel ausmachen (sonst träfe es normale Sätze wie „… Test …“).
     // EN: Blocklisted words always reduce entropy; rejection only if they make up at
     //     least a third (otherwise ordinary sentences such as "... test ..." would fail).
-    let mut words = vec![false; chars.len()];
-    mark_substrings(low, BLOCKLIST, false, &mut words);
-    mark_substrings(leet, BLOCKLIST, false, &mut words);
-    let covered = words.iter().filter(|w| **w).count();
+    let mut words = mask(chars.len())?;
+    mark_substrings(low, BLOCKLIST, false, words.expose_mut());
+    mark_substrings(leet, BLOCKLIST, false, words.expose_mut());
+    let covered = words.expose().iter().filter(|w| **w).count();
     let blocklisted = covered > 0 && covered * 3 >= chars.len();
-    marked.iter_mut().zip(&words).for_each(|(m, w)| *m |= *w);
+    marked
+        .expose_mut()
+        .iter_mut()
+        .zip(words.expose())
+        .for_each(|(m, w)| *m |= *w);
     let reasons = [
         (repetition, Reason::Repetition),
         (sequence, Reason::Sequence),
@@ -77,6 +86,10 @@ pub(super) fn find(chars: &[char]) -> Result<Found> {
     .filter_map(|(hit, reason)| hit.then_some(reason))
     .collect();
     Ok(Found { marked, reasons })
+}
+
+fn mask(len: usize) -> Result<SecretBuffer<bool>> {
+    SecretBuffer::new(vec![false; len])
 }
 
 /// DE: Markiert Läufe ≥ `MIN_RUN`, in denen benachbarte Zeichen `rel` erfüllen.
