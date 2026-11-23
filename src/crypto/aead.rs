@@ -40,14 +40,14 @@ pub fn generate_key() -> Result<SecretBytes> {
     rng::secret(KEY_LEN)
 }
 
-// DE: Öffentlicher Zustand vor dem Sperren und nach dem Löschen.
-// EN: Public state before locking and after wiping the secret state.
+// DE: Ausschließlich öffentlicher Initialzustand vor dem Sperren.
+// EN: Public initial state only, before locking.
 fn public_cipher() -> Aes256Gcm {
     Aes256Gcm::new(&aes_gcm::Key::<Aes256Gcm>::default())
 }
 
 pub(crate) fn cipher(key: &[u8]) -> Result<SecretState<Aes256Gcm>> {
-    let mut state = SecretState::new(public_cipher(), public_cipher)?;
+    let mut state = SecretState::new(public_cipher())?;
     *state.get_mut() =
         Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })?;
     Ok(state)

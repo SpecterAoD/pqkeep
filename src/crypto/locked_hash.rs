@@ -21,7 +21,7 @@ where
 {
     pub(crate) fn new() -> Result<Self> {
         Ok(Self {
-            state: SecretState::new(D::new(), D::new)?,
+            state: SecretState::new(D::new())?,
         })
     }
 
