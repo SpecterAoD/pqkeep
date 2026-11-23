@@ -1,67 +1,9 @@
 //! DE: Einzige produktive FFI-Grenze, keine Allokation oder Secret-Kopie.
 //! EN: Single production FFI boundary, without allocation or secret copying.
 
-use crate::WerFlags;
 use std::io;
 use std::os::windows::io::{AsRawHandle, BorrowedHandle};
 use windows_sys::Win32::System::Console::{GetConsoleMode, WriteConsoleW};
-use windows_sys::Win32::System::ErrorReporting::{WerGetFlags, WerSetFlags};
-use windows_sys::Win32::System::Threading::GetCurrentProcess;
-
-fn wer_flags(handle: windows_sys::Win32::Foundation::HANDLE) -> io::Result<WerFlags> {
-    let mut flags = 0;
-    // DE: Initialisierte Ausgabe; Win32 prüft das Prozesshandle, keine Zeigerspeicherung.
-    // SAFETY: Exclusive initialized output; Win32 validates the process handle and
-    // does not retain the pointer. Invalid handles produce an HRESULT failure.
-    let result = unsafe { WerGetFlags(handle, &raw mut flags) };
-    // DE: WER_E_NOT_FOUND ist Abwesenheit, kein erfolgreicher Null-Flagsatz.
-    // EN: WER_E_NOT_FOUND denotes absence, never a successful zero flag set.
-    if result.cast_unsigned() == 0x8007_0490 {
-        return Ok(WerFlags::Absent);
-    }
-    hresult(result)?;
-    Ok(WerFlags::Present(flags))
-}
-
-fn hresult(result: i32) -> io::Result<()> {
-    if result == 0 {
-        Ok(())
-    } else {
-        // DE: Nur öffentlicher Statuscode, keine privaten Eingaben im Fehlertext.
-        // EN: Public status code only; never include private inputs in errors.
-        Err(io::Error::other(format!(
-            "WER operation failed (HRESULT {result:#010x})"
-        )))
-    }
-}
-
-/// DE: WER-Flags des eigenen Prozesses lesen, keine Policy ändern.
-/// EN: Read this process's WER flags without changing policy.
-/// # Errors
-/// DE/EN: Nicht erfolgreiche WER-Abfrage / unsuccessful WER query.
-pub fn current_wer_flags() -> io::Result<WerFlags> {
-    // DE: Pseudohandle, nicht schließen. EN: Pseudo-handle, must not be closed.
-    // SAFETY: No arguments or pointers; returns the current process pseudo-handle.
-    wer_flags(unsafe { GetCurrentProcess() })
-}
-
-/// DE: Nur WER-Heapberichte des eigenen Prozesses mindern und nachprüfen.
-/// Bestehende Flags erhalten; keine vollständige Dumpsperre. Beim Prozessstart aufrufen.
-/// EN: Mitigate and verify current-process WER heap reporting only, preserving flags.
-/// Not a complete dump barrier. Invoke during startup before concurrent host policy changes.
-/// # Errors
-/// DE/EN: Read-/Set-/Read-back-Fehler; keine Erfolgsannahme / no assumed success.
-pub fn suppress_wer_heap_reporting() -> io::Result<()> {
-    static POLICY: std::sync::Mutex<()> = std::sync::Mutex::new(());
-    let _guard = POLICY
-        .lock()
-        .map_err(|_| io::Error::other("WER policy unavailable"))?;
-    crate::wer::ensure_noheap(current_wer_flags, |flags| {
-        // DE: Ausschließlich eigener Prozess; keine fremden Handles/Registry-Eingriffe.
-        // SAFETY: Scalar documented flags, no pointers; affects the current process only.
-        hresult(unsafe { WerSetFlags(flags) })
-    })
-}
 
 /// DE: Nur echte Konsolen erkennen; MSYS-/Cygwin-PTY-Pipes bleiben Byte-Streams.
 /// EN: Detect real consoles only; MSYS/Cygwin PTY pipes remain byte streams.
@@ -112,7 +54,3 @@ pub fn write_console(handle: BorrowedHandle<'_>, text: &[u16]) -> io::Result<usi
 #[cfg(test)]
 #[path = "windows_tests.rs"]
 mod tests;
-
-#[cfg(test)]
-#[path = "windows_wer_tests.rs"]
-mod wer_tests;

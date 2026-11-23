@@ -336,8 +336,3 @@ fallibel. Typisierte Seeds und private Hashzustände werden vor privater Befüll
 Provider-Konstruktoren und Prozess-/Helper-Unterstützung bleiben offen; siehe
 [Plattformplan](security/PLATFORM_SUPPORT_PLAN.md). Keine vollständige Schließung behauptet.
 Geprüfte Main-Merges sind freigegeben; Host-/Registry-/Rechteänderungen weiterhin separat.
-
-R7-Teilbaustein: harden_process ergänzt/verifiziert unter Windows prozesslokales
-WER-NOHEAP. Der zusätzliche Berichtswert ist keine vollständige Dumpsperre;
-complete/core_dumps_disabled/not_dumpable bleiben falsch. Host-Policy und externe
-Passworthelfer bleiben getrennt und offen. Keine Registry-/ACL-/Systemänderung.
