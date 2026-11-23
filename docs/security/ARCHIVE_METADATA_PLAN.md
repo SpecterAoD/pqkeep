@@ -30,3 +30,15 @@ Tests inspect live owned storage only, never freed/uninitialized bytes. Do not c
 elimination of compiler/register copies, caller-controlled outputs, OS filesystem
 metadata, abort cleanup, or closure of provider/password-helper/process-policy gaps.
 Issue147 and roadmap remain In progress until all separately tracked work is accepted.
+
+## Lokaler Umsetzungsstand / Local implementation checkpoint
+
+DE: Framing-State und Eintragsrecord vor Befüllung gesperrt; Archiv- und private
+Verbraucherpfade angepasst. 22Tests mit und22ohne API sowie4gemeinsame Puffer-/
+Wipe-/Unwind-Tests erfolgreich. Linux prüft eigene lebende VmFlags zusätzlich zur
+Owner-Registry; Sperrverweigerung im isolierten Kindprozess. Beide strengen Clippy-
+Konfigurationen, fmt/Limits und Herkunftsabgleich erfolgreich. Erste Signaturannahme
+an den DecryptReader und Clippy-Konvertierungs-/Teststilbefunde korrigiert, keine
+Lint-Ausnahme oder abgesenkte Prüfung. Originale Fehlerprotokolle bleiben erhalten.
+EN: Full native PR CI and eight automatic fuzz targets are still required. Linux
+live observations do not prove Windows page state; no full issue closure claimed.

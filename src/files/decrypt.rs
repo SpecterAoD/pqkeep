@@ -131,7 +131,7 @@ pub(super) fn open(
         body,
     )?;
     drop(opened.file_key);
-    Ok((ArchiveReader::new(dec), opened.content, check))
+    Ok((ArchiveReader::new(dec)?, opened.content, check))
 }
 
 /// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
@@ -197,10 +197,12 @@ fn extract_file<R: Read>(
     target: &Path,
     check: Option<SignatureCheck>,
 ) -> Result<Report> {
-    let Some(Entry::File(name, size)) = archive.next_entry()? else {
-        return Err(Error::InvalidInput { field: "archive" });
-    };
-    paths::validate(name.expose()?)?;
+    let entry = archive
+        .next_entry()?
+        .filter(Entry::is_file)
+        .ok_or(Error::InvalidInput { field: "archive" })?;
+    let size = entry.size();
+    paths::validate(entry.path()?.expose()?)?;
     let (temp, file) = TempOutput::file(target)?;
     let mut out = file;
     archive.copy_file(size, &mut out)?;
@@ -228,22 +230,17 @@ fn extract_dir<R: Read>(
     let mut seen = PathSet::default();
     let mut report = Report::default();
     while let Some(entry) = archive.next_entry()? {
-        match entry {
-            Entry::Dir(path) => {
-                let parts = paths::validate(path.expose()?)?;
-                seen.insert(&parts, false)?;
-                output::create_dir(temp.path(), &parts)?;
-                report.directories += 1;
-            }
-            Entry::File(path, size) => {
-                let parts = paths::validate(path.expose()?)?;
-                seen.insert(&parts, true)?;
-                let mut out = output::create_file(temp.path(), &parts)?;
-                archive.copy_file(size, &mut out)?;
-                finish_file(out)?;
-                report.files += 1;
-                report.bytes += size;
-            }
+        let parts = paths::validate(entry.path()?.expose()?)?;
+        seen.insert(&parts, entry.is_file())?;
+        if entry.is_file() {
+            let mut out = output::create_file(temp.path(), &parts)?;
+            archive.copy_file(entry.size(), &mut out)?;
+            finish_file(out)?;
+            report.files += 1;
+            report.bytes += entry.size();
+        } else {
+            output::create_dir(temp.path(), &parts)?;
+            report.directories += 1;
         }
     }
     archive.finish()?;
