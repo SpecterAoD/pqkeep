@@ -16,7 +16,9 @@
 mod generate;
 mod guard;
 mod handlers;
+mod locked_json;
 mod middleware;
+mod protected_buffer;
 mod secret_input;
 mod server;
 pub mod token;

@@ -27,15 +27,37 @@ pub use crate::read::IoRead;
 
 //////////////////////////////////////////////////////////////////////////////
 
+/// DE: Host-Schutz für eine vorab reservierte und gesperrte Scratch-Allokation.
+/// EN: Host protection of a preallocated, already locked scratch allocation.
+#[cfg(feature = "std")]
+pub trait ScratchProtection: Send {
+    /// DE: Die gesamte Kapazität vor dem Entsperren löschen, ohne Reallokation.
+    /// EN: Wipe the entire capacity before unlocking, without reallocating.
+    fn wipe(&mut self, scratch: &mut Vec<u8>);
+}
+
 /// A structure that deserializes JSON into Rust values.
 pub struct Deserializer<R> {
     read: R,
     scratch: Vec<u8>,
+    #[cfg(feature = "std")]
+    scratch_protection: Option<alloc::boxed::Box<dyn ScratchProtection>>,
     remaining_depth: u8,
     #[cfg(feature = "float_roundtrip")]
     single_precision: bool,
     #[cfg(feature = "unbounded_depth")]
     disable_recursion_limit: bool,
+}
+
+#[cfg(feature = "std")]
+impl<R> Drop for Deserializer<R> {
+    fn drop(&mut self) {
+        if let Some(mut protection) = self.scratch_protection.take() {
+            protection.wipe(&mut self.scratch);
+            // DE/EN: Schutz nach Wipe, aber vor der Vec-Freigabe lösen / unlock before free.
+            drop(protection);
+        }
+    }
 }
 
 impl<'de, R> Deserializer<R>
@@ -60,6 +82,8 @@ where
         Deserializer {
             read,
             scratch: Vec::new(),
+            #[cfg(feature = "std")]
+            scratch_protection: None,
             remaining_depth: 128,
             #[cfg(feature = "float_roundtrip")]
             single_precision: false,
@@ -85,6 +109,37 @@ where
 }
 
 impl<'a> Deserializer<read::SliceRead<'a>> {
+    /// DE: Nutzt die bereits vom Host gesperrte Scratch-Allokation.
+    /// EN: Use a scratch allocation already locked by the host.
+    ///
+    /// DE: Der Host muss die komplette Kapazität bis nach `wipe` gesperrt halten.
+    /// SliceRead kopiert höchstens die Eingabelänge; der IgnoredAny-Stack benötigt
+    /// höchstens die Rekursionstiefe128. Erweiterte Zahlenmodi sind nicht zugelassen.
+    /// EN: The host must retain the complete allocation lock through wiping. SliceRead
+    /// copies at most input length, and IgnoredAny uses at most depth128. Extended
+    /// numeric modes are rejected; this entry point cannot fall back to plain scratch.
+    #[cfg(feature = "std")]
+    pub fn from_slice_with_protection(
+        bytes: &'a [u8],
+        scratch: Vec<u8>,
+        protection: alloc::boxed::Box<dyn ScratchProtection>,
+    ) -> Result<Self> {
+        let required = bytes.len().checked_add(128);
+        if cfg!(any(feature = "float_roundtrip", feature = "arbitrary_precision"))
+            || !scratch.is_empty()
+            || required.map_or(true, |n| scratch.capacity() < n)
+        {
+            return Err(Error::io(crate::io::Error::new(
+                crate::io::ErrorKind::InvalidInput,
+                "unsupported protected scratch capacity or numeric mode",
+            )));
+        }
+        let mut de = Self::from_slice(bytes);
+        de.scratch = scratch;
+        de.scratch_protection = Some(protection);
+        Ok(de)
+    }
+
     /// Creates a JSON deserializer from a `&[u8]`.
     pub fn from_slice(bytes: &'a [u8]) -> Self {
         Deserializer::new(read::SliceRead::new(bytes))

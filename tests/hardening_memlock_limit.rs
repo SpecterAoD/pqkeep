@@ -40,6 +40,7 @@ fn locking_failure_refuses_secret_processing() {
         aead::generate_key(),
         Err(pqkeep::Error::MemoryLock)
     ));
+    assert_metadata_refused();
     let mut called = false;
     assert!(matches!(
         pqkeep::sign::digest_reader(Unread(&mut called)),
@@ -59,5 +60,55 @@ fn locking_failure_refuses_secret_processing() {
             Err(pqkeep::Error::MemoryLock)
         ));
         assert!(!path.exists());
+        assert_server_rejects_before_any_input();
     }
+}
+
+#[cfg(target_os = "linux")]
+fn assert_metadata_refused() {
+    use pqkeep::files::{ConfidentialText, paths::PathSet};
+    assert!(matches!(
+        ConfidentialText::from_text("fixture"),
+        Err(pqkeep::Error::MemoryLock)
+    ));
+    assert!(matches!(
+        PathSet::default().insert(&["fixture"], true),
+        Err(pqkeep::Error::MemoryLock)
+    ));
+}
+
+#[cfg(all(target_os = "linux", feature = "api"))]
+fn assert_server_rejects_before_any_input() {
+    use pqkeep::api::{self, AppState, Limits, TokenHash};
+    use tokio::io::AsyncReadExt;
+    use tokio::net::{TcpListener, TcpStream};
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(
+            file.path(),
+            format!("pqkeep-token-v1 sha3-256 {}\n", "00".repeat(32)),
+        )
+        .unwrap();
+        let state = AppState::new(TokenHash::load(file.path()).unwrap(), Limits::default());
+        let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+        let task = tokio::spawn(api::serve(listener, state, async {
+            let _ = rx.await;
+        }));
+        let mut client = TcpStream::connect(addr).await.unwrap();
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            client.read(&mut [0u8; 1]),
+        )
+        .await
+        .unwrap();
+        assert!(matches!(result, Ok(0)));
+        tx.send(()).unwrap();
+        assert!(task.await.unwrap().is_ok());
+    });
 }

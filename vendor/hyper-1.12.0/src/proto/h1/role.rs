@@ -4,7 +4,7 @@ use std::mem::MaybeUninit;
 use std::fmt::{self, Write as _};
 
 use bytes::Bytes;
-use bytes::BytesMut;
+use crate::rt::ReadBuffer as BytesMut;
 #[cfg(feature = "client")]
 use http::header::Entry;
 #[cfg(feature = "server")]
@@ -222,7 +222,7 @@ impl Http1Transaction for Server {
             }
         };
 
-        let slice = buf.split_to(len).freeze();
+        let slice = buf.split_to(len).map_err(|_| Parse::Internal)?.freeze();
         let uri = {
             let uri_bytes = slice.slice_ref(&slice[path_range]);
             // TODO(lucab): switch to `Uri::from_shared()` once public.
@@ -1097,7 +1097,7 @@ impl Http1Transaction for Client {
                 }
             };
 
-            let mut slice = buf.split_to(len);
+            let mut slice = buf.split_to(len).map_err(|_| Parse::Internal)?;
 
             if ctx
                 .h1_parser_config
@@ -1696,7 +1696,7 @@ fn extend(dst: &mut Vec<u8>, data: &[u8]) {
 
 #[cfg(test)]
 mod tests {
-    use bytes::BytesMut;
+    use crate::rt::ReadBuffer as BytesMut;
 
     use super::*;
 
@@ -3470,6 +3470,7 @@ mod tests {
             \r\n\r\n"[..],
         );
         let len = raw.len();
+        let fixture = raw.as_ref().to_vec();
         let mut headers = Some(HeaderMap::new());
 
         b.bytes = len as u64;
@@ -3499,15 +3500,9 @@ mod tests {
             headers = Some(msg.head.headers);
             std::mem::take(&mut msg.head.subject);
 
-            restart(&mut raw, len);
+            raw.reset_fixture(&fixture);
         });
 
-        fn restart(b: &mut BytesMut, len: usize) {
-            b.reserve(1);
-            unsafe {
-                b.set_len(len);
-            }
-        }
     }
 
     #[cfg(feature = "nightly")]
@@ -3516,6 +3511,7 @@ mod tests {
         let s = &b"GET / HTTP/1.1\r\nHost: localhost:8080\r\n\r\n"[..];
         let mut raw = BytesMut::from(s);
         let len = raw.len();
+        let fixture = raw.as_ref().to_vec();
         let mut headers = Some(HeaderMap::new());
 
         b.bytes = len as u64;
@@ -3541,15 +3537,9 @@ mod tests {
             ::test::black_box(&msg);
             msg.head.headers.clear();
             headers = Some(msg.head.headers);
-            restart(&mut raw, len);
+            raw.reset_fixture(&fixture);
         });
 
-        fn restart(b: &mut BytesMut, len: usize) {
-            b.reserve(1);
-            unsafe {
-                b.set_len(len);
-            }
-        }
     }
 
     #[cfg(feature = "nightly")]

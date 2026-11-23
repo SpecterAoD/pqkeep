@@ -71,6 +71,9 @@ pub async fn serve(
 
 /// DE: Bedient eine Verbindung. EN: Serves one connection.
 async fn connection(stream: TcpStream, addr: SocketAddr, app: Router, header_timeout: Duration) {
+    let Ok(buffer) = super::protected_buffer::ProtectedBuffer::new(MAX_BUF) else {
+        return;
+    };
     let service = service_fn(move |mut req: hyper::Request<Incoming>| {
         req.extensions_mut().insert(ConnectInfo(addr));
         app.clone().oneshot(req.map(Body::new))
@@ -80,6 +83,6 @@ async fn connection(stream: TcpStream, addr: SocketAddr, app: Router, header_tim
         .header_read_timeout(header_timeout)
         .keep_alive(false)
         .max_buf_size(MAX_BUF)
-        .serve_connection(TokioIo::new(stream), service)
+        .serve_connection_with_protected_buffer(TokioIo::new(stream), service, Box::new(buffer))
         .await;
 }

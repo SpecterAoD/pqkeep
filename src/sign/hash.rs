@@ -5,10 +5,10 @@
 
 use std::io::{ErrorKind, Read};
 
-use sha3::{Digest, Sha3_512};
+use sha3::Sha3_512;
 
 use crate::Result;
-use crate::crypto::SecretBytes;
+use crate::crypto::{SecretBytes, locked_hash::LockedHash};
 
 /// DE: Länge des SHA3-512-Hashwerts. EN: Length of the SHA3-512 digest.
 pub const DIGEST_LEN: usize = 64;
@@ -31,7 +31,7 @@ pub struct FileDigest {
 /// # Errors
 /// DE/EN: [`crate::Error::Io`].
 pub fn digest_reader<R: Read>(mut reader: R) -> Result<FileDigest> {
-    let mut hasher = Sha3_512::new();
+    let mut hasher = LockedHash::<Sha3_512>::new()?;
     let mut block = SecretBytes::zeroed(BLOCK_LEN)?;
     let mut size = 0u64;
     loop {
@@ -45,7 +45,11 @@ pub fn digest_reader<R: Read>(mut reader: R) -> Result<FileDigest> {
         size += n as u64;
     }
     Ok(FileDigest {
-        sha3_512: hasher.finalize().into(),
+        sha3_512: hasher
+            .finalize()?
+            .expose()
+            .try_into()
+            .map_err(|_| crate::Error::Crypto)?,
         size,
     })
 }

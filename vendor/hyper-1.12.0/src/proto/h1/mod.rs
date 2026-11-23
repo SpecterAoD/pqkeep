@@ -1,4 +1,4 @@
-use bytes::BytesMut;
+use crate::rt::ReadBuffer as BytesMut;
 use http::{HeaderMap, Method};
 use httparse::ParserConfig;
 

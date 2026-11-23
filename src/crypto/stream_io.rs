@@ -170,11 +170,16 @@ impl<R: Read> DecryptReader<R> {
     /// # Errors
     /// DE/EN: [`Error::InvalidInput`] (Restdaten / trailing data), [`Error::Decrypt`].
     pub fn finish(mut self) -> Result<()> {
-        let mut probe = [0u8; 1];
-        if self.read(&mut probe)? == 0 {
-            Ok(())
-        } else {
-            Err(Error::InvalidInput { field: "archive" })
+        loop {
+            if self.pos != self.plain.len() {
+                return Err(Error::InvalidInput { field: "archive" });
+            }
+            if self.done {
+                return Ok(());
+            }
+            // DE: Restdaten nur im vorhandenen gesperrten Puffer prüfen.
+            // EN: Check trailing data only in the existing locked buffer.
+            self.refill()?;
         }
     }
 }

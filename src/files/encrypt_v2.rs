@@ -128,10 +128,14 @@ pub(super) fn build(
         prefix,
         slots,
         wraps: Vec::with_capacity(keks.len()),
-        signer: signer.map(|public_key| Signer {
-            public_key: public_key.to_vec(),
-            commit: signer_v3::commit(file_key.expose()),
-        }),
+        signer: signer
+            .map(|public_key| -> Result<Signer> {
+                Ok(Signer {
+                    public_key: public_key.to_vec(),
+                    commit: signer_v3::commit(file_key.expose())?,
+                })
+            })
+            .transpose()?,
     };
     let metadata = header.metadata()?;
     for (index, kek) in keks.iter().enumerate() {

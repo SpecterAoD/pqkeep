@@ -24,10 +24,10 @@ fn created_token_verifies_and_file_holds_only_hash() {
     assert!(text.starts_with("pqkeep-token-v1 sha3-256 "));
     assert!(!text.contains(&tok.expose().unwrap()[TOKEN_PREFIX.len()..]));
     let hash = TokenHash::load(&path).unwrap();
-    assert!(hash.verify(tok.expose().unwrap()));
-    assert!(!hash.verify(&format!("{}x", tok.expose().unwrap())));
-    assert!(!hash.verify(""));
-    assert!(!hash.verify(&"a".repeat(10_000)));
+    assert!(hash.verify(tok.expose().unwrap()).unwrap());
+    assert!(!hash.verify(&format!("{}x", tok.expose().unwrap())).unwrap());
+    assert!(!hash.verify("").unwrap());
+    assert!(!hash.verify(&"a".repeat(10_000)).unwrap());
 }
 
 #[test]
@@ -50,11 +50,12 @@ fn existing_file_is_not_overwritten_without_force() {
         TokenHash::load(&path)
             .unwrap()
             .verify(first.expose().unwrap())
+            .unwrap()
     );
     let second = token::create(&path, Overwrite::Yes).unwrap();
     let hash = TokenHash::load(&path).unwrap();
-    assert!(hash.verify(second.expose().unwrap()));
-    assert!(!hash.verify(first.expose().unwrap()));
+    assert!(hash.verify(second.expose().unwrap()).unwrap());
+    assert!(!hash.verify(first.expose().unwrap()).unwrap());
 }
 
 #[cfg(unix)]

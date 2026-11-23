@@ -46,3 +46,7 @@ pub trait Executor<Fut> {
     /// Place the future into the executor to be run.
     fn execute(&self, fut: Fut);
 }
+
+mod protected;
+pub use protected::ProtectedReadBuffer;
+pub(crate) use protected::ReadBuffer;

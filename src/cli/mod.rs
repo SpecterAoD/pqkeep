@@ -32,6 +32,7 @@ mod io;
 mod json_out;
 mod keys;
 mod list_cmd;
+mod list_json;
 mod list_text;
 mod many_text;
 mod menu;
@@ -130,7 +131,7 @@ fn dispatch_json(t: &Texts, lang: Lang, name: &str, m: &ArgMatches) -> CliResult
         "encrypt" => json_out::run(name, || files_json::encrypt(t, lang, m)),
         "decrypt" => json_out::run(name, || files_json::decrypt(t, lang, m)),
         "check" => json_out::run(name, || check_cmd::json(t, lang, m)),
-        "list" => json_out::run(name, || list_cmd::json(t, lang, m)),
+        "list" => list_cmd::run_json(t, lang, m),
         "inspect" => json_out::run(name, || inspect_json::run(lang, m)),
         "verify" => json_out::run(name, || sign_cmd::verify_json(lang, m)),
         _ => Err(Failure::new(code::USAGE, "")),

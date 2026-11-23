@@ -3,7 +3,8 @@ use std::fmt;
 use std::io;
 use std::task::{Context, Poll};
 
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::Bytes;
+use crate::rt::ReadBuffer as BytesMut;
 use futures_core::ready;
 use http::{HeaderMap, HeaderName, HeaderValue};
 use http_body::Frame;
@@ -28,12 +29,12 @@ const TRAILER_LIMIT: usize = 1024 * 16;
 ///
 /// If a message body does not include a Transfer-Encoding, it *should*
 /// include a Content-Length header.
-#[derive(Clone, PartialEq)]
+#[derive(PartialEq)]
 pub(crate) struct Decoder {
     kind: Kind,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Kind {
     /// A Reader used when a Content-Length header is passed with a positive integer.
     Length(u64),
@@ -275,7 +276,7 @@ macro_rules! or_overflow {
 
 macro_rules! put_u8 {
     ($trailers_buf:expr, $byte:expr, $limit:expr) => {
-        $trailers_buf.put_u8($byte);
+        $trailers_buf.try_put_u8($byte)?;
 
         if $trailers_buf.len() >= $limit {
             return Poll::Ready(Err(io::Error::new(
@@ -603,8 +604,8 @@ impl ChunkedState {
                 match trailers_buf {
                     None => {
                         // 64 will fit a single Expires header without reallocating
-                        let mut buf = BytesMut::with_capacity(64);
-                        buf.put_u8(byte);
+                        let mut buf = rdr.sibling_buffer(64)?;
+                        buf.try_put_u8(byte)?;
                         *trailers_buf = Some(buf);
                     }
                     Some(trailers_buf) => {
@@ -641,8 +642,9 @@ impl ChunkedState {
 // TODO: disallow Transfer-Encoding, Content-Length, Trailer, etc in trailers ??
 fn decode_trailers(buf: &mut BytesMut, count: usize) -> Result<HeaderMap, io::Error> {
     let mut trailers = HeaderMap::new();
+    let bytes = buf.split_to(buf.len())?.freeze();
     let mut headers = vec![httparse::EMPTY_HEADER; count];
-    let res = httparse::parse_headers(buf, &mut headers);
+    let res = httparse::parse_headers(&bytes, &mut headers);
     match res {
         Ok(httparse::Status::Complete((_, headers))) => {
             for header in headers {
@@ -652,17 +654,20 @@ fn decode_trailers(buf: &mut BytesMut, count: usize) -> Result<HeaderMap, io::Er
                     Err(_) => {
                         return Err(io::Error::new(
                             io::ErrorKind::InvalidInput,
-                            format!("Invalid header name: {header:?}"),
+                            "Invalid trailer header name",
                         ));
                     }
                 };
 
-                let value = match HeaderValue::from_bytes(header.value) {
+                let value = match HeaderValue::from_maybe_shared({
+                    let start = header.value.as_ptr() as usize - bytes.as_ptr() as usize;
+                    bytes.slice(start..start + header.value.len())
+                }) {
                     Ok(value) => value,
                     Err(_) => {
                         return Err(io::Error::new(
                             io::ErrorKind::InvalidInput,
-                            format!("Invalid header value: {header:?}"),
+                            "Invalid trailer header value",
                         ));
                     }
                 };
@@ -1049,7 +1054,13 @@ mod tests {
     async fn all_async_cases(content: &str, expected: &str, decoder: Decoder) {
         let content_len = content.len();
         for block_at in 0..content_len {
-            let actual = read_async(decoder.clone(), content.as_bytes(), block_at).await;
+            let fresh = match &decoder.kind {
+                Kind::Length(n) => Decoder::length(*n),
+                Kind::Eof(_) => Decoder::eof(),
+                Kind::Chunked { h1_max_headers, h1_max_header_size, .. } =>
+                    Decoder::chunked(*h1_max_headers, *h1_max_header_size),
+            };
+            let actual = read_async(fresh, content.as_bytes(), block_at).await;
             assert_eq!(expected, &actual) //, "Failed async. Blocking at {}", block_at);
         }
     }

@@ -130,3 +130,49 @@ fn later_directory_parent_and_non_descendant_prefixes_remain_valid() {
     set.insert(&["a-"], false).unwrap();
     set.insert(&["a"], true).unwrap();
 }
+
+/// DE: Gespeicherte Vergleichsschlüssel bleiben gesperrt und Debug redigiert.
+/// EN: Retained comparison keys stay locked and Debug is redacted.
+#[test]
+fn normalized_keys_are_locked_and_conflicts_do_not_mutate_state() {
+    let mut set = PathSet::default();
+    set.insert(&["Ä", "İΣ"], true).unwrap();
+    for key in set.entries.iter().chain(&set.files) {
+        assert!(crate::hardening::memlock::is_locked(
+            key.bytes().as_ptr().addr()
+        ));
+        assert_eq!(format!("{key:?}"), "[REDACTED]");
+    }
+    let before = (set.entries.len(), set.files.len());
+    assert!(set.insert(&["ä", "i\u{307}ς"], false).is_err());
+    assert!(set.insert(&["Ä"], true).is_err());
+    assert_eq!((set.entries.len(), set.files.len()), before);
+    set.insert(&["ä", "other"], true).unwrap();
+}
+
+/// DE: Streaming-Faltung darf alte Unicode-Konflikte nicht übersehen.
+/// EN: Streaming folding must not miss previous Unicode conflicts.
+#[test]
+fn unicode_folding_preserves_lowercase_conflicts_and_sigma_aliases() {
+    for text in [
+        "ΟΣ",
+        "ΟΣΑ",
+        "İ",
+        "ẞ",
+        "ẞΣ",
+        "日本語",
+        "\u{212a}",
+        "ΣΣ",
+        "Σ/Σ",
+    ] {
+        let previous = text.to_lowercase();
+        let mut set = PathSet::default();
+        set.insert(&validate(text).unwrap(), true).unwrap();
+        assert!(set.insert(&validate(&previous).unwrap(), true).is_err());
+    }
+    for (left, right) in [("ΟΣ", "οσ"), ("ος", "οσ"), ("σ", "ς")] {
+        let mut set = PathSet::default();
+        set.insert(&[left], true).unwrap();
+        assert!(set.insert(&[right], true).is_err());
+    }
+}

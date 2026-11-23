@@ -8,8 +8,12 @@ German release notes: see `docs/releases/`.
 
 - DE: #147 Laufzeitnacharbeit: direkte Klartext-Datei-I/O, gesperrter Hash-Eingabepuffer,
   In-place-AEAD ohne allokierende Klartext-Zwischenkopie, gesperrtes Rekey-Framing und
-  Token-Erzeugung. HTTP-/Provider-/Prozessgrenzen weiterhin gesondert in Umsetzung.
-  EN: Locked runtime buffers replace plaintext staging; strict failure handling preserved.
+  Token-Erzeugung; HTTP/1-/JSON-Speicheradapter und vertrauliche Archivnamen/Konfliktschlüssel.
+  Listen-JSON unverändert, Rust-Pfad-/Tokenhash-Zugriffe explizit/fallibel. Provider-Konstruktoren
+  und Prozess-/Helper-Unterstützung weiterhin offen, keine vollständige Schließungsbehauptung.
+  EN: Locked runtime buffers, protected ingress owners/parser scratch and confidential
+  metadata; strict failures and wire/JSON compatibility preserved. Provider construction
+  and platform/helper verification remain open.
   Generated API tokens now require explicit borrowed exposure instead of a clonable String.
 
 

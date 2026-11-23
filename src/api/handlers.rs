@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use tokio::time::Instant;
 
 use super::AppState;
+use super::locked_json::LockedJson;
 use crate::security::{Assessment, Lang, Reason};
 
 /// DE: Generische Fehler der API. EN: Generic API errors.
@@ -202,12 +203,12 @@ async fn assess(req: ValidateRequest) -> Result<ValidateResponse, ApiError> {
 /// run time reveals nothing about the structure of the passphrase.
 pub async fn validate(
     State(state): State<Arc<AppState>>,
-    body: Result<Json<ValidateRequest>, JsonRejection>,
+    body: Result<LockedJson<ValidateRequest>, ApiError>,
 ) -> Response {
     let deadline = Instant::now() + state.limits.validate_min;
     let result = match body {
-        Ok(Json(req)) => assess(req).await,
-        Err(rejection) => Err(ApiError::from(rejection)),
+        Ok(LockedJson(req)) => assess(req).await,
+        Err(rejection) => Err(rejection),
     };
     tokio::time::sleep_until(deadline).await;
     match result {

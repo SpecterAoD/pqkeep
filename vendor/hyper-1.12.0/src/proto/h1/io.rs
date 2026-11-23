@@ -5,7 +5,8 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use crate::rt::{Read, ReadBuf, Write};
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, Bytes};
+use crate::rt::{ReadBuffer as BytesMut, ProtectedReadBuffer};
 use futures_core::ready;
 
 use super::{Http1Transaction, ParseContext, ParsedMessage};
@@ -109,6 +110,11 @@ where
         // so this assert is here to catch myself
         debug_assert_eq!(self.write_buf.queue.bufs_cnt(), 0);
         self.write_buf.set_strategy(WriteStrategy::Queue);
+    }
+
+    pub(crate) fn set_protected_buffer(&mut self, buffer: Box<dyn ProtectedReadBuffer>) {
+        assert!(self.read_buf.is_empty());
+        self.read_buf = BytesMut::Protected(buffer);
     }
 
     pub(crate) fn read_buf(&self) -> &[u8] {
@@ -239,23 +245,17 @@ where
                 .saturating_sub(self.read_buf.len()),
         );
         if self.read_buf_remaining_mut() < next {
-            self.read_buf.reserve(next);
+            self.read_buf.reserve(next)?;
         }
 
-        // SAFETY: ReadBuf and poll_read promise not to set any uninitialized
-        // bytes onto `dst`.
-        let dst = unsafe { self.read_buf.chunk_mut().as_uninit_slice_mut() };
-        let mut buf = ReadBuf::uninit(dst);
+        // DE: Initialisierter, im Schutzmodus bereits gesperrter Speicher.
+        // EN: Initialized storage, already protected when the host selected that mode.
+        let mut buf = ReadBuf::new(self.read_buf.spare_mut());
         match Pin::new(&mut self.io).poll_read(cx, buf.unfilled()) {
             Poll::Ready(Ok(())) => {
                 let n = buf.filled().len();
                 trace!("received {} bytes", n);
-                // Safety: we just read that many bytes into the
-                // uninitialized part of the buffer, so this is okay.
-                // @tokio pls give me back `poll_read_buf` thanks
-                unsafe {
-                    self.read_buf.advance_mut(n);
-                }
+                self.read_buf.commit(n);
                 self.read_buf_strategy.record(n);
                 Poll::Ready(Ok(n))
             }
@@ -351,6 +351,9 @@ impl<T: Unpin, B> Unpin for Buffered<T, B> {}
 // TODO: This trait is old... at least rename to PollBytes or something...
 pub(crate) trait MemRead {
     fn read_mem(&mut self, cx: &mut Context<'_>, len: usize) -> Poll<io::Result<Bytes>>;
+    fn sibling_buffer(&self, capacity: usize) -> io::Result<BytesMut> {
+        Ok(BytesMut::with_capacity(capacity))
+    }
 }
 
 impl<T, B> MemRead for Buffered<T, B>
@@ -358,13 +361,17 @@ where
     T: Read + Write + Unpin,
     B: Buf,
 {
+    fn sibling_buffer(&self, capacity: usize) -> io::Result<BytesMut> {
+        self.read_buf.sibling(capacity)
+    }
+
     fn read_mem(&mut self, cx: &mut Context<'_>, len: usize) -> Poll<io::Result<Bytes>> {
         if !self.read_buf.is_empty() {
             let n = std::cmp::min(len, self.read_buf.len());
-            Poll::Ready(Ok(self.read_buf.split_to(n).freeze()))
+            Poll::Ready(Ok(self.read_buf.split_to(n)?.freeze()))
         } else {
             let n = ready!(self.poll_read_from_io(cx))?;
-            Poll::Ready(Ok(self.read_buf.split_to(::std::cmp::min(len, n)).freeze()))
+            Poll::Ready(Ok(self.read_buf.split_to(::std::cmp::min(len, n))?.freeze()))
         }
     }
 }

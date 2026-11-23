@@ -475,7 +475,32 @@ impl Builder {
         <S::ResBody as Body>::Error: Into<Box<dyn StdError + Send + Sync>>,
         I: Read + Write + Unpin,
     {
+        self.build_connection(io, service, None)
+    }
+
+    /// DE: Host-Puffer vor dem ersten Socket-Read verwenden, ohne ungeschützten Fallback.
+    /// EN: Select a host-protected buffer before the first socket read, without fallback.
+    pub fn serve_connection_with_protected_buffer<I, S>(&self, io: I, service: S, buffer: Box<dyn crate::rt::ProtectedReadBuffer>) -> Connection<I, S>
+    where
+        S: HttpService<IncomingBody>,
+        S::Error: Into<Box<dyn StdError + Send + Sync>>,
+        S::ResBody: 'static,
+        <S::ResBody as Body>::Error: Into<Box<dyn StdError + Send + Sync>>,
+        I: Read + Write + Unpin,
+    {
+        self.build_connection(io, service, Some(buffer))
+    }
+
+    fn build_connection<I, S>(&self, io: I, service: S, protected: Option<Box<dyn crate::rt::ProtectedReadBuffer>>) -> Connection<I, S>
+    where
+        S: HttpService<IncomingBody>,
+        S::Error: Into<Box<dyn StdError + Send + Sync>>,
+        S::ResBody: 'static,
+        <S::ResBody as Body>::Error: Into<Box<dyn StdError + Send + Sync>>,
+        I: Read + Write + Unpin,
+    {
         let mut conn = proto::Conn::new(io);
+        if let Some(buffer) = protected { conn.set_protected_buffer(buffer); }
         conn.set_h1_parser_config(self.h1_parser_config.clone());
         conn.set_timer(self.timer.clone());
         if !self.h1_keep_alive {

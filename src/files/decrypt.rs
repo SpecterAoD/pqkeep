@@ -200,7 +200,7 @@ fn extract_file<R: Read>(
     let Some(Entry::File(name, size)) = archive.next_entry()? else {
         return Err(Error::InvalidInput { field: "archive" });
     };
-    paths::validate(&name)?;
+    paths::validate(name.expose()?)?;
     let (temp, file) = TempOutput::file(target)?;
     let mut out = file;
     archive.copy_file(size, &mut out)?;
@@ -230,13 +230,13 @@ fn extract_dir<R: Read>(
     while let Some(entry) = archive.next_entry()? {
         match entry {
             Entry::Dir(path) => {
-                let parts = paths::validate(&path)?;
+                let parts = paths::validate(path.expose()?)?;
                 seen.insert(&parts, false)?;
                 output::create_dir(temp.path(), &parts)?;
                 report.directories += 1;
             }
             Entry::File(path, size) => {
-                let parts = paths::validate(&path)?;
+                let parts = paths::validate(path.expose()?)?;
                 seen.insert(&parts, true)?;
                 let mut out = output::create_file(temp.path(), &parts)?;
                 archive.copy_file(size, &mut out)?;

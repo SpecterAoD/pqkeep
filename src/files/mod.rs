@@ -14,6 +14,7 @@
 
 mod archive;
 mod check;
+mod confidential_text;
 mod decrypt;
 mod decrypt_v2;
 mod encrypt;
@@ -36,6 +37,7 @@ use std::path::Path;
 
 pub use crate::fsutil::set_temp_tag;
 pub use check::{check, check_with};
+pub use confidential_text::ConfidentialText;
 pub use decrypt::{decrypt, decrypt_with};
 pub use encrypt::{encrypt, encrypt_many, encrypt_many_signed, encrypt_signed};
 pub use format::{Content, FileHeader, HeaderMode};

@@ -2,7 +2,8 @@
 
 DE: Eigentümerfreigabe nach Audit-PR298: „Umsetzen und Laufzeitlücken schließen“.
 Die konkreten Pläne R1–R8 aus SECRET_LIFETIME_REMEDIATION.md sind damit beauftragt.
-Kein Main-Merge, Deployment, Installation oder Ändern von Host-/Sicherheitsrichtlinien.
+Nachfolgend Main-Merge ausdrücklich freigegeben: „PRs dann nach Main bringen“.
+Deployment, Installation und Änderungen von Host-/Sicherheitsrichtlinien bleiben separat.
 EN: Owner authorized implementation of the reviewable remediation plans after the audit.
 This branch depends on audit27dec1a; preserve the separate audit PR and prior148/186 fixes.
 
@@ -24,9 +25,10 @@ This branch depends on audit27dec1a; preserve the separate audit PR and prior148
 6. R6/A7: inspect typed seeds and provider construction/workspaces; reuse pinned audited
    primitives, lock before private construction, wipe before unlock on every exit.
    Never assert elimination of compiler/register copies or invent cryptography.
-7. R7/A8: mandatory process capability gate for own CLI/server; explicit embedding
-   contract, Windows/GUI128/149/150 coordination. No surprise host-process changes,
-   Registry/ACL edits or privilege expansion. Platform limits remain explicit.
+7. R7/A8: owner chose verified platform/helper support first; no blanket Windows/GUI
+   shutdown. Explicit embedding contract, Windows/GUI128/149/150 coordination. No
+   surprise host-process changes, Registry/ACL edits or privilege expansion. See
+   SECRET_PROCESS_CAPABILITY_ADR.md; native verification remains a release gate.
 8. R8/A9: confidential metadata ownership/retention/Debug/Clone/serialization policy,
    preserve authenticated list output and wire compatibility, coordinate98/117.
 

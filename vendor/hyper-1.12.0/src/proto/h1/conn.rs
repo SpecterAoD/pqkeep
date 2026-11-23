@@ -103,6 +103,10 @@ where
         self.io.set_write_strategy_queue();
     }
 
+    pub(crate) fn set_protected_buffer(&mut self, buffer: Box<dyn crate::rt::ProtectedReadBuffer>) {
+        self.io.set_protected_buffer(buffer);
+    }
+
     pub(crate) fn set_max_buf_size(&mut self, max: usize) {
         self.io.set_max_buf_size(max);
     }
@@ -417,7 +421,7 @@ where
                 }
 
                 // And now recurse once in the Reading::Body state...
-                self.state.reading = Reading::Body(decoder.clone());
+                self.state.reading = Reading::Body(std::mem::replace(decoder, Decoder::length(0)));
                 return self.poll_read_body(cx);
             }
             _ => unreachable!("poll_read_body invalid state: {:?}", self.state.reading),
@@ -877,7 +881,7 @@ where
         if let Reading::Continue(decoder) = &mut self.state.reading {
             // skip sending the 100-continue
             // just move forward to a read, in case a tiny body was included
-            self.state.reading = Reading::Body(decoder.clone());
+            self.state.reading = Reading::Body(std::mem::replace(decoder, Decoder::length(0)));
         }
 
         let _ = self.poll_read_body(cx);
@@ -1194,7 +1198,7 @@ mod tests {
         // an empty IO, we'll be skipping and using the read buffer anyways
         let io = Compat(tokio_test::io::Builder::new().build());
         let mut conn = Conn::<_, bytes::Bytes, crate::proto::h1::ServerTransaction>::new(io);
-        *conn.io.read_buf_mut() = ::bytes::BytesMut::from(&s[..]);
+        *conn.io.read_buf_mut() = ::bytes::BytesMut::from(&s[..]).into();
         conn.state.cached_headers = Some(HeaderMap::with_capacity(2));
 
         let rt = tokio::runtime::Builder::new_current_thread()
@@ -1214,10 +1218,7 @@ mod tests {
                     f => panic!("expected Ready(Some(Ok(..))): {:?}", f),
                 }
 
-                conn.io.read_buf_mut().reserve(1);
-                unsafe {
-                    conn.io.read_buf_mut().set_len(len);
-                }
+                conn.io.read_buf_mut().reset_fixture(s);
                 conn.state.reading = Reading::Init;
                 Poll::Ready(())
             }));

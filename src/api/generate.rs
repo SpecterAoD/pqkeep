@@ -15,7 +15,6 @@ use std::sync::Arc;
 
 use axum::Json;
 use axum::extract::State;
-use axum::extract::rejection::JsonRejection;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
@@ -24,6 +23,7 @@ use tokio::sync::OwnedSemaphorePermit;
 
 use super::AppState;
 use super::handlers::{ApiError, ReqLang, lang_of, to_response};
+use super::locked_json::LockedJson;
 use crate::crypto::KeyAlgorithm;
 use crate::crypto::kdf::KdfProfile;
 use crate::envelope::{KeyFile, Metadata};
@@ -161,11 +161,11 @@ async fn run(state: &AppState, req: GenerateRequest) -> Result<Response, ApiErro
 /// DE: `POST /v1/generate`. EN: `POST /v1/generate`.
 pub async fn generate(
     State(state): State<Arc<AppState>>,
-    body: Result<Json<GenerateRequest>, JsonRejection>,
+    body: Result<LockedJson<GenerateRequest>, ApiError>,
 ) -> Response {
     let result = match body {
-        Ok(Json(req)) => run(&state, req).await,
-        Err(rejection) => Err(ApiError::from(rejection)),
+        Ok(LockedJson(req)) => run(&state, req).await,
+        Err(rejection) => Err(rejection),
     };
     result.unwrap_or_else(IntoResponse::into_response)
 }

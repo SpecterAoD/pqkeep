@@ -11,10 +11,10 @@
 use std::path::Path;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use sha3::{Digest, Sha3_256};
+use sha3::Sha3_256;
 use subtle::ConstantTimeEq;
 
-use crate::crypto::{SecretBytes, rng};
+use crate::crypto::{SecretBytes, locked_hash::LockedHash, rng};
 use crate::envelope::{Overwrite, hex_decode, hex_encode, read_limited, write_atomic};
 use crate::{Error, Result};
 
@@ -35,20 +35,29 @@ pub struct TokenHash([u8; HASH_LEN]);
 
 impl TokenHash {
     /// DE: Hash eines Tokens. EN: Hash of a token.
-    #[must_use]
-    pub fn of(token: &str) -> Self {
-        Self(Sha3_256::digest(token.as_bytes()).into())
+    /// # Errors
+    /// DE/EN: [`Error::MemoryLock`] bei fehlender Sperre / unavailable lock.
+    pub fn of(token: &str) -> Result<Self> {
+        let mut hash = LockedHash::<Sha3_256>::new()?;
+        hash.update(token.as_bytes());
+        Ok(Self(
+            hash.finalize()?
+                .expose()
+                .try_into()
+                .map_err(|_| Error::Crypto)?,
+        ))
     }
 
     /// DE: Prüft ein vorgelegtes Token in konstanter Zeit (bezogen auf den Hash).
     /// EN: Checks a presented token in constant time (with respect to the hash).
-    #[must_use]
-    pub fn verify(&self, presented: &str) -> bool {
+    /// # Errors
+    /// DE/EN: [`Error::MemoryLock`] bei fehlender Sperre / unavailable lock.
+    pub fn verify(&self, presented: &str) -> Result<bool> {
         if presented.len() > MAX_TOKEN_CHARS {
-            return false;
+            return Ok(false);
         }
-        let candidate = Self::of(presented);
-        bool::from(self.0.ct_eq(&candidate.0))
+        let candidate = Self::of(presented)?;
+        Ok(bool::from(self.0.ct_eq(&candidate.0)))
     }
 
     /// DE: Liest den Hash aus einer Token-Datei.
@@ -101,7 +110,7 @@ pub fn create(path: &Path, overwrite: Overwrite) -> Result<SecretToken> {
     Base64UrlUnpadded::encode(raw.expose(), &mut bytes.expose_mut()[TOKEN_PREFIX.len()..])
         .map_err(|_| Error::Crypto)?;
     let token = SecretToken(bytes);
-    let hash = TokenHash::of(token.expose()?);
+    let hash = TokenHash::of(token.expose()?)?;
     let line = format!("{FILE_TAG}{}\n", hex_encode(&hash.0));
     write_atomic(path, line.as_bytes(), overwrite)?;
     Ok(token)

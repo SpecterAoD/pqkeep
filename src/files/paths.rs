@@ -12,7 +12,10 @@
 //! excessive nesting. Duplicates are detected case-insensitively too (on
 //! Windows/macOS they would be the same file).
 
-use std::collections::{BTreeSet, HashSet};
+use super::ConfidentialText;
+use crate::crypto::SecretBytes;
+use std::collections::BTreeSet;
+use std::ops::Bound;
 
 use crate::{Error, Result};
 
@@ -38,17 +41,19 @@ fn invalid() -> Error {
 /// DE: Windows-reservierter Name (auch mit Endung, z. B. „nul.txt“, „COM1.log“)?
 /// EN: Windows reserved name (also with extension, e.g. "nul.txt", "COM1.log")?
 fn is_reserved(part: &str) -> bool {
-    let stem = part.split('.').next().unwrap_or(part).to_ascii_uppercase();
-    if RESERVED.contains(&stem.as_str()) {
+    let stem = part.split('.').next().unwrap_or(part);
+    if RESERVED.iter().any(|name| stem.eq_ignore_ascii_case(name)) {
         return true;
     }
     let numbered = |prefix: &str| {
-        stem.strip_prefix(prefix).is_some_and(|rest| {
-            matches!(
-                rest,
-                "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
-            )
-        })
+        stem.get(..prefix.len())
+            .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
+            && stem.get(prefix.len()..).is_some_and(|rest| {
+                matches!(
+                    rest,
+                    "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+                )
+            })
     };
     numbered("COM") || numbered("LPT")
 }
@@ -88,40 +93,83 @@ pub fn validate(path: &str) -> Result<Vec<&str>> {
 /// file/directory conflicts ("a" as a file and "a/b").
 #[derive(Default)]
 pub struct PathSet {
-    entries: BTreeSet<String>,
-    files: HashSet<String>,
+    entries: BTreeSet<ConfidentialText>,
+    files: BTreeSet<ConfidentialText>,
+}
+
+fn lower_chars(part: &str) -> impl Iterator<Item = char> + '_ {
+    // DE: Sigma-Aliase konservativ zusammenfassen; Originalnamen nicht ändern.
+    // EN: Conservatively merge sigma aliases; never alter original names.
+    part.chars()
+        .flat_map(char::to_lowercase)
+        .map(|c| if c == 'ς' { 'σ' } else { c })
+}
+
+fn folded_key(parts: &[&str]) -> Result<ConfidentialText> {
+    if parts.is_empty() || parts.len() > MAX_DEPTH || !parts.iter().all(|p| component_ok(p)) {
+        return Err(invalid());
+    }
+    let raw_len: usize = parts.iter().map(|p| p.len()).sum::<usize>() + parts.len() - 1;
+    if raw_len > MAX_PATH_BYTES {
+        return Err(invalid());
+    }
+    let len = parts
+        .iter()
+        .map(|p| lower_chars(p).map(char::len_utf8).sum::<usize>())
+        .sum::<usize>()
+        + parts.len()
+        - 1;
+    let mut out = SecretBytes::zeroed(len)?;
+    let mut offset = 0;
+    for (index, part) in parts.iter().enumerate() {
+        if index > 0 {
+            out.expose_mut()[offset] = b'/';
+            offset += 1;
+        }
+        for c in lower_chars(part) {
+            let len = c.len_utf8();
+            c.encode_utf8(&mut out.expose_mut()[offset..offset + len]);
+            offset += len;
+        }
+    }
+    ConfidentialText::from_locked(out)
 }
 
 impl PathSet {
-    /// DE: Fügt einen Pfad hinzu. EN: Adds a path.
-    ///
+    /// DE: Fügt einen Pfad hinzu; keine ungesperrte normalisierte Kopie.
+    /// EN: Insert a path without an unlocked normalized copy.
     /// # Errors
-    /// DE/EN: [`Error::InvalidInput`] (Feld `path`) bei Doppelten/Konflikten / on duplicates/conflicts.
+    /// DE/EN: [`Error::InvalidInput`] (path), [`Error::MemoryLock`].
     pub fn insert(&mut self, parts: &[&str], is_file: bool) -> Result<()> {
-        let folded: Vec<String> = parts.iter().map(|p| p.to_lowercase()).collect();
-        for depth in 1..folded.len() {
-            if self.files.contains(&folded[..depth].join("/")) {
+        let key = folded_key(parts)?;
+        for (index, byte) in key.bytes().iter().enumerate() {
+            if *byte == b'/' && self.files.contains(&key.bytes()[..index]) {
                 return Err(invalid());
             }
         }
-        let key = folded.join("/");
+        if self.entries.contains(key.bytes()) {
+            return Err(invalid());
+        }
         if is_file {
-            // DE: Auch spätere Datei-Vorfahren abweisen, ohne alle bisherigen Pfade abzulaufen.
-            // EN: Reject later file ancestors too, without scanning every previous path.
-            let prefix = format!("{key}/");
+            let mut prefix = SecretBytes::zeroed(key.bytes().len() + 1)?;
+            prefix.expose_mut()[..key.bytes().len()].copy_from_slice(key.bytes());
+            prefix.expose_mut()[key.bytes().len()] = b'/';
             if self
                 .entries
-                .range(prefix.clone()..)
+                .range::<[u8], _>((Bound::Included(prefix.expose()), Bound::Unbounded))
                 .next()
-                .is_some_and(|p| p.starts_with(&prefix))
+                .is_some_and(|p| p.bytes().starts_with(prefix.expose()))
             {
                 return Err(invalid());
             }
         }
-        if !self.entries.insert(key.clone()) {
-            return Err(invalid());
-        }
-        if is_file {
+        let file_key = if is_file {
+            Some(key.try_duplicate()?)
+        } else {
+            None
+        };
+        self.entries.insert(key);
+        if let Some(key) = file_key {
             self.files.insert(key);
         }
         Ok(())

@@ -51,3 +51,23 @@ ursprünglichen Kopien wurde vor der Extraktion geprüft. Native BSD-Abnahme wir
 EN: Consolidate byte-identical BSD protection mappings/tests into a shared include, preserving
 code and the unchanged duplication threshold. No new FFI, mapping or Linux/Windows behavior;
 verify both original copies identical before extraction. No native BSD test claim.
+
+
+#147 protected ingress / geschützter Eingang:
+- Hyper1.12.0: opt-in host-owned protected read/split/trailer buffers; retain existing
+  HTTP parser and framing, sanitized trailer errors, no payload Debug. Replace the old
+  unsafe benchmark length reset with explicit initialized synthetic fixture reset.
+- serde_json1.0.154: opt-in caller-locked bounded SliceRead scratch with a wipe-before-
+  release callback. No parser/escape/algorithm replacement. Extended numeric modes are
+  rejected by this entry point; the ordinary upstream API stays available for public data.
+- Axum0.8.9 and hyper-util0.1.21: dependency-path bridges only, ensuring external consumers
+  and the fuzz workspace also select these exact providers, not a root-only Cargo patch.
+
+DE: Originalarchive gegen Ausgangs-Cargo.lock-Prüfsummen verifiziert. Original-Lizenztexte
+MIT (Hyper/hyper-util/Axum), MIT OR Apache-2.0 (serde_json) bleiben unverändert erhalten.
+Alle Originaldateien in upstream-sha256.json, jede konkrete Abweichung/Zusatzdatei in
+patches-sha256.json. Protokoll-/Speicherprüfungen und native CI vor Abnahme erforderlich;
+keine Root-only-Ausnahme, Scanner-Unterdrückung oder neue Privilegien.
+EN: Preserve original licenses and per-file provenance; actual native validation remains
+required. Package versions and parsing algorithms are unchanged. These are modified local
+providers and remain subject to the separate publication-route issue71, not crates.io releases.
