@@ -33,3 +33,24 @@ DE: Dateien: files/archive.rs/list.rs/paths.rs, neue confidential_text.rs, CLI-L
 gezielte Tests/SPEC-Doku. Keine Datenmigration, kein Dateisystem-/Hosteingriff. Rückweg als
 eigener geprüfter Revert; keine automatische Rücknahme strengerer Speichersperren.
 EN: Baseline archive, signature/wire and rollback evidence remain required before review.
+
+## Locked record arena / Gesperrter Datensatzbereich
+
+DE: Zusatzabgleich R8: Auch Listeneinträge mit Typ/Größe dürfen nicht dauerhaft in
+gewöhnlichem Vec-Speicher bleiben. `ConfidentialEntries` ersetzt `Vec<ListEntry>`
+als lesbarer, nicht klonbarer Owner. Vor dem ersten privaten Eintrag wird die feste
+Kapazität von MAX_LIST_ENTRIES reserviert und vollständig über den bestehenden
+SecretBuffer gesperrt. Einfügen darf niemals reallokieren; Grenz-/Sperrfehler liefern
+keine Teilliste. Caller-eigene Vec-Konvertierung ist ausdrücklich eine äußere Grenze.
+EN: Lock an empty bounded arena before collecting private records. Preserve borrowed
+iteration, indexing and equality; keep archive bytes and pqkeep-list/1 unchanged.
+Clear names and scalar metadata before element destruction, then wipe the entire
+spare allocation while still locked, including bytes previously occupied by owners.
+
+DE: Dateien: neue files/confidential_entries.rs, files/list.rs/mod.rs,
+crypto/secret_buffer.rs und gezielte Listen-/Speichertests. Kein neues unsafe, keine
+Abhängigkeit oder Systemänderung. Tests prüfen stabile Adressen, vollständig gesperrte
+Kapazität, Löschreihenfolge, Grenzen und unveränderte CLI-Ausgabe.
+EN: This additional pre-API98 ownership change is fallible and documented. It does
+not claim elimination of compiler temporaries, caller copies or OS metadata. Return
+reports retain their existing explicit disclosure contract.
