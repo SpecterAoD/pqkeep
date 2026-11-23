@@ -41,6 +41,10 @@ fn locking_failure_refuses_secret_processing() {
         Err(pqkeep::Error::MemoryLock)
     ));
     assert_metadata_refused();
+    assert!(matches!(
+        pqkeep::security::Passphrase::new("fixture"),
+        Err(pqkeep::Error::MemoryLock)
+    ));
     let mut called = false;
     assert!(matches!(
         pqkeep::sign::digest_reader(Unread(&mut called)),
