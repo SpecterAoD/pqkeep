@@ -345,11 +345,6 @@ sorting and class-count workspaces instead of TinyVec/standard-sort scratch. Pre
 passphrase bytes and limits; compare every Unicode scalar and the complete Unicode18
 conformance corpus. Other private provider construction/workspaces remain open.
 
-The owned provider wrapper retains a fixed, completely locked allocation. Drop the
-provider in place first, wipe every former allocation/padding byte, then unlock and
-deallocate. Never reconstruct replacement state during destruction. Private internal
-provider workspaces remain open findings.
-
 Partial R7 capability: explicit harden_process adds/verifies current-process Windows
 WER NOHEAP, reported separately from complete/core_dumps_disabled/not_dumpable, which
 remain false. External host policy and password helpers remain open; no registry, ACL

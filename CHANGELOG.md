@@ -6,13 +6,6 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
-- DE: Eigenen Providerzustand gesperrt zerstören und anschließend die vollständige
-  frühere Allokation einschließlich Padding vor dem Entsperren löschen (#147 R6).
-  EN: Drop owned provider state in place and wipe its full former allocation before
-  unlocking, including destructor unwinding; avoid replacement construction during drop.
-  DE: Produktions-/Provider-/Cargo-Änderungen lösen alle acht bestehenden Fuzz-Ziele aus.
-  EN: Production/provider/Cargo changes trigger all eight existing fuzz targets.
-
 - DE: NFKC-Zeichen-/Sortierarbeitsbereiche vor Befüllung sperren; bisherige Passphrase-Bytes
   gegen alle Unicode-Skalare und den vollständigen Unicode18-Korpus prüfen (#147 R6).
   EN: Lock normalization workspaces before use, preserving the pinned Unicode tables
