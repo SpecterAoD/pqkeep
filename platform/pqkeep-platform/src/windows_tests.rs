@@ -7,7 +7,7 @@ use std::os::windows::io::{AsHandle, FromRawHandle, OwnedHandle};
 use windows_sys::Win32::Foundation::{GENERIC_READ, GENERIC_WRITE, INVALID_HANDLE_VALUE};
 use windows_sys::Win32::System::Console::{
     AllocConsole, CONSOLE_TEXTMODE_BUFFER, COORD, CreateConsoleScreenBuffer,
-    ReadConsoleOutputCharacterW,
+    ReadConsoleOutputCharacterW, SetConsoleCursorPosition,
 };
 
 fn screen_buffer() -> OwnedHandle {
@@ -36,29 +36,37 @@ fn screen_buffer() -> OwnedHandle {
 fn native_console_roundtrips_unicode_and_rejects_file_handles() {
     let buffer = screen_buffer();
     let raw = buffer.as_raw_handle();
-    let text: Vec<u16> = "α中".encode_utf16().collect();
-    assert_eq!(
-        write_console(buffer.as_handle(), &text).unwrap(),
-        text.len()
-    );
-    let mut actual = [0u16; 2];
+    // DE: Bildschirmzellen können doppelte Breite haben, auch bei griechischen Zeichen.
+    // EN: Screen cells may have double width, including for Greek characters.
+    for character in "α中".chars() {
+        // SAFETY: Live owned screen buffer and an in-bounds origin; no pointer arguments.
+        let positioned = unsafe { SetConsoleCursorPosition(raw, COORD { X: 0, Y: 0 }) };
+        assert_ne!(positioned, 0);
+        let text = [u16::try_from(u32::from(character)).unwrap()];
+        assert_eq!(write_console(buffer.as_handle(), &text).unwrap(), 1);
+        assert_eq!(first_cell(&buffer), text[0]);
+    }
+    let file = std::env::current_exe()
+        .and_then(std::fs::File::open)
+        .unwrap();
+    assert!(write_console(file.as_handle(), &[0x61]).is_err());
+}
+
+fn first_cell(buffer: &OwnedHandle) -> u16 {
+    let mut actual = 0u16;
     let mut read = 0;
-    // SAFETY: Live owned screen-buffer handle; initialized exclusive output array
-    // covers the exact count. The OS does not retain output pointers.
+    // SAFETY: Live owned screen buffer; initialized exclusive outputs cover one unit.
+    // The OS does not retain pointers. Read a cell, not a presumed string offset.
     let result = unsafe {
         ReadConsoleOutputCharacterW(
-            raw,
-            actual.as_mut_ptr(),
-            2,
+            buffer.as_raw_handle(),
+            &raw mut actual,
+            1,
             COORD { X: 0, Y: 0 },
             &raw mut read,
         )
     };
     assert_ne!(result, 0);
-    assert_eq!(read, 2);
-    assert_eq!(actual.as_slice(), text);
-    let file = std::env::current_exe()
-        .and_then(std::fs::File::open)
-        .unwrap();
-    assert!(write_console(file.as_handle(), &text).is_err());
+    assert_eq!(read, 1);
+    actual
 }

@@ -28,7 +28,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
   Auditphase in PR298 nach Main gemergt (f9a983f); Laufzeitbehebung ausdrücklich beauftragt
-  und auf sauberem Folgebranch zu [PR299](https://github.com/SpecterAoD/pqkeep/pull/299) in Umsetzung. / Audit merged;
+  und in [PR300](https://github.com/SpecterAoD/pqkeep/pull/300) in Umsetzung (ersetzt PR299). / Audit merged;
   authorized runtime remediation in progress, [runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.
