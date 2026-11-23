@@ -74,3 +74,24 @@ Der separate Lockfile wird entsprechend abgeglichen; die fallible Token-Hash-API
 wird auch im API-Fuzz-Ziel behandelt. Lokaler Build ist kein Fuzz-Laufnachweis.
 EN: Align the separate fuzz dependency graph with production, compile all targets,
 and retain the existing CI fuzz executions and unchanged security gates.
+
+## Verified WER capability / Verifizierte WER-Fähigkeit
+
+DE: Nächster kleiner R7-Schritt im separaten Folgebranch: Win32-Wrapper im vorhandenen
+FFI-Modul lesen aktuelle WER-Flags, ergänzen ausschließlich NOHEAP und prüfen danach
+die tatsächlich gesetzten Flags. Vorhandene Flags erhalten, HRESULT korrekt behandeln;
+kein fremder Prozess, kein Registry-/ACL-/Systemeingriff. Ein neuer Berichtswert benennt
+nur diese Heap-Berichtsminderung; complete/core_dumps_disabled/not_dumpable bleiben
+unter Windows falsch. Nur der explizite harden_process-Aufruf ändert den eigenen Prozess.
+EN: Add a narrowly verified current-process WER mitigation, not a complete dump barrier.
+Use existing windows-sys0.61.2 ErrorReporting/Threading features, without new versions.
+Keep embedding opt-in and all existing CLI/GUI functionality. LocalDumps/debuggers,
+provider workspaces and protected password helpers remain open.
+
+DE: Dateien: platform Cargo.toml/lib.rs/windows.rs + separate WER-Tests; Root-
+HardeningReport/CLI-Diagnose/Prozesstests und DE/EN SPEC/Memory-Doku. Tests: native
+read/set/read-back, wiederholter Aufruf, falsches Handle, keine falschen vollständigen
+Flags; portabler Ablauf mit simulierten Read-/Set-/Read-back-Fehlern. Native CI und
+bestehende vollständige Kompatibilitäts-/Security-Prüfungen bleiben unverändert nötig.
+EN: Preserve existing policy flags and expose sanitized failures without a success fallback.
+Rollback is a reviewed code revert; the mitigation lasts only for the invoking process.
