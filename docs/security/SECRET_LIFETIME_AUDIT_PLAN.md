@@ -43,7 +43,7 @@ validated PR; no main merge, release, system/protection changes or foreign-syste
 
 DE: DE/EN-Auditbericht, Inventar und Test-/Grenzenmatrix unter `docs/security/`; Roadmap,
 CHANGELOG und bestehende Sicherheitsdokumentation nur entsprechend tatsächlicher Ergebnisse
-ergänzen. `src/`, Provider, Cargo-Dateien und CI-Laufzeitverhalten bleiben unverändert.
+ergänzen. `src/`, Provider, Cargo-Dateien und CI-Sicherheits-/Workflowkonfiguration bleiben gleich.
 EN: Add bilingual audit/inventory/test evidence and factual roadmap/changelog/security links.
 No production/provider/dependency or CI security/workflow change in this phase.
 DE: Eine isolierte Testdatei darf synthetische Standard-/Providerkopien reproduzieren;

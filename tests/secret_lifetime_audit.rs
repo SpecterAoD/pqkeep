@@ -179,7 +179,7 @@ fn pinned_aead_allocating_adapter_copies_before_encrypting() {
                 .is_err()
         );
         assert_eq!(spy.bytes.get(), size);
-        assert_ne!(spy.address.get(), data.as_ptr().addr());
+        assert!(spy.address.get() != data.as_ptr().addr());
         println!(
             "AUDIT147 aead bytes={size} private=true locked={:?}",
             spy.locked.get()
@@ -198,7 +198,7 @@ fn direct_aead_inout_preserves_caller_storage_control() {
         spy.encrypt_inout_detached(&Nonce::<Spy>::default(), &[], data.as_mut_slice().into())
             .is_err()
     );
-    assert_eq!(spy.address.get(), address);
+    assert!(spy.address.get() == address);
 }
 
 struct HashInput {
