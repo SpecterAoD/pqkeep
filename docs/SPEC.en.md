@@ -350,13 +350,6 @@ provider in place first, wipe every former allocation/padding byte, then unlock 
 deallocate. Never reconstruct replacement state during destruction. Private internal
 provider workspaces remain open findings.
 
-Internal UTF-8 character offsets, non-overlapping dictionary spans and per-character
-pattern masks are held in fixed locked buffers before their first private write.
-Wipe full allocations before unlocking; propagate lock failure without an unlocked
-fallback assessment. Dictionary selection, entropy formula and intentionally public
-coarse assessment results remain unchanged. See
-[ASSESSMENT_METADATA_PLAN.md](security/ASSESSMENT_METADATA_PLAN.md).
-
 Partial R7 capability: explicit harden_process adds/verifies current-process Windows
 WER NOHEAP, reported separately from complete/core_dumps_disabled/not_dumpable, which
 remain false. External host policy and password helpers remain open; no registry, ACL
