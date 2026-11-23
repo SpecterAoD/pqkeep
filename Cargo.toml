@@ -28,6 +28,16 @@ include = [
 # EN: Publishing to crates.io only after an explicit decision (#71).
 publish = false
 
+[workspace]
+members = ["platform/pqkeep-platform"]
+default-members = [".", "platform/pqkeep-platform"]
+exclude = [
+    "vendor/axum-0.8.9", "vendor/hyper-1.12.0", "vendor/hyper-util-0.1.21",
+    "vendor/serde_json-1.0.154", "vendor/hkdf-0.13.0", "vendor/hmac-0.13.0",
+    "vendor/region-4.0.1", "fuzz",
+]
+resolver = "3"
+
 [lib]
 name = "pqkeep"
 path = "src/lib.rs"
@@ -116,6 +126,7 @@ seccompiler = { version = "0.5.0", default-features = false }
 # EN: Context menu on Windows (HKCU). 0.6.x since newer versions require Rust 1.95 (MSRV 1.88).
 [target.'cfg(windows)'.dependencies]
 windows-registry = "0.6.1"
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 
 # DE: `api` (Standard) baut den REST-Server `pqkeep serve` ein. Ohne das Feature
 #     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.

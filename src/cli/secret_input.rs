@@ -26,18 +26,8 @@ pub(super) fn stdin_file() -> std::io::Result<File> {
 
 // DE: Absichtliche Ausgabe direkt ans OS, ohne stdout-Zwischenpuffer.
 // EN: Intentional disclosure directly to the OS, without stdout staging.
-#[cfg(unix)]
-pub(super) fn stdout_file() -> std::io::Result<File> {
-    use std::os::fd::AsFd;
-    Ok(File::from(std::io::stdout().as_fd().try_clone_to_owned()?))
-}
-
-#[cfg(windows)]
-pub(super) fn stdout_file() -> std::io::Result<File> {
-    use std::os::windows::io::AsHandle;
-    Ok(File::from(
-        std::io::stdout().as_handle().try_clone_to_owned()?,
-    ))
+pub(super) fn stdout_file() -> std::io::Result<impl std::io::Write> {
+    pqkeep::security::output::stdout()
 }
 
 pub(super) fn read_line(reader: &mut impl Read, limit: usize) -> Result<SecretBytes> {

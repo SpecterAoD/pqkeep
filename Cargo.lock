@@ -927,6 +927,7 @@ dependencies = [
  "mime",
  "ml-dsa",
  "ml-kem",
+ "pqkeep-platform",
  "proptest",
  "region",
  "rustix",
@@ -943,6 +944,13 @@ dependencies = [
  "unicode-normalization",
  "windows-registry",
  "zeroize",
+]
+
+[[package]]
+name = "pqkeep-platform"
+version = "0.1.0"
+dependencies = [
+ "windows-sys",
 ]
 
 [[package]]

@@ -27,11 +27,8 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   Inventar, synthetische Kopierproben, Dump-/Prozessgrenzen und priorisierte Nacharbeit.
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
-  Auditphase in PR298 nach Main gemergt (f9a983f); Laufzeitbehebung ausdrücklich beauftragt
-  und in [PR299](https://github.com/SpecterAoD/pqkeep/pull/299) in Umsetzung. / Audit merged;
-  authorized runtime remediation in progress, [runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
-  Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
-  / Verified Main merges authorized; findings close only after actual final validation.
+  Keine produktive Behebung oder Main-Merge in dieser Phase. / No runtime fix or main merge
+  in this phase; coordinate #128/#148/#149/#150, before stream #83 and API #98.
 
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
@@ -92,3 +89,9 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 - [x] Ruleset auf `main` (PR, Pflicht-Checks, signierte Commits) und Schutz der Release-Tags
 - [x] Secret Scanning und Push Protection aktiv
 - [x] Signing-Key für Git-Tags (SSH)
+
+
+DE: Aktualisierung23.11.2026: Audit298 nach Main gemergt (f9a983f). Laufzeitbehebung147
+weiter in Draft-PR299; Plattform-/Helper-Unterstuetzung zuerst. Gepruefte Main-Merges freigegeben.
+EN: Audit298 merged; runtime147 remains in progress in draft299, support-first platform
+work. Verified Main merges authorized. Issue147 remains open until actual runtime closure.
