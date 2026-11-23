@@ -14,7 +14,32 @@ use std::ops::Range;
 use std::sync::OnceLock;
 
 use crate::crypto::SecretBytes;
+use crate::crypto::secret_buffer::SecretBuffer;
 use crate::{Error, Result};
+use zeroize::Zeroize;
+
+#[cfg(test)]
+#[path = "dictionary_tests.rs"]
+mod tests;
+
+/// DE: Interner vertraulicher Zeichenbereich. EN: Internal confidential character span.
+pub(super) struct WordSpan {
+    pub start: usize,
+    pub end: usize,
+}
+
+impl WordSpan {
+    pub(super) fn range(&self) -> Range<usize> {
+        self.start..self.end
+    }
+}
+
+impl Zeroize for WordSpan {
+    fn zeroize(&mut self) {
+        self.start.zeroize();
+        self.end.zeroize();
+    }
+}
 
 /// DE: Kürzeste berücksichtigte Wortlänge (Zeichen). EN: Shortest word length considered.
 pub(super) const MIN_WORD_CHARS: usize = 4;
@@ -66,27 +91,32 @@ pub fn len() -> usize {
     words().len()
 }
 
-/// DE: Findet Wörter in `low` (Kleinbuchstaben); markierte Zeichen (Muster) werden
-/// übersprungen. Ergebnis: nicht überlappende Zeichenbereiche.
-/// EN: Finds words in `low` (lowercase); marked characters (patterns) are skipped.
-/// Result: non-overlapping character ranges.
-pub(super) fn find(low: &[char], marked: &[bool]) -> Result<Vec<Range<usize>>> {
-    // DE: Zusammenhängender Text mit Byte-Grenzen je Zeichen; wird beim Verlassen genullt.
-    // EN: Contiguous text with byte offsets per character; zeroed when leaving scope.
+fn encode(low: &[char]) -> Result<(SecretBytes, SecretBuffer<usize>)> {
+    // DE: Auch positionsgenaue Metadaten vor erster Befüllung sperren.
+    // EN: Lock per-character metadata too, before its first write.
     let capacity = low.iter().map(|c| c.len_utf8()).sum();
     let mut text = SecretBytes::zeroed(capacity)?;
+    let mut offsets = SecretBuffer::new(vec![0usize; low.len() + 1])?;
     let mut written = 0;
-    let mut offsets = Vec::with_capacity(low.len() + 1);
-    for &c in low {
-        offsets.push(written);
+    for (index, &c) in low.iter().enumerate() {
+        offsets.expose_mut()[index] = written;
         let n = c.len_utf8();
         c.encode_utf8(&mut text.expose_mut()[written..written + n]);
         written += n;
     }
-    offsets.push(written);
-    let text = std::str::from_utf8(text.expose()).map_err(|_| Error::Crypto)?;
+    offsets.expose_mut()[low.len()] = written;
+    Ok((text, offsets))
+}
 
-    let mut found = Vec::new();
+/// DE: Längste nicht überlappende Wörter; markierte Zeichen überspringen.
+/// EN: Longest non-overlapping words, skipping marked characters.
+pub(super) fn find(low: &[char], marked: &[bool]) -> Result<SecretBuffer<WordSpan>> {
+    let (text, offsets) = encode(low)?;
+    let offsets = offsets.expose();
+    let text = std::str::from_utf8(text.expose()).map_err(|_| Error::Crypto)?;
+    // DE: Nicht überlappende Wörter verbrauchen jeweils mindestens vier Zeichen.
+    // EN: Every non-overlapping word consumes at least four characters.
+    let mut found = SecretBuffer::new(Vec::with_capacity(low.len() / MIN_WORD_CHARS))?;
     let mut i = 0;
     while i < low.len() {
         let longest = (MIN_WORD_CHARS..=MAX_WORD_CHARS.min(low.len() - i))
@@ -96,7 +126,10 @@ pub(super) fn find(low: &[char], marked: &[bool]) -> Result<Vec<Range<usize>>> {
             });
         match longest {
             Some(n) => {
-                found.push(i..i + n);
+                found.push_preallocated(WordSpan {
+                    start: i,
+                    end: i + n,
+                })?;
                 i += n;
             }
             None => i += 1,

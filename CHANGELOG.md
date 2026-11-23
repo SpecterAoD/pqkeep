@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Interne UTF-8-Positionen, Wörterbuchbereiche und Mustermasken der
+  Passphrasenbewertung vor Befüllung sperren und vor Unlock löschen (#147 R6).
+  EN: Prelock and wipe internal assessment offsets, word spans and pattern masks;
+  retain dictionary selection, entropy calculation and public assessment results.
+
 - DE: Eigenen Providerzustand gesperrt zerstören und anschließend die vollständige
   frühere Allokation einschließlich Padding vor dem Entsperren löschen (#147 R6).
   EN: Drop owned provider state in place and wipe its full former allocation before
