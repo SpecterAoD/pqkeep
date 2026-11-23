@@ -57,6 +57,9 @@ aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "al
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
 axum = { version = "0.8.9", path = "vendor/axum-0.8.9", default-features = false, features = ["http1", "json", "tokio"], optional = true }
 base64ct = { version = "1.8.3", features = ["alloc"] }
+# DE: Produktionsfeature für Argon2s Blake2-Core; Argon2/zeroize leitet es nicht weiter.
+# EN: Production feature for Argon2's Blake2 core; Argon2/zeroize does not forward it.
+blake2 = { version = "0.11.0", default-features = false, features = ["zeroize"] }
 clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "color"] }
 clap_complete = "4.6.11"
 clap_mangen = "0.3.3"

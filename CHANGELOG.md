@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Fehlendes zeroize-Produktionsfeature des bereits gepinnten Blake2-Providers
+  aktivieren; Argon2s Feature leitet es nicht weiter (#147 R6).
+  EN: Activate pinned Blake2 core destruction wiping in production builds. This
+  does not prelock private provider construction, compression or worker workspaces.
+
 - DE: Archiv-Framing und interne Eintragsowner vor privater Befüllung sperren;
   entschlüsselte Framingarrays und gewöhnliche Eintragsdatensätze entfernen (#147 R8).
   EN: Prelock archive framing/counts and temporary entry records; preserve the wire

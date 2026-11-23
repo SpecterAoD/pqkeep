@@ -37,8 +37,11 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   nach Main gemergt ([PR304](https://github.com/SpecterAoD/pqkeep/pull/304)).
   / Internal assessment metadata merged; Main acceptance tracked separately.
   [Archiv-Framing und interne Einträge / archive framing and entry records](security/ARCHIVE_METADATA_PLAN.md)
-  in Bearbeitung; weitere Providerzustände und verifizierte Passworthelfer bleiben offen.
-  / Archive metadata remediation in progress; other providers/helpers remain open.
+  nach Main gemergt ([PR305](https://github.com/SpecterAoD/pqkeep/pull/305)).
+  / Archive framing/entry remediation merged; Main acceptance tracked separately.
+  [Blake2-Produktionsfeature / production destruction feature](security/BLAKE2_DROP_FEATURE_PLAN.md)
+  in Bearbeitung; weitere Metadaten-/Providerzustände und verifizierte Passworthelfer offen.
+  / Blake2 feature repair in progress; other metadata/providers/helpers remain open.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.

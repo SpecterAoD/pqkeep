@@ -366,3 +366,10 @@ Eintragsvorbereitung propagieren Sperrfehler; Verbraucher leihen Name/Typ/Größ
 Archivformat und öffentliche List-/Prüf-/Extraktionsverträge bleiben erhalten.
 Keine Aussage über sämtliche Compiler-/Registerkopien oder OS-Dateisystemmetadaten;
 Provider-/Helper-Grenzen bleiben offen. Siehe [Plan](security/ARCHIVE_METADATA_PLAN.md).
+
+R6-Featurekorrektur: Der Produktionsgraph aktiviert blake2/zeroize ausdrücklich,
+auch ohne API; Argon2/zeroize leitet dieses Feature nicht weiter. Damit ist die
+bestehende Drop-Löschung von Blake2s privatem h/t-Corezustand aktiviert. Paketmenge,
+Versionen, Quellen, Checksummen und KDF-Verhalten bleiben erhalten. Dies ersetzt
+keine vorab gesperrten Arbeitsbereiche; Konstruktor-/Kompressions-/Hashausgabe-/
+Worker-Grenzen bleiben offen. Siehe [Plan](security/BLAKE2_DROP_FEATURE_PLAN.md).
