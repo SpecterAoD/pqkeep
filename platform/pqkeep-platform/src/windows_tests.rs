@@ -58,6 +58,7 @@ fn configure_buffer(buffer: &OwnedHandle) {
 #[test]
 fn native_console_roundtrips_unicode_and_rejects_file_handles() {
     let buffer = screen_buffer();
+    assert!(is_console(buffer.as_handle()));
     let raw = buffer.as_raw_handle();
     // DE: Bildschirmzellen können doppelte Breite haben, auch bei griechischen Zeichen.
     // EN: Screen cells may have double width, including for Greek characters.
@@ -72,6 +73,7 @@ fn native_console_roundtrips_unicode_and_rejects_file_handles() {
     let file = std::env::current_exe()
         .and_then(std::fs::File::open)
         .unwrap();
+    assert!(!is_console(file.as_handle()));
     assert!(write_console(file.as_handle(), &[0x61]).is_err());
 }
 
@@ -92,6 +94,9 @@ fn first_cell(buffer: &OwnedHandle) -> u16 {
         )
     };
     assert_ne!(result, 0);
-    assert_eq!(read, 4);
+    // DE: Vier Zellen können wegen breiter Glyphen weniger UTF-16-Einheiten liefern.
+    // EN: Four cells can yield fewer UTF-16 units because of wide glyphs.
+    assert_ne!(read, 0);
+    assert!(usize::try_from(read).unwrap() <= actual.len());
     actual[0]
 }

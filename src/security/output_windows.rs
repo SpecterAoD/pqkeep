@@ -4,7 +4,7 @@
 use crate::crypto::{SecretBytes, secret_buffer::SecretBuffer};
 use std::{
     fs::File,
-    io::{self, IsTerminal, Write},
+    io::{self, Write},
     os::windows::io::AsHandle,
 };
 use zeroize::Zeroize;
@@ -18,7 +18,7 @@ pub(super) struct Output {
 
 impl Output {
     pub(super) fn new(file: File) -> io::Result<Self> {
-        let console = file.is_terminal();
+        let console = pqkeep_platform::is_console(file.as_handle());
         let workspace = console
             .then(|| SecretBuffer::new(vec![0u16; 1024]))
             .transpose()

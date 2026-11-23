@@ -55,3 +55,22 @@ Preserve existing non-secret dialogs; do not invent a safety guarantee for widge
 DE/EN: Native Windows/Linux CI, both features, MSRV1.88, strict Clippy, fmt, limits,
 dependency/license/secret/source checks; no claim based on cross-compilation alone.
 Rollback: reviewed code revert, no data migration or machine configuration to restore.
+
+## Console and fuzz follow-up / Konsolen- und Fuzz-Abgleich
+
+DE: `GetConsoleMode` unterscheidet echte Konsolen von MSYS-/Cygwin-PTY-Pipes;
+`IsTerminal` allein genügt wegen seiner Windows-Heuristik nicht. Der native Test
+prüft echte Unicode-Zeichen und getrennt Datei-Handles. Breite Bildschirmglyphen
+können beim Lesen mehrerer Zellen weniger UTF-16-Einheiten ergeben; die tatsächliche
+Rückgabelänge wird geprüft, die exakte Zeichenprüfung bleibt bestehen.
+EN: Classify real console handles before calling WriteConsoleW; keep redirected
+and PTY output as UTF-8 byte streams. Respect returned UTF-16 counts rather than
+assuming one code unit per screen cell. See the Windows-specific notes in
+[IsTerminal](https://doc.rust-lang.org/std/io/trait.IsTerminal.html).
+
+DE: Die acht bestehenden Fuzz-Ziele müssen dieselben geschützten HTTP-/JSON-
+Pfadabhängigkeiten und gemeinsamen Registry-Versionen wie der Hauptbuild verwenden.
+Der separate Lockfile wird entsprechend abgeglichen; die fallible Token-Hash-API
+wird auch im API-Fuzz-Ziel behandelt. Lokaler Build ist kein Fuzz-Laufnachweis.
+EN: Align the separate fuzz dependency graph with production, compile all targets,
+and retain the existing CI fuzz executions and unchanged security gates.

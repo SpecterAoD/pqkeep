@@ -3,7 +3,18 @@
 
 use std::io;
 use std::os::windows::io::{AsRawHandle, BorrowedHandle};
-use windows_sys::Win32::System::Console::WriteConsoleW;
+use windows_sys::Win32::System::Console::{GetConsoleMode, WriteConsoleW};
+
+/// DE: Nur echte Konsolen erkennen; MSYS-/Cygwin-PTY-Pipes bleiben Byte-Streams.
+/// EN: Detect real consoles only; MSYS/Cygwin PTY pipes remain byte streams.
+#[must_use]
+pub fn is_console(handle: BorrowedHandle<'_>) -> bool {
+    let mut mode = 0;
+    // DE: Geliehenes gültiges Handle und initialisierter exklusiver Ausgabewert.
+    // SAFETY: Live borrowed handle and initialized exclusive output pointer;
+    // the synchronous API does not retain the pointer.
+    unsafe { GetConsoleMode(handle.as_raw_handle(), &raw mut mode) != 0 }
+}
 
 /// DE: Geliehene UTF-16-Einheiten synchron ausgeben; Caller schützt deren Speicher.
 /// EN: Synchronously write borrowed UTF-16 units; caller protects their storage.

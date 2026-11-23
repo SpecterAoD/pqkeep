@@ -5,4 +5,4 @@
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
-pub use windows::write_console;
+pub use windows::{is_console, write_console};
