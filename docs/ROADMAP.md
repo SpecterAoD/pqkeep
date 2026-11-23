@@ -21,6 +21,15 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | 6 | CI/CD, Release-Workflow mit Signierung, Dokumentation | Grüne CI, Beta-Trockenlauf mit Verifikation |
 | 7 | Abschluss-Review, erste signierte Beta | `v0.1.0-beta.1` veröffentlicht und verifiziert |
 
+## In Bearbeitung / In progress
+
+- [ ] [#147](https://github.com/SpecterAoD/pqkeep/issues/147): Secret-Lebensdauer-Audit –
+  Inventar, synthetische Kopierproben, Dump-/Prozessgrenzen und priorisierte Nacharbeit.
+  / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
+  [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
+  Keine produktive Behebung oder Main-Merge in dieser Phase. / No runtime fix or main merge
+  in this phase; coordinate #128/#148/#149/#150, before stream #83 and API #98.
+
 ## Abgeschlossene Ergänzungen / Completed follow-ups
 
 - [x] [#186](https://github.com/SpecterAoD/pqkeep/issues/186): Release-Vertrauenskette – vollständige

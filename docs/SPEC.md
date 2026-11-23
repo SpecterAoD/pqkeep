@@ -66,6 +66,10 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - Geheimnisse (private Schlüssel, Seeds, abgeleitete Schlüssel, Passphrase) in `Zeroizing<...>` bzw. Typen mit `ZeroizeOnDrop` / `secrecy`. Diese Typen implementieren **kein** `Debug`, `Display`, `Clone` oder `Serialize` mit Klartext-Ausgabe.
 - Kein Logging von Geheimnissen oder Request-Bodies. Vergleich von Geheimnissen/Tags in konstanter Zeit (`subtle`).
 - Doku-Hinweis: Zeroization ist „best effort“ (Kopien durch Compiler, Swap, Core Dumps). Secret-Speicherseiten einschließlich Argon2/HKDF müssen vollständig gesperrt sein, sonst Fehler. Core-Dump-/Compiler-/OS-Grenzen getrennt dokumentieren.
+- Auditstand #147 (23.11.2026): Diese Anforderung ist kein Nachweis vollständiger Umsetzung.
+  Offene I/O-/AEAD-/Rekey-/Signatur-/HTTP-/Tokenkopien und Plattformgrenzen sind im
+  [Secret-Lebensdauer-Audit](security/SECRET_LIFETIME_AUDIT.md) mit Behebungsplan erfasst;
+  der Audit-PR behebt keine produktiven Speicherpfade.
 
 ### 3.2 Kryptografie
 - **Schlüsselaustausch:** ML-KEM (FIPS 203), Standard **ML-KEM-768**, wählbar ML-KEM-512/1024.

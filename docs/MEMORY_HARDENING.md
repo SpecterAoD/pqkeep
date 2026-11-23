@@ -2,7 +2,9 @@
 
 **DE** | [EN](#english)
 
-**Secret-Speichersperren sind zwingend**: Scheitert eine Sperre, wird die Operation verweigert.
+**Secret-Speichersperren sind zwingend**: Scheitert die Sperre eines verwalteten Secret-Typs,
+wird seine Konstruktion verweigert. Das ist noch kein Nachweis für alle vorgelagerten Kopien:
+[Audit #147](security/SECRET_LIFETIME_AUDIT.md) erfasst offene I/O-/AEAD-/Rekey-/API-Pfade.
 System-/Compilergrenzen bleiben: Die Maßnahmen garantieren nicht, dass
 Geheimnisse nie außerhalb des Arbeitsspeichers landen. Der Anwendungscode behält `#![forbid(unsafe_code)]`; der dokumentierte region-Provider enthält
 eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre) und `rustix`
@@ -16,8 +18,9 @@ eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre)
   wird, wenn kein Geheimnis mehr darauf liegt.
 - Freigabe in fester Reihenfolge: **nullen → entsperren → Speicher freigeben**.
 - Schlägt das Sperren fehl, liefert der Konstruktor `Error::MemoryLock`; keine ungesperrte Instanz.
-- Typisierte Argon2-Blöcke, HKDF/HMAC-Zustände und Zwischenwerte sowie app-eigene Klartextpuffer
-  sind gesperrt. Löschen bleibt zusätzlich erhalten. Details: [LOCKED_SECRETS](security/LOCKED_SECRETS.md).
+- Typisierte Argon2-Blöcke, HKDF/HMAC-Zustände und Zwischenwerte sowie explizite SecretBytes-
+  Archiv-/STREAM-Puffer sind gesperrt. Zusätzliche Standard-/Providerkopien sind damit nicht
+  pauschal abgedeckt. Löschen bleibt erhalten. Details: [LOCKED_SECRETS](security/LOCKED_SECRETS.md).
 
 **Grenzen:**
 - Linux erlaubt normalen Benutzern meist nur wenige MiB gesperrten Speicher (`ulimit -l`, oft 8 MiB).
@@ -29,7 +32,8 @@ eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre)
 - Interne Puffer der Krypto-Crates (z. B. expandierte ML-KEM/ML-DSA-Schlüssel, AES-Schlüsselplan)
   können vorübergehende Stack-/Registerkopien erzeugen; AES-/HMAC-Dauerzustände sind gesperrt.
   Die aktivierten Provider-zeroize-Merkmale bleiben zusätzlich erhalten.
-- Daten liegen kurz ungesperrt im Speicher, bevor sie in `SecretBytes` übernommen werden.
+- Noch offene vorgelagerte Kopien sind Befunde, keine erlaubten ungesperrten Fallbacks;
+  ein nachträglich gesperrtes Ziel schützt sie nicht rückwirkend (Audit A1–A7).
 - **Ruhezustand/Hibernation** schreibt auch gesperrten Speicher auf die Platte.
 
 **Empfehlung:** verschlüsselter Swap bzw. verschlüsselte Auslagerungsdatei (unter Windows
@@ -38,23 +42,24 @@ Festplattenverschlüsselung nutzen.
 
 ## 2. Core-Dump-Sperre
 
-`hardening::harden_process()` wird von CLI und API als Erstes aufgerufen.
+Die CLI ruft `hardening::harden_process()` früh auf, auch vor `serve`. Direkte Library-/Router-
+Aufrufer müssen ihre Prozesspolicy selbst festlegen. Ein unvollständiger Bericht erzwingt
+derzeit keinen Abbruch; die Ausgabe erfolgt mit `--verbose` (Audit A8).
 
 - **Linux:** `RLIMIT_CORE` = 0 (keine Core-Dateien) und `PR_SET_DUMPABLE` = 0. Letzteres verhindert
   zusätzlich, dass andere Prozesse desselben Benutzers ohne root-Rechte den Speicher per `ptrace`
   lesen (z. B. Debugger, `/proc/<pid>/mem`).
-- **Windows:** Die Fehlerberichterstattung (WER) kann ein Programm nicht zuverlässig selbst
-  abschalten. Empfehlung für Rechner mit Schlüsselmaterial:
-  - Lokale Absturzabbilder nicht aktivieren (Registry `HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps`
-    nicht anlegen bzw. für `pqkeep.exe` `DumpType` = 0).
-  - WER für die Anwendung ausschließen, z. B. per Gruppenrichtlinie „Windows-Fehlerberichterstattung
-    deaktivieren“.
-  - Speicherabbilder bei Systemabsturz („Kernelspeicherabbild“) auf „Keine“ stellen, wenn möglich.
+- **Windows:** Keine automatische WER-/Dump-Policy durch PQKeep. `DumpType=0` bedeutet
+  **Custom Dump**, nicht „aus“. LocalDumps sind von der WER-Abschaltung unabhängig.
+  Globale und anwendungsspezifische Dump-/Debugger-Policies müssen für den konkreten
+  Betrieb administrativ geprüft werden; keine Registry-Änderung allein aus diesem Hinweis.
+  Quelle: [Microsoft LocalDumps](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps).
 
 ## 3. Sofortiges Nullen
 
-- Alle Geheimnisse liegen in Typen, die beim Freigeben genullt werden (`SecretBytes`, `Passphrase`,
-  `StrongPassphrase`, Schlüsseltypen der Crates mit `ZeroizeOnDrop`).
+- Die verwalteten Secret-Typen werden beim Freigeben genullt (`SecretBytes`, `Passphrase`,
+  `StrongPassphrase`, aktivierte Provider-`ZeroizeOnDrop`-Typen). Das [Inventar](security/SECRET_LIFETIME_INVENTORY.md)
+  benennt Kopien außerhalb dieser Typen; diese benötigen weitere Behebung.
 - Abgeleitete Schlüssel werden direkt nach der letzten Nutzung freigegeben (z. B. in `protect`/
   `unprotect` vor der Rückgabe).
 - Zwischenkopien werden vermieden oder genullt: Seeds beim Laden, gemeinsame Geheimnisse nach dem
@@ -84,30 +89,37 @@ Open-Source-Projekt erschwert das Reverse Engineering kaum, da der Quelltext öf
 ## Tests
 
 `tests/hardening_*.rs` und `src/hardening/memlock_tests.rs`: Sperren und Freigeben (Linux zusätzlich
-über `VmLck` in `/proc/self/status`), gemeinsame Seiten mit Zähler, Weiterlaufen bei verbotenem
+über `VmLck` in `/proc/self/status`), gemeinsame Seiten mit Zähler, Abweisung bei verbotenem
 Sperren (`RLIMIT_MEMLOCK` = 0), Core-Dump-Grenze und „nicht dumpbar“ nach dem Start.
+Die [Auditproben](security/SECRET_LIFETIME_TESTS.md) trennen gemessene Restkopien von behobenen Pfaden.
 
 ---
 
 ## English
 
-Secret memory locking is **mandatory**, with no unlocked fallback. Application code retains
+Secret memory locking is **mandatory**, with no unlocked fallback. Managed secret constructors
+enforce it; this is not proof that every upstream copy is covered. See the open
+[audit findings](security/SECRET_LIFETIME_AUDIT.md). Application code retains
 `forbid(unsafe_code)`; documented provider FFI prepares Windows working-set capacity.
 System/compiler limits are distinct from the enforced lock policy. See [LOCKED_SECRETS](security/LOCKED_SECRETS.md).
 
 1. **Memory locking:** every `SecretBytes` buffer is locked on creation (`mlock`/`VirtualLock`), with a
    per-page reference counter so that releasing one secret never unlocks another on the same page.
    Release order: zero → unlock → free. Lock failure returns MemoryLock; no unlocked instance.
-   Argon2 blocks, HKDF/HMAC intermediates/state and application plaintext buffers are locked.
+   Argon2 blocks, HKDF/HMAC intermediates/state and explicit SecretBytes archive/STREAM buffers
+   are locked; additional std/provider copies require separate remediation.
    Linux requires sufficient existing RLIMIT_MEMLOCK; Windows requests current-process working-set
-   capacity and fails if denied. Temporary provider stack/register copies remain outside this guarantee; data is briefly unlocked before it enters
-   `SecretBytes`; hibernation writes locked memory to disk. Recommendation: encrypted swap/page file,
+   capacity and fails if denied. Temporary provider stack/register copies remain outside this guarantee;
+   open upstream-copy findings are not approved unlocked fallbacks. Hibernation can persist locked RAM. Recommendation: encrypted swap/page file,
    avoid hibernation or use full-disk encryption.
-2. **Core dumps:** `harden_process()` (called first by CLI and API) sets `RLIMIT_CORE` = 0 and
-   `PR_SET_DUMPABLE` = 0 on Linux (the latter also blocks `ptrace` by same-user processes). On Windows,
-   WER cannot be reliably disabled by the program; do not enable `LocalDumps` for `pqkeep.exe`,
-   exclude it from WER via policy and set system crash dumps to "None" where possible.
-3. **Immediate zeroing:** all secrets live in zeroize-on-drop types; derived keys are released right
+2. **Core dumps:** CLI startup, including `serve`, attempts `RLIMIT_CORE` = 0 and
+   `PR_SET_DUMPABLE` = 0 on Linux. Failed process hardening does not currently gate execution;
+   direct library/router callers own their process policy (audit A8). Windows dump policies
+   are not managed by PQKeep. `DumpType=0` selects a custom dump; LocalDumps operate independently
+   of disabled WER. Review effective global/per-app/debugger policy for the actual deployment;
+   do not edit the registry based on this note. See [Microsoft](https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps).
+3. **Immediate zeroing:** managed secret types wipe on drop; the inventory identifies remaining
+   copies outside them. Derived keys are released right
    after last use; intermediate copies are avoided or zeroed (seed parsing, shared secrets, passphrase
    character copies, generator buffers, exact-size NFKC buffer). The compiler may still copy values to
    registers or the stack; this cannot be fully prevented in safe Rust.

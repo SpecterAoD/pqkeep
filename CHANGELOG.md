@@ -7,18 +7,26 @@ German release notes: see `docs/releases/`.
 ## [Unreleased]
 
 ### Security
+- Secret-lifetime audit (#147): inventory and synthetic std/provider copy probes, explicit
+  remaining I/O/AEAD/rekey/hash/HTTP/token findings and scoped remediation/test proposals.
+  Clarify memory-coverage claims and correct the Windows `DumpType=0` premise (custom dump,
+  not disabled). No production/provider/format change; runtime findings remain open.
+  **DE:** Secret-Kopien und Plattformgrenzen auditiert, gezielte Nacharbeit dokumentiert;
+  Sicherheitsdoku präzisiert, keine Laufzeitbefunde als behoben ausgegeben.
 - Verify the complete release bundle before creating a draft (#186), then reverify at the
   write boundary; bind signatures/attestations to repository, workflow, ref and source/signer
   commit. Trust signed tags only against protected main signers; release writes confined to draft.
   **DE:** Release-Verifikation technisch vor Entwurf erzwingen, Identität/Commit strikt prüfen,
   keine tag-eigenen Vertrauensanker. Bestehende Freigaben und manuelle Veröffentlichung erhalten.
 - Mandatory locked secret memory (#148): fail closed on lock failure; typed locked Argon2
-  workspace, locked HKDF/HMAC intermediates, AES state and plaintext buffers; bounded locked
-  password input and generator. Existing v1/v2/v3 formats and derivation bytes unchanged.
+  workspace, locked HKDF/HMAC intermediates, AES state and explicit archive/STREAM buffers;
+  bounded locked standard password input and generator. Additional copies remain in audit147.
+  Existing v1/v2/v3 formats and derivation bytes unchanged.
   Linux needs sufficient existing memlock budget; Windows requests its own working-set capacity.
   Application unsafe prohibition retained; narrow provider patches documented in vendor/README.md.
   **DE:** Secret-Speicher zwingend sperren, keine ungesperrten Fallbacks; KDF-/HKDF-Zwischenwerte,
-  Klartext und Passphrase-Eingaben abgesichert, bei Ressourcenfehler sicher abbrechen.
+  explizite Archiv-/STREAM-Puffer und Standard-Passphrase-Eingabe abgesichert, bei
+  Ressourcenfehler sicher abbrechen. Weitere Kopien siehe Audit147.
 
 ### Changed
 - **Weekly preview build no longer runs on pull requests** (#269): only on its weekly schedule and

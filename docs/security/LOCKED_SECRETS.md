@@ -31,7 +31,7 @@ deployment, host privilege change or repository-protection change.
 | Argon2 | Caller-owned typed locked Block storage passed to existing RustCrypto API; entire working allocation wiped while locked. |
 | HKDF/HMAC | Existing provider extract/expand steps with locked HMAC state, scratch, PRK and output; no hidden key-state cloning. |
 | AES-GCM/STREAM | Stable locked provider state; plaintext decrypted in place directly inside SecretBytes. |
-| Archive/STREAM buffers | Fixed locked plaintext buffers; consumed encrypt buffer wiped before reuse. |
+| Archive/STREAM buffers | Explicit buffers fixed/locked; consumed encrypt buffer wiped. Outer std buffers and allocating AEAD copies remain audit A1/A2. |
 | stdin passwords | Raw duplicated OS handle, bounded direct reads into locked memory; no stdio line buffering or read-ahead into the next secret. |
 | password files | Existing owner/type/mode checks, bounded direct reads into locked storage; no growing Vec/String. |
 | terminal | Existing console provider reads keys without echo; full input and confirmation stay in locked buffers. |
@@ -44,6 +44,13 @@ Argon2-, AES-, SHA3- oder Zufallsalgorithmus. Der HKDF-Adapter liefert exakt den
 Format vorgesehenen ersten Expand-Block. Gegenproben müssen den bisherigen Vertrag bestätigen.
 EN: Provider patches are documented with provenance; no replacement Argon2/AES/SHA3/RNG.
 The HKDF adapter returns exactly the first expand block required by current formats.
+
+DE: [Audit #147](SECRET_LIFETIME_AUDIT.md) erfasst weitere vorgelagerte Kopien, darunter
+Rekey-, Signatur-Hash-, HTTP-/Tokenpfade und Provider-Konstruktion. Diese Tabelle belegt
+konkrete gesperrte Speicherorte, keine lückenlose Sperre aller Secret-Kopien. Nacharbeit
+ist erforderlich; die strenge Sperrpolicy bleibt bestehen.
+EN: Audit147 records remaining rekey/hash/HTTP/token/provider-construction copies. Evidence
+for specific locked allocations does not establish complete coverage; retain strict policy.
 
 ## Platform behavior / Plattformverhalten
 
