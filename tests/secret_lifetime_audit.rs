@@ -179,7 +179,11 @@ fn pinned_aead_allocating_adapter_copies_before_encrypting() {
                 .is_err()
         );
         assert_eq!(spy.bytes.get(), size);
-        assert!(spy.address.get() != data.as_ptr().addr());
+        let private_copy = spy.address.get() != data.as_ptr().addr();
+        assert!(
+            private_copy,
+            "Allocating adapter must use distinct fixture storage"
+        );
         println!(
             "AUDIT147 aead bytes={size} private=true locked={:?}",
             spy.locked.get()
@@ -198,7 +202,8 @@ fn direct_aead_inout_preserves_caller_storage_control() {
         spy.encrypt_inout_detached(&Nonce::<Spy>::default(), &[], data.as_mut_slice().into())
             .is_err()
     );
-    assert!(spy.address.get() == address);
+    let in_place = spy.address.get() == address;
+    assert!(in_place, "Direct adapter must retain fixture storage");
 }
 
 struct HashInput {
