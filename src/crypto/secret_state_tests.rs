@@ -40,20 +40,26 @@ impl Drop for Probe {
     }
 }
 
-fn state(observation: &Arc<Observation>) -> SecretState<Probe> {
-    let mut state = SecretState::new(Probe {
+fn public_probe(observation: &Arc<Observation>) -> Probe {
+    Probe {
         observation: Arc::clone(observation),
         payload: [0; 16 * 1024],
         active: false,
-    })
-    .unwrap();
-    let address = std::ptr::from_ref(state.get()).addr();
-    observation.address.store(address, Ordering::SeqCst);
-    let probe = state.get_mut();
+    }
+}
+
+fn activate(probe: &mut Probe) {
+    let address = std::ptr::from_ref(probe).addr();
+    probe.observation.address.store(address, Ordering::SeqCst);
     probe.payload[0] = 17;
     let last = probe.payload.len() - 1;
     probe.payload[last] = 23;
     probe.active = true;
+}
+
+fn state(observation: &Arc<Observation>) -> SecretState<Probe> {
+    let mut state = SecretState::new(public_probe(observation)).unwrap();
+    activate(state.get_mut());
     state
 }
 
@@ -102,4 +108,59 @@ fn provider_destructor_stays_locked_during_unwinding() {
     assert!(result.is_err());
     assert_eq!(observation.drops.load(Ordering::SeqCst), 1);
     assert_eq!(Arc::strong_count(&observation), 1);
+}
+
+struct PanickingProbe {
+    probe: Probe,
+    active: bool,
+}
+
+impl ZeroizeOnDrop for PanickingProbe {}
+
+impl Drop for PanickingProbe {
+    fn drop(&mut self) {
+        if self.active {
+            std::panic::resume_unwind(Box::new(()));
+        }
+    }
+}
+
+fn panicking_state(observation: &Arc<Observation>) -> SecretState<PanickingProbe> {
+    let mut provider = SecretState::new(PanickingProbe {
+        probe: public_probe(observation),
+        active: false,
+    })
+    .unwrap();
+    activate(&mut provider.get_mut().probe);
+    provider.get_mut().active = true;
+    provider
+}
+
+#[test]
+fn destructor_panic_releases_owned_resources_and_completes_guard_cleanup() {
+    let observation = Arc::new(Observation::default());
+    let result = std::panic::catch_unwind({
+        let observation = Arc::clone(&observation);
+        move || drop(panicking_state(&observation))
+    });
+    assert!(result.is_err());
+    assert_eq!(observation.drops.load(Ordering::SeqCst), 1);
+    assert_eq!(Arc::strong_count(&observation), 1);
+}
+
+#[test]
+fn destructor_panic_leaves_full_live_allocation_available_to_wipe_guard() {
+    let observation = Arc::new(Observation::default());
+    let mut provider = panicking_state(&observation);
+    let address = provider.inner.as_ptr().addr();
+    let capacity = provider.inner.capacity();
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| provider.wipe()));
+    assert!(result.is_err());
+    assert_eq!(observation.drops.load(Ordering::SeqCst), 1);
+    assert_eq!(Arc::strong_count(&observation), 1);
+    assert!(provider.inner.is_empty());
+    assert_eq!(provider.inner.spare_capacity_mut().len(), capacity);
+    assert!(memlock::is_locked(address));
+    drop(provider);
+    assert_eq!(observation.drops.load(Ordering::SeqCst), 1);
 }

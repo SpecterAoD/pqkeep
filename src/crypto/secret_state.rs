@@ -15,6 +15,14 @@ pub(crate) struct SecretState<T: ZeroizeOnDrop> {
     lock: Option<LockedRange>,
 }
 
+struct WipeAllocation<'a, T>(&'a mut Vec<T>);
+
+impl<T> Drop for WipeAllocation<'_, T> {
+    fn drop(&mut self) {
+        self.0.spare_capacity_mut().zeroize();
+    }
+}
+
 impl<T: ZeroizeOnDrop> SecretState<T> {
     pub(crate) fn new(public_value: T) -> Result<Self> {
         let mut inner = Vec::new();
@@ -46,9 +54,11 @@ impl<T: ZeroizeOnDrop> SecretState<T> {
 
     fn wipe(&mut self) {
         // DE: Owner zuerst an Ort und Stelle zerstören, danach auch Padding löschen.
+        // Vec::clear setzt die Länge vor Drop; der Guard läuft auch bei dessen Unwind.
         // EN: Destroy owners in place first, then wipe padding and the full allocation.
-        self.inner.clear();
-        self.inner.spare_capacity_mut().zeroize();
+        // Vec::clear removes the length before Drop; the guard also runs on its unwind.
+        let allocation = WipeAllocation(&mut self.inner);
+        allocation.0.clear();
     }
 }
 
@@ -56,7 +66,8 @@ impl<T: ZeroizeOnDrop> Drop for SecretState<T> {
     fn drop(&mut self) {
         // DE: Speicher bis nach Wipe und Unlock behalten, keinen Ersatzkonstruktor aufrufen.
         // EN: Retain storage through wiping and unlocking; never invoke a replacement constructor.
+        let lock = self.lock.take();
         self.wipe();
-        self.lock.take();
+        drop(lock);
     }
 }
