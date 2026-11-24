@@ -24,6 +24,8 @@ mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
 mod list;
+#[cfg(test)]
+mod locked_owner_tests;
 mod output;
 pub mod paths;
 mod scan;

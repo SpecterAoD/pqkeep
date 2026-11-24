@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Private Namensdescriptoren vor Befüllung sperren; Listeneinträge direkt in
+  gesperrten Slots aufbauen, statt private temporäre Datensätze zu verschieben (#147 R8).
+  EN: Prelock private name descriptors with existing owners and populate listing
+  slots directly. Preserve text/ordering/budget contracts and roll back failed slots.
+
 - DE: Fehlendes zeroize-Produktionsfeature des bereits gepinnten Blake2-Providers
   aktivieren; Argon2s Feature leitet es nicht weiter (#147 R6).
   EN: Activate pinned Blake2 core destruction wiping in production builds. This

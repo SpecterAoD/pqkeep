@@ -138,6 +138,7 @@ fn normalized_keys_are_locked_and_conflicts_do_not_mutate_state() {
     let mut set = PathSet::default();
     set.insert(&["Ä", "İΣ"], true).unwrap();
     for key in set.entries.iter().chain(&set.files) {
+        key.assert_owner_locked();
         assert!(crate::hardening::memlock::is_locked(
             key.bytes().as_ptr().addr()
         ));
@@ -175,4 +176,25 @@ fn unicode_folding_preserves_lowercase_conflicts_and_sigma_aliases() {
         set.insert(&[left], true).unwrap();
         assert!(set.insert(&[right], true).is_err());
     }
+}
+
+/// DE: Reale Baumaufteilungen dürfen private Namensowner nicht entsperren.
+/// EN: Actual tree splits must not unlock private name owners.
+#[test]
+fn private_name_owners_stay_locked_through_tree_growth() {
+    let mut set = PathSet::default();
+    for batch in 0..2 {
+        for index in batch * 64..(batch + 1) * 64 {
+            let name = format!("entry-{index:04}");
+            set.insert(&[&name], true).unwrap();
+        }
+        for key in set.entries.iter().chain(&set.files) {
+            key.assert_owner_locked();
+        }
+    }
+    assert_eq!(set.entries.len(), 128);
+    assert_eq!(set.files.len(), 128);
+    assert!(set.insert(&["ENTRY-0000"], true).is_err());
+    assert_eq!(set.entries.len(), 128);
+    assert_eq!(set.files.len(), 128);
 }

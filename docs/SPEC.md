@@ -373,3 +373,13 @@ bestehende Drop-Löschung von Blake2s privatem h/t-Corezustand aktiviert. Paketm
 Versionen, Quellen, Checksummen und KDF-Verhalten bleiben erhalten. Dies ersetzt
 keine vorab gesperrten Arbeitsbereiche; Konstruktor-/Kompressions-/Hashausgabe-/
 Worker-Grenzen bleiben offen. Siehe [Plan](security/BLAKE2_DROP_FEATURE_PLAN.md).
+
+R8-Ownerschritt: ConfidentialText sperrt auch seinen privaten SecretBytes-Descriptor
+vor Befüllung mit bestehendem SecretState. Namebytes bleiben separat gesperrt;
+äußere Baum-Handles enthalten feste öffentliche Ownergeometrie. Explizites Zeroize
+erhält einen gültigen leeren Text; Drop zerstört den inneren Owner gesperrt und
+löscht seine gesamte ehemalige Allokation vor Unlock. Listen bereiten öffentliche
+leere Slots vor und setzen Name/Typ/Größe direkt im gesperrten Datensatz; Fehler
+nehmen den Slot zurück. Budgets, Sortierung und Ausgabegrenzen bleiben erhalten.
+Baumtopologie, weitere Pfad-Arbeitsbereiche sowie R6/R7 bleiben offen. Siehe
+[Plan](security/METADATA_OWNER_PLAN.md).

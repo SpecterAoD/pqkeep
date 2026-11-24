@@ -376,3 +376,12 @@ Drop wiping of Blake2's private h/t core state. Preserve package identities, sou
 checksums, versions and KDF behavior. Feature activation does not replace prelocked
 workspaces; private construction, compression, hash output and worker boundaries
 remain open. See the [plan](security/BLAKE2_DROP_FEATURE_PLAN.md).
+
+R8 owner step: ConfidentialText also prelocks its private SecretBytes descriptor
+using existing SecretState. Name bytes remain separately locked; outer tree handles
+contain fixed public owner geometry. Explicit Zeroize preserves valid empty text;
+Drop destroys the inner owner while locked and wipes its entire former allocation
+before unlocking. Listings prepare public empty slots and fill name/kind/size
+directly in the locked record, rolling the slot back on failure. Preserve budgets,
+ordering and disclosure boundaries. Tree topology, other path workspaces and R6/R7
+remain open. See the [plan](security/METADATA_OWNER_PLAN.md).

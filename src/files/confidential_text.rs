@@ -1,32 +1,46 @@
 //! DE: Gesperrte UTF-8-Metadaten mit expliziter, fallibler Weitergabe.
 //! EN: Locked UTF-8 metadata with explicit fallible disclosure.
 
+use crate::crypto::secret_state::SecretState;
 use crate::{Error, Result, crypto::SecretBytes};
 use std::{borrow::Borrow, cmp::Ordering, fmt};
 use zeroize::Zeroize;
 
 /// DE: Vertraulicher Archivtext; kein Clone/Display/Serialize, Debug bleibt redigiert.
 /// EN: Confidential archive text; no Clone/Display/Serialize, Debug stays redacted.
-pub struct ConfidentialText(SecretBytes);
+pub struct ConfidentialText(SecretState<SecretBytes>);
 
 impl Zeroize for ConfidentialText {
     fn zeroize(&mut self) {
-        self.0.zeroize();
+        self.0.get_mut().zeroize();
     }
 }
 
 impl ConfidentialText {
+    pub(crate) fn prepare() -> Result<Self> {
+        Ok(Self(SecretState::new(SecretBytes::zeroed(0)?)?))
+    }
+
+    pub(crate) fn copy_from(&mut self, source: &Self) -> Result<()> {
+        *self.0.get_mut() = SecretBytes::from_slice(source.bytes())?;
+        Ok(())
+    }
+
     /// DE: Ziel vor der Kopie sperren; Quell-Ownership bleibt beim Caller.
     /// EN: Lock before copying; the caller retains source ownership.
     /// # Errors
     /// DE/EN: [`Error::MemoryLock`].
     pub fn from_text(text: &str) -> Result<Self> {
-        Ok(Self(SecretBytes::from_slice(text.as_bytes())?))
+        let mut out = Self::prepare()?;
+        *out.0.get_mut() = SecretBytes::from_slice(text.as_bytes())?;
+        Ok(out)
     }
 
     pub(crate) fn from_locked(bytes: SecretBytes) -> Result<Self> {
-        std::str::from_utf8(bytes.expose()).map_err(|_| Error::InvalidInput { field: "path" })?;
-        Ok(Self(bytes))
+        let mut out = Self::prepare()?;
+        *out.0.get_mut() = bytes;
+        std::str::from_utf8(out.bytes()).map_err(|_| Error::InvalidInput { field: "path" })?;
+        Ok(out)
     }
 
     /// DE: Nur für bewusst angeforderte Ausgabe ausleihen, nicht loggen.
@@ -34,7 +48,7 @@ impl ConfidentialText {
     /// # Errors
     /// DE/EN: [`Error::Crypto`] bei ungültigem internem UTF-8 / invalid internal UTF-8.
     pub fn expose(&self) -> Result<&str> {
-        std::str::from_utf8(self.0.expose()).map_err(|_| Error::Crypto)
+        std::str::from_utf8(self.bytes()).map_err(|_| Error::Crypto)
     }
 
     /// DE: Explizite Kopie erst nach bestätigter Zielsperre.
@@ -42,13 +56,19 @@ impl ConfidentialText {
     /// # Errors
     /// DE/EN: [`Error::MemoryLock`].
     pub fn try_duplicate(&self) -> Result<Self> {
-        Ok(Self(SecretBytes::from_slice(self.0.expose())?))
+        let mut out = Self::prepare()?;
+        out.copy_from(self)?;
+        Ok(out)
     }
 
     pub(crate) fn bytes(&self) -> &[u8] {
-        self.0.expose()
+        self.0.get().expose()
     }
 }
+
+#[cfg(test)]
+#[path = "confidential_text_tests.rs"]
+mod tests;
 
 impl Borrow<[u8]> for ConfidentialText {
     fn borrow(&self) -> &[u8] {
