@@ -116,3 +116,14 @@ without API, after both strict Clippies. Preserve the later full test suites,
 worker/lock budgets, scanners and eight fuzz gates. This is earlier failure
 feedback, never a passing skip or substitute for final-head native acceptance.
 Production behavior stays unchanged until the actual failure is diagnosed.
+
+DE: Native Diagnose209b3b2 lokalisiert AccessDenied beim Read-only-CONIN$-Modusguard,
+nach erfolgreichen Record-/Unicode-/Queue-Proben. Vor Produktionsänderung: Setzen
+und Restore über das bereits vor Eingabe geöffnete eigene Read/Write-CONIN$-Handle;
+Modus zusätzlich über das ursprüngliche geliehene Eingabehandle nachprüfen. Stdin
+weiter unverändert lesen; keine Handle-Rechte/ACLs/Tokens ändern oder Tests entfernen.
+EN: Retain both-handle read-back, actual input-capability checks and checked error
+flush before mode release. Native read-only input remains mandatory acceptance,
+not a skip. Re-run strict platform/Root checks and complete final-head native CI.
+API documentation lists GENERIC_READ for SetConsoleMode, but native access denial
+is not waived on that basis. Signed clarification precedes production change.
