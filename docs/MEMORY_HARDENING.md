@@ -19,7 +19,10 @@ eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre)
   direkt darin; from_slice kopiert erst danach. new(Vec) übernimmt Callerbytes ohne
   Payloadkopie, schützt aber nicht rückwirkend dessen Quelle. Drop zerstört den Puffer
   gesperrt und löscht danach die gesamte ehemalige Descriptorallokation vor Unlock.
-  Andere typisierte Descriptoren und Compiler-/Registerkopien bleiben getrennte Grenzen.
+  Geprüfte typisierte Zeichen-/Offset-/Masken-/Span-/Listen-/u16-Descriptoren nutzen
+  denselben Ownervertrag über SecretWorkspace; Reserve/Defaults erst im gesperrten
+  Descriptor. Konkrete Drop-Marker statt generischer Zusage. Andere skalare, Pfad-/
+  Baum-/Ausgabezustände und Compiler-/Registerkopien bleiben getrennte Grenzen.
 - Gesperrt wird pro Speicherseite. Ein **Seitenzähler** sorgt dafür, dass eine Seite erst entsperrt
   wird, wenn kein Geheimnis mehr darauf liegt.
 - Freigabe in fester Reihenfolge: **nullen → entsperren → Speicher freigeben**.
@@ -122,7 +125,10 @@ System/compiler limits are distinct from the enforced lock policy. See [LOCKED_S
    including empty values. Reserve/lock directly there, then copy; new(Vec) retains the caller
    ownership boundary without payload copying or retroactive source protection. Drop destroys
    the buffer while locked, then wipes the entire former descriptor allocation before unlock.
-   Other typed-buffer descriptors and compiler/register copies remain separate boundaries.
+   Reviewed char/offset/mask/span/list/u16 descriptors use the same owner contract via
+   SecretWorkspace: reserve/default initialization inside the locked descriptor, with
+   concrete drop markers. Other scalar/path/tree/output state and compiler/register
+   copies remain separate boundaries.
    Argon2 blocks, HKDF/HMAC intermediates/state and explicit SecretBytes archive/STREAM buffers
    are locked; additional std/provider copies require separate remediation.
    Linux requires sufficient existing RLIMIT_MEMLOCK; Windows requests current-process working-set

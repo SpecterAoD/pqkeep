@@ -142,7 +142,7 @@ pub(super) fn estimate(chars: &[char], low: &[char], marked: &[bool]) -> crate::
     let per = per_char(chars);
     let words = dictionary::find(low, marked)?;
     let (mut bits, mut word_model, mut i) = (0.0, false, 0);
-    let mut seen = crate::crypto::secret_buffer::SecretBuffer::new(vec!['\0'; chars.len()])?;
+    let mut seen = crate::crypto::secret_workspace::SecretWorkspace::zeroed(chars.len())?;
     let mut used = 0;
     while i < chars.len() {
         if marked[i] {

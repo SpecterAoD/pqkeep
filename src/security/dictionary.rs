@@ -14,9 +14,13 @@ use std::ops::Range;
 use std::sync::OnceLock;
 
 use crate::crypto::SecretBytes;
-use crate::crypto::secret_buffer::SecretBuffer;
+use crate::crypto::secret_workspace::SecretWorkspace;
 use crate::{Error, Result};
 use zeroize::Zeroize;
+
+// DE: Konkreter Buffer-Drop löscht beide Offsets und seine volle frühere Allokation.
+// EN: The concrete buffer destructor wipes both offsets and its full former allocation.
+impl zeroize::ZeroizeOnDrop for crate::crypto::secret_buffer::SecretBuffer<WordSpan> {}
 
 #[cfg(test)]
 #[path = "dictionary_tests.rs"]
@@ -91,12 +95,12 @@ pub fn len() -> usize {
     words().len()
 }
 
-fn encode(low: &[char]) -> Result<(SecretBytes, SecretBuffer<usize>)> {
+fn encode(low: &[char]) -> Result<(SecretBytes, SecretWorkspace<usize>)> {
     // DE: Auch positionsgenaue Metadaten vor erster Befüllung sperren.
     // EN: Lock per-character metadata too, before its first write.
     let capacity = low.iter().map(|c| c.len_utf8()).sum();
     let mut text = SecretBytes::zeroed(capacity)?;
-    let mut offsets = SecretBuffer::new(vec![0usize; low.len() + 1])?;
+    let mut offsets = SecretWorkspace::zeroed(low.len() + 1)?;
     let mut written = 0;
     for (index, &c) in low.iter().enumerate() {
         offsets.expose_mut()[index] = written;
@@ -110,13 +114,13 @@ fn encode(low: &[char]) -> Result<(SecretBytes, SecretBuffer<usize>)> {
 
 /// DE: Längste nicht überlappende Wörter; markierte Zeichen überspringen.
 /// EN: Longest non-overlapping words, skipping marked characters.
-pub(super) fn find(low: &[char], marked: &[bool]) -> Result<SecretBuffer<WordSpan>> {
+pub(super) fn find(low: &[char], marked: &[bool]) -> Result<SecretWorkspace<WordSpan>> {
     let (text, offsets) = encode(low)?;
     let offsets = offsets.expose();
     let text = std::str::from_utf8(text.expose()).map_err(|_| Error::Crypto)?;
     // DE: Nicht überlappende Wörter verbrauchen jeweils mindestens vier Zeichen.
     // EN: Every non-overlapping word consumes at least four characters.
-    let mut found = SecretBuffer::new(Vec::with_capacity(low.len() / MIN_WORD_CHARS))?;
+    let mut found = SecretWorkspace::with_capacity(low.len() / MIN_WORD_CHARS)?;
     let mut i = 0;
     while i < low.len() {
         let longest = (MIN_WORD_CHARS..=MAX_WORD_CHARS.min(low.len() - i))

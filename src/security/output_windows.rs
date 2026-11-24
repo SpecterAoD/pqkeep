@@ -1,7 +1,7 @@
 //! DE: UTF-8 stückweise ohne ungesperrte Transcodierung zur nativen Konsole.
 //! EN: Incremental UTF-8 to native console without unlocked transcoding.
 
-use crate::crypto::{SecretBytes, secret_buffer::SecretBuffer};
+use crate::crypto::{SecretBytes, secret_workspace::SecretWorkspace};
 use std::{
     fs::File,
     io::{self, Write},
@@ -11,7 +11,7 @@ use zeroize::Zeroize;
 
 pub(super) struct Output {
     file: File,
-    workspace: Option<SecretBuffer<u16>>,
+    workspace: Option<SecretWorkspace<u16>>,
     pending: SecretBytes,
     used: usize,
 }
@@ -20,7 +20,7 @@ impl Output {
     pub(super) fn new(file: File) -> io::Result<Self> {
         let console = pqkeep_platform::is_console(file.as_handle());
         let workspace = console
-            .then(|| SecretBuffer::new(vec![0u16; 1024]))
+            .then(|| SecretWorkspace::zeroed(1024))
             .transpose()
             .map_err(io::Error::other)?;
         let pending = SecretBytes::zeroed(if console { 4 } else { 0 }).map_err(io::Error::other)?;

@@ -41,21 +41,14 @@ impl SecretBytes {
     /// # Errors
     /// DE/EN: [`crate::Error::MemoryLock`].
     pub fn new(mut bytes: Vec<u8>) -> Result<Self> {
-        let mut out = match Self::prepare() {
-            Ok(out) => out,
-            Err(error) => {
-                bytes.zeroize();
-                bytes.spare_capacity_mut().zeroize();
-                return Err(error);
-            }
-        };
-        out.inner.get_mut().adopt_locked(bytes)?;
-        Ok(out)
+        let mut inner = SecretBuffer::prepare_state_or_wipe(&mut bytes)?;
+        inner.get_mut().adopt_locked(bytes)?;
+        Ok(Self { inner })
     }
 
     fn prepare() -> Result<Self> {
         Ok(Self {
-            inner: SecretState::new(SecretBuffer::new(Vec::new())?)?,
+            inner: SecretBuffer::prepare_state()?,
         })
     }
 

@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Geprüfte typisierte Zeichen-/Offset-/Masken-/Span-/Listen-/u16-Descriptoren
+  vor privater Geometrie stabil sperren; gesamte Payloadkapazität vor Befüllung sperren (#147 R8).
+  EN: Reuse stable owners for reviewed typed workspace descriptors with concrete drop
+  markers. Preserve bounded growth, caller transfer contracts and strict lock failures.
+
 - DE: SecretBytes-Bytepufferdescriptor vor privater Befüllung stabil sperren,
   einschließlich leerer Werte; Sperrfehler strikt propagieren (#147 R8).
   EN: Prelock managed byte-buffer descriptors with existing stable owners. Preserve
