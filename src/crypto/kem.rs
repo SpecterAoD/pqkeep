@@ -8,7 +8,7 @@ use ml_kem::kem::{Decapsulate, Encapsulate, FromSeed, Kem, KeyExport, TryKeyInit
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
 
-use super::secret_buffer::SecretBuffer;
+use super::seed_state;
 use crate::crypto::{KemAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
 
@@ -103,20 +103,14 @@ pub fn decapsulate(algorithm: KemAlgorithm, seed: &[u8], ciphertext: &[u8]) -> R
     }
 }
 
-fn parse_seed<K: FromSeed>(seed: &[u8]) -> Result<SecretBuffer<ml_kem::kem::Seed<K>>> {
-    let public = ml_kem::kem::Seed::<K>::default();
-    if seed.len() != public.len() {
-        return Err(Error::InvalidInput { field: "seed" });
-    }
-    let mut out = SecretBuffer::new(vec![public])?;
-    out.expose_mut()[0].as_mut_slice().copy_from_slice(seed);
-    Ok(out)
+fn parse_seed<K: FromSeed>(seed: &[u8]) -> Result<SecretBytes> {
+    seed_state::parse(seed, ml_kem::kem::Seed::<K>::default().len())
 }
 
 fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>> {
     let mut seed = parse_seed::<K>(seed)?;
-    let (_dk, ek) = K::from_seed(&seed.expose()[0]);
-    seed.expose_mut()[0].zeroize();
+    let (_dk, ek) = K::from_seed(seed_state::view(&seed)?);
+    seed.zeroize();
     Ok(ek.to_bytes().to_vec())
 }
 
@@ -141,8 +135,8 @@ where
 {
     let mut out = SecretBytes::zeroed(32)?;
     let mut seed = parse_seed::<K>(seed)?;
-    let (dk, _ek) = K::from_seed(&seed.expose()[0]);
-    seed.expose_mut()[0].zeroize();
+    let (dk, _ek) = K::from_seed(seed_state::view(&seed)?);
+    seed.zeroize();
     let mut shared = dk
         .decapsulate_slice(ciphertext)
         .map_err(|_| Error::InvalidInput {

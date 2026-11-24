@@ -417,3 +417,13 @@ depth limits and conflict rules. Preserve public validate()->Vec and
 PathSet::insert(&[&str]) contracts; normalized keys still require locked storage.
 Public caller vectors, source/output paths, tree/scalar metadata and stack/compiler
 copies remain open. See the [component plan](security/PATH_COMPONENT_PLAN.md).
+
+R6/R8 caller seeds: borrow fixed typed 32/64-byte seeds directly from prelocked
+SecretBytes, without a private array copy or an additional typed owner. Validate
+exact length before construction; lock descriptors and payload before private copy.
+Existing seed payloads were already locked; remove additional inner seed Vec
+descriptors. Checked array views borrow their owner and reject wrong sizes. Preserve
+strict failure, explicit early wiping and full former-allocation wipe before unlock.
+Provider calls and public bytes remain unchanged. Provider-retained seeds, expanded
+state, construction/scratch and remaining R6/R7/R8 boundaries stay open. See the
+[seed plan](security/SEED_OWNER_PLAN.md).

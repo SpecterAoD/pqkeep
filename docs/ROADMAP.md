@@ -55,9 +55,12 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   nach Main gemergt ([PR310](https://github.com/SpecterAoD/pqkeep/pull/310)).
   / Fixed range bookkeeping merged; native Main acceptance tracked separately.
   [Geliehene interne Pfadteile / borrowed internal path components](security/PATH_COMPONENT_PLAN.md)
-  in Bearbeitung; öffentliche Schnittstellen erhalten, keine internen Teile-Listen.
-  / Borrowed path components in progress; shared registry, source/output paths,
-  tree/scalar metadata and provider/helper boundaries remain open.
+  nach Main gemergt ([PR311](https://github.com/SpecterAoD/pqkeep/pull/311)).
+  / Borrowed path components merged; native Main acceptance tracked separately.
+  [Stabile typisierte Seeds / stable typed seed owners](security/SEED_OWNER_PLAN.md)
+  in Bearbeitung; Provider-Rückgaben/-Scratch und Helper-/Prozessgrenzen offen.
+  / Stable typed caller seeds in progress; shared registry, source/output paths,
+  tree/scalar metadata and other provider/helper boundaries remain open.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.

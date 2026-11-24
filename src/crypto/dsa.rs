@@ -12,7 +12,7 @@ use ml_dsa::{EncodedVerifyingKey, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signat
 use ml_dsa::{SigningKey, VerifyingKey};
 use zeroize::Zeroize;
 
-use super::secret_buffer::SecretBuffer;
+use super::seed_state;
 use crate::crypto::{DsaAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
 
@@ -111,13 +111,9 @@ pub fn verify(
 }
 
 fn signing_key<P: MlDsaParams>(seed: &[u8]) -> Result<SigningKey<P>> {
-    if seed.len() != SEED_LEN {
-        return Err(Error::InvalidInput { field: "seed" });
-    }
-    let mut xi = SecretBuffer::new(vec![ml_dsa::Seed::default()])?;
-    xi.expose_mut()[0].as_mut_slice().copy_from_slice(seed);
-    let sk = SigningKey::<P>::from_seed(&xi.expose()[0]);
-    xi.expose_mut()[0].zeroize();
+    let mut xi = seed_state::parse(seed, SEED_LEN)?;
+    let sk = SigningKey::<P>::from_seed(seed_state::view(&xi)?);
+    xi.zeroize();
     Ok(sk)
 }
 

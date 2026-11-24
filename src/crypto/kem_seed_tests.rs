@@ -8,7 +8,8 @@ use crate::hardening::memlock;
 fn check<K: FromSeed>() {
     let fixture = rng::secret(SEED_LEN).unwrap();
     let parsed = parse_seed::<K>(fixture.expose()).unwrap();
-    let bytes = parsed.expose()[0].as_slice();
+    parsed.assert_metadata_locked();
+    let bytes = parsed.expose();
     assert!(memlock::is_locked(bytes.as_ptr().addr()));
     assert!(memlock::is_locked(bytes.as_ptr().addr() + bytes.len() - 1));
     assert_eq!(bytes, fixture.expose());
