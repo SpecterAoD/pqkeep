@@ -402,3 +402,10 @@ concrete reviewed buffer drop markers, without a blanket generic contract. Expli
 caller list transfer avoids payload copies and wipes on lock failure. Preserve public
 API/normalization/listing/output contracts. Other scalar/path/source/output/tree data
 and provider/helper gaps remain open. See the [typed plan](security/TYPED_OWNER_PLAN.md).
+
+R8 lock bookkeeping: a fixed start/end record replaces the additional per-range
+page-address allocation. Release only the successfully acquired contiguous prefix;
+shared pages stay locked until the last user releases them. Geometry/rounding/budget/
+refcount overflow cannot report a complete lock. Wipe owned record fields after
+release. Shared registry, temporary stack/compiler copies and remaining R6/R7/R8
+boundaries remain open. See the [scoped plan](security/LOCK_RANGE_PLAN.md).

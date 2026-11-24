@@ -401,3 +401,11 @@ Vertrag. Explizite Caller-Listenübernahme ohne Payloadkopie; bei Sperrfehlern l
 Öffentliche API-/Normalisierungs-/Listen-/Ausgabeverträge bleiben erhalten. Andere
 skalare, Pfad-/Quell-/Ausgabe-/Baumdaten und Provider-/Helper-Grenzen bleiben offen.
 Siehe [Typplan](security/TYPED_OWNER_PLAN.md).
+
+R8-Sperrbuchhaltung: Ein fester Anfang-/Ende-Datensatz ersetzt die zusätzliche
+Seitenadressliste je Sperrbereich. Nur der tatsächlich erworbene zusammenhängende
+Präfix wird freigegeben; gemeinsame Seiten bleiben bis zum letzten Nutzer gesperrt.
+Geometrie-/Rundungs-/Budget-/Referenzzählerüberlauf kann keine vollständige Sperre
+melden. Eigene Record-Felder nach Freigabe zeroisieren. Gemeinsame Registry,
+temporäre Stack-/Compilerkopien und übrige R6/R7/R8-Grenzen bleiben offen.
+Siehe [Teilplan](security/LOCK_RANGE_PLAN.md).

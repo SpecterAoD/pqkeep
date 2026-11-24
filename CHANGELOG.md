@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Zusätzliche Seitenadresslisten pro Sperrbereich durch feste Präfixdatensätze
+  ersetzen; Geometrie, Budget und Referenzzähler auf Überlauf prüfen (#147 R8).
+  EN: Remove per-range address allocations, preserve shared/partial lock cleanup
+  and wipe owned range records after release. Shared registry and stack copies remain open.
+
 - DE: Geprüfte typisierte Zeichen-/Offset-/Masken-/Span-/Listen-/u16-Descriptoren
   vor privater Geometrie stabil sperren; gesamte Payloadkapazität vor Befüllung sperren (#147 R8).
   EN: Reuse stable owners for reviewed typed workspace descriptors with concrete drop
