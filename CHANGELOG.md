@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Feste typisierte Caller-Seeds direkt vor privater Befüllung stabil sperren;
+  zusätzliche innere Pufferdescriptoren entfernen (#147 R6/R8).
+  EN: Borrow typed seed views from existing stable locked SecretBytes owners.
+  Preserve strict failures and provider bytes; provider-owned copies remain open.
+
 - DE: Sieben interne Pfadprüfungen ohne gewöhnliche Pfadteil-Referenzlisten ausführen;
   den gesamten Pfad vor Dateierzeugung prüfen (#147 R8).
   EN: Reuse fully validated borrowed components internally, preserving public APIs,

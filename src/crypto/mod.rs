@@ -18,6 +18,7 @@ mod secret;
 pub(crate) mod secret_buffer;
 pub(crate) mod secret_state;
 pub(crate) mod secret_workspace;
+mod seed_state;
 pub mod stream;
 mod stream_io;
 pub mod v2;

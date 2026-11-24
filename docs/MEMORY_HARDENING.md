@@ -2,6 +2,15 @@
 
 **DE** | [EN](#english)
 
+DE: Feste typisierte 32-/64-Byte-Caller-Seeds nur als geprüfte Leihsicht aus
+vorab gesperrten SecretBytes verwenden. Exakte Längenprüfung vor Konstruktion;
+Descriptor und Payload vor privater Kopie sperren. Die Payload war bereits gesperrt;
+zusätzliche innere Seed-Vec-Descriptoren entfallen. Kein ungesperrter Ersatz bei Fehlern.
+EN: Borrow typed seed views without array copies, reusing stable byte owners,
+early wiping and full former-allocation wipe-before-unlock. Provider-retained
+seeds, expanded keys, construction and scratch
+remain separate OPEN boundaries. See the [seed plan](security/SEED_OWNER_PLAN.md).
+
 DE: Interne Pfadprüfungen verwenden vollständig vorab geprüfte geliehene Iteratoren
 statt gewöhnlicher Pfadteil-Referenzlisten. Normalisierte Schlüssel bleiben gesperrt;
 öffentliche validate()-Ergebnisse gehören weiterhin dem Aufrufer. Quell-/Ausgabepfade,

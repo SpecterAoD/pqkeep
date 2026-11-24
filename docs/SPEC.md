@@ -417,3 +417,13 @@ bleiben erhalten. Öffentliche validate()->Vec- und PathSet::insert(&[&str])-Ver
 bleiben erhalten; normalisierte Schlüssel weiterhin zwingend sperren. Öffentliche
 Callerlisten, Quell-/Ausgabepfade, Baum-/Skalarmetadaten und Stack-/Compilerkopien
 bleiben offen. Siehe [Pfadteilplan](security/PATH_COMPONENT_PLAN.md).
+
+R6/R8-Caller-Seeds: Feste typisierte 32-/64-Byte-Seeds direkt aus vorab gesperrten
+SecretBytes ausleihen, ohne private Arraykopie oder zusätzlichen typisierten Owner.
+Exakte Längenprüfung vor Konstruktion; Descriptor und Payload vor privater Kopie
+sperren. Die bisherigen Payloads waren bereits gesperrt; zusätzliche innere
+Seed-Vec-Descriptoren entfallen. Geprüfte Array-Leihsicht an den Owner binden;
+falsche Größe verweigern. Frühes explizites Löschen und vollständiger Wipe vor
+Unlock bleiben erhalten. Provideraufrufe und öffentliche Bytes unverändert. Providerinterne Seeds,
+expandierte Zustände, Konstruktion/Scratch und übrige R6/R7/R8-Grenzen bleiben offen.
+Siehe [Seedplan](security/SEED_OWNER_PLAN.md).
