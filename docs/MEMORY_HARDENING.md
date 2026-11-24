@@ -5,6 +5,14 @@
 **Secret-Speichersperren sind zwingend**: Scheitert die Sperre eines verwalteten Secret-Typs,
 wird seine Konstruktion verweigert. Das ist noch kein Nachweis für alle vorgelagerten Kopien:
 [Audit #147](security/SECRET_LIFETIME_AUDIT.md) erfasst offene I/O-/AEAD-/Rekey-/API-Pfade.
+
+DE: Feste Sperrbereichsdatensätze ersetzen die zusätzliche gewöhnliche Seitenadressliste
+je Bereich. Überläufe verweigern vollständige Sperren; Teilsperren werden präzise
+freigegeben. Eigene Bereichsfelder nach Freigabe zeroisieren. Gemeinsame Registry und
+temporäre Stack-/Compilerkopien bleiben offen, siehe [Teilplan](security/LOCK_RANGE_PLAN.md).
+EN: Fixed range records remove per-range address allocations while retaining strict
+overflow handling and successful-prefix cleanup. Wiping owned fields after release
+does not close shared-registry or stack/compiler boundaries.
 System-/Compilergrenzen bleiben: Die Maßnahmen garantieren nicht, dass
 Geheimnisse nie außerhalb des Arbeitsspeichers landen. Der Anwendungscode behält `#![forbid(unsafe_code)]`; der dokumentierte region-Provider enthält
 eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre) und `rustix`
