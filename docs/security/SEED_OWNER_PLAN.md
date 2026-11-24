@@ -44,3 +44,21 @@ Stack-/Register-/Compilerkopien- oder Prozessschutzgarantie.
 EN: #147/roadmap stay In progress. No dependency, KDF, provider source, CI/scanner,
 ACL/Registry/rights/host-policy change or deployment. Recovery is a separately
 reviewed signed revert PR, never an automatically weaker security fallback.
+
+## Signed refinement before final implementation / Signierte Präzisierung
+
+DE: Die gepinnte hybrid-array-API bietet TryFrom<&[u8]> für &Array<u8,N>.
+Damit feste Seeds direkt aus dem bereits stabilen gesperrten SecretBytes-Owner
+ausleihen; kein zusätzlicher typisierter Owner und keine private Arraykopie.
+Plan-State/Zeroizing-Prototypen bleiben historische Zwischennachweise, nicht der
+finale Produktionsweg. Erst exakte erwartete Länge prüfen, dann SecretBytes vor
+privater Kopie sperren. Typisierte Sicht nur geliehen; fehlerhafte Sicht verweigern.
+EN: Use existing stable byte-owner descriptor/payload protection and destruction.
+The internal view is constrained to Array<u8,N>, uses the pinned checked borrowed
+conversion and cannot outlive its SecretBytes owner. Preserve early wiping and
+all provider calls/bytes. No new owner abstraction, unsafe or dependency.
+
+DE/EN: Same scoped files/tests/rollback and OPEN provider/helper/process boundaries.
+Add actual pointer-identity/owner-lock checks for borrowed views and reject wrong
+view sizes; the isolated denial child checks actual byte-owner construction.
+Signed refinement precedes replacement of the uncommitted prototypes.
