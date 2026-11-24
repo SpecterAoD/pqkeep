@@ -23,6 +23,10 @@ use crate::{Error, Result};
 #[path = "paths_tests.rs"]
 mod paths_tests;
 
+#[cfg(test)]
+#[path = "path_components_tests.rs"]
+mod component_tests;
+
 /// DE: Höchstlänge eines Pfadteils in Bytes. EN: Maximum length of a path part in bytes.
 pub const MAX_COMPONENT_BYTES: usize = 255;
 /// DE: Höchstlänge des ganzen Pfads in Bytes. EN: Maximum length of the whole path in bytes.
@@ -77,14 +81,28 @@ fn component_ok(part: &str) -> bool {
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] mit Feld `path` / with field `path`.
 pub fn validate(path: &str) -> Result<Vec<&str>> {
+    Ok(components(path)?.collect())
+}
+
+// DE: Vollständig prüfen, bevor ein geliehener Iterator zum Verbraucher gelangt.
+// EN: Validate fully before returning a borrowed iterator to any consumer.
+pub(super) fn components(path: &str) -> Result<impl Iterator<Item = &str> + Clone> {
     if path.is_empty() || path.len() > MAX_PATH_BYTES || path.starts_with('/') {
         return Err(invalid());
     }
-    let parts: Vec<&str> = path.split('/').collect();
-    if parts.len() > MAX_DEPTH || !parts.iter().all(|p| component_ok(p)) {
+    if !path
+        .split('/')
+        .enumerate()
+        .all(|(index, part)| index < MAX_DEPTH && component_ok(part))
+    {
         return Err(invalid());
     }
-    Ok(parts)
+    Ok(path.split('/'))
+}
+
+pub(super) fn validate_only(path: &str) -> Result<()> {
+    let _ = components(path)?;
+    Ok(())
 }
 
 /// DE: Merkt sich Pfade (ohne Groß-/Kleinschreibung) und erkennt Doppelte sowie
@@ -105,23 +123,30 @@ fn lower_chars(part: &str) -> impl Iterator<Item = char> + '_ {
         .map(|c| if c == 'ς' { 'σ' } else { c })
 }
 
-fn folded_key(parts: &[&str]) -> Result<ConfidentialText> {
-    if parts.is_empty() || parts.len() > MAX_DEPTH || !parts.iter().all(|p| component_ok(p)) {
+fn folded_size<'a>(parts: impl Iterator<Item = &'a str>) -> Result<usize> {
+    let (mut count, mut raw_len, mut len) = (0, 0, 0);
+    for part in parts {
+        if count == MAX_DEPTH || !component_ok(part) {
+            return Err(invalid());
+        }
+        let separator = usize::from(count > 0);
+        raw_len += part.len() + separator;
+        if raw_len > MAX_PATH_BYTES {
+            return Err(invalid());
+        }
+        len += lower_chars(part).map(char::len_utf8).sum::<usize>() + separator;
+        count += 1;
+    }
+    if count == 0 {
         return Err(invalid());
     }
-    let raw_len: usize = parts.iter().map(|p| p.len()).sum::<usize>() + parts.len() - 1;
-    if raw_len > MAX_PATH_BYTES {
-        return Err(invalid());
-    }
-    let len = parts
-        .iter()
-        .map(|p| lower_chars(p).map(char::len_utf8).sum::<usize>())
-        .sum::<usize>()
-        + parts.len()
-        - 1;
-    let mut out = SecretBytes::zeroed(len)?;
+    Ok(len)
+}
+
+fn folded_key<'a>(parts: impl Iterator<Item = &'a str> + Clone) -> Result<ConfidentialText> {
+    let mut out = SecretBytes::zeroed(folded_size(parts.clone())?)?;
     let mut offset = 0;
-    for (index, part) in parts.iter().enumerate() {
+    for (index, part) in parts.enumerate() {
         if index > 0 {
             out.expose_mut()[offset] = b'/';
             offset += 1;
@@ -141,6 +166,14 @@ impl PathSet {
     /// # Errors
     /// DE/EN: [`Error::InvalidInput`] (path), [`Error::MemoryLock`].
     pub fn insert(&mut self, parts: &[&str], is_file: bool) -> Result<()> {
+        self.insert_components(parts.iter().copied(), is_file)
+    }
+
+    pub(super) fn insert_components<'a>(
+        &mut self,
+        parts: impl Iterator<Item = &'a str> + Clone,
+        is_file: bool,
+    ) -> Result<()> {
         let key = folded_key(parts)?;
         for (index, byte) in key.bytes().iter().enumerate() {
             if *byte == b'/' && self.files.contains(&key.bytes()[..index]) {

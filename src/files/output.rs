@@ -138,22 +138,23 @@ impl Drop for TempOutput {
     }
 }
 
-fn join(root: &Path, parts: &[&str]) -> PathBuf {
-    parts
-        .iter()
-        .fold(root.to_path_buf(), |p, part| p.join(part))
+fn join<'a>(root: &Path, parts: impl Iterator<Item = &'a str>) -> PathBuf {
+    parts.fold(root.to_path_buf(), |p, part| p.join(part))
 }
 
 /// DE: Legt einen (bereits geprüften) Ordner unter `root` an.
 /// EN: Creates an (already validated) directory below `root`.
-pub(crate) fn create_dir(root: &Path, parts: &[&str]) -> Result<()> {
+pub(crate) fn create_dir<'a>(root: &Path, parts: impl Iterator<Item = &'a str>) -> Result<()> {
     dir_builder().create(join(root, parts))?;
     Ok(())
 }
 
 /// DE: Legt eine neue Datei unter `root` an (Elternordner bei Bedarf).
 /// EN: Creates a new file below `root` (parent directories if needed).
-pub(crate) fn create_file(root: &Path, parts: &[&str]) -> Result<OutputFile> {
+pub(crate) fn create_file<'a>(
+    root: &Path,
+    parts: impl Iterator<Item = &'a str>,
+) -> Result<OutputFile> {
     let path = join(root, parts);
     if let Some(parent) = path.parent() {
         dir_builder().create(parent)?;

@@ -2,6 +2,15 @@
 
 **DE** | [EN](#english)
 
+DE: Interne Pfadprüfungen verwenden vollständig vorab geprüfte geliehene Iteratoren
+statt gewöhnlicher Pfadteil-Referenzlisten. Normalisierte Schlüssel bleiben gesperrt;
+öffentliche validate()-Ergebnisse gehören weiterhin dem Aufrufer. Quell-/Ausgabepfade,
+Baum-/Skalarmetadaten und Stack-/Compilerkopien bleiben offen.
+EN: Internal validation uses fully checked borrowed components before filesystem
+effects, removing seven component-vector allocations without changing public APIs,
+Unicode folding or path limits. This does not protect source/output paths or tree
+metadata. See the [scoped plan](security/PATH_COMPONENT_PLAN.md).
+
 **Secret-Speichersperren sind zwingend**: Scheitert die Sperre eines verwalteten Secret-Typs,
 wird seine Konstruktion verweigert. Das ist noch kein Nachweis für alle vorgelagerten Kopien:
 [Audit #147](security/SECRET_LIFETIME_AUDIT.md) erfasst offene I/O-/AEAD-/Rekey-/API-Pfade.
