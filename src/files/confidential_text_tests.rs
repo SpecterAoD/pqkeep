@@ -22,11 +22,11 @@ impl ConfidentialText {
 fn owner_is_locked_before_private_fill_and_stable_after_moves() {
     let mut text = ConfidentialText::prepare().unwrap();
     text.assert_owner_locked();
-    let owner = std::ptr::from_ref(text.0.get()).addr();
+    let owner = std::ptr::from_ref(text.0.get());
     let source = ConfidentialText::from_text("Ä/日本語").unwrap();
     text.copy_from(&source).unwrap();
     let moved = Box::new(text);
-    assert!(std::ptr::from_ref(moved.0.get()).addr() == owner);
+    assert!(std::ptr::eq(std::ptr::from_ref(moved.0.get()), owner));
     moved.assert_owner_locked();
     assert_eq!(moved.expose().unwrap(), "Ä/日本語");
 }
@@ -51,10 +51,10 @@ fn text_order_borrow_redaction_and_duplicate_remain_compatible() {
 #[test]
 fn explicit_zeroize_preserves_empty_text_and_locked_owner() {
     let mut text = ConfidentialText::from_text("private metadata fixture").unwrap();
-    let owner = std::ptr::from_ref(text.0.get()).addr();
+    let owner = std::ptr::from_ref(text.0.get());
     text.zeroize();
     text.assert_owner_locked();
-    assert!(std::ptr::from_ref(text.0.get()).addr() == owner);
+    assert!(std::ptr::eq(std::ptr::from_ref(text.0.get()), owner));
     assert_eq!(text.expose().unwrap(), "");
     let borrowed: &[u8] = text.borrow();
     assert_eq!(borrowed, b"");
