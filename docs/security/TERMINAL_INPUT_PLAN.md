@@ -86,3 +86,20 @@ trees must exclude the fixture, with/without API. Existing platform CI Clippy/te
 include all features to audit the fixture too; all other gates stay intact. Native
 Root integration tests use only the safe fixture API and real protected Input reader,
 without prebuild prerequisites. Signed clarification precedes fixture implementation.
+
+## Queued-error remediation before code / Restpufferbehebung vor Code
+
+DE: Zusätzliche echte PTY-Probe zeigt3/3 nach ungültigem UTF8 noch25 öffentliche
+Fixturebytes im Eingabepuffer, obwohl der Modus restauriert war. Nicht als erfolgreiche
+Fehler-Vertraulichkeit ausgeben. Vor finalem Code: nur bei Fehler/Abbruch und Unwind
+bereits wartende Eingaben vor Modusfreigabe verwerfen; erfolgreiche Reads erhalten
+vorgetippte Bestätigung. Linux TCSAFLUSH statt NOW nur auf diesen Fehlerwegen, mit
+Read-back des sicheren Modus vor Prompt. Windows eigene bestehende CONIN$-Read/Write-
+Datei für dokumentiert schreibberechtigte Fehlerbereinigung öffnen, ursprüngliches
+Stdin weiter lesen; keine ACL-/Token-/Nutzerrechte ändern. Flush-Rückgabe kontrollieren,
+bei fehlgeschlagener Fehlerbereinigung nicht still zum Echo-Modus zurückfallen.
+EN: Add true queued-suffix/typed-ahead PTY regressions and native Windows queue-count,
+normal-preservation/error-discard tests, including ordinary read-only input handles.
+Future bytes arriving after the operation, OS-owned buffers/real IME and full
+process/isolation remain OPEN. Existing local-v1 sixteen passes are historical once
+this code changes. Signed clarification precedes the queued-error implementation.
