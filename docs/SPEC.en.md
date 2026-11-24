@@ -450,3 +450,13 @@ ordinary read-only stdin handles. Report flush failure without silently restorin
 echo. No ACL/token/user-right changes. Future input arriving after operation completion
 is outside this guarantee. Microsoft: [flush contract](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),
 [standard/CONIN$ handles](https://learn.microsoft.com/en-us/windows/console/console-handles).
+
+R6/R8 fixed owners: populate hash output, HKDF PRK and result directly in exact-sized
+prelocked SecretBytes through a length-checked mutable Output borrow; return the
+same owner without a private typed output Vec or array value. HMAC state/scratch
+and archive framing/records reuse existing SecretWorkspace with the inner buffer
+descriptor locked before allocation. Only concrete reviewed drop markers; preserve
+failure before private use and wipe-before-unlock. Native tests must observe actual
+nested descriptor/payload locks before processing and after owner moves. This does
+not establish complete provider/compiler/process protection; remaining R6/R7/R8
+boundaries stay OPEN. See the [fixed owner plan](security/FIXED_WORKSPACE_OWNER_PLAN.md).

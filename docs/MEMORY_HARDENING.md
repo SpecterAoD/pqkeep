@@ -2,6 +2,19 @@
 
 **DE** | [EN](#english)
 
+DE: Feste HKDF/HMAC-Zustände und -Scratch sowie Archiv-Framing/Eintragsdatensätze
+verwenden SecretWorkspace: Der innere Pufferdescriptor wird vor Allokation und
+privater Befüllung stabil gesperrt. Hashausgabe, HKDF-PRK und -Ergebnis entstehen
+direkt in exakt großen SecretBytes über eine geprüfte mutable Output-Leihsicht;
+kein zusätzlicher typisierter Ausgabe-Vec oder private Rückkopie. Konkrete
+Drop-Marker bleiben an geprüfte Payloadtypen gebunden. Kein ungesperrter Fallback.
+EN: Fixed HMAC/scratch and archive framing/record buffers reuse existing nested
+workspace owners; hash/HKDF outputs and PRK use direct checked borrows from prelocked
+SecretBytes. Preserve wiping before unlock and actual descriptor/payload locks
+through owner moves. Provider internals, scalar/compiler/stack/register copies and
+full process/helper boundaries remain OPEN. See the
+[fixed workspace plan](security/FIXED_WORKSPACE_OWNER_PLAN.md).
+
 DE: Feste typisierte 32-/64-Byte-Caller-Seeds nur als geprüfte Leihsicht aus
 vorab gesperrten SecretBytes verwenden. Exakte Längenprüfung vor Konstruktion;
 Descriptor und Payload vor privater Kopie sperren. Die Payload war bereits gesperrt;

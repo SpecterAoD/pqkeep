@@ -1,5 +1,18 @@
 # Secret copy inventory / Inventar der Secret-Kopien (#147)
 
+DE: Aktueller enger Ownerschritt auf Main5eb4696: Hash-/HKDF-Ausgabe und PRK ohne
+zusätzlichen typisierten Vec direkt in vorab gesperrte SecretBytes; HMAC/Scratch und
+Archiv-Framing/Record mit vor Allokation gesperrten inneren SecretWorkspace-Descriptoren.
+Native Laufzeitabnahme ist Voraussetzung. Das folgende historische Inventar bleibt
+als Ausgangsbefund erhalten; seine A1–A6-Zeilen sind keine Aussage, dass bereits
+nachgebesserte Main-Pfade noch dieselben Implementierungen verwenden.
+EN: Current scoped fixed-owner remediation uses checked mutable output borrows and
+the existing nested workspace owner. Full native validation remains required.
+Historical baseline rows below are not a fresh finding against remediated paths;
+provider construction/scratch, parser/source/output/tree/shared-registry and
+GUI/full-process/compiler boundaries remain OPEN. See
+[fixed workspace plan](FIXED_WORKSPACE_OWNER_PLAN.md).
+
 DE: Klasseninventar auf Main `94b2304` mit gezielter Quellprüfung der genannten Pfade,
 kein Laufzeit-Heapdump und keine Behauptung, sämtliche Compiler-/Providerkopien erfasst
 zu haben. „Gesperrt“ bezeichnet die explizit verwaltete Allokation, nicht jede vorgelagerte
