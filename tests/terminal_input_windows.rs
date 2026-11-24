@@ -22,14 +22,21 @@ fn native_protected_input_runs_in_own_console_child() {
         .creation_flags(0x10)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::piped())
         .spawn()
         .unwrap();
     let deadline = Instant::now() + Duration::from_secs(30);
     loop {
-        if let Some(status) = child.try_wait().unwrap() {
-            assert!(status.success(), "own native input child failed");
+        if child.try_wait().unwrap().is_some() {
             let output = child.wait_with_output().unwrap();
+            // DE/EN: Ausschließlich feste öffentliche Fixture-Ausgabe / fixed public fixture only.
+            assert!(
+                output.status.success(),
+                "own native input child failed ({}): {} {}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
             assert!(
                 std::str::from_utf8(&output.stdout)
                     .unwrap()

@@ -64,6 +64,12 @@ jobs:
       # DE: Reine CLI ohne API/Netzwerkcode muss baubar bleiben.
       # EN: The pure CLI without API/network code must stay buildable.
       - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
+      # DE/EN: Echte eigene Konsolenkinder vor langen Suiten / own console children before long suites.
+      - name: Native Terminaleingabe / native terminal input
+        if: matrix.os == 'windows-latest'
+        run: |
+          cargo test --locked --test terminal_input_windows
+          cargo test --locked --no-default-features --test terminal_input_windows
       - name: Tests mit gesperrtem Speicher / tests with locked memory
         shell: bash
         run: |
