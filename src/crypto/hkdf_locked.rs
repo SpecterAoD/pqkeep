@@ -25,12 +25,14 @@ impl ZeroizeOnDrop for SecretBuffer<Output<Sha3_256>> {}
 impl LockedHmac {
     fn new() -> Result<Self> {
         use hmac::KeyInit;
-        // DE: Nur öffentlicher leerer Schlüssel vor Sperren; privates Rekey erst danach.
-        // EN: Only a public empty key before locking; private rekey happens afterwards.
-        let state =
-            SimpleHmac::<Sha3_256>::new_from_slice(&[]).map_err(|_| crate::Error::Crypto)?;
+        // DE: Descriptor und Kapazität vor öffentlicher Initialisierung/privatem Rekey sperren.
+        // EN: Lock descriptor/capacity before public initialization or private rekey.
+        let mut state = SecretWorkspace::with_capacity(1)?;
+        state.push_preallocated(
+            SimpleHmac::<Sha3_256>::new_from_slice(&[]).map_err(|_| crate::Error::Crypto)?,
+        )?;
         Ok(Self {
-            state: SecretWorkspace::new(vec![state])?,
+            state,
             scratch: SecretWorkspace::zeroed(1)?,
         })
     }
