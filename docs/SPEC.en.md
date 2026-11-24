@@ -392,6 +392,13 @@ this guard. Fallible reservation and payload locking occur directly in the guard
 descriptor before copying; private growth is refused. new(Vec) remains an explicit
 caller ownership boundary without a payload copy. Lock failures wipe transferred
 caller bytes; Drop destroys the buffer while locked and wipes its entire former
-descriptor allocation before unlocking. Preserve public APIs. Other typed-buffer
-descriptors, path/tree data and provider/helper gaps remain open. See the
-[plan](security/BYTE_OWNER_PLAN.md).
+descriptor allocation before unlocking. Preserve public APIs. See the
+[base plan](security/BYTE_OWNER_PLAN.md).
+
+R8 typed owners: reviewed char/usize/bool/WordSpan/ListEntry/u16 buffer descriptors
+use SecretWorkspace to enter stable locked SecretState before reserving. Lock the
+full payload capacity before defaults/private population; no private growth. Use
+concrete reviewed buffer drop markers, without a blanket generic contract. Explicit
+caller list transfer avoids payload copies and wipes on lock failure. Preserve public
+API/normalization/listing/output contracts. Other scalar/path/source/output/tree data
+and provider/helper gaps remain open. See the [typed plan](security/TYPED_OWNER_PLAN.md).

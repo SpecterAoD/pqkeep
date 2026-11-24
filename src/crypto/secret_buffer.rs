@@ -3,6 +3,7 @@
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+use super::secret_state::SecretState;
 use crate::hardening::memlock::{self, LockedRange};
 use crate::{Error, Result};
 
@@ -57,12 +58,10 @@ impl<T: Zeroize> SecretBuffer<T> {
             self.inner.truncate(len);
         }
     }
-}
 
-impl SecretBuffer<u8> {
     // DE: Der Aufrufer hält den Descriptor bereits im gesperrten SecretState.
     // EN: The caller already holds the descriptor in a locked SecretState.
-    pub(super) fn initialize_zeroed(&mut self, len: usize) -> Result<()> {
+    pub(super) fn reserve_empty(&mut self, len: usize) -> Result<()> {
         if self.inner.capacity() != 0 {
             return Err(Error::MemoryLock);
         }
@@ -78,11 +77,10 @@ impl SecretBuffer<u8> {
                 return Err(error);
             }
         }
-        self.inner.resize(len, 0);
         Ok(())
     }
 
-    pub(super) fn adopt_locked(&mut self, mut bytes: Vec<u8>) -> Result<()> {
+    pub(super) fn adopt_locked(&mut self, mut bytes: Vec<T>) -> Result<()> {
         if self.inner.capacity() != 0 {
             bytes.zeroize();
             bytes.spare_capacity_mut().zeroize();
@@ -95,9 +93,47 @@ impl SecretBuffer<u8> {
     }
 }
 
-// DE: Nur u8 markieren: bestehender Drop löscht dessen gesamte Bytekapazität.
-// EN: Mark only u8: the existing destructor wipes its entire byte allocation.
+impl<T: Zeroize + Default> SecretBuffer<T> {
+    pub(super) fn initialize_defaults(&mut self, len: usize) -> Result<()> {
+        self.reserve_empty(len)?;
+        self.inner.resize_with(len, T::default);
+        Ok(())
+    }
+}
+
+impl<T: Zeroize> SecretBuffer<T>
+where
+    Self: ZeroizeOnDrop,
+{
+    pub(super) fn prepare_state() -> Result<SecretState<Self>> {
+        SecretState::new(Self::new(Vec::new())?)
+    }
+
+    // DE: Quelle nur ausleihen; keinen zusätzlichen privaten Vec-Descriptor bewegen.
+    // EN: Borrow the source; do not move another private Vec descriptor.
+    pub(super) fn prepare_state_or_wipe(source: &mut Vec<T>) -> Result<SecretState<Self>> {
+        let state = Self::prepare_state();
+        if state.is_err() {
+            source.zeroize();
+            source.spare_capacity_mut().zeroize();
+        }
+        state
+    }
+}
+
+impl SecretBuffer<u8> {
+    pub(super) fn initialize_zeroed(&mut self, len: usize) -> Result<()> {
+        self.initialize_defaults(len)
+    }
+}
+
+// DE: Konkrete primitive Werte: Drop löscht Elemente und volle frühere Kapazität.
+// EN: Concrete primitive values: Drop wipes elements and the full former allocation.
 impl ZeroizeOnDrop for SecretBuffer<u8> {}
+impl ZeroizeOnDrop for SecretBuffer<char> {}
+impl ZeroizeOnDrop for SecretBuffer<usize> {}
+impl ZeroizeOnDrop for SecretBuffer<bool> {}
+impl ZeroizeOnDrop for SecretBuffer<u16> {}
 
 impl<T: Zeroize> Zeroize for SecretBuffer<T> {
     fn zeroize(&mut self) {

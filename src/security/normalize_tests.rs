@@ -78,8 +78,12 @@ fn deterministic_mixed_sequences_match_without_changing_equal_class_order() {
 #[test]
 fn actual_decomposition_and_sort_workspaces_are_locked_and_stable() {
     let mut chars = decompose("a\u{0315}\u{0300}\u{0327}").unwrap();
-    let mut scratch = SecretBuffer::new(vec!['\0'; chars.expose().len()]).unwrap();
-    let mut counts = SecretBuffer::new(vec![0usize; 256]).unwrap();
+    let mut scratch = SecretWorkspace::<char>::zeroed(chars.expose().len()).unwrap();
+    let mut counts = SecretWorkspace::<usize>::zeroed(256).unwrap();
+    chars.assert_metadata_locked();
+    scratch.assert_metadata_locked();
+    counts.assert_metadata_locked();
+    let chars_pointer = chars.expose().as_ptr();
     let addresses = [
         chars.expose().as_ptr().addr(),
         scratch.expose().as_ptr().addr(),
@@ -101,7 +105,7 @@ fn actual_decomposition_and_sort_workspaces_are_locked_and_stable() {
         scratch.expose_mut(),
         counts.expose_mut(),
     );
-    assert_eq!(chars.expose().as_ptr().addr(), addresses[0]);
+    assert!(std::ptr::eq(chars.expose().as_ptr(), chars_pointer));
     for address in addresses {
         assert!(memlock::is_locked(address));
     }

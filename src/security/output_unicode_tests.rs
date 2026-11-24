@@ -3,12 +3,12 @@
 #![allow(clippy::unwrap_used)]
 
 use super::*;
-use crate::{crypto::secret_buffer::SecretBuffer, hardening::memlock};
+use crate::{crypto::secret_workspace::SecretWorkspace, hardening::memlock};
 
 #[test]
 fn locked_unicode_workspace_handles_boundaries_and_short_writes() {
     for capacity in [2, 3, 127, 128, 129, 1024] {
-        let mut storage = SecretBuffer::new(vec![0u16; capacity]).unwrap();
+        let mut storage = SecretWorkspace::zeroed(capacity).unwrap();
         let fixture = format!("{}α中🙂{}", "x".repeat(1023), "y".repeat(1025));
         let mut actual = Vec::new();
         write_text(storage.expose_mut(), &fixture, |words| {
@@ -28,7 +28,7 @@ fn locked_unicode_workspace_handles_boundaries_and_short_writes() {
 #[test]
 fn unicode_workspace_is_wiped_on_backend_error_and_zero_or_invalid_progress() {
     for result in [Err(io::ErrorKind::BrokenPipe), Ok(0), Ok(1025)] {
-        let mut storage = SecretBuffer::new(vec![0u16; 1024]).unwrap();
+        let mut storage = SecretWorkspace::zeroed(1024).unwrap();
         let error = write_text(storage.expose_mut(), "α中🙂", |words| {
             assert!(memlock::is_locked(words.as_ptr().addr()));
             result.map_err(io::Error::from)

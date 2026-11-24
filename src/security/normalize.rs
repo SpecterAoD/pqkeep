@@ -3,7 +3,7 @@
 
 use crate::{
     Error, Result,
-    crypto::{SecretBytes, secret_buffer::SecretBuffer},
+    crypto::{SecretBytes, secret_workspace::SecretWorkspace},
 };
 use unicode_normalization::char::{canonical_combining_class, compose, decompose_compatible};
 
@@ -13,12 +13,12 @@ fn invalid() -> Error {
     }
 }
 
-fn decompose(input: &str) -> Result<SecretBuffer<char>> {
+fn decompose(input: &str) -> Result<SecretWorkspace<char>> {
     let mut count = Some(0usize);
     for ch in input.chars() {
         decompose_compatible(ch, |_| count = count.and_then(|n| n.checked_add(1)));
     }
-    let mut chars = SecretBuffer::new(vec!['\0'; count.ok_or_else(invalid)?])?;
+    let mut chars = SecretWorkspace::zeroed(count.ok_or_else(invalid)?)?;
     let mut offset = 0;
     for ch in input.chars() {
         decompose_compatible(ch, |value| {
@@ -54,8 +54,8 @@ fn order_run(run: &mut [char], scratch: &mut [char], counts: &mut [usize]) {
 }
 
 fn reorder(chars: &mut [char]) -> Result<()> {
-    let mut scratch = SecretBuffer::new(vec!['\0'; chars.len()])?;
-    let mut counts = SecretBuffer::new(vec![0usize; 256])?;
+    let mut scratch = SecretWorkspace::zeroed(chars.len())?;
+    let mut counts = SecretWorkspace::zeroed(256)?;
     let mut start = 0;
     for end in 0..=chars.len() {
         if end == chars.len() || canonical_combining_class(chars[end]) == 0 {

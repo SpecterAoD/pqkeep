@@ -7,7 +7,7 @@
 //! not count towards the entropy estimate.
 
 use crate::Result;
-use crate::crypto::secret_buffer::SecretBuffer;
+use crate::crypto::secret_workspace::SecretWorkspace;
 
 #[cfg(test)]
 #[path = "patterns_tests.rs"]
@@ -22,7 +22,7 @@ pub(super) const MIN_RUN: usize = 4;
 /// DE: Gefundene Muster. EN: Patterns found.
 pub(super) struct Found {
     /// DE: Pro Zeichen: Teil eines Musters? EN: Per character: part of a pattern?
-    pub marked: SecretBuffer<bool>,
+    pub marked: SecretWorkspace<bool>,
     /// DE: Gründe in fester Reihenfolge. EN: Reasons in fixed order.
     pub reasons: Vec<Reason>,
 }
@@ -88,8 +88,8 @@ pub(super) fn find(chars: &[char]) -> Result<Found> {
     Ok(Found { marked, reasons })
 }
 
-fn mask(len: usize) -> Result<SecretBuffer<bool>> {
-    SecretBuffer::new(vec![false; len])
+fn mask(len: usize) -> Result<SecretWorkspace<bool>> {
+    SecretWorkspace::zeroed(len)
 }
 
 /// DE: Markiert Läufe ≥ `MIN_RUN`, in denen benachbarte Zeichen `rel` erfüllen.

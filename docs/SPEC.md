@@ -391,5 +391,13 @@ Descriptor, erst danach wird kopiert; privates Wachstum wird verweigert. new(Vec
 bleibt eine explizite Caller-Ownership-Grenze ohne Payloadkopie. Sperrfehler löschen
 übernommene Callerbytes; Drop zerstört den Puffer gesperrt und löscht die gesamte
 ehemalige Descriptorallokation vor Unlock. Öffentliche APIs bleiben erhalten.
-Andere typisierte Descriptoren, Pfad-/Baumdaten und Provider-/Helper-Grenzen bleiben
-offen. Siehe [Plan](security/BYTE_OWNER_PLAN.md).
+Siehe [Basisplan](security/BYTE_OWNER_PLAN.md).
+
+R8-Typowner: Geprüfte char-/usize-/bool-/WordSpan-/ListEntry-/u16-Pufferdescriptoren
+liegen über SecretWorkspace ebenfalls vor Reservierung im stabilen gesperrten
+SecretState. Gesamte Payloadkapazität vor Defaults/private Befüllung sperren, kein
+privates Wachstum. Konkrete geprüfte Buffer-Drop-Marker statt pauschalem generischem
+Vertrag. Explizite Caller-Listenübernahme ohne Payloadkopie; bei Sperrfehlern löschen.
+Öffentliche API-/Normalisierungs-/Listen-/Ausgabeverträge bleiben erhalten. Andere
+skalare, Pfad-/Quell-/Ausgabe-/Baumdaten und Provider-/Helper-Grenzen bleiben offen.
+Siehe [Typplan](security/TYPED_OWNER_PLAN.md).

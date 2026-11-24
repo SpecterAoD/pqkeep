@@ -46,8 +46,11 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   nach Main gemergt ([PR307](https://github.com/SpecterAoD/pqkeep/pull/307)).
   / Locked metadata owners merged; Main acceptance tracked separately.
   [SecretBytes-Basisdescriptoren / base byte-owner descriptors](security/BYTE_OWNER_PLAN.md)
-  in Bearbeitung; weitere Metadaten-/Providerzustände und verifizierte Passworthelfer offen.
-  / Base byte-owner guards in progress; other metadata/providers/helpers remain open.
+  nach Main gemergt ([PR308](https://github.com/SpecterAoD/pqkeep/pull/308)).
+  / Base byte-owner guards merged; Main acceptance tracked separately.
+  [Typisierte Descriptoren / typed workspace owners](security/TYPED_OWNER_PLAN.md)
+  in Bearbeitung; weitere skalare/Pfad-/Baum-/Provider-/Helper-Grenzen offen.
+  / Typed workspace owners in progress; remaining scalar/path/tree/provider/helper gaps open.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.

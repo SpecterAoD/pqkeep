@@ -2,22 +2,22 @@
 //! EN: Listing records locked before collection without reallocation.
 
 use super::{ConfidentialText, EntryKind, ListEntry, MAX_LIST_ENTRIES, archive::Entry};
-use crate::{Error, Result, crypto::secret_buffer::SecretBuffer};
+use crate::{Error, Result, crypto::secret_workspace::SecretWorkspace};
 use std::{fmt, ops::Deref, slice};
 
 /// DE: Vertrauliche Listeneinträge; Ausleihen ist eine bewusste Ausgabegrenze.
 /// EN: Confidential listing records; borrowing is an explicit disclosure boundary.
 #[derive(Default)]
-pub struct ConfidentialEntries(Option<SecretBuffer<ListEntry>>);
+pub struct ConfidentialEntries(Option<SecretWorkspace<ListEntry>>);
+
+// DE: ListEntry löscht verschachtelte Owner; Buffer löscht danach auch Recordbytes.
+// EN: ListEntry wipes nested owners; the buffer then wipes the former record bytes.
+impl zeroize::ZeroizeOnDrop for crate::crypto::secret_buffer::SecretBuffer<ListEntry> {}
 
 impl ConfidentialEntries {
     pub(crate) fn prepare(&mut self) -> Result<()> {
         if self.0.is_none() {
-            let mut empty = Vec::new();
-            empty
-                .try_reserve_exact(MAX_LIST_ENTRIES)
-                .map_err(|_| Error::MemoryLock)?;
-            self.0 = Some(SecretBuffer::new(empty)?);
+            self.0 = Some(SecretWorkspace::with_capacity(MAX_LIST_ENTRIES)?);
         }
         Ok(())
     }
@@ -57,7 +57,7 @@ impl TryFrom<Vec<ListEntry>> for ConfidentialEntries {
                 field: "list_limit",
             });
         }
-        Ok(Self(Some(SecretBuffer::new(entries)?)))
+        Ok(Self(Some(SecretWorkspace::new(entries)?)))
     }
 }
 
@@ -65,7 +65,7 @@ impl Deref for ConfidentialEntries {
     type Target = [ListEntry];
 
     fn deref(&self) -> &Self::Target {
-        self.0.as_ref().map_or(&[], SecretBuffer::expose)
+        self.0.as_ref().map_or(&[], SecretWorkspace::expose)
     }
 }
 

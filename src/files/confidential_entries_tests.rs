@@ -7,6 +7,38 @@ use super::*;
 use crate::crypto::SecretBytes;
 
 #[test]
+fn prepared_arena_descriptor_is_locked_before_population_and_after_moves() {
+    let mut entries = ConfidentialEntries::default();
+    entries.prepare().unwrap();
+    entries.0.as_ref().unwrap().assert_metadata_locked();
+    assert!(entries.is_empty());
+    let pointer = entries.as_ptr();
+    let mut moved = Box::new(entries);
+    moved
+        .push(&Entry::fixture(ConfidentialText::from_text("name").unwrap(), Some(17)).unwrap())
+        .unwrap();
+    assert!(std::ptr::eq(moved.as_ptr(), pointer));
+    moved.0.as_ref().unwrap().assert_metadata_locked();
+    assert_eq!(moved[0].path.expose().unwrap(), "name");
+    assert_eq!(moved[0].bytes, Some(17));
+}
+
+#[test]
+fn caller_listing_transfer_keeps_payload_and_guards_descriptor() {
+    let source = vec![ListEntry {
+        path: ConfidentialText::from_text("name").unwrap(),
+        kind: EntryKind::File,
+        bytes: Some(17),
+    }];
+    let pointer = source.as_ptr();
+    let entries = ConfidentialEntries::try_from(source).unwrap();
+    assert!(std::ptr::eq(entries.as_ptr(), pointer));
+    entries.0.as_ref().unwrap().assert_metadata_locked();
+    assert_eq!(entries[0].bytes, Some(17));
+    entries[0].path.assert_owner_locked();
+}
+
+#[test]
 fn unprepared_arena_refuses_collection_without_mutation() {
     let mut entries = ConfidentialEntries::default();
     let entry = Entry::fixture(ConfidentialText::from_text("name").unwrap(), Some(17)).unwrap();
@@ -19,7 +51,8 @@ fn full_arena_refuses_growth_and_preserves_existing_records() {
     let mut arena = Vec::new();
     arena.try_reserve_exact(1).unwrap();
     let capacity = arena.capacity();
-    let mut entries = ConfidentialEntries(Some(SecretBuffer::new(arena).unwrap()));
+    let mut entries = ConfidentialEntries(Some(SecretWorkspace::new(arena).unwrap()));
+    entries.0.as_ref().unwrap().assert_metadata_locked();
     let entry = Entry::fixture(
         ConfidentialText::from_text("Ä/name").unwrap(),
         Some(u64::MAX),
@@ -31,7 +64,8 @@ fn full_arena_refuses_growth_and_preserves_existing_records() {
     let pointer = entries.as_ptr();
     assert_eq!(entries.push(&entry), Err(Error::MemoryLock));
     assert_eq!(entries.len(), capacity);
-    assert_eq!(entries.as_ptr(), pointer);
+    assert!(std::ptr::eq(entries.as_ptr(), pointer));
+    entries.0.as_ref().unwrap().assert_metadata_locked();
     for record in &entries {
         record.path.assert_owner_locked();
         assert_eq!(record.path.expose().unwrap(), "Ä/name");
@@ -90,7 +124,8 @@ fn lock_denial_child() {
     .unwrap();
     assert_eq!(entries.push(&source), Err(Error::MemoryLock));
     assert_eq!(entries.len(), 1);
-    assert_eq!(entries.as_ptr(), pointer);
+    assert!(std::ptr::eq(entries.as_ptr(), pointer));
+    entries.0.as_ref().unwrap().assert_metadata_locked();
     assert_eq!(entries[0].path.expose().unwrap(), "kept");
     assert_eq!(entries[0].bytes, Some(17));
     entries[0].path.assert_owner_locked();

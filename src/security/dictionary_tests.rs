@@ -5,13 +5,31 @@
 use super::*;
 use crate::hardening::memlock;
 
-fn locked<T: Zeroize>(buffer: &SecretBuffer<T>) {
+fn locked<T: Zeroize>(buffer: &SecretWorkspace<T>)
+where
+    crate::crypto::secret_buffer::SecretBuffer<T>: zeroize::ZeroizeOnDrop,
+{
+    buffer.assert_metadata_locked();
     let slice = buffer.expose();
     if !slice.is_empty() {
         let first = slice.as_ptr().addr();
         assert!(memlock::is_locked(first));
         assert!(memlock::is_locked(first + size_of_val(slice) - 1));
     }
+}
+
+#[test]
+fn word_span_owner_is_locked_before_population_and_after_explicit_wiping() {
+    let mut spans = SecretWorkspace::<WordSpan>::with_capacity(1).unwrap();
+    spans.assert_metadata_locked();
+    spans
+        .push_preallocated(WordSpan { start: 3, end: 8 })
+        .unwrap();
+    locked(&spans);
+    assert_eq!(spans.expose()[0].range(), 3..8);
+    spans.zeroize();
+    assert!(spans.expose().is_empty());
+    spans.assert_metadata_locked();
 }
 
 #[test]
