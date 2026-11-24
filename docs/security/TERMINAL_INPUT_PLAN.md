@@ -59,3 +59,18 @@ Handle-/Peer-Schutz sowie übrige R8-/Compiler-/Stack-/Registergrenzen bleiben o
 EN: #147/roadmap remain In progress. No installation, rights/ACL/Registry/host-policy
 change, sandbox relaxation, deployment or new IPC. Recovery through a separately
 reviewed signed revert PR; preserve local work and full backup.
+
+## Native fixture refinement before implementation / Präzisierung vor Fixture-Code
+
+DE: Die Root-Crossprüfung bestätigt das auch für Integrationstests erzwungene
+Unsafe-Verbot. Keine Ausnahme hinzufügen. Native Test-FFI stattdessen als eigenes
+Konsolenfixture-Example der vorhandenen Plattformcrate; nur öffentliche synthetische
+Ereignisse. Root-Test startet dieses in CREATE_NEW_CONSOLE. Fixture prüft alleinige
+Konsolenzugehörigkeit vor dem Schreiben und startet den sicheren Root-Testkindprozess
+mit derselben eigenen Eingabekonsole. Root verwendet nur sichere Reader-/Modus-APIs.
+EN: No Root windows-sys dev dependency or new package. Add one Windows-only CI build
+step for the fixture example; retain every existing check, scanner and eight fuzz
+targets. Both fixture and Root child use checked timeouts; parent verifies exactly
+one actual child test passed, never a successful empty filter. Unsafe remains only
+in the platform boundary/fixture. Keep non-Linux/non-Windows existing provider
+behavior explicitly OPEN rather than introduce a new Unsupported refusal.
