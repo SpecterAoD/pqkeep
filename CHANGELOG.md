@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Sieben interne Pfadprüfungen ohne gewöhnliche Pfadteil-Referenzlisten ausführen;
+  den gesamten Pfad vor Dateierzeugung prüfen (#147 R8).
+  EN: Reuse fully validated borrowed components internally, preserving public APIs,
+  Unicode folding and path limits. Source/output paths and tree metadata remain open.
+
 - DE: Zusätzliche Seitenadresslisten pro Sperrbereich durch feste Präfixdatensätze
   ersetzen; Geometrie, Budget und Referenzzähler auf Überlauf prüfen (#147 R8).
   EN: Remove per-range address allocations, preserve shared/partial lock cleanup

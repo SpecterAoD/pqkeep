@@ -38,7 +38,7 @@ fn file<R: Read>(
     }
     let size = entry.size();
     visit(&entry)?;
-    paths::validate(entry.path()?.expose()?)?;
+    paths::validate_only(entry.path()?.expose()?)?;
     archive.copy_file(size, &mut sink())?;
     if archive.next_entry()?.is_some() {
         return Err(Error::InvalidInput { field: "archive" });
@@ -61,7 +61,7 @@ fn directory<R: Read>(
         // DE: List-Budget vor PathSet/Kopien prüfen; kein öffentlicher Callback.
         // EN: Check listing budget before PathSet/copies; no public callback.
         visit(&entry)?;
-        seen.insert(&paths::validate(entry.path()?.expose()?)?, entry.is_file())?;
+        seen.insert_components(paths::components(entry.path()?.expose()?)?, entry.is_file())?;
         if entry.is_file() {
             archive.copy_file(entry.size(), &mut sink())?;
             report.files += 1;

@@ -409,3 +409,11 @@ Geometrie-/Rundungs-/Budget-/Referenzzählerüberlauf kann keine vollständige S
 melden. Eigene Record-Felder nach Freigabe zeroisieren. Gemeinsame Registry,
 temporäre Stack-/Compilerkopien und übrige R6/R7/R8-Grenzen bleiben offen.
 Siehe [Teilplan](security/LOCK_RANGE_PLAN.md).
+
+R8-Pfadteile: Sieben interne Pfadprüfungen verwenden vollständig vorab validierte,
+geliehene Iteratoren statt gewöhnlicher Referenzlisten. Gesamten Pfad vor Übergabe
+an Dateierzeugung prüfen; Unicode-/Sigma-Faltung, Byte-/Tiefenlimits und Konfliktregeln
+bleiben erhalten. Öffentliche validate()->Vec- und PathSet::insert(&[&str])-Verträge
+bleiben erhalten; normalisierte Schlüssel weiterhin zwingend sperren. Öffentliche
+Callerlisten, Quell-/Ausgabepfade, Baum-/Skalarmetadaten und Stack-/Compilerkopien
+bleiben offen. Siehe [Pfadteilplan](security/PATH_COMPONENT_PLAN.md).

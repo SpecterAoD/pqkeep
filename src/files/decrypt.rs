@@ -202,7 +202,7 @@ fn extract_file<R: Read>(
         .filter(Entry::is_file)
         .ok_or(Error::InvalidInput { field: "archive" })?;
     let size = entry.size();
-    paths::validate(entry.path()?.expose()?)?;
+    paths::validate_only(entry.path()?.expose()?)?;
     let (temp, file) = TempOutput::file(target)?;
     let mut out = file;
     archive.copy_file(size, &mut out)?;
@@ -230,16 +230,16 @@ fn extract_dir<R: Read>(
     let mut seen = PathSet::default();
     let mut report = Report::default();
     while let Some(entry) = archive.next_entry()? {
-        let parts = paths::validate(entry.path()?.expose()?)?;
-        seen.insert(&parts, entry.is_file())?;
+        let parts = paths::components(entry.path()?.expose()?)?;
+        seen.insert_components(parts.clone(), entry.is_file())?;
         if entry.is_file() {
-            let mut out = output::create_file(temp.path(), &parts)?;
+            let mut out = output::create_file(temp.path(), parts)?;
             archive.copy_file(entry.size(), &mut out)?;
             finish_file(out)?;
             report.files += 1;
             report.bytes += entry.size();
         } else {
-            output::create_dir(temp.path(), &parts)?;
+            output::create_dir(temp.path(), parts)?;
             report.directories += 1;
         }
     }

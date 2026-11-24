@@ -60,7 +60,7 @@ pub(crate) fn collect_file(path: &Path) -> Result<SourceEntry> {
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or(Error::InvalidInput { field: "path" })?;
-    paths::validate(name)?;
+    paths::validate_only(name)?;
     Ok(SourceEntry {
         rel: name.to_owned(),
         abs: path.to_path_buf(),
@@ -94,7 +94,7 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<S
             .file_name()
             .and_then(|n| n.to_str())
             .ok_or(Error::InvalidInput { field: "path" })?;
-        paths::validate(name)?;
+        paths::validate_only(name)?;
         if !names.insert(name.to_lowercase()) {
             return Err(Error::InvalidInput { field: "duplicate" });
         }
@@ -167,7 +167,7 @@ fn visit(
         return skip(SkipReason::NonUtf8Name);
     };
     let rel = format!("{prefix}{name}");
-    if paths::validate(&rel).is_err() {
+    if paths::validate_only(&rel).is_err() {
         return skip(SkipReason::InvalidName);
     }
     let file_type = child.file_type()?;

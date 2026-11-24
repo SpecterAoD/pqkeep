@@ -409,3 +409,11 @@ shared pages stay locked until the last user releases them. Geometry/rounding/bu
 refcount overflow cannot report a complete lock. Wipe owned record fields after
 release. Shared registry, temporary stack/compiler copies and remaining R6/R7/R8
 boundaries remain open. See the [scoped plan](security/LOCK_RANGE_PLAN.md).
+
+R8 path components: seven internal path validations use fully validated borrowed
+iterators instead of ordinary reference vectors. Check the entire path before
+passing components to filesystem creation; preserve Unicode/sigma folding, byte/
+depth limits and conflict rules. Preserve public validate()->Vec and
+PathSet::insert(&[&str]) contracts; normalized keys still require locked storage.
+Public caller vectors, source/output paths, tree/scalar metadata and stack/compiler
+copies remain open. See the [component plan](security/PATH_COMPONENT_PLAN.md).
