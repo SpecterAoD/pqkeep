@@ -112,6 +112,7 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 | U2 | Mehrere Empfänger pro Container (ML-KEM-1024 je Empfänger) – Format v2: [V2_DRAFT.md](V2_DRAFT.md); Core, Kommandozeile (`--to` mehrfach, `--with-passphrase`), Menü und Kontextmenü umgesetzt | #45–#47 |
 | U3 | Einrichtungs-Assistent in der Konsole, Notfall-Backup | #48–#50 |
 | U4 | Kontextmenü (Rechtsklick) mit Passphrase-Dialog; U4-1 Linux, U4-2 Windows und U4-3 Fenster unter Linux und Windows, U4-4 Mehrfachauswahl sowie U4-5 Thunar umgesetzt ([INTEGRATION.md](INTEGRATION.md)) | #51–#53, #72, #92 |
+| U5 | Privatsphäre und Metadaten, optional und konfigurierbar (Standard aus, Stufe `--privacy high`): zufällige äußere Dateinamen, Padding, anonyme Empfänger, verborgener Absender, verschlüsselte Zeitstempel und erweiterte Attribute – Reihenfolge #315 → #316 (mit #83, vor #98) → Archiv-Erweiterung im Backup-Epic | #315, #316, #123 |
 | GUI | Optionale moderne grafische Oberfläche, rein in Rust, ohne Web-Technik und Netzwerk; Sicherheit vorab neu bewerten (SPEC-Änderung nötig) | #58–#65 (Meilenstein M3) |
 | – | Spiegel-Modus für Ordner | #54 |
 | – | Diceware-Generator mit gemeinfreier Wortliste | #55 |
