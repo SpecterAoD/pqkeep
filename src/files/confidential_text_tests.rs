@@ -8,6 +8,7 @@ use crate::hardening::memlock;
 impl ConfidentialText {
     pub(crate) fn assert_owner_locked(&self) {
         crate::files::locked_owner_tests::locked(self.0.get());
+        self.0.get().assert_metadata_locked();
         if !self.bytes().is_empty() {
             assert!(memlock::is_locked(self.bytes().as_ptr().addr()));
             assert!(memlock::is_locked(

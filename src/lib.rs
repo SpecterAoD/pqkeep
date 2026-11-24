@@ -57,3 +57,6 @@ mod rekey_fault_tests;
 
 #[cfg(test)]
 mod rekey_crash_tests;
+
+#[cfg(test)]
+mod locked_owner_test_support;

@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: SecretBytes-Bytepufferdescriptor vor privater Befüllung stabil sperren,
+  einschließlich leerer Werte; Sperrfehler strikt propagieren (#147 R8).
+  EN: Prelock managed byte-buffer descriptors with existing stable owners. Preserve
+  public byte APIs, no-copy caller adoption and full wipe-before-unlock destruction.
+
 - DE: Private Namensdescriptoren vor Befüllung sperren; Listeneinträge direkt in
   gesperrten Slots aufbauen, statt private temporäre Datensätze zu verschieben (#147 R8).
   EN: Prelock private name descriptors with existing owners and populate listing

@@ -1,7 +1,7 @@
 //! DE: Fester, typisierter Secret-Puffer; Sperre vor Benutzung, Löschen vor Entsperren.
 //! EN: Fixed typed secret buffer; lock before use, wipe before unlocking.
 
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::hardening::memlock::{self, LockedRange};
 use crate::{Error, Result};
@@ -13,6 +13,14 @@ pub(crate) struct SecretBuffer<T: Zeroize> {
 
 impl<T: Zeroize> SecretBuffer<T> {
     pub(crate) fn new(mut inner: Vec<T>) -> Result<Self> {
+        let lock = Self::lock_allocation(&mut inner)?;
+        Ok(Self {
+            inner,
+            lock: Some(lock),
+        })
+    }
+
+    fn lock_allocation(inner: &mut Vec<T>) -> Result<LockedRange> {
         let bytes = inner
             .capacity()
             .checked_mul(size_of::<T>())
@@ -23,10 +31,7 @@ impl<T: Zeroize> SecretBuffer<T> {
             inner.spare_capacity_mut().zeroize();
             return Err(Error::MemoryLock);
         }
-        Ok(Self {
-            inner,
-            lock: Some(lock),
-        })
+        Ok(lock)
     }
 
     pub(crate) fn expose(&self) -> &[T] {
@@ -53,6 +58,46 @@ impl<T: Zeroize> SecretBuffer<T> {
         }
     }
 }
+
+impl SecretBuffer<u8> {
+    // DE: Der Aufrufer hält den Descriptor bereits im gesperrten SecretState.
+    // EN: The caller already holds the descriptor in a locked SecretState.
+    pub(super) fn initialize_zeroed(&mut self, len: usize) -> Result<()> {
+        if self.inner.capacity() != 0 {
+            return Err(Error::MemoryLock);
+        }
+        self.inner
+            .try_reserve_exact(len)
+            .map_err(|_| Error::MemoryLock)?;
+        match Self::lock_allocation(&mut self.inner) {
+            Ok(lock) => self.lock = Some(lock),
+            Err(error) => {
+                // DE: Helper hat vor Unlock gelöscht; erst danach Allokation freigeben.
+                // EN: Helper wiped before unlocking; only now release the allocation.
+                self.inner = Vec::new();
+                return Err(error);
+            }
+        }
+        self.inner.resize(len, 0);
+        Ok(())
+    }
+
+    pub(super) fn adopt_locked(&mut self, mut bytes: Vec<u8>) -> Result<()> {
+        if self.inner.capacity() != 0 {
+            bytes.zeroize();
+            bytes.spare_capacity_mut().zeroize();
+            return Err(Error::MemoryLock);
+        }
+        let lock = Self::lock_allocation(&mut bytes)?;
+        self.inner = bytes;
+        self.lock = Some(lock);
+        Ok(())
+    }
+}
+
+// DE: Nur u8 markieren: bestehender Drop löscht dessen gesamte Bytekapazität.
+// EN: Mark only u8: the existing destructor wipes its entire byte allocation.
+impl ZeroizeOnDrop for SecretBuffer<u8> {}
 
 impl<T: Zeroize> Zeroize for SecretBuffer<T> {
     fn zeroize(&mut self) {
