@@ -1,28 +1,51 @@
-//! DE: Unter Linux verdeckten Raw-Modus für eine ganze Eingabe halten.
-//! EN: Hold hidden raw mode across an entire Linux input operation.
+//! DE: Raw-Modus über Bestätigung/Retry halten. EN: Hold raw mode through confirmation/retry.
 
-use rustix::termios::{OptionalActions, Termios, tcgetattr, tcsetattr};
+use rustix::termios::{OptionalActions, SpecialCodeIndex, Termios, tcgetattr, tcsetattr};
 
 pub(super) struct Mode {
     original: Option<Termios>,
 }
 
+fn set(actions: OptionalActions, expected: &Termios) -> std::io::Result<()> {
+    tcsetattr(std::io::stdin(), actions, expected)?;
+    let actual = tcgetattr(std::io::stdin())?;
+    // DE: Sicherheitsrelevante Flags/Read-Timing vor Prompt und nach Restore nachprüfen.
+    // EN: Verify security-relevant flags/read timing before prompt and after restore.
+    if actual.input_modes != expected.input_modes
+        || actual.local_modes != expected.local_modes
+        || actual.control_modes != expected.control_modes
+        || actual.output_modes != expected.output_modes
+        || actual.special_codes[SpecialCodeIndex::VMIN]
+            != expected.special_codes[SpecialCodeIndex::VMIN]
+        || actual.special_codes[SpecialCodeIndex::VTIME]
+            != expected.special_codes[SpecialCodeIndex::VTIME]
+    {
+        return Err(std::io::ErrorKind::InvalidData.into());
+    }
+    Ok(())
+}
+
 impl Mode {
     pub(super) fn new() -> std::io::Result<Self> {
-        let input = std::io::stdin();
-        let original = tcgetattr(&input)?;
+        let original = tcgetattr(std::io::stdin())?;
         let mut raw = original.clone();
         raw.make_raw();
         raw.output_modes = original.output_modes;
-        tcsetattr(&input, OptionalActions::Now, &raw)?;
-        Ok(Self {
+        let guard = Self {
             original: Some(original),
-        })
+        };
+        set(OptionalActions::Now, &raw)?;
+        Ok(guard)
     }
 
-    pub(super) fn restore(mut self) -> std::io::Result<()> {
+    pub(super) fn restore(mut self, discard: bool) -> std::io::Result<()> {
         if let Some(original) = &self.original {
-            tcsetattr(std::io::stdin(), OptionalActions::Now, original)?;
+            let actions = if discard {
+                OptionalActions::Flush
+            } else {
+                OptionalActions::Now
+            };
+            set(actions, original)?;
             self.original = None;
         }
         Ok(())
@@ -32,9 +55,9 @@ impl Mode {
 impl Drop for Mode {
     fn drop(&mut self) {
         if let Some(original) = &self.original {
-            // DE: Nur Panic-/Fehler-Sicherung; normale Rückwege prüfen restore explizit.
-            // EN: Panic/error cleanup only; normal return paths explicitly check restore.
-            let _ = tcsetattr(std::io::stdin(), OptionalActions::Now, original);
+            // DE: Nur Fehler-/Unwind-Sicherung; wartende private Reste vor Echo verwerfen.
+            // EN: Error/unwind cleanup only; discard queued private suffix before echo.
+            let _ = set(OptionalActions::Flush, original);
         }
     }
 }

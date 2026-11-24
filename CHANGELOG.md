@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Linux-/Windows-Terminaleingabe ohne gewöhnliche private Providerpuffer;
+  native Records und UTF8-/UTF16-Scratch vor erster Befüllung sperren (#147 R7).
+  EN: Direct protected input, checked console restoration and full native record
+  wipe-before-return; strict decoding, bounded repeats and whole-character backspace.
+  DE: Modus über Bestätigung/Retry halten; Fehlerreste vor Echo-Restore verwerfen.
+  EN: Keep safe mode through confirmation/retries; purge queued suffix on errors,
+  preserve successful typeahead and check native input/cleanup capability.
+  GUI/OS queues, other-platform providers and full process protection remain open.
+
 - DE: Feste typisierte Caller-Seeds direkt vor privater Befüllung stabil sperren;
   zusätzliche innere Pufferdescriptoren entfernen (#147 R6/R8).
   EN: Borrow typed seed views from existing stable locked SecretBytes owners.

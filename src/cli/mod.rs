@@ -52,8 +52,15 @@ mod serve_text;
 mod sign_cmd;
 mod sign_text;
 mod signing;
+mod terminal_input;
+#[cfg(target_os = "linux")]
+mod terminal_input_linux;
 #[cfg(target_os = "linux")]
 mod terminal_mode;
+#[cfg_attr(
+    not(any(target_os = "linux", windows)),
+    path = "terminal_secret_legacy.rs"
+)]
 mod terminal_secret;
 mod text;
 mod text_de;

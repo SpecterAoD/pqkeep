@@ -20,6 +20,28 @@ effects, removing seven component-vector allocations without changing public API
 Unicode folding or path limits. This does not protect source/output paths or tree
 metadata. See the [scoped plan](security/PATH_COMPONENT_PLAN.md).
 
+DE: Terminalpasswörter auf Linux direkt mit rustix in gesperrte SecretBytes lesen;
+kein gepufferter Stdin-Reader oder console-Key-/Escape-Vec im privaten Leseweg.
+Windows-Records, UTF16-Zustand und UTF8-Scratch vor erstem Read sperren. Die FFI
+wählt eine ausgerichtete MaybeUninit-Sicht innerhalb des Callerpuffers; vollständiger
+volatiler Record-Wipe einschließlich Padding vor sicherem Bytezugriff/Rückgabe,
+auch bei Fehler/Unwind. Keine private Record-Rückgabe per Wert.
+EN: Preserve full-character backspace, bounded UTF8/UTF16 input and checked mode
+restoration. Hold safe mode continuously through confirmation/retries; verify Linux
+flags/read timing before the first prompt. Error/cancel/unwind paths discard already
+queued suffixes before releasing mode; successful completion preserves typeahead.
+DE: Modussteuerung über eigenes Read/Write-Handle; beide Handles nachprüfen.
+EN: Windows acquires its own existing CONIN$ read/write handle for cleanup/mode control,
+verifying mode through both owned and original borrowed input handles,
+including ordinary read-only stdin cases, without ACL/token/user-right changes.
+Cleanup failure is reported; no silent echo restoration when Windows flushing fails.
+Only bytes already queued at cleanup are covered, not future input arriving after
+operation completion. Existing non-Linux/non-Windows provider paths remain OPEN, not newly accepted support. OS input queues,
+GUI helpers/real IME and scalar/compiler/register/stack copies remain separate OPEN
+boundaries; release panic=abort does not promise unwind cleanup. See the
+[terminal plan](security/TERMINAL_INPUT_PLAN.md). Root library/binary still forbid
+unsafe; Windows fixture FFI is confined to a platform dev feature and its sole own-console child.
+
 **Secret-Speichersperren sind zwingend**: Scheitert die Sperre eines verwalteten Secret-Typs,
 wird seine Konstruktion verweigert. Das ist noch kein Nachweis für alle vorgelagerten Kopien:
 [Audit #147](security/SECRET_LIFETIME_AUDIT.md) erfasst offene I/O-/AEAD-/Rekey-/API-Pfade.

@@ -58,12 +58,19 @@ jobs:
       # DE/EN: Isolierte Plattform-FFI nativ mit denselben strengen Regeln prüfen.
       # EN: Check isolated platform FFI natively under the same strict rules.
       - run: cargo fmt --check -p pqkeep-platform
-      - run: cargo clippy --all-targets --locked -p pqkeep-platform -- -D warnings
-      - run: cargo test --locked -p pqkeep-platform
+      - run: cargo clippy --all-targets --all-features --locked -p pqkeep-platform -- -D warnings
+      - run: cargo test --all-features --locked -p pqkeep-platform
       - run: cargo clippy --all-targets --locked -- -D warnings
       # DE: Reine CLI ohne API/Netzwerkcode muss baubar bleiben.
       # EN: The pure CLI without API/network code must stay buildable.
       - run: cargo clippy --all-targets --no-default-features --locked -- -D warnings
+      # DE/EN: Echte eigene Konsolenkinder vor langen Suiten / own console children before long suites.
+      - name: Native Terminaleingabe / native terminal input
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          cargo test --locked --test terminal_input_windows
+          cargo test --locked --no-default-features --test terminal_input_windows
       - name: Tests mit gesperrtem Speicher / tests with locked memory
         shell: bash
         run: |

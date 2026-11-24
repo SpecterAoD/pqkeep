@@ -427,3 +427,26 @@ strict failure, explicit early wiping and full former-allocation wipe before unl
 Provider calls and public bytes remain unchanged. Provider-retained seeds, expanded
 state, construction/scratch and remaining R6/R7/R8 boundaries stay open. See the
 [seed plan](security/SEED_OWNER_PLAN.md).
+
+R7 terminal input: Linux reads with rustix directly into prelocked SecretBytes;
+Windows uses caller-protected native record/UTF16/UTF8 storage. No ordinary private
+console Key/escape Vec or complete native record by-value copy. Check alignment
+and size inside the protected allocation; volatile overwrite of every record byte,
+including padding, before safe access/return/unwind. Strict invalid UTF8/UTF16
+rejection, bounded repeats and whole-character backspace; prompt follows locks and
+mode setup, normal success/error paths check restoration. Native Linux PTY/Windows
+input tests are acceptance gates. Other-platform providers, OS input queues,
+GUI/real IME, private scalars/compiler/stack/registers and complete process/dump/
+isolation remain OPEN. No new unprotected fallback. See the
+[terminal plan](security/TERMINAL_INPUT_PLAN.md).
+
+Hold safe mode continuously through confirmation/retries. Linux verifies flags/read
+timing before the first prompt; error/cancel/unwind uses TCSAFLUSH to discard queued
+suffixes before releasing echo, while success preserves typeahead. Windows verifies
+actual input capability rather than only GetConsoleMode bits and opens its own
+existing CONIN$ read/write handle before private input for cleanup and mode control.
+Read back mode through both the owned and original input handles, supporting
+ordinary read-only stdin handles. Report flush failure without silently restoring
+echo. No ACL/token/user-right changes. Future input arriving after operation completion
+is outside this guarantee. Microsoft: [flush contract](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),
+[standard/CONIN$ handles](https://learn.microsoft.com/en-us/windows/console/console-handles).

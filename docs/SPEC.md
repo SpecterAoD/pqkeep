@@ -427,3 +427,27 @@ falsche Größe verweigern. Frühes explizites Löschen und vollständiger Wipe 
 Unlock bleiben erhalten. Provideraufrufe und öffentliche Bytes unverändert. Providerinterne Seeds,
 expandierte Zustände, Konstruktion/Scratch und übrige R6/R7/R8-Grenzen bleiben offen.
 Siehe [Seedplan](security/SEED_OWNER_PLAN.md).
+
+R7-Terminaleingabe: Linux liest mit rustix direkt in vorab gesperrte SecretBytes;
+Windows verwendet gesperrten Record-/UTF16-/UTF8-Speicher des Callers. Kein privater
+console-Key-/Escape-Vec oder kompletter nativer Record als gewöhnliche Wertkopie.
+Native Ausrichtung/Größe innerhalb der geschützten Allokation prüfen; auch Padding
+vor sicherem Zugriff/Rückgabe/Unwind vollständig volatil überschreiben. Ungültige
+UTF8/UTF16-Eingaben strikt ablehnen, Wiederholungen und ganzes Backspace begrenzen;
+Prompt erst nach Sperren/Modus setzen, normale Erfolg-/Fehlerwege prüfen Restore.
+Native Linux-PTY-/Windows-Eingabetests sind Abnahmevoraussetzung. Andere Plattform-
+Provider, Betriebssystemqueues, GUI/echte IME, private Skalare/Compiler/Stack/Register
+und vollständiger Prozess-/Dump-/Isolationsschutz bleiben offen. Keine neue
+ungeschützte Ersatzroute. Siehe [Terminalplan](security/TERMINAL_INPUT_PLAN.md).
+
+Terminalmodus über Bestätigung und Wiederholung durchgehend halten. Linux prüft
+Flags/Read-Timing vor erstem Prompt erneut; auf Fehler/Abbruch/Unwind wartende Reste
+mit TCSAFLUSH verwerfen, bevor Echo zurückkehrt. Erfolgreicher Abschluss bewahrt
+Typeahead. Windows prüft echte Eingabefähigkeit statt nur GetConsoleMode-Bits und
+öffnet vor Privateingabe ein eigenes vorhandenes CONIN$-Read/Write-Handle für die
+Fehlerbereinigung und Modussteuerung; Modus über eigenes und ursprüngliches Handle
+nachprüfen. Auch gewöhnliche Read-only-Stdin-Handles unterstützen. Flush-
+Fehler melden und dann keinen stillen Echo-Restore ausführen. Keine ACL-/Token-/
+Nutzerrechteänderung. Später nach Abschluss eintreffende Eingaben sind nicht damit
+abgedeckt. Microsoft: [Flush-Vertrag](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),
+[Standard-/CONIN$-Handles](https://learn.microsoft.com/en-us/windows/console/console-handles).
