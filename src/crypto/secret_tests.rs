@@ -28,7 +28,10 @@ fn descriptor_is_locked_before_filling_and_stable_through_moves() {
     value.inner.get_mut().initialize_zeroed(32).unwrap();
     value.expose_mut().fill(17);
     let moved = Box::new(value);
-    assert_eq!(std::ptr::from_ref(moved.inner.get()), descriptor);
+    assert!(std::ptr::eq(
+        std::ptr::from_ref(moved.inner.get()),
+        descriptor
+    ));
     assert_eq!(moved.expose(), &[17; 32]);
     moved.assert_metadata_locked();
 }
@@ -39,7 +42,7 @@ fn caller_allocation_is_adopted_without_payload_copy() {
     source.extend_from_slice(&[17; 32]);
     let pointer = source.as_ptr();
     let value = SecretBytes::new(source).unwrap();
-    assert_eq!(value.expose().as_ptr(), pointer);
+    assert!(std::ptr::eq(value.expose().as_ptr(), pointer));
     assert_eq!(value.expose(), &[17; 32]);
     value.assert_metadata_locked();
 }
@@ -57,7 +60,10 @@ fn empty_and_zeroized_values_keep_valid_locked_descriptors() {
         value.zeroize();
         assert!(value.is_empty());
         assert_eq!(value.expose_mut(), b"");
-        assert_eq!(std::ptr::from_ref(value.inner.get()), descriptor);
+        assert!(std::ptr::eq(
+            std::ptr::from_ref(value.inner.get()),
+            descriptor
+        ));
         value.assert_metadata_locked();
     }
 }
@@ -83,8 +89,11 @@ fn allocation_overflow_and_private_growth_are_refused_without_mutation() {
         Err(Error::MemoryLock)
     );
     assert_eq!(value.expose(), &[17; 4]);
-    assert_eq!(value.expose().as_ptr(), payload);
-    assert_eq!(std::ptr::from_ref(value.inner.get()), descriptor);
+    assert!(std::ptr::eq(value.expose().as_ptr(), payload));
+    assert!(std::ptr::eq(
+        std::ptr::from_ref(value.inner.get()),
+        descriptor
+    ));
     value.assert_metadata_locked();
 }
 

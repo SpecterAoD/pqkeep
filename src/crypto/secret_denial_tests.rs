@@ -81,8 +81,11 @@ fn payload_denial_child() {
         Err(Error::MemoryLock)
     );
     assert!(allocate.is_empty() && adopt.is_empty());
-    assert_eq!(std::ptr::from_ref(allocate.inner.get()), first);
-    assert_eq!(std::ptr::from_ref(adopt.inner.get()), second);
+    assert!(std::ptr::eq(
+        std::ptr::from_ref(allocate.inner.get()),
+        first
+    ));
+    assert!(std::ptr::eq(std::ptr::from_ref(adopt.inner.get()), second));
     allocate.assert_metadata_locked();
     adopt.assert_metadata_locked();
 }
