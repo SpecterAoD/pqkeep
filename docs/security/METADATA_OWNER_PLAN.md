@@ -50,3 +50,14 @@ Lintausnahme, ursprüngliches Protokoll erhalten.
 EN: Full native Linux/Windows/ARM64/security and eight-target fuzz CI still pending.
 Local observations are live owner checks, not post-free padding inspection or
 complete R6/R7/R8 acceptance. Signed plan precedes implementation.
+
+## Gemeinsamer Testprüfer / Shared test checker
+
+DE: Erste Sonar-Abnahme meldet8,9Prozent duplizierte neue Zeilen bei3Prozent
+Grenze, keine offenen Code-/Sicherheitsbefunde. Der neue Linux-VmFlags-Prüfer
+dupliziert bestehenden Archivtestcode. Vor Korrektur planen: gemeinsamen
+files/locked_owner_tests.rs-Prüfer unter cfg(test) aus bestehendem Code extrahieren,
+Archiv-/Namensowner-Tests wiederverwenden lassen; Beobachtungsumfang erhalten.
+EN: Preserve the failed gate; no rule/exclusion/threshold change. Existing runtime
+code stays unchanged. Repeat strict local checks and full native/security/fuzz
+acceptance on the new signed head; prior CI is superseded evidence only.
