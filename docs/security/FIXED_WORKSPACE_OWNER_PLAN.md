@@ -26,6 +26,15 @@ Plan precedes code; issue/roadmap remain In progress.
   Lock nested descriptors before allocation/population; add only concrete reviewed
   wiping-drop markers. Public empty-key HMAC initialization precedes locking;
   private rekey happens only after every required allocation has been locked.
+- DE: Abschlussabgleich: Auch den öffentlichen HMAC-Startwert ohne vorgeschaltetes
+  `vec!` übernehmen. Zuerst SecretWorkspace::with_capacity(1) fallibel anlegen und
+  sperren, dann den öffentlichen leeren HMAC mit push_preallocated einsetzen.
+  Damit gilt „Descriptor vor Allokation“ auch für diesen Konstruktor; öffentliche
+  Initialisierung darf nach dem Sperren erfolgen. Keine Änderung privater Ableitung.
+  EN: Final review refinement: use fallible SecretWorkspace::with_capacity(1)
+  before constructing/pushing the public empty-key HMAC. Remove the preceding
+  public vec! allocation; descriptor-before-allocation now also covers this path.
+  Public initialization may occur after locking; private derivation is unchanged.
 - DE: Ein bloßer Wechsel nach SecretState<Zeroizing<T>> wäre unzureichend: dessen
   beweglicher innerer Vec-Descriptor bliebe außerhalb der neuen Schutzbehauptung.
   EN: A type swap to SecretState<Zeroizing<T>> alone does not establish nested
