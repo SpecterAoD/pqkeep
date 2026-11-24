@@ -137,20 +137,29 @@ fn overlapping_owners_release_only_their_pages() {
 
 #[test]
 fn concurrent_shared_owner_keeps_page_locked() {
-    use std::{sync::mpsc, time::Duration};
+    use std::{
+        sync::{Arc, mpsc},
+        time::Duration,
+    };
     let size = region::page::size();
-    let buffer = vec![0u8; 4 * size];
+    let buffer = Arc::new(vec![0u8; 4 * size]);
     let first = interior_page(&buffer);
     let original = lock_range(first, size);
     assert!(original.complete(first, size));
     let (ready_tx, ready_rx) = mpsc::channel();
     let (release_tx, release_rx) = mpsc::channel();
+    // DE: Auch bei Eltern-Timeout Speicher bis nach dem Worker-Guard behalten.
+    // EN: Retain storage through worker guard destruction even on parent timeout.
+    let worker_buffer = Arc::clone(&buffer);
     let worker = std::thread::spawn(move || {
+        let first = interior_page(&worker_buffer);
         let second = lock_range(first, size);
         assert!(second.complete(first, size));
         ready_tx.send(()).unwrap();
         release_rx.recv_timeout(Duration::from_secs(30)).unwrap();
         assert!(is_locked(first));
+        drop(second);
+        drop(worker_buffer);
     });
     ready_rx.recv_timeout(Duration::from_secs(30)).unwrap();
     drop(original);
