@@ -383,3 +383,13 @@ leere Slots vor und setzen Name/Typ/Größe direkt im gesperrten Datensatz; Fehl
 nehmen den Slot zurück. Budgets, Sortierung und Ausgabegrenzen bleiben erhalten.
 Baumtopologie, weitere Pfad-Arbeitsbereiche sowie R6/R7 bleiben offen. Siehe
 [Plan](security/METADATA_OWNER_PLAN.md).
+
+R8-Basisowner: SecretBytes hält seinen variablen Bytepuffer-Descriptor im bestehenden
+stabilen SecretState, gesperrt vor privater Befüllung. Auch leere Werte benötigen
+diese Sperre. Fallible Reservierung und Payloadsperre erfolgen direkt im geschützten
+Descriptor, erst danach wird kopiert; privates Wachstum wird verweigert. new(Vec)
+bleibt eine explizite Caller-Ownership-Grenze ohne Payloadkopie. Sperrfehler löschen
+übernommene Callerbytes; Drop zerstört den Puffer gesperrt und löscht die gesamte
+ehemalige Descriptorallokation vor Unlock. Öffentliche APIs bleiben erhalten.
+Andere typisierte Descriptoren, Pfad-/Baumdaten und Provider-/Helper-Grenzen bleiben
+offen. Siehe [Plan](security/BYTE_OWNER_PLAN.md).

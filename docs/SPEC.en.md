@@ -385,3 +385,13 @@ before unlocking. Listings prepare public empty slots and fill name/kind/size
 directly in the locked record, rolling the slot back on failure. Preserve budgets,
 ordering and disclosure boundaries. Tree topology, other path workspaces and R6/R7
 remain open. See the [plan](security/METADATA_OWNER_PLAN.md).
+
+R8 base owner: SecretBytes keeps its variable byte-buffer descriptor in existing
+stable SecretState, locked before private population. Empty values also require
+this guard. Fallible reservation and payload locking occur directly in the guarded
+descriptor before copying; private growth is refused. new(Vec) remains an explicit
+caller ownership boundary without a payload copy. Lock failures wipe transferred
+caller bytes; Drop destroys the buffer while locked and wipes its entire former
+descriptor allocation before unlocking. Preserve public APIs. Other typed-buffer
+descriptors, path/tree data and provider/helper gaps remain open. See the
+[plan](security/BYTE_OWNER_PLAN.md).

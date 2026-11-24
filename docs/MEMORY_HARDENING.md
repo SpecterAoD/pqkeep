@@ -14,6 +14,12 @@ eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre)
 
 - Jeder `SecretBytes`-Puffer (Seeds, abgeleitete Schlüssel, Passphrasen, gemeinsame Geheimnisse)
   wird beim Anlegen gesperrt: Linux `mlock`, Windows `VirtualLock`.
+- Der variable Bytepuffer-Descriptor liegt vor privater Befüllung in einem stabilen
+  gesperrten SecretState, auch bei leeren Bytes. Payloadallokation und Sperre erfolgen
+  direkt darin; from_slice kopiert erst danach. new(Vec) übernimmt Callerbytes ohne
+  Payloadkopie, schützt aber nicht rückwirkend dessen Quelle. Drop zerstört den Puffer
+  gesperrt und löscht danach die gesamte ehemalige Descriptorallokation vor Unlock.
+  Andere typisierte Descriptoren und Compiler-/Registerkopien bleiben getrennte Grenzen.
 - Gesperrt wird pro Speicherseite. Ein **Seitenzähler** sorgt dafür, dass eine Seite erst entsperrt
   wird, wenn kein Geheimnis mehr darauf liegt.
 - Freigabe in fester Reihenfolge: **nullen → entsperren → Speicher freigeben**.
@@ -112,6 +118,11 @@ System/compiler limits are distinct from the enforced lock policy. See [LOCKED_S
 1. **Memory locking:** every `SecretBytes` buffer is locked on creation (`mlock`/`VirtualLock`), with a
    per-page reference counter so that releasing one secret never unlocks another on the same page.
    Release order: zero → unlock → free. Lock failure returns MemoryLock; no unlocked instance.
+   Variable byte-buffer descriptors use stable SecretState locked before private population,
+   including empty values. Reserve/lock directly there, then copy; new(Vec) retains the caller
+   ownership boundary without payload copying or retroactive source protection. Drop destroys
+   the buffer while locked, then wipes the entire former descriptor allocation before unlock.
+   Other typed-buffer descriptors and compiler/register copies remain separate boundaries.
    Argon2 blocks, HKDF/HMAC intermediates/state and explicit SecretBytes archive/STREAM buffers
    are locked; additional std/provider copies require separate remediation.
    Linux requires sufficient existing RLIMIT_MEMLOCK; Windows requests current-process working-set

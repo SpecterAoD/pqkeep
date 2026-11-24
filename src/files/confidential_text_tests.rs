@@ -8,6 +8,7 @@ use crate::hardening::memlock;
 impl ConfidentialText {
     pub(crate) fn assert_owner_locked(&self) {
         crate::files::locked_owner_tests::locked(self.0.get());
+        self.0.get().assert_metadata_locked();
         if !self.bytes().is_empty() {
             assert!(memlock::is_locked(self.bytes().as_ptr().addr()));
             assert!(memlock::is_locked(
@@ -21,11 +22,11 @@ impl ConfidentialText {
 fn owner_is_locked_before_private_fill_and_stable_after_moves() {
     let mut text = ConfidentialText::prepare().unwrap();
     text.assert_owner_locked();
-    let owner = std::ptr::from_ref(text.0.get()).addr();
+    let owner = std::ptr::from_ref(text.0.get());
     let source = ConfidentialText::from_text("Ä/日本語").unwrap();
     text.copy_from(&source).unwrap();
     let moved = Box::new(text);
-    assert_eq!(std::ptr::from_ref(moved.0.get()).addr(), owner);
+    assert!(std::ptr::eq(std::ptr::from_ref(moved.0.get()), owner));
     moved.assert_owner_locked();
     assert_eq!(moved.expose().unwrap(), "Ä/日本語");
 }
@@ -37,7 +38,10 @@ fn text_order_borrow_redaction_and_duplicate_remain_compatible() {
     text.assert_owner_locked();
     duplicate.assert_owner_locked();
     assert_eq!(text, duplicate);
-    assert_ne!(text.bytes().as_ptr(), duplicate.bytes().as_ptr());
+    assert!(!std::ptr::eq(
+        text.bytes().as_ptr(),
+        duplicate.bytes().as_ptr()
+    ));
     let borrowed: &[u8] = text.borrow();
     assert_eq!(borrowed, "Ä/name".as_bytes());
     assert_eq!(format!("{text:?}"), "[REDACTED]");
@@ -47,10 +51,10 @@ fn text_order_borrow_redaction_and_duplicate_remain_compatible() {
 #[test]
 fn explicit_zeroize_preserves_empty_text_and_locked_owner() {
     let mut text = ConfidentialText::from_text("private metadata fixture").unwrap();
-    let owner = std::ptr::from_ref(text.0.get()).addr();
+    let owner = std::ptr::from_ref(text.0.get());
     text.zeroize();
     text.assert_owner_locked();
-    assert_eq!(std::ptr::from_ref(text.0.get()).addr(), owner);
+    assert!(std::ptr::eq(std::ptr::from_ref(text.0.get()), owner));
     assert_eq!(text.expose().unwrap(), "");
     let borrowed: &[u8] = text.borrow();
     assert_eq!(borrowed, b"");
@@ -67,7 +71,7 @@ fn locked_transfer_keeps_bytes_and_rejects_invalid_utf8() {
     let pointer = bytes.expose().as_ptr();
     let text = ConfidentialText::from_locked(bytes).unwrap();
     text.assert_owner_locked();
-    assert_eq!(text.bytes().as_ptr(), pointer);
+    assert!(std::ptr::eq(text.bytes().as_ptr(), pointer));
     assert!(matches!(
         ConfidentialText::from_locked(SecretBytes::from_slice(&[0xff]).unwrap()),
         Err(Error::InvalidInput { field: "path" })

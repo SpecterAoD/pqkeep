@@ -43,8 +43,11 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   nach Main gemergt ([PR306](https://github.com/SpecterAoD/pqkeep/pull/306)).
   / Blake2 feature repair merged; Main acceptance tracked separately.
   [Namensdescriptoren und direkte Listen-Slots / name descriptors and direct list slots](security/METADATA_OWNER_PLAN.md)
+  nach Main gemergt ([PR307](https://github.com/SpecterAoD/pqkeep/pull/307)).
+  / Locked metadata owners merged; Main acceptance tracked separately.
+  [SecretBytes-Basisdescriptoren / base byte-owner descriptors](security/BYTE_OWNER_PLAN.md)
   in Bearbeitung; weitere Metadaten-/Providerzustände und verifizierte Passworthelfer offen.
-  / Locked metadata owners in progress; other metadata/providers/helpers remain open.
+  / Base byte-owner guards in progress; other metadata/providers/helpers remain open.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.
   / Verified Main merges authorized; findings close only after actual final validation.
