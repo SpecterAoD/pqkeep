@@ -67,6 +67,7 @@ jobs:
       # DE/EN: Echte eigene Konsolenkinder vor langen Suiten / own console children before long suites.
       - name: Native Terminaleingabe / native terminal input
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           cargo test --locked --test terminal_input_windows
           cargo test --locked --no-default-features --test terminal_input_windows
