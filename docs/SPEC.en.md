@@ -369,3 +369,10 @@ writer and entry preparation propagate lock failures; consumers borrow metadata.
 Preserve archive wire format and public list/check/extraction contracts. This does
 not eliminate all compiler/register copies or OS filesystem metadata; provider and
 helper gaps remain open. See the [plan](security/ARCHIVE_METADATA_PLAN.md).
+
+R6 feature repair: production builds explicitly activate blake2/zeroize, including
+without the API; argon2/zeroize does not forward this flag. This enables existing
+Drop wiping of Blake2's private h/t core state. Preserve package identities, sources,
+checksums, versions and KDF behavior. Feature activation does not replace prelocked
+workspaces; private construction, compression, hash output and worker boundaries
+remain open. See the [plan](security/BLAKE2_DROP_FEATURE_PLAN.md).
