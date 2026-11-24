@@ -74,3 +74,15 @@ targets. Both fixture and Root child use checked timeouts; parent verifies exact
 one actual child test passed, never a successful empty filter. Unsafe remains only
 in the platform boundary/fixture. Keep non-Linux/non-Windows existing provider
 behavior explicitly OPEN rather than introduce a new Unsupported refusal.
+
+DE: Finale Fixture-Anbindung vor Code: Ein separat vorgebautes Example würde einen
+neuen manuellen cargo-test-Vorbereitungsschritt verlangen. Stattdessen schmales
+native-input-fixture-Feature derselben Plattformcrate, ausschließlich über Roots
+Windows-dev-dependency aktiviert. Keine neue Paketidentität und keine FFI-Ausnahme
+in Root. Fixture prüft alleinige eigene Konsolenzugehörigkeit und erlaubt nur fest
+vorgegebene öffentliche synthetische Ereignisse; keine beliebigen Secret-Parameter.
+EN: This supersedes the example/build-step proposal. Normal Root production feature
+trees must exclude the fixture, with/without API. Existing platform CI Clippy/tests
+include all features to audit the fixture too; all other gates stay intact. Native
+Root integration tests use only the safe fixture API and real protected Input reader,
+without prebuild prerequisites. Signed clarification precedes fixture implementation.
