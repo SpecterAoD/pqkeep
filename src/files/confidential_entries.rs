@@ -1,7 +1,7 @@
 //! DE: Vor dem Sammeln gesperrte Listen-Datensätze ohne Reallokation.
 //! EN: Listing records locked before collection without reallocation.
 
-use super::{ListEntry, MAX_LIST_ENTRIES};
+use super::{ConfidentialText, EntryKind, ListEntry, MAX_LIST_ENTRIES, archive::Entry};
 use crate::{Error, Result, crypto::secret_buffer::SecretBuffer};
 use std::{fmt, ops::Deref, slice};
 
@@ -22,11 +22,27 @@ impl ConfidentialEntries {
         Ok(())
     }
 
-    pub(crate) fn push(&mut self, entry: ListEntry) -> Result<()> {
-        self.0
-            .as_mut()
-            .ok_or(Error::MemoryLock)?
-            .push_preallocated(entry)
+    pub(crate) fn push(&mut self, entry: &Entry) -> Result<()> {
+        let path = entry.path()?;
+        let arena = self.0.as_mut().ok_or(Error::MemoryLock)?;
+        let original = arena.expose().len();
+        // DE: Nur öffentliche Leerwerte bewegen; private Felder im gesperrten Slot setzen.
+        // EN: Move only public empty values; fill private fields in the locked slot.
+        arena.push_preallocated(ListEntry {
+            path: ConfidentialText::prepare()?,
+            kind: EntryKind::Directory,
+            bytes: None,
+        })?;
+        let slot = &mut arena.expose_mut()[original];
+        if let Err(error) = slot.path.copy_from(path) {
+            arena.truncate(original);
+            return Err(error);
+        }
+        if entry.is_file() {
+            slot.kind = EntryKind::File;
+            slot.bytes = Some(entry.size());
+        }
+        Ok(())
     }
 }
 
@@ -74,3 +90,7 @@ impl fmt::Debug for ConfidentialEntries {
         f.write_str("ConfidentialEntries([REDACTED])")
     }
 }
+
+#[cfg(test)]
+#[path = "confidential_entries_tests.rs"]
+mod tests;

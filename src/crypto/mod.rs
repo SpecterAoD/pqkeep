@@ -16,7 +16,7 @@ pub mod protect_v2;
 pub mod rng;
 mod secret;
 pub(crate) mod secret_buffer;
-mod secret_state;
+pub(crate) mod secret_state;
 pub mod stream;
 mod stream_io;
 pub mod v2;

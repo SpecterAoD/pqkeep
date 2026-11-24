@@ -59,11 +59,6 @@ fn limit() -> Error {
 impl Pending {
     fn push(&mut self, entry: &Entry) -> Result<()> {
         let path = entry.path()?;
-        let (kind, bytes) = if entry.is_file() {
-            (EntryKind::File, Some(entry.size()))
-        } else {
-            (EntryKind::Directory, None)
-        };
         let total = self
             .path_bytes
             .checked_add(path.bytes().len())
@@ -72,11 +67,7 @@ impl Pending {
             return Err(limit());
         }
         self.entries.prepare()?;
-        self.entries.push(ListEntry {
-            path: path.try_duplicate()?,
-            kind,
-            bytes,
-        })?;
+        self.entries.push(entry)?;
         self.path_bytes = total;
         Ok(())
     }

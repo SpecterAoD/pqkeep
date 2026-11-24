@@ -76,6 +76,7 @@ fn listing_record_arena_is_locked_before_private_collection_and_never_moves() {
         assert_eq!(pending.entries.as_ptr().addr(), base);
         assert!(memlock::is_locked(end));
         assert_eq!(pending.entries.last().unwrap().bytes, Some(size));
+        pending.entries.last().unwrap().path.assert_owner_locked();
     }
     assert_eq!(
         format!("{:?}", pending.entries),

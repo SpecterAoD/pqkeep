@@ -38,3 +38,15 @@ EN: Plan signed before code. Issue147/roadmap stay In progress; path component
 vectors, source/OS path construction, tree bookkeeping, R6 provider construction/
 scratch and R7 protected helpers/full process policy remain OPEN. No release,
 deployment, installation, privileges, Registry, process-policy or host changes.
+
+## Lokaler Prüfstand / Local validation
+
+DE: Alle elf Prüfkommandos erfolgreich: beide strengen Clippies, fmt/Limits,
+Datei-/Pfad-/Listenprüfungen mit und ohne API sowie gemeinsame Owner-Wipe-/
+Unwind-Prüfungen, Herkunft und unveränderte Cargo-/Provider-/Plattformdateien.
+Echte PathSet-Aufteilungen mit128Pfaden prüfen innere Descriptoren beider Bäume;
+keine vollständige Baumseiten-Sperre behauptet. Erste Assertion korrigiert ohne
+Lintausnahme, ursprüngliches Protokoll erhalten.
+EN: Full native Linux/Windows/ARM64/security and eight-target fuzz CI still pending.
+Local observations are live owner checks, not post-free padding inspection or
+complete R6/R7/R8 acceptance. Signed plan precedes implementation.
