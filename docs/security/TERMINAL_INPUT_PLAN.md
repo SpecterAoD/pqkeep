@@ -127,3 +127,8 @@ flush before mode release. Native read-only input remains mandatory acceptance,
 not a skip. Re-run strict platform/Root checks and complete final-head native CI.
 API documentation lists GENERIC_READ for SetConsoleMode, but native access denial
 is not waived on that basis. Signed clarification precedes production change.
+
+DE/EN: Microsofts eigener Host-Dispatcher verlangt beim Setzen GENERIC_WRITE,
+beim Abfragen GENERIC_READ / Microsoft's own host dispatcher requires write for
+setting and read for querying:
+[ApiDispatchers.cpp](https://github.com/microsoft/terminal/blob/main/src/server/ApiDispatchers.cpp).

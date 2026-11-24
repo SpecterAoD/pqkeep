@@ -156,11 +156,14 @@ fn queued_cleanup(console: &Console, input: &mut Input, original: u32) {
     assert_eq!(console.mode().unwrap(), original);
     let read_only = OpenOptions::new().read(true).open("CONIN$").unwrap();
     let guard = pqkeep_platform::ConsoleInputMode::new(read_only.as_handle()).unwrap();
+    assert_eq!(console.mode().unwrap() & 0x0207, 0);
+    input.assert_all_locked();
     console.emit(Event::Alpha).unwrap();
     assert_eq!(
         input.windows(read_only.as_handle()).unwrap(),
         Action::Text { len: 2, repeat: 3 }
     );
+    input.assert_record_wiped();
     console.emit(Event::Alpha).unwrap();
     guard.restore_after_error().unwrap();
     assert_eq!(console.queued().unwrap(), 0);

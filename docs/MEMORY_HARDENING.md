@@ -30,7 +30,9 @@ EN: Preserve full-character backspace, bounded UTF8/UTF16 input and checked mode
 restoration. Hold safe mode continuously through confirmation/retries; verify Linux
 flags/read timing before the first prompt. Error/cancel/unwind paths discard already
 queued suffixes before releasing mode; successful completion preserves typeahead.
-Windows acquires its own existing CONIN$ read/write handle for documented cleanup,
+DE: Modussteuerung über eigenes Read/Write-Handle; beide Handles nachprüfen.
+EN: Windows acquires its own existing CONIN$ read/write handle for cleanup/mode control,
+verifying mode through both owned and original borrowed input handles,
 including ordinary read-only stdin cases, without ACL/token/user-right changes.
 Cleanup failure is reported; no silent echo restoration when Windows flushing fails.
 Only bytes already queued at cleanup are covered, not future input arriving after

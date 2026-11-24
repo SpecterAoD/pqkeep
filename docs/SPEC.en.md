@@ -444,7 +444,8 @@ Hold safe mode continuously through confirmation/retries. Linux verifies flags/r
 timing before the first prompt; error/cancel/unwind uses TCSAFLUSH to discard queued
 suffixes before releasing echo, while success preserves typeahead. Windows verifies
 actual input capability rather than only GetConsoleMode bits and opens its own
-existing CONIN$ read/write handle before private input for error cleanup, supporting
+existing CONIN$ read/write handle before private input for cleanup and mode control.
+Read back mode through both the owned and original input handles, supporting
 ordinary read-only stdin handles. Report flush failure without silently restoring
 echo. No ACL/token/user-right changes. Future input arriving after operation completion
 is outside this guarantee. Microsoft: [flush contract](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),

@@ -445,7 +445,8 @@ Flags/Read-Timing vor erstem Prompt erneut; auf Fehler/Abbruch/Unwind wartende R
 mit TCSAFLUSH verwerfen, bevor Echo zurückkehrt. Erfolgreicher Abschluss bewahrt
 Typeahead. Windows prüft echte Eingabefähigkeit statt nur GetConsoleMode-Bits und
 öffnet vor Privateingabe ein eigenes vorhandenes CONIN$-Read/Write-Handle für die
-Fehlerbereinigung; auch gewöhnliche Read-only-Stdin-Handles unterstützen. Flush-
+Fehlerbereinigung und Modussteuerung; Modus über eigenes und ursprüngliches Handle
+nachprüfen. Auch gewöhnliche Read-only-Stdin-Handles unterstützen. Flush-
 Fehler melden und dann keinen stillen Echo-Restore ausführen. Keine ACL-/Token-/
 Nutzerrechteänderung. Später nach Abschluss eintreffende Eingaben sind nicht damit
 abgedeckt. Microsoft: [Flush-Vertrag](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),

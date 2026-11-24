@@ -61,8 +61,7 @@ impl<'a> ConsoleInputMode<'a> {
             active: true,
             cleanup,
         };
-        set(
-            handle,
+        guard.set_mode(
             original
                 & !(ENABLE_ECHO_INPUT
                     | ENABLE_LINE_INPUT
@@ -70,6 +69,16 @@ impl<'a> ConsoleInputMode<'a> {
                     | ENABLE_VIRTUAL_TERMINAL_INPUT),
         )?;
         Ok(guard)
+    }
+
+    fn set_mode(&self, mode: u32) -> io::Result<()> {
+        // DE: Set benötigt nativ Schreibzugriff; Stdin bleibt unverändert geliehen.
+        // EN: Native Set requires write access; stdin remains borrowed unchanged.
+        set(self.cleanup.as_handle(), mode)?;
+        if get(self.handle)? != mode {
+            return Err(io::ErrorKind::InvalidData.into());
+        }
+        Ok(())
     }
 
     /// DE: Ursprünglichen Modus setzen und nachprüfen.
@@ -92,7 +101,7 @@ impl<'a> ConsoleInputMode<'a> {
         if discard {
             flush(&self.cleanup)?;
         }
-        set(self.handle, self.original)?;
+        self.set_mode(self.original)?;
         self.active = false;
         Ok(())
     }
@@ -104,7 +113,7 @@ impl Drop for ConsoleInputMode<'_> {
             // DE: Nur Unwind-/Fehlersicherung; normale Rückwege prüfen restore.
             // EN: Unwind/error cleanup only; normal returns check restore explicitly.
             if flush(&self.cleanup).is_ok() {
-                let _ = set(self.handle, self.original);
+                let _ = self.set_mode(self.original);
             }
         }
     }
