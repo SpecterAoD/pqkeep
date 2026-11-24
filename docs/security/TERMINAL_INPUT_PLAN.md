@@ -103,3 +103,16 @@ normal-preservation/error-discard tests, including ordinary read-only input hand
 Future bytes arriving after the operation, OS-owned buffers/real IME and full
 process/isolation remain OPEN. Existing local-v1 sixteen passes are historical once
 this code changes. Signed clarification precedes the queued-error implementation.
+
+## Native failure diagnostics / Native Fehlerdiagnose
+
+DE: Windows-CI am Heada78fb8f scheitert im eigenen Konsolenkind; der Elternprozess
+prüft dessen Status vor dem Lesen der gepipeten Testdiagnose und verdeckt damit
+die konkrete Ursache. Vor Änderung: Kind immer vollständig einsammeln und erst
+danach Status und tatsächlichen Ein-Test-Erfolg prüfen. Nur feste öffentliche
+Fixture-Diagnose erfassen; keine echten Geheimnisse oder fremde Konsole verwenden.
+EN: Add an early Windows-only run of the same native integration target, with and
+without API, after both strict Clippies. Preserve the later full test suites,
+worker/lock budgets, scanners and eight fuzz gates. This is earlier failure
+feedback, never a passing skip or substitute for final-head native acceptance.
+Production behavior stays unchanged until the actual failure is diagnosed.
