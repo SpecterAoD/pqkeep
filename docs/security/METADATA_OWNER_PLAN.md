@@ -61,3 +61,9 @@ Archiv-/Namensowner-Tests wiederverwenden lassen; Beobachtungsumfang erhalten.
 EN: Preserve the failed gate; no rule/exclusion/threshold change. Existing runtime
 code stays unchanged. Repeat strict local checks and full native/security/fuzz
 acceptance on the new signed head; prior CI is superseded evidence only.
+
+DE: Nach Extraktion alle elf lokalen Prüfkommandos erneut erfolgreich, je30
+Datei-/Pfad-/Listen-Tests und unveränderte5/4Owner-/Pufferprüfungen. Extrahierter
+Prüfer nach ausschließlich Visibility-Normalisierung bytegleich zum ursprünglichen
+Archivprüfer. Kein geänderter Beobachtungsumfang oder Quality-Gate-Grenzwert.
+EN: Fresh final native/security/fuzz CI still required on the corrected signed head.

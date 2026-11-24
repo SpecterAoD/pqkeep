@@ -7,13 +7,7 @@ use crate::hardening::memlock;
 
 impl ConfidentialText {
     pub(crate) fn assert_owner_locked(&self) {
-        let first = std::ptr::from_ref(self.0.get()).addr();
-        let last = first + size_of::<SecretBytes>() - 1;
-        for address in [first, last] {
-            assert!(memlock::is_locked(address));
-            #[cfg(target_os = "linux")]
-            assert!(own_mapping_locked(address));
-        }
+        crate::files::locked_owner_tests::locked(self.0.get());
         if !self.bytes().is_empty() {
             assert!(memlock::is_locked(self.bytes().as_ptr().addr()));
             assert!(memlock::is_locked(
@@ -21,28 +15,6 @@ impl ConfidentialText {
             ));
         }
     }
-}
-
-#[cfg(target_os = "linux")]
-fn own_mapping_locked(address: usize) -> bool {
-    let maps = std::fs::read_to_string("/proc/self/smaps").unwrap();
-    let mut selected = false;
-    for line in maps.lines() {
-        if let Some(flags) = line.strip_prefix("VmFlags:") {
-            if selected {
-                return flags.split_whitespace().any(|flag| flag == "lo");
-            }
-        } else if let Some(range) = line.split_whitespace().next()
-            && let Some((first, last)) = range.split_once('-')
-            && let (Ok(first), Ok(last)) = (
-                usize::from_str_radix(first, 16),
-                usize::from_str_radix(last, 16),
-            )
-        {
-            selected = first <= address && address < last;
-        }
-    }
-    false
 }
 
 #[test]
