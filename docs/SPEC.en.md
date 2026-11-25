@@ -481,3 +481,11 @@ failure before private use and wipe-before-unlock. Native tests must observe act
 nested descriptor/payload locks before processing and after owner moves. This does
 not establish complete provider/compiler/process protection; remaining R6/R7/R8
 boundaries stay OPEN. See the [fixed owner plan](security/FIXED_WORKSPACE_OWNER_PLAN.md).
+
+R8 parser protection record: place the public-empty LockedRange in a stable locked
+SecretState before acquiring pages in place. Refuse replacement of active/partial
+records and reject metadata-lock failures before payload use. Scratch wiping still
+precedes payload unlock/free; the range destructor wipes fields while metadata stays
+locked. Parser/scratch Vec descriptors, SliceRead/index/depth, shared registry and
+compiler transit remain OPEN. No full parser guarantee. See
+[plan](security/PARSER_PROTECTION_OWNER_PLAN.md).

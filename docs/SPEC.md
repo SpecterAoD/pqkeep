@@ -483,3 +483,11 @@ Wipe vor Unlock erhalten. Native Tests müssen tatsächliche innere Descriptor- 
 Payloadsperren vor Verarbeitung/nach Owner-Moves prüfen. Keine vollständige
 Provider-/Compiler-/Prozessschutzzusage; übrige R6/R7/R8-Grenzen bleiben offen.
 Siehe [Festownerplan](security/FIXED_WORKSPACE_OWNER_PLAN.md).
+
+R8 Parser-Schutzrecord: Den leeren LockedRange zunächst in einem stabil gesperrten
+SecretState halten, dann direkt dort akquirieren. Aktive/partielle Records nicht
+überschreiben; Metadatenfehler vor Payload-Nutzung ablehnen. Scratch-Wipe erfolgt
+weiter vor Payload-Unlock/Freigabe; der Record-Drop löscht seine Felder noch unter
+Metadatensperre. Parser-/Scratch-Vec-Descriptor, SliceRead/Index/Tiefe und Shared
+Registry sowie Compilertransit bleiben offen. Keine vollständige Parserzusage.
+Siehe [Plan](security/PARSER_PROTECTION_OWNER_PLAN.md).

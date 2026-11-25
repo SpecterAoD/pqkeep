@@ -233,3 +233,14 @@ Lock its descriptor before allocation and its full capacity before private write
 Preserve fail-closed locking, KDF parameters and parallelism, wiping before unlock.
 Provider Block copies, prehash/Blake2/Rayon worker stacks and other R6/R7/R8
 boundaries remain OPEN. See [plan](security/ARGON_WORKSPACE_OWNER_PLAN.md).
+
+## Parser protection metadata / Parser-Schutzmetadaten (#147)
+
+DE: ScratchLock hält den tatsächlichen LockedRange in SecretState, bevor dessen
+Seitenadressen direkt eingetragen werden. Keine private Record-Kopie als
+Konstruktorargument; Metadatenfehler verweigern die Payload-Akquisition. Bestehende
+Scratch-Wipe-/Unlock-/Free-Reihenfolge bleibt erhalten.
+EN: Stable locked range metadata precedes in-place population; preserve actual
+payload locking and wipe-before-unlock. No new unsafe, provider or policy change.
+Parser/read/index/depth/scratch-descriptor, shared-registry and compiler transit
+remain OPEN. [Plan](security/PARSER_PROTECTION_OWNER_PLAN.md).

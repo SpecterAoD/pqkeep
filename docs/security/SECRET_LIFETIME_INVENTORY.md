@@ -22,6 +22,15 @@ EN: Class inventory and targeted source audit, not heap extraction or complete c
 provider-copy enumeration. A locked allocation does not imply locked upstream copies.
 Finding IDs refer to the audit; passing functional tests does not close them.
 
+## Current parser protection record / Aktueller Parser-Schutzrecord (#147)
+
+DE: Der persistente ScratchLock-Seitenrecord liegt vor Befüllung im stabil
+gesperrten SecretState; vorhandener Payload-Wipe und Unlock bleiben geordnet.
+EN: Protect the concrete callback range metadata before in-place acquisition.
+Parser/scratch Vec descriptors, SliceRead/index/depth, shared registry and transit
+remain OPEN. Historical baseline rows retain their original meaning; no full
+parser closure. [Plan](PARSER_PROTECTION_OWNER_PLAN.md).
+
 ## Input and transport / Eingabe und Transport
 
 | Class / Klasse | Owner and lifetime / Eigentümer und Lebensdauer | Lock/wipe and failure / Sperre, Wipe, Fehler | Source / Quelle |

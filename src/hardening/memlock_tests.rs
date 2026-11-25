@@ -182,3 +182,29 @@ fn unwinding_releases_the_successful_range() {
     assert!(result.is_err());
     assert!(!is_locked(first));
 }
+
+#[test]
+fn in_place_acquisition_preserves_existing_range_when_reinitialization_is_refused() {
+    let size = region::page::size();
+    let buffer = vec![0u8; 4 * size];
+    let first = interior_page(&buffer);
+    let mut range = super::LockedRange::empty();
+    assert_eq!(range.pages, 0..0);
+    assert!(range.acquire(first, size));
+    assert!(!range.acquire(first + size, size));
+    assert!(!range.acquire(0, 0));
+    assert_eq!(range.pages, first..first + size);
+    assert!(is_locked(first) && !is_locked(first + size));
+    range.release();
+    assert_eq!(range.pages, 0..0);
+    assert!(!is_locked(first));
+}
+
+#[test]
+fn invalid_in_place_span_does_not_populate_or_lock_the_public_empty_record() {
+    let mut range = super::LockedRange::empty();
+    assert!(!range.acquire(usize::MAX, 1));
+    assert_eq!(range.pages, 0..0);
+    assert!(range.acquire(usize::MAX, 0));
+    assert_eq!(range.pages, 0..0);
+}
