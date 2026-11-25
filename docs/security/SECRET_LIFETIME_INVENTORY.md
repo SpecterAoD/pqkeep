@@ -24,6 +24,17 @@ Finding IDs refer to the audit; passing functional tests does not close them.
 | API bearer token / Bearer-Token | HTTP HeaderValue borrowed by middleware | Length bound and constant-time hash compare; HTTP storage not secret-owned **A5/A6** | [middleware](../../src/api/middleware.rs), [token](../../src/api/token.rs) |
 | External API caller / externer Bibliotheksaufrufer | Borrowed &str/&[u8]/String passed into public APIs | Caller owns source copies; destination lock does not retrospectively protect source | [security](../../src/security/mod.rs), [secret](../../src/crypto/secret.rs) |
 
+## Aktueller Argon2-Ownerschritt / Current Argon2 owner step (#147)
+
+DE: Zusätzlich zum bereits gesperrten Blockpayload schützt SecretWorkspace<Block>
+jetzt den inneren Vec-Descriptor vor Allokation. Konkreter Drop löscht Blockwerte
+und volle frühere Kapazität vor Unlock; Parameter/Parallelität bleiben unverändert.
+EN: Nested descriptor and payload locking use the existing owner. Actual lock,
+move and denial tests accompany the change. Provider-private Block copies/scratch
+remain OPEN. Historical baseline rows below retain their original audit meaning.
+[Source](../../src/crypto/kdf.rs), [tests](../../src/crypto/kdf_workspace_tests.rs),
+[plan](ARGON_WORKSPACE_OWNER_PLAN.md).
+
 ## Secret processing / Verarbeitung
 
 | Class / Klasse | Owner and lifetime / Eigentümer und Lebensdauer | Lock/wipe and failure / Sperre, Wipe, Fehler | Source / Quelle |

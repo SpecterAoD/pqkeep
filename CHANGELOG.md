@@ -15,6 +15,12 @@ German release notes: see `docs/releases/`.
   preserve successful typeahead and check native input/cleanup capability.
   GUI/OS queues, other-platform providers and full process protection remain open.
 
+- DE: Argon2-Arbeitsbereich einschließlich innerem Vec-Descriptor vor Allokation
+  mit bestehendem SecretWorkspace sperren; Parameter/Parallelität unverändert (#147).
+  EN: Lock the Argon2 workspace descriptor before allocation using the existing
+  nested owner; preserve payload wiping and strict lock failure. Provider scratch
+  copies and remaining R6/R7/R8 boundaries stay open.
+
 - DE: Feste typisierte Caller-Seeds direkt vor privater Befüllung stabil sperren;
   zusätzliche innere Pufferdescriptoren entfernen (#147 R6/R8).
   EN: Borrow typed seed views from existing stable locked SecretBytes owners.
