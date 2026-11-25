@@ -47,6 +47,7 @@ struct WipeProbe {
 }
 impl serde_json::de::ScratchProtection for WipeProbe {
     fn wipe(&mut self, scratch: &mut Vec<u8>) {
+        crate::locked_owner_test_support::locked(self.inner.range.get());
         assert!(memlock::is_locked(scratch.as_ptr().addr()));
         serde_json::de::ScratchProtection::wipe(&mut self.inner, scratch);
         assert_eq!(scratch.len(), scratch.capacity());
@@ -65,10 +66,8 @@ fn parser_wipes_complete_scratch_while_still_locked_on_success_and_error() {
         let bytes = SecretBytes::from_slice(input).unwrap();
         let wiped = Arc::new(AtomicBool::new(false));
         let scratch = Vec::<u8>::with_capacity(input.len() + 128);
-        let lock = memlock::lock_range(scratch.as_ptr().addr(), scratch.capacity());
-        assert!(lock.complete(scratch.as_ptr().addr(), scratch.capacity()));
         let protection = WipeProbe {
-            inner: ScratchLock { _lock: lock },
+            inner: ScratchLock::new(scratch.as_ptr().addr(), scratch.capacity()).unwrap(),
             wiped: wiped.clone(),
         };
         let mut parser = serde_json::Deserializer::from_slice_with_protection(

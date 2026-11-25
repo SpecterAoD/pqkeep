@@ -6,6 +6,10 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Parser-Scratch-Schutzrecord vor Befüllung stabil sperren (#147 R8).
+  EN: Acquire scratch page ownership directly inside prelocked range metadata;
+  retain strict failure and wiping order. Other parser metadata remains open.
+
 - DE: Feste HKDF/HMAC- und Archiv-Arbeitsbereichsdescriptoren vor privater Befüllung
   im bestehenden SecretWorkspace sperren; Hash-/HKDF-Ausgaben direkt in SecretBytes
   finalisieren statt zusätzliche private typisierte Owner zu kopieren (#147 R6/R8).

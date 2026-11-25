@@ -9,13 +9,27 @@ use std::{future::poll_fn, pin::Pin};
 use zeroize::Zeroize;
 
 use super::{MAX_BODY_BYTES, handlers::ApiError};
-use crate::crypto::SecretBytes;
-use crate::hardening::memlock::{self, LockedRange};
+use crate::crypto::{SecretBytes, secret_state::SecretState};
+#[cfg(test)]
+use crate::hardening::memlock;
+use crate::hardening::memlock::LockedRange;
 
 pub(super) struct LockedJson<T>(pub T);
 
 struct ScratchLock {
-    _lock: LockedRange,
+    range: SecretState<LockedRange>,
+}
+
+impl ScratchLock {
+    fn new(address: usize, capacity: usize) -> Result<Self, ApiError> {
+        let mut out = Self {
+            range: SecretState::new(LockedRange::empty()).map_err(|_| ApiError::Busy)?,
+        };
+        if !out.range.get_mut().acquire(address, capacity) {
+            return Err(ApiError::Busy);
+        }
+        Ok(out)
+    }
 }
 
 impl serde_json::de::ScratchProtection for ScratchLock {
@@ -34,6 +48,10 @@ mod tests;
 #[cfg(test)]
 #[path = "parser_error_tests.rs"]
 mod error_tests;
+
+#[cfg(test)]
+#[path = "parser_protection_tests.rs"]
+mod protection_tests;
 
 fn content_type(headers: &HeaderMap) -> bool {
     headers
@@ -56,11 +74,7 @@ pub(super) fn decode<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, ApiError> {
         .try_reserve_exact(capacity)
         .map_err(|_| ApiError::Busy)?;
     let address = scratch.as_ptr().addr();
-    let lock = memlock::lock_range(address, scratch.capacity());
-    if !lock.complete(address, scratch.capacity()) {
-        return Err(ApiError::Busy);
-    }
-    let protection = Box::new(ScratchLock { _lock: lock });
+    let protection = Box::new(ScratchLock::new(address, scratch.capacity())?);
     serde_json::de::from_slice_with_protection(bytes, scratch, protection)
         .map_err(|_| ApiError::BadRequest)
 }

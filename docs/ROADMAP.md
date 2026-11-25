@@ -135,3 +135,9 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 - [x] Ruleset auf `main` (PR, Pflicht-Checks, signierte Commits) und Schutz der Release-Tags
 - [x] Secret Scanning und Push Protection aktiv
 - [x] Signing-Key für Git-Tags (SSH)
+
+DE: #147 R8 In Bearbeitung: tatsächlichen Parser-Schutzrecord vor In-place-
+Akquisition mit bestehendem SecretState sperren; native Abnahme ausstehend.
+EN: #147 R8 In progress: prelock parser protection range metadata; full native
+acceptance pending, remaining parser/provider/process gaps OPEN. See
+[plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
