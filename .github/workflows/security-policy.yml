@@ -42,12 +42,21 @@ jobs:
         run: python3 -m unittest scripts/test_check_actions_policy.py -v
       - name: Eigene Regeln / own rules
         run: python3 scripts/check_actions_policy.py
-      - name: actionlint installieren / install (v1.7.7, Go-Prüfsummen / Go checksums)
+      # DE: Release-Binärdatei mit fester SHA-256 (wie gitleaks) statt `go install` – unabhängig vom
+      #     Go-Modulcache und überall gleich nachprüfbar. EN: Release binary with a pinned SHA-256 (as
+      #     for gitleaks) instead of `go install` – independent of the Go module cache.
+      - name: actionlint installieren / install (v1.7.7, SHA-256)
         env:
           GOBIN: ${{ runner.temp }}/security-tools
+          ACTIONLINT_VERSION: "1.7.7"
+          ACTIONLINT_SHA256: "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
         run: |
           mkdir -p "$GOBIN"
-          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          f="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/$f" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/$f"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$GOBIN" actionlint
           "$GOBIN/actionlint" -version
       - name: actionlint
         env:
