@@ -27,6 +27,9 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   Inventar, synthetische Kopierproben, Dump-/Prozessgrenzen und priorisierte Nacharbeit.
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
+  [Argon2-Descriptor / Argon2 descriptor](security/ARGON_WORKSPACE_OWNER_PLAN.md):
+  isoliert in Bearbeitung auf Main, unabhängig von PR314; Provider-Scratch bleibt offen.
+  / Independent scoped work in progress; does not close provider scratch findings.
   Auditphase PR298, geschützte Laufzeitpuffer [PR300](https://github.com/SpecterAoD/pqkeep/pull/300)
   und begrenzte WER-Fähigkeit [PR301](https://github.com/SpecterAoD/pqkeep/pull/301) nach Main gemergt.
   / Audit, protected runtime buffers and partial WER capability merged; authorized remediation continues.
@@ -61,8 +64,12 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   nach Main gemergt ([PR312](https://github.com/SpecterAoD/pqkeep/pull/312)).
   / Stable typed caller seed views merged; native Main acceptance tracked separately.
   [Direkte gesperrte Terminaleingabe / direct protected terminal input](security/TERMINAL_INPUT_PLAN.md)
-  auf Linux/Windows in Bearbeitung; native Abnahme erforderlich.
-  / Linux/Windows input remediation in progress; provider-retained/math scratch,
+  auf Linux/Windows nach Main gemergt ([PR313](https://github.com/SpecterAoD/pqkeep/pull/313));
+  separate Main-Abnahme nachverfolgen. / Linux/Windows input merged; Main acceptance separate.
+  [Feste Arbeitsbereichsowner / fixed workspace owners](security/FIXED_WORKSPACE_OWNER_PLAN.md)
+  für Hash/HKDF/Archiv in Bearbeitung; konkrete native Descriptor-/Payloadprüfung erforderlich.
+  / Fixed hash/HKDF/archive owners in progress; actual native descriptor/payload validation required.
+  Provider-retained/math scratch,
   other-platform providers, GUI helpers and full process/dump/isolation remain OPEN.
   [Laufzeitplan / runtime plan](security/SECRET_LIFETIME_RUNTIME_PLAN.md).
   Eigentümer hat geprüfte Main-Merges freigegeben; #128/#148/#149/#150 abgleichen, vor Stream83/API98.

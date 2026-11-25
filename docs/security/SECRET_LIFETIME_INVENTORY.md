@@ -1,5 +1,18 @@
 # Secret copy inventory / Inventar der Secret-Kopien (#147)
 
+DE: Aktueller enger Ownerschritt auf Main5eb4696: Hash-/HKDF-Ausgabe und PRK ohne
+zusätzlichen typisierten Vec direkt in vorab gesperrte SecretBytes; HMAC/Scratch und
+Archiv-Framing/Record mit vor Allokation gesperrten inneren SecretWorkspace-Descriptoren.
+Native Laufzeitabnahme ist Voraussetzung. Das folgende historische Inventar bleibt
+als Ausgangsbefund erhalten; seine A1–A6-Zeilen sind keine Aussage, dass bereits
+nachgebesserte Main-Pfade noch dieselben Implementierungen verwenden.
+EN: Current scoped fixed-owner remediation uses checked mutable output borrows and
+the existing nested workspace owner. Full native validation remains required.
+Historical baseline rows below are not a fresh finding against remediated paths;
+provider construction/scratch, parser/source/output/tree/shared-registry and
+GUI/full-process/compiler boundaries remain OPEN. See
+[fixed workspace plan](FIXED_WORKSPACE_OWNER_PLAN.md).
+
 DE: Klasseninventar auf Main `94b2304` mit gezielter Quellprüfung der genannten Pfade,
 kein Laufzeit-Heapdump und keine Behauptung, sämtliche Compiler-/Providerkopien erfasst
 zu haben. „Gesperrt“ bezeichnet die explizit verwaltete Allokation, nicht jede vorgelagerte
@@ -23,6 +36,17 @@ Finding IDs refer to the audit; passing functional tests does not close them.
 | API token generation / Tokenerzeugung | RNG array → Base64 String → final Zeroizing<String> → explicit display | Hash-only persistence; generation/formatting copies not locked, temporary encoding not guarded **A6** | [token](../../src/api/token.rs), [serve](../../src/cli/serve.rs) |
 | API bearer token / Bearer-Token | HTTP HeaderValue borrowed by middleware | Length bound and constant-time hash compare; HTTP storage not secret-owned **A5/A6** | [middleware](../../src/api/middleware.rs), [token](../../src/api/token.rs) |
 | External API caller / externer Bibliotheksaufrufer | Borrowed &str/&[u8]/String passed into public APIs | Caller owns source copies; destination lock does not retrospectively protect source | [security](../../src/security/mod.rs), [secret](../../src/crypto/secret.rs) |
+
+## Aktueller Argon2-Ownerschritt / Current Argon2 owner step (#147)
+
+DE: Zusätzlich zum bereits gesperrten Blockpayload schützt SecretWorkspace<Block>
+jetzt den inneren Vec-Descriptor vor Allokation. Konkreter Drop löscht Blockwerte
+und volle frühere Kapazität vor Unlock; Parameter/Parallelität bleiben unverändert.
+EN: Nested descriptor and payload locking use the existing owner. Actual lock,
+move and denial tests accompany the change. Provider-private Block copies/scratch
+remain OPEN. Historical baseline rows below retain their original audit meaning.
+[Source](../../src/crypto/kdf.rs), [tests](../../src/crypto/kdf_workspace_tests.rs),
+[plan](ARGON_WORKSPACE_OWNER_PLAN.md).
 
 ## Secret processing / Verarbeitung
 

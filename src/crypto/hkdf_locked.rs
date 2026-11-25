@@ -5,15 +5,37 @@ use hkdf::InPlaceHmac;
 use hmac::SimpleHmac;
 use sha3::Sha3_256;
 use sha3::digest::{Output, OutputSizeUser, Update, consts::U32};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use super::SecretBytes;
 use super::secret_buffer::SecretBuffer;
+use super::{locked_hash::output_view, secret_workspace::SecretWorkspace};
 use crate::Result;
 
 struct LockedHmac {
-    state: SecretBuffer<SimpleHmac<Sha3_256>>,
-    scratch: SecretBuffer<Output<Sha3_256>>,
+    state: SecretWorkspace<SimpleHmac<Sha3_256>>,
+    scratch: SecretWorkspace<Output<Sha3_256>>,
+}
+
+// DE: Nur diese geprüften Typen: HMAC-Drop löscht Zustand, Buffer-Drop volle Kapazität.
+// EN: Only these reviewed types: HMAC drop wipes state; buffer drop wipes full capacity.
+impl ZeroizeOnDrop for SecretBuffer<SimpleHmac<Sha3_256>> {}
+impl ZeroizeOnDrop for SecretBuffer<Output<Sha3_256>> {}
+
+impl LockedHmac {
+    fn new() -> Result<Self> {
+        use hmac::KeyInit;
+        // DE: Descriptor und Kapazität vor öffentlicher Initialisierung/privatem Rekey sperren.
+        // EN: Lock descriptor/capacity before public initialization or private rekey.
+        let mut state = SecretWorkspace::with_capacity(1)?;
+        state.push_preallocated(
+            SimpleHmac::<Sha3_256>::new_from_slice(&[]).map_err(|_| crate::Error::Crypto)?,
+        )?;
+        Ok(Self {
+            state,
+            scratch: SecretWorkspace::zeroed(1)?,
+        })
+    }
 }
 
 impl OutputSizeUser for LockedHmac {
@@ -37,23 +59,20 @@ impl InPlaceHmac for LockedHmac {
 }
 
 pub(super) fn derive(salt: &[u8], ikm: &[u8], info: &[u8]) -> Result<SecretBytes> {
-    use hmac::KeyInit;
-    // DE: Nur ein öffentlicher leerer Schlüssel vor dem Sperren; Secret-Rekey erst danach.
-    // EN: Only a public empty key before locking; secret rekey happens afterwards.
-    let state = SimpleHmac::<Sha3_256>::new_from_slice(&[]).map_err(|_| crate::Error::Crypto)?;
-    let mut mac = LockedHmac {
-        state: SecretBuffer::new(vec![state])?,
-        scratch: SecretBuffer::new(vec![Output::<Sha3_256>::default()])?,
-    };
-    let mut prk = SecretBuffer::new(vec![Output::<Sha3_256>::default()])?;
-    let mut out = SecretBuffer::new(vec![Output::<Sha3_256>::default()])?;
+    let mut mac = LockedHmac::new()?;
+    let mut prk = SecretBytes::zeroed(size_of::<Output<Sha3_256>>())?;
+    let mut out = SecretBytes::zeroed(size_of::<Output<Sha3_256>>())?;
     hkdf::derive_first_block_in_place(
         &mut mac,
         salt,
         ikm,
         info,
-        &mut prk.expose_mut()[0],
-        &mut out.expose_mut()[0],
+        output_view::<Sha3_256>(&mut prk)?,
+        output_view::<Sha3_256>(&mut out)?,
     );
-    SecretBytes::from_slice(&out.expose()[0])
+    Ok(out)
 }
+
+#[cfg(test)]
+#[path = "hkdf_workspace_tests.rs"]
+mod tests;

@@ -440,6 +440,15 @@ Unlock bleiben erhalten. Provideraufrufe und öffentliche Bytes unverändert. Pr
 expandierte Zustände, Konstruktion/Scratch und übrige R6/R7/R8-Grenzen bleiben offen.
 Siehe [Seedplan](security/SEED_OWNER_PLAN.md).
 
+Argon2-Arbeitsbereich (#147): vorhandenen SecretWorkspace<Block> verwenden, damit
+auch der innere Vec-Descriptor vor Allokation gesperrt ist; Blockpayload vor
+Default-Initialisierung und privater Verarbeitung vollständig sperren. Nur konkreter
+geprüfter Wiping-Drop-Marker; Parameter, Blockzahl, Profile, Parallelität und Bytes
+unverändert. Reale Descriptor-/Payload-/Move-/Sperrfehlerprüfungen und unabhängige
+KATs sind erforderlich. Provider-interne Blockkopien, Prehash/Blake2/Rayon-Stacks
+und übrige R6/R7/R8-Grenzen bleiben offen; kein vollständiger Argon2-Schutz.
+Siehe [Argon2-Plan](security/ARGON_WORKSPACE_OWNER_PLAN.md).
+
 R7-Terminaleingabe: Linux liest mit rustix direkt in vorab gesperrte SecretBytes;
 Windows verwendet gesperrten Record-/UTF16-/UTF8-Speicher des Callers. Kein privater
 console-Key-/Escape-Vec oder kompletter nativer Record als gewöhnliche Wertkopie.
@@ -463,3 +472,14 @@ Fehler melden und dann keinen stillen Echo-Restore ausführen. Keine ACL-/Token-
 Nutzerrechteänderung. Später nach Abschluss eintreffende Eingaben sind nicht damit
 abgedeckt. Microsoft: [Flush-Vertrag](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),
 [Standard-/CONIN$-Handles](https://learn.microsoft.com/en-us/windows/console/console-handles).
+
+R6/R8-Festowner: Hashausgabe, HKDF-PRK und -Ergebnis direkt in exakt großen
+vorab gesperrten SecretBytes über eine längengeprüfte mutable Output-Leihsicht
+befüllen; denselben Owner zurückgeben, keinen privaten typisierten Ausgabe-Vec
+oder Arraywert anlegen. HMAC-Zustand/-Scratch und Archiv-Framing/Eintragsdatensätze
+verwenden vorhandene SecretWorkspace mit vor Allokation gesperrtem innerem
+Pufferdescriptor. Nur konkrete geprüfte Drop-Marker; Fehler vor privater Nutzung,
+Wipe vor Unlock erhalten. Native Tests müssen tatsächliche innere Descriptor- und
+Payloadsperren vor Verarbeitung/nach Owner-Moves prüfen. Keine vollständige
+Provider-/Compiler-/Prozessschutzzusage; übrige R6/R7/R8-Grenzen bleiben offen.
+Siehe [Festownerplan](security/FIXED_WORKSPACE_OWNER_PLAN.md).

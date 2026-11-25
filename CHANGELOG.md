@@ -6,6 +6,13 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Feste HKDF/HMAC- und Archiv-Arbeitsbereichsdescriptoren vor privater Befüllung
+  im bestehenden SecretWorkspace sperren; Hash-/HKDF-Ausgaben direkt in SecretBytes
+  finalisieren statt zusätzliche private typisierte Owner zu kopieren (#147 R6/R8).
+  EN: Reuse nested locked workspace owners for HMAC/scratch and archive framing/records;
+  borrow checked output views from prelocked SecretBytes. Preserve bytes, strict
+  denial and wipe-before-unlock; provider/compiler/process boundaries remain open.
+
 - DE: Linux-/Windows-Terminaleingabe ohne gewöhnliche private Providerpuffer;
   native Records und UTF8-/UTF16-Scratch vor erster Befüllung sperren (#147 R7).
   EN: Direct protected input, checked console restoration and full native record
@@ -14,6 +21,12 @@ German release notes: see `docs/releases/`.
   EN: Keep safe mode through confirmation/retries; purge queued suffix on errors,
   preserve successful typeahead and check native input/cleanup capability.
   GUI/OS queues, other-platform providers and full process protection remain open.
+
+- DE: Argon2-Arbeitsbereich einschließlich innerem Vec-Descriptor vor Allokation
+  mit bestehendem SecretWorkspace sperren; Parameter/Parallelität unverändert (#147).
+  EN: Lock the Argon2 workspace descriptor before allocation using the existing
+  nested owner; preserve payload wiping and strict lock failure. Provider scratch
+  copies and remaining R6/R7/R8 boundaries stay open.
 
 - DE: Feste typisierte Caller-Seeds direkt vor privater Befüllung stabil sperren;
   zusätzliche innere Pufferdescriptoren entfernen (#147 R6/R8).

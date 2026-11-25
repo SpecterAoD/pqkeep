@@ -49,6 +49,10 @@ fn metadata_denial_child() {
     );
     deny_further_locks();
     assert!(matches!(
+        SecretWorkspace::<argon2::Block>::zeroed(4),
+        Err(Error::MemoryLock)
+    ));
+    assert!(matches!(
         SecretWorkspace::<char>::zeroed(0),
         Err(Error::MemoryLock)
     ));
@@ -75,8 +79,15 @@ fn payload_denial_child() {
     );
     let mut allocate = SecretWorkspace::<char>::prepare().unwrap();
     let mut adopt = SecretWorkspace::<usize>::prepare().unwrap();
+    let mut blocks = SecretWorkspace::<argon2::Block>::prepare().unwrap();
     let incoming = vec![17usize; 1024 * 1024];
     deny_further_locks();
+    assert_eq!(
+        blocks.inner.get_mut().initialize_defaults(1024),
+        Err(Error::MemoryLock)
+    );
+    assert!(blocks.expose().is_empty());
+    blocks.assert_metadata_locked();
     assert_eq!(
         allocate.inner.get_mut().initialize_defaults(1024 * 1024),
         Err(Error::MemoryLock)

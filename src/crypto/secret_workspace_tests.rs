@@ -9,7 +9,7 @@ impl<T: Zeroize> SecretWorkspace<T>
 where
     SecretBuffer<T>: ZeroizeOnDrop,
 {
-    pub(crate) fn assert_metadata_locked(&self) {
+    pub(crate) fn assert_metadata_locked(&self) -> usize {
         locked(self.inner.get());
         for item in self
             .expose()
@@ -19,6 +19,7 @@ where
         {
             locked(item);
         }
+        std::ptr::from_ref(self.inner.get()).addr()
     }
 }
 
@@ -118,3 +119,6 @@ fn overflow_and_reinitialization_refuse_mutation() {
 #[cfg(target_os = "linux")]
 #[path = "secret_workspace_denial_tests.rs"]
 mod denial;
+
+#[path = "kdf_workspace_tests.rs"]
+mod argon;

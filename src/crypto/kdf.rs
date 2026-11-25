@@ -11,6 +11,11 @@
 use argon2::{Algorithm, Argon2, AssociatedData, Block, ParamsBuilder, Version};
 
 use super::secret_buffer::SecretBuffer;
+use super::secret_workspace::SecretWorkspace;
+
+// DE: Konkrete Blockwerte und volle frühere Kapazität werden vor Unlock gelöscht.
+// EN: Concrete Block values and the full former capacity are wiped before unlock.
+impl zeroize::ZeroizeOnDrop for SecretBuffer<Block> {}
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -156,12 +161,7 @@ pub(crate) fn argon2id(
             .map_err(|_| Error::KdfParams)?
     };
     let count = argon.params().block_count();
-    let mut blocks = Vec::new();
-    blocks
-        .try_reserve_exact(count)
-        .map_err(|_| Error::MemoryLock)?;
-    blocks.resize(count, Block::new());
-    let mut blocks = SecretBuffer::new(blocks)?;
+    let mut blocks = SecretWorkspace::<Block>::zeroed(count)?;
     argon
         .hash_password_into_with_memory(passphrase, salt, out, blocks.expose_mut())
         .map_err(|_| Error::Crypto)
