@@ -472,3 +472,14 @@ Fehler melden und dann keinen stillen Echo-Restore ausführen. Keine ACL-/Token-
 Nutzerrechteänderung. Später nach Abschluss eintreffende Eingaben sind nicht damit
 abgedeckt. Microsoft: [Flush-Vertrag](https://learn.microsoft.com/en-us/windows/console/flushconsoleinputbuffer),
 [Standard-/CONIN$-Handles](https://learn.microsoft.com/en-us/windows/console/console-handles).
+
+R6/R8-Festowner: Hashausgabe, HKDF-PRK und -Ergebnis direkt in exakt großen
+vorab gesperrten SecretBytes über eine längengeprüfte mutable Output-Leihsicht
+befüllen; denselben Owner zurückgeben, keinen privaten typisierten Ausgabe-Vec
+oder Arraywert anlegen. HMAC-Zustand/-Scratch und Archiv-Framing/Eintragsdatensätze
+verwenden vorhandene SecretWorkspace mit vor Allokation gesperrtem innerem
+Pufferdescriptor. Nur konkrete geprüfte Drop-Marker; Fehler vor privater Nutzung,
+Wipe vor Unlock erhalten. Native Tests müssen tatsächliche innere Descriptor- und
+Payloadsperren vor Verarbeitung/nach Owner-Moves prüfen. Keine vollständige
+Provider-/Compiler-/Prozessschutzzusage; übrige R6/R7/R8-Grenzen bleiben offen.
+Siehe [Festownerplan](security/FIXED_WORKSPACE_OWNER_PLAN.md).

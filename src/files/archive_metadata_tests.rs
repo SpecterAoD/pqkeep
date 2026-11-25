@@ -15,6 +15,7 @@ use crate::files::locked_owner_tests::locked;
 #[test]
 fn record_is_locked_before_population_and_stable_across_owner_moves() {
     let mut entry = Entry::prepare().unwrap();
+    let descriptor = entry.0.assert_metadata_locked();
     let base = std::ptr::from_ref(&entry.0.expose()[0]).addr();
     locked(&entry.0.expose()[0]);
     assert!(entry.path().is_err());
@@ -22,6 +23,7 @@ fn record_is_locked_before_population_and_stable_across_owner_moves() {
     entry.record_mut().kind = super::super::TAG_FILE;
     entry.record_mut().size = u64::MAX;
     let mut moved = Box::new(entry);
+    assert_eq!(moved.0.assert_metadata_locked(), descriptor);
     assert_eq!(std::ptr::from_ref(&moved.0.expose()[0]).addr(), base);
     locked(&moved.0.expose()[0]);
     locked(&moved.0.expose()[0].size);
@@ -42,12 +44,14 @@ fn record_is_locked_before_population_and_stable_across_owner_moves() {
 fn framing_is_locked_before_io_and_roundtrips_all_size_boundaries() {
     let key = aead::generate_key().unwrap();
     let mut framing = Framing::new().unwrap();
+    let descriptor = framing.0.assert_metadata_locked();
     let base = std::ptr::from_ref(&framing.0.expose()[0]).addr();
     locked(&framing.0.expose()[0]);
     let mut enc = EncryptWriter::new(key.expose(), [0; 7], b"sizes", Vec::new()).unwrap();
     for value in [0, 1, 255, 256, u64::MAX] {
         framing.write(&mut enc, value, 8).unwrap();
         assert_eq!(std::ptr::from_ref(&framing.0.expose()[0]).addr(), base);
+        assert_eq!(framing.0.assert_metadata_locked(), descriptor);
     }
     let mut dec = DecryptReader::new(
         key.expose(),
@@ -67,6 +71,28 @@ fn framing_is_locked_before_io_and_roundtrips_all_size_boundaries() {
     framing.0.expose_mut()[0].count = u64::MAX;
     assert!(framing.advance(u64::MAX).is_err());
     assert_eq!(framing.count(), u64::MAX);
+}
+
+#[test]
+fn archive_workspace_wiping_preserves_live_locked_descriptors() {
+    let mut framing = Framing::new().unwrap();
+    let descriptor = framing.0.assert_metadata_locked();
+    framing.0.expose_mut()[0].bytes.fill(0x5a);
+    framing.0.expose_mut()[0].count = u64::MAX;
+    framing.0.expose_mut()[0].zeroize();
+    assert!(framing.0.expose()[0].bytes.iter().all(|b| *b == 0));
+    assert_eq!(framing.count(), 0);
+    let mut moved = Box::new(framing);
+    assert_eq!(moved.0.assert_metadata_locked(), descriptor);
+    moved.0.zeroize();
+    assert!(moved.0.expose().is_empty());
+    assert_eq!(moved.0.assert_metadata_locked(), descriptor);
+    let mut entry = Entry::prepare().unwrap();
+    let record = entry.0.assert_metadata_locked();
+    entry.record_mut().path = Some(ConfidentialText::from_text("Ä/wipe").unwrap());
+    entry.0.zeroize();
+    assert!(entry.0.expose().is_empty());
+    assert_eq!(entry.0.assert_metadata_locked(), record);
 }
 
 #[test]

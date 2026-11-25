@@ -6,6 +6,13 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Feste HKDF/HMAC- und Archiv-Arbeitsbereichsdescriptoren vor privater Befüllung
+  im bestehenden SecretWorkspace sperren; Hash-/HKDF-Ausgaben direkt in SecretBytes
+  finalisieren statt zusätzliche private typisierte Owner zu kopieren (#147 R6/R8).
+  EN: Reuse nested locked workspace owners for HMAC/scratch and archive framing/records;
+  borrow checked output views from prelocked SecretBytes. Preserve bytes, strict
+  denial and wipe-before-unlock; provider/compiler/process boundaries remain open.
+
 - DE: Linux-/Windows-Terminaleingabe ohne gewöhnliche private Providerpuffer;
   native Records und UTF8-/UTF16-Scratch vor erster Befüllung sperren (#147 R7).
   EN: Direct protected input, checked console restoration and full native record
