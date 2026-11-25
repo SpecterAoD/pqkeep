@@ -489,6 +489,21 @@ R8 parser protection record: place the public-empty LockedRange in a stable lock
 SecretState before acquiring pages in place. Refuse replacement of active/partial
 records and reject metadata-lock failures before payload use. Scratch wiping still
 precedes payload unlock/free; the range destructor wipes fields while metadata stays
-locked. Parser/scratch Vec descriptors, SliceRead/index/depth, shared registry and
-compiler transit remain OPEN. No full parser guarantee. See
+locked. Parser ownership below extends protection to parser/scratch descriptors
+and SliceRead/index/depth. Shared registry and compiler transit remain OPEN;
+no full parser/transit guarantee. See
 [plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
+
+R8 parser state: lock the public-empty concrete SliceRead parser in SecretState,
+then reserve its embedded scratch Vec and protect its entire capacity. Only then
+bind source/index in place. Synchronous one-shot scope; refuse active/reused
+states, inadequate capacity, extended numeric modes and disabled recursion limits. SliceRead
+scratch and iterative IgnoredAny frames are each bounded by input length; the
+latter are not limited to recursion128. Input length+128 remains conservative.
+Discard private positions before heap retention and never restore them; preserve
+ordinary diagnostics/classification. Concrete parser destruction wipes scratch
+before unlock/free; SecretState then wipes the entire inline owner before unlock.
+No guarantee for arbitrary visitor outputs, error category, provider internals,
+GUI/process protection, other owners or scalar/compiler/stack transit. Native
+tests must demonstrate locks before allocation/binding, moves, wiping/unwind and
+actual lock refusal. See [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).

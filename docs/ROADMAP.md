@@ -137,7 +137,13 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
 - [x] Signing-Key für Git-Tags (SSH)
 
 DE: #147 R8 In Bearbeitung: tatsächlichen Parser-Schutzrecord vor In-place-
-Akquisition mit bestehendem SecretState sperren; native Abnahme ausstehend.
+Akquisition mit bestehendem SecretState sperren; Main320 vollständig abgenommen.
 EN: #147 R8 In progress: prelock parser protection range metadata; full native
-acceptance pending, remaining parser/provider/process gaps OPEN. See
+acceptance completed on Main320; remaining parser/provider/process gaps OPEN. See
 [plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
+
+DE: #147 R8 In Bearbeitung: gesamten konkreten SliceRead-Parser vor Allokation
+und privater Bindung sperren; private Fehlerpositionen nicht speichern.
+EN: Prelock parser/source/index/depth/scratch descriptor; native/security/fuzz
+acceptance required. Other R6/R7/R8 boundaries remain OPEN. See
+[parser state plan](security/PARSER_STATE_OWNER_PLAN.md).

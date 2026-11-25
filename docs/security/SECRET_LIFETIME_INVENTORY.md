@@ -27,11 +27,20 @@ Finding IDs refer to the audit; passing functional tests does not close them.
 DE: Der persistente ScratchLock-Seitenrecord liegt vor Befüllung im stabil
 gesperrten SecretState; vorhandener Payload-Wipe und Unlock bleiben geordnet.
 EN: Protect the concrete callback range metadata before in-place acquisition.
-Parser/scratch Vec descriptors, SliceRead/index/depth, shared registry and transit
+The parser-owner remediation below extends this record-only step to persistent
+parser/scratch descriptors and SliceRead/index/depth. Shared registry and transit
 remain OPEN. Historical baseline rows retain their original meaning; no full
 parser closure. [Plan](PARSER_PROTECTION_OWNER_PLAN.md).
 
 ## Input and transport / Eingabe und Transport
+
+DE: Aktueller Parserzustandsschritt: gesamten öffentlich leeren SliceRead-Parser
+vor Scratch-Reservierung und privater Quellenbindung in SecretState sperren.
+EN: New scoped remediation protects persistent parser/source/index/depth and
+scratch Vec metadata before population; private positions are not retained.
+Actual native/security/fuzz acceptance required. Other source/path/tree/registry
+owners, R6/R7 and scalar/compiler transit remain OPEN. Historical rows retain
+their baseline meaning. [Plan](PARSER_STATE_OWNER_PLAN.md).
 
 | Class / Klasse | Owner and lifetime / Eigentümer und Lebensdauer | Lock/wipe and failure / Sperre, Wipe, Fehler | Source / Quelle |
 |---|---|---|---|

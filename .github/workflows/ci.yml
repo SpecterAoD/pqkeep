@@ -201,7 +201,7 @@ jobs:
       - name: gitleaks installieren / install
         run: |
           f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          curl --proto '=https' --tlsv1.2 -sSfL -o "$RUNNER_TEMP/$f" \
+          curl --proto '=https' --tlsv1.3 -sSfL -o "$RUNNER_TEMP/$f" \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
