@@ -84,6 +84,13 @@ fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> C
         }
         // DE: Optional als Absender signieren (#287). EN: Optionally sign as sender (#287).
         super::signing::menu_args(lang, |prompt| ask(prompt, true), argv)?;
+        // DE: Stufe „Privatsphäre hoch“ (#315): zufälliger Name, kein eigenes Ziel.
+        // EN: Level "privacy high" (#315): random name, no own target.
+        if confirm(super::privacy::menu_question(lang))? {
+            argv.extend(["--privacy".to_owned(), "high".to_owned()]);
+            argv.extend(["--".to_owned(), path]);
+            return Ok(());
+        }
     } else {
         let extra = super::factor_ui::for_decrypt(Path::new(&path), lang, |what| match what {
             Ask::Key => ask(t.menu_keyfile, false),

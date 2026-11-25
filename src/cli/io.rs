@@ -99,6 +99,7 @@ impl Failure {
                 .or_else(|| super::recipients::message(field))
                 .or_else(|| super::rekey_cmd::message(field))
                 .or_else(|| super::list_cmd::message(field))
+                .or_else(|| super::privacy::message(field))
                 .map_or_else(|| err.to_string(), str::to_owned),
             other => other.to_string(),
         };

@@ -96,16 +96,29 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
             .ok_or_else(|| Failure::new(code::USAGE, s.need_out))?;
         let protection = read_protection(t, lang, m)?;
         let list: Vec<&Path> = sources.iter().map(PathBuf::as_path).collect();
-        let report = protection
-            .encrypt_many(&list, out)
-            .map_err(|e| Failure::from_error(&e, lang))?;
-        print_report(t, lang, t.msg_encrypted, out, &report);
+        let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
+        let (out, report) = if super::privacy::random(m) {
+            super::privacy::encrypt_container(&protection, &list, out).map_err(fail)?
+        } else {
+            (
+                out.clone(),
+                protection.encrypt_many(&list, out).map_err(fail)?,
+            )
+        };
+        print_report(t, lang, t.msg_encrypted, &out, &report);
         return Ok(());
     }
+    super::privacy::check_out(m, false, lang)?;
     let protection = read_protection(t, lang, m)?;
     let mut tally = Tally::new(s, m, sources.len());
     for src in sources {
         tally.begin();
+        if super::privacy::random(m) {
+            let (out, r) = super::privacy::encrypt_random(&protection, src);
+            let out = out.unwrap_or_else(|| src.clone());
+            tally.record(t, lang, src, &out, r.map(|r| (t.msg_encrypted, r)));
+            continue;
+        }
         let Some(out) = default_for(m, default_encrypted(src)) else {
             tally.missing_target(src);
             continue;
@@ -164,6 +177,12 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
     let mut tally = Tally::new(many_texts(lang), m, sources.len());
     for src in sources {
         tally.begin();
+        if super::privacy::restore(m, src) {
+            let (out, r) = super::privacy::decrypt_original(m, src, &unlock, expected.as_ref());
+            let out = out.unwrap_or_else(|| src.clone());
+            tally.record(t, lang, src, &out, r.map(|r| (t.msg_decrypted, r)));
+            continue;
+        }
         let Some(out) = default_for(m, default_decrypted(src)) else {
             tally.missing_target(src);
             continue;

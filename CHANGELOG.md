@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Zufällige äußere Dateinamen (#315): `encrypt --random-name` bzw. `--privacy high` (auch
+  `--each` und Container), `decrypt` stellt den Originalnamen aus dem Archiv her (automatisch bei
+  zufälligem Namen ohne `--out`, sonst `--original-name`); Menü-Stufe „Privatsphäre hoch“,
+  Kontextmenü entschlüsselt solche Dateien. Kein Formatwechsel.
+  EN: Random outer file names (#315): `encrypt --random-name` or `--privacy high` (also `--each` and
+  containers); `decrypt` restores the original name from the archive (automatic for a random name
+  without `--out`, else `--original-name`); menu level "privacy high", the context menu decrypts such
+  files. No format change.
+
 - DE: Parser-Scratch-Schutzrecord vor Befüllung stabil sperren (#147 R8).
   EN: Acquire scratch page ownership directly inside prelocked range metadata;
   retain strict failure and wiping order. Other parser metadata remains open.
