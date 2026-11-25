@@ -313,6 +313,14 @@ pub(crate) enum ErrorCode {
 impl Error {
     #[cold]
     pub(crate) fn syntax(code: ErrorCode, line: usize, column: usize) -> Self {
+        // DE: Private Position vor Heap-Speicherung verwerfen, nicht danach löschen.
+        // EN: Discard private positions before heap retention, not after allocation.
+        #[cfg(feature = "std")]
+        let (line, column) = if crate::de::private_errors_active() {
+            (0, 0)
+        } else {
+            (line, column)
+        };
         Error {
             err: Box::new(ErrorImpl { code, line, column }),
         }
@@ -338,6 +346,12 @@ impl Error {
     where
         F: FnOnce(ErrorCode) -> Error,
     {
+        // DE: Den positionsberechnenden Callback im privaten Scope nie ausführen.
+        // EN: Never invoke the position-producing closure in the private scope.
+        #[cfg(feature = "std")]
+        if crate::de::private_errors_active() {
+            return self;
+        }
         if self.err.line == 0 {
             f(self.err.code)
         } else {

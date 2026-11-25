@@ -86,15 +86,23 @@
   "serde_json-1.0.154": [
     {
       "path": "src/de.rs",
-      "sha256": "efddf906a69d0d42a95f5313c570e86802f9b598598957b81539de568a7a70e7"
+      "sha256": "0613734c44e2c174555786d3784484b90c4823e4f2af1eff8da79919d13a1efd"
     },
     {
       "path": "src/error.rs",
-      "sha256": "81afa1934e2599ee29fc6e4d4fb47785022474b68d1d92427e1283737805e7f4"
+      "sha256": "a86d1fac8d45ac49649158f847d7e06588919a7f21d62a01679da6c91b9789a8"
     },
     {
       "path": "src/protected_error.rs",
       "sha256": "f53687c578a9d514e69e7159238838beec760318b4b7afc946313a0bb57d4828"
+    },
+    {
+      "path": "src/read.rs",
+      "sha256": "332462f8a1153a1a84b405cf435e29204600f357efde02cea1ff3f9cc241a688"
+    },
+    {
+      "path": "src/protected_slice.rs",
+      "sha256": "28a763f8a12eaffbc5a24bc72be8cc014806383fd53a323aae52f3ec2705084c"
     }
   ],
   "axum-0.8.9": [

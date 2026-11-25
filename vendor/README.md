@@ -54,6 +54,12 @@ verify both original copies identical before extraction. No native BSD test clai
 
 
 #147 protected ingress / geschützter Eingang:
+- DE: Additive SliceRead-Vorbereitung: Host sperrt öffentlichen leeren Parser vor
+  Scratch-Reservierung; erst nach vollem Payload-Schutz wird Quelle direkt gebunden.
+  EN: In-place one-shot protected parser binding; no scratch Vec escape, unchanged
+  ordinary algorithms and diagnostics. Private positions discarded before retention.
+  DE/EN: SliceRead and iterative IgnoredAny scratch are bounded by input length,
+  not recursion128. Extended numeric modes and disabled recursion limits are refused.
 - Hyper1.12.0: opt-in host-owned protected read/split/trailer buffers; retain existing
   HTTP parser and framing, sanitized trailer errors, no payload Debug. Replace the old
   unsafe benchmark length reset with explicit initialized synthetic fixture reset.
