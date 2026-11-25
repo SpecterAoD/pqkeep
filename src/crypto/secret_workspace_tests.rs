@@ -9,7 +9,7 @@ impl<T: Zeroize> SecretWorkspace<T>
 where
     SecretBuffer<T>: ZeroizeOnDrop,
 {
-    pub(crate) fn assert_metadata_locked(&self) {
+    pub(crate) fn assert_metadata_locked(&self) -> usize {
         locked(self.inner.get());
         for item in self
             .expose()
@@ -19,6 +19,7 @@ where
         {
             locked(item);
         }
+        std::ptr::from_ref(self.inner.get()).addr()
     }
 }
 

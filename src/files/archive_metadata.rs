@@ -2,9 +2,12 @@
 //! EN: Lock archive framing and records before private population.
 
 use super::{ConfidentialText, bad};
-use crate::{Result, crypto::secret_buffer::SecretBuffer};
+use crate::{
+    Result,
+    crypto::{secret_buffer::SecretBuffer, secret_workspace::SecretWorkspace},
+};
 use std::io::{Read, Write};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[derive(Default)]
 struct FrameState {
@@ -19,11 +22,15 @@ impl Zeroize for FrameState {
     }
 }
 
-pub(super) struct Framing(SecretBuffer<FrameState>);
+// DE: Konkreter Buffer-Drop löscht Elemente und gesamte frühere Kapazität vor Unlock.
+// EN: Concrete buffer drop wipes elements and full former capacity before unlock.
+impl ZeroizeOnDrop for SecretBuffer<FrameState> {}
+
+pub(super) struct Framing(SecretWorkspace<FrameState>);
 
 impl Framing {
     pub(super) fn new() -> Result<Self> {
-        Ok(Self(SecretBuffer::new(vec![FrameState::default()])?))
+        Ok(Self(SecretWorkspace::zeroed(1)?))
     }
 
     pub(super) fn read<R: Read>(
@@ -87,11 +94,15 @@ impl Zeroize for EntryRecord {
 
 /// DE: Nur der Guard bewegt sich; der private Datensatz bleibt gesperrt.
 /// EN: Only the guard moves; the private record stays locked in place.
-pub(crate) struct Entry(SecretBuffer<EntryRecord>);
+pub(crate) struct Entry(SecretWorkspace<EntryRecord>);
+
+// DE: Enthaltenen Pfad zuerst zerstören; Buffer-Drop löscht auch sämtliche Paddingbytes.
+// EN: Destroy the owned path first; buffer drop also wipes all padding bytes.
+impl ZeroizeOnDrop for SecretBuffer<EntryRecord> {}
 
 impl Entry {
     pub(super) fn prepare() -> Result<Self> {
-        Ok(Self(SecretBuffer::new(vec![EntryRecord::default()])?))
+        Ok(Self(SecretWorkspace::zeroed(1)?))
     }
 
     pub(super) fn record_mut(&mut self) -> &mut EntryRecord {
