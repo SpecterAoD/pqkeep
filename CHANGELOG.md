@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Formatentwurf v4 (`docs/V4_DRAFT.md`, SPEC v2.21) für Padding, anonyme Empfänger, verborgenen
+  Absender und Strom-Modus – nur Entwurf, Umsetzung folgt (#316, #83).
+  EN: Format draft v4 (`docs/V4_DRAFT.md`, SPEC v2.21) for padding, anonymous recipients, hidden
+  sender and stream mode – draft only, implementation follows (#316, #83).
+
 - DE: Parser-Scratch-Schutzrecord vor Befüllung stabil sperren (#147 R8).
   EN: Acquire scratch page ownership directly inside prelocked range metadata;
   retain strict failure and wiping order. Other parser metadata remains open.

@@ -1,16 +1,18 @@
-# MASTER PROJECT SPECIFICATION v2.20: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.21: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.20. Both versions are maintained together; every change to one is made to the other in the
+> 2.21. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.20. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.21. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.19 (2026-11-22, owner-authorized autonomous security fix through main): mandatory secret locking including KDF/HKDF workspaces; fail on unavailable locks, bounded input, wipe before release. Format/derivation bytes unchanged. See [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
 
 > Change v2.20 (2026-11-24, approved by SpecterAoD): new planned update **U5 privacy and metadata** (section 9) – random outer file names, padding, anonymous recipients (optional exception to D1), hidden sender, encrypted timestamps and extended attributes; all optional and configurable, off by default; section 4a amended accordingly (#315, #316, #123).
+
+> Change v2.21 (2026-11-25, instructed by SpecterAoD: #315/#316 through merge): **format draft v4** ([V4_DRAFT.md](V4_DRAFT.md)) for padding, anonymous recipients (**D1 exception only on request, D1 stays the default**), hidden sender and stream mode (#83) – one version scheme with option bits, content type "stream", trailer inside the encrypted stream, key commitment in every v4 file; draft only, implementation in separate PRs before #98 (#316, #83).
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
 > Change v2.2 (2026-11-06, approved by SpecterAoD): memory hardening (step 2a), build hardening (`panic = "abort"`, checks for PIE/RELRO/NX and ASLR/DEP/CFG), weekly audit, sandboxing (step 5a), root warning (step 4), timing equalisation for `/v1/validate` (step 5).
@@ -315,6 +317,7 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 ### U5: Privacy and metadata (optional, configurable)
 All features are **optional and off by default**; without an option formats and output stay unchanged (principle D3: a new format only when an option needs it; older versions report "unsupported", never silently). Configuration: per-call options, the `--privacy high` level sets the privacy options together, menu and context menu offer this level only, persistent defaults via profile/setup (#136, #48–#50) – no separate configuration file.
 - **Random outer file names** (`--random-name`, #315): the `.pqkf` name reveals nothing about the content; the original name is stored encrypted in the archive and restored when decrypting. No format change.
+- **Format draft v4** for padding, anonymous recipients, hidden sender and stream mode (#83): [V4_DRAFT.md](V4_DRAFT.md) (decisions P1–P9).
 - **Padding** (`--pad`, #316): hides the exact file size with authenticated fill bytes (proposal PADMÉ, at most ~12 % overhead).
 - **Anonymous recipients** (`--anonymous-recipients`, #316): slots without recipient ID, opened by trial decapsulation; **optional exception to D1** (visible IDs stay the default).
 - **Hidden sender** (`--hide-sender`, #316): sender key and signature (U1, format v3) in the encrypted part; verifiable by recipients only, key commitment kept.
