@@ -440,6 +440,15 @@ Unlock bleiben erhalten. Provideraufrufe und öffentliche Bytes unverändert. Pr
 expandierte Zustände, Konstruktion/Scratch und übrige R6/R7/R8-Grenzen bleiben offen.
 Siehe [Seedplan](security/SEED_OWNER_PLAN.md).
 
+Argon2-Arbeitsbereich (#147): vorhandenen SecretWorkspace<Block> verwenden, damit
+auch der innere Vec-Descriptor vor Allokation gesperrt ist; Blockpayload vor
+Default-Initialisierung und privater Verarbeitung vollständig sperren. Nur konkreter
+geprüfter Wiping-Drop-Marker; Parameter, Blockzahl, Profile, Parallelität und Bytes
+unverändert. Reale Descriptor-/Payload-/Move-/Sperrfehlerprüfungen und unabhängige
+KATs sind erforderlich. Provider-interne Blockkopien, Prehash/Blake2/Rayon-Stacks
+und übrige R6/R7/R8-Grenzen bleiben offen; kein vollständiger Argon2-Schutz.
+Siehe [Argon2-Plan](security/ARGON_WORKSPACE_OWNER_PLAN.md).
+
 R7-Terminaleingabe: Linux liest mit rustix direkt in vorab gesperrte SecretBytes;
 Windows verwendet gesperrten Record-/UTF16-/UTF8-Speicher des Callers. Kein privater
 console-Key-/Escape-Vec oder kompletter nativer Record als gewöhnliche Wertkopie.

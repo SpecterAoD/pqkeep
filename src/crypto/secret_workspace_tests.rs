@@ -119,3 +119,6 @@ fn overflow_and_reinitialization_refuse_mutation() {
 #[cfg(target_os = "linux")]
 #[path = "secret_workspace_denial_tests.rs"]
 mod denial;
+
+#[path = "kdf_workspace_tests.rs"]
+mod argon;

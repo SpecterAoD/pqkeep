@@ -27,6 +27,9 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   Inventar, synthetische Kopierproben, Dump-/Prozessgrenzen und priorisierte Nacharbeit.
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
+  [Argon2-Descriptor / Argon2 descriptor](security/ARGON_WORKSPACE_OWNER_PLAN.md):
+  isoliert in Bearbeitung auf Main, unabhängig von PR314; Provider-Scratch bleibt offen.
+  / Independent scoped work in progress; does not close provider scratch findings.
   Auditphase PR298, geschützte Laufzeitpuffer [PR300](https://github.com/SpecterAoD/pqkeep/pull/300)
   und begrenzte WER-Fähigkeit [PR301](https://github.com/SpecterAoD/pqkeep/pull/301) nach Main gemergt.
   / Audit, protected runtime buffers and partial WER capability merged; authorized remediation continues.

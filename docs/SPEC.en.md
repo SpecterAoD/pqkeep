@@ -440,6 +440,15 @@ Provider calls and public bytes remain unchanged. Provider-retained seeds, expan
 state, construction/scratch and remaining R6/R7/R8 boundaries stay open. See the
 [seed plan](security/SEED_OWNER_PLAN.md).
 
+Argon2 workspace (#147): reuse SecretWorkspace<Block> to lock the nested Vec
+descriptor before allocation, and fully lock the Block payload before default
+initialization and private processing. Add only a concrete reviewed wiping-drop
+marker; preserve parameters, block count, profiles, parallelism and output bytes.
+Actual descriptor/payload/move/lock-denial checks and independent KATs are required.
+Provider Block value copies, prehash/Blake2/Rayon stacks and remaining R6/R7/R8
+boundaries stay OPEN; no complete Argon2 protection claim.
+See the [Argon2 plan](security/ARGON_WORKSPACE_OWNER_PLAN.md).
+
 R7 terminal input: Linux reads with rustix directly into prelocked SecretBytes;
 Windows uses caller-protected native record/UTF16/UTF8 storage. No ordinary private
 console Key/escape Vec or complete native record by-value copy. Check alignment

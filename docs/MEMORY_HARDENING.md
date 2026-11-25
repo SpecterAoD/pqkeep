@@ -218,3 +218,18 @@ System/compiler limits are distinct from the enforced lock policy. See [LOCKED_S
 5. **Binary hardening:** CI checks the release binary for PIE, full RELRO and NX stack (Linux) and
    ASLR, DEP and Control Flow Guard (Windows). `strip` mostly reduces size; for open source it hardly
    hinders reverse engineering.
+
+
+## Argon2-Descriptor / Argon2 descriptor (#147)
+
+DE: Der bestehende gesperrte Blockpayload liegt nun in SecretWorkspace<Block>.
+Auch sein innerer Vec-Descriptor ist vor Allokation stabil gesperrt, anschließend
+die volle Blockkapazität vor privatem Schreiben. Sperrfehler bleiben Fehler;
+keine kleineren Parameter oder reduzierte Parallelität. Konkreter Drop löscht
+Blockwerte und volle frühere Allokation vor Unlock. Laufzeitprüfungen lesen nur
+lebende Owner; keine Freigabe-/Crashlöschgarantie aus post-free-Speicherlesen.
+EN: Existing locked Argon2 Block storage now uses the nested workspace owner.
+Lock its descriptor before allocation and its full capacity before private writes.
+Preserve fail-closed locking, KDF parameters and parallelism, wiping before unlock.
+Provider Block copies, prehash/Blake2/Rayon worker stacks and other R6/R7/R8
+boundaries remain OPEN. See [plan](security/ARGON_WORKSPACE_OWNER_PLAN.md).
