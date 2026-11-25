@@ -1,14 +1,16 @@
-# MASTER PROJECT SPECIFICATION v2.19: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.20: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
-> 2.19. Both versions are maintained together; every change to one is made to the other in the
+> 2.20. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the
 > difference is fixed – please report it as an issue.
 >
-> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.19. Beide
+> **Übersetzungshinweis:** Englische Übersetzung von [`SPEC.md`](SPEC.md), Version 2.20. Beide
 > Fassungen werden gemeinsam gepflegt; bei Widersprüchen gilt bis zur Korrektur die deutsche.
 
 > Change v2.19 (2026-11-22, owner-authorized autonomous security fix through main): mandatory secret locking including KDF/HKDF workspaces; fail on unavailable locks, bounded input, wipe before release. Format/derivation bytes unchanged. See [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
+
+> Change v2.20 (2026-11-24, approved by SpecterAoD): new planned update **U5 privacy and metadata** (section 9) – random outer file names, padding, anonymous recipients (optional exception to D1), hidden sender, encrypted timestamps and extended attributes; all optional and configurable, off by default; section 4a amended accordingly (#315, #316, #123).
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
 > Change v2.2 (2026-11-06, approved by SpecterAoD): memory hardening (step 2a), build hardening (`panic = "abort"`, checks for PIE/RELRO/NX and ASLR/DEP/CFG), weekly audit, sandboxing (step 5a), root warning (step 4), timing equalisation for `/v1/validate` (step 5).
@@ -119,7 +121,7 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 - **Folders:** A folder becomes **one** encrypted archive (own minimal format: type, relative path, size, content, checksum). File names, count and structure stay hidden. The `tar` crate is not used (history of extraction vulnerabilities).
 - **Decryption:** Output first to temporary files, released (renamed) only after full authentication and checksum verification; no partial output on errors. Existing targets are never overwritten.
 - **Path safety when extracting:** Rejection of `..`, absolute paths, drive letters/UNC, control characters, Windows reserved names and overly long paths; limits for entries and nesting depth. Symlinks, devices and pipes are not followed when encrypting (skipped and reported) and never created when extracting. In recipient mode anyone with the public key can create valid files; the parser must therefore also safely reject malicious, correctly encrypted archives.
-- **Not preserved:** timestamps, owners, permissions (content and structure only). Decrypted files get restrictive permissions (Linux `0600`/folders `0700`).
+- **Not preserved (default):** timestamps, owners, permissions (content and structure only); timestamps and extended attributes optionally encrypted in the future (U5), never owners or setuid/setgid. Decrypted files get restrictive permissions (Linux `0600`/folders `0700`).
 - **Originals:** are not deleted; secure deletion is unreliable on SSDs (section 5b).
 - **Planned extensions (later updates):** mirror mode (folder structure preserved, each file encrypted separately), multiple recipients per file, optional ML-DSA signature of the sender.
 - **Documentation:** `docs/FILE_FORMAT.md` (DE/EN), addition to `docs/THREAT_MODEL.md` (visible metadata: approximate size; attacks via manipulated archives).
@@ -299,7 +301,7 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 ### U2: Multiple recipients (multi-recipient container)
 - One random AES-256-GCM file key (as before); in the header one entry per recipient (ML-KEM encapsulation, default ML-KEM-1024, recipient ID, wrapped key). Each recipient opens with their own private key; no shared password.
 - Limits: maximum number of recipients (e.g. 64), new `format_version` with downgrade protection, tests for every recipient, wrong/missing recipients, manipulated entries.
-- Decision in the plan: recipient IDs visible (quickly finding one's own entry) or hidden (trial decryption, more privacy). Draft together with U0: [V2_DRAFT.md](V2_DRAFT.md) (proposal: visible).
+- Decision in the plan: recipient IDs visible (quickly finding one's own entry) or hidden (trial decryption, more privacy). Draft together with U0: [V2_DRAFT.md](V2_DRAFT.md) (proposal: visible). Optional anonymous recipients as an exception: U5 (#316).
   - Implemented in the core (#46) and on the command line (#47): repeated `--to` (up to 64, any ML-KEM level), optionally with an own passphrase (`--with-passphrase`, also with a factor file); a single recipient stays v1. Menu and context menu ask "another?" after each confirmed recipient; only the menu offers the additional own passphrase.
 
 ### U3: Setup wizard (console)
@@ -309,6 +311,16 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 ### U4: Context menu (right-click) with passphrase dialog
 - Actions "Secure with PQC" / "Decrypt PQC" (later "Sign"/"Verify") in the file manager. Registration only at user level, without administrator rights, fully reversible: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo actions (Cinnamon/Mint), Nautilus scripts, Dolphin service menus, Thunar actions (`uca.xml`, Xfce).
 - Without a terminal a small input window for the passphrase opens. **Deviation from section 1 ("GUI is a non-goal"):** only this dialog, no application interface; implementation decided in the plan (e.g. existing system tools such as `zenity`/`kdialog` on Linux or a minimal native dialog on Windows). The passphrase is passed only via pipe/memory, never via arguments or environment variables.
+
+### U5: Privacy and metadata (optional, configurable)
+All features are **optional and off by default**; without an option formats and output stay unchanged (principle D3: a new format only when an option needs it; older versions report "unsupported", never silently). Configuration: per-call options, the `--privacy high` level sets the privacy options together, menu and context menu offer this level only, persistent defaults via profile/setup (#136, #48–#50) – no separate configuration file.
+- **Random outer file names** (`--random-name`, #315): the `.pqkf` name reveals nothing about the content; the original name is stored encrypted in the archive and restored when decrypting. No format change.
+- **Padding** (`--pad`, #316): hides the exact file size with authenticated fill bytes (proposal PADMÉ, at most ~12 % overhead).
+- **Anonymous recipients** (`--anonymous-recipients`, #316): slots without recipient ID, opened by trial decapsulation; **optional exception to D1** (visible IDs stay the default).
+- **Hidden sender** (`--hide-sender`, #316): sender key and signature (U1, format v3) in the encrypted part; verifiable by recipients only, key commitment kept.
+- **Encrypted timestamps** (`--keep-times`, #123): modification time encrypted in the archive entry and set when decrypting (deviation from section 4a only with this option).
+- **Encrypted extended attributes** (`--keep-xattr`, #123): `user.*` only by default; never automatically restore `security.*` (e.g. capabilities), `trusted.*`, `system.*`/ACLs or SELinux labels; never owners or setuid/setgid; size and count limits; Windows as a separate step.
+- **Order:** #315 → format draft #316 together with #83 and **before #98** → archive extension (timestamps/attributes) in the backup epic (#123, #113); concept aligned with the vault index (#263). Every step with its own plan, format draft, tests and attack catalogue cases.
 
 ### Further updates
 - Mirror mode for folders (structure preserved, files encrypted separately).

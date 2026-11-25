@@ -1,8 +1,10 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.19: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.20: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
+
+> Änderung v2.20 (24.11.2026, freigegeben von SpecterAoD): neues geplantes Update **U5 Privatsphäre und Metadaten** (Abschnitt 9) – zufällige äußere Dateinamen, Padding, anonyme Empfänger (optionale Ausnahme von D1), verborgener Absender, verschlüsselte Zeitstempel und erweiterte Attribute; alles optional und konfigurierbar, Standard aus; Abschnitt 4a entsprechend ergänzt (#315, #316, #123).
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -113,7 +115,7 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 - **Ordner:** Ein Ordner wird zu **einem** verschlüsselten Archiv (eigenes minimales Format: Typ, relativer Pfad, Größe, Inhalt, Prüfsumme). Dateinamen, Anzahl und Struktur bleiben verborgen. Kein Einsatz der Crate `tar` (Historie von Entpack-Schwachstellen).
 - **Entschlüsseln:** Ausgabe zunächst in temporäre Dateien, Freigabe (Umbenennen) erst nach vollständiger Authentifizierung und Prüfsummenkontrolle; bei Fehlern keine Teilausgabe. Vorhandene Ziele werden nie überschrieben.
 - **Pfadsicherheit beim Entpacken:** Ablehnung von `..`, absoluten Pfaden, Laufwerksbuchstaben/UNC, Steuerzeichen, Windows-reservierten Namen und zu langen Pfaden; Grenzen für Einträge und Verschachtelungstiefe. Symlinks, Geräte und Pipes werden beim Verschlüsseln nicht verfolgt (übersprungen und gemeldet) und beim Entpacken nie angelegt. Im Empfänger-Modus kann jeder mit dem öffentlichen Schlüssel gültige Dateien erzeugen; der Parser muss daher auch bösartige, korrekt verschlüsselte Archive sicher abweisen.
-- **Nicht übernommen:** Zeitstempel, Eigentümer, Rechte (nur Inhalt und Struktur). Entschlüsselte Dateien erhalten restriktive Rechte (Linux `0600`/Ordner `0700`).
+- **Nicht übernommen (Standard):** Zeitstempel, Eigentümer, Rechte (nur Inhalt und Struktur); Zeitstempel und erweiterte Attribute künftig optional verschlüsselt (U5), Eigentümer und setuid/setgid nie. Entschlüsselte Dateien erhalten restriktive Rechte (Linux `0600`/Ordner `0700`).
 - **Originale:** werden nicht gelöscht; sicheres Löschen ist auf SSDs unzuverlässig (Abschnitt 5b).
 - **Geplante Erweiterungen (spätere Updates):** Spiegel-Modus (Ordnerstruktur erhalten, jede Datei einzeln verschlüsselt), mehrere Empfänger pro Datei, optionale ML-DSA-Signatur des Absenders.
 - **Dokumentation:** `docs/FILE_FORMAT.md` (DE/EN), Ergänzung in `docs/THREAT_MODEL.md` (sichtbare Metadaten: ungefähre Größe; Angriffe über manipulierte Archive).
@@ -295,7 +297,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 ### U2: Mehrere Empfänger (Multi-Recipient-Container)
 - Ein zufälliger AES-256-GCM-Dateischlüssel (wie bisher); im Header pro Empfänger ein eigener Eintrag (ML-KEM-Kapselung, Standard ML-KEM-1024, Empfänger-ID, eingepackter Schlüssel). Jeder Empfänger öffnet mit seinem eigenen privaten Schlüssel; kein geteiltes Passwort.
 - Grenzen: Höchstzahl Empfänger (z. B. 64), neue `format_version` mit Downgrade-Schutz, Tests für jeden Empfänger, falsche/fehlende Empfänger, manipulierte Einträge.
-- Entscheidung im Plan: Empfänger-IDs sichtbar (schnelles Finden des eigenen Eintrags) oder verborgen (Probe-Entschlüsselung, mehr Privatsphäre). Entwurf zusammen mit U0: [V2_DRAFT.md](V2_DRAFT.md) (Vorschlag: sichtbar).
+- Entscheidung im Plan: Empfänger-IDs sichtbar (schnelles Finden des eigenen Eintrags) oder verborgen (Probe-Entschlüsselung, mehr Privatsphäre). Entwurf zusammen mit U0: [V2_DRAFT.md](V2_DRAFT.md) (Vorschlag: sichtbar). Optional anonyme Empfänger als Ausnahme: U5 (#316).
   - DE: Umgesetzt im Core (#46) und auf der Kommandozeile (#47): `--to` mehrfach (bis 64, jede ML-KEM-Stufe), optional mit eigener Passphrase (`--with-passphrase`, auch mit Faktordatei); ein einzelner Empfänger bleibt v1. Menü und Kontextmenü fragen nach jedem bestätigten Empfänger „weiterer?“; die zusätzliche eigene Passphrase bietet nur das Menü an.
   - EN: Implemented in the core (#46) and on the command line (#47): repeated `--to` (up to 64, any ML-KEM level), optionally with an own passphrase (`--with-passphrase`, also with a factor file); a single recipient stays v1. Menu and context menu ask "another?" after each confirmed recipient; only the menu offers the additional own passphrase.
 
@@ -306,6 +308,16 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 ### U4: Kontextmenü (Rechtsklick) mit Passphrase-Dialog
 - Aktionen „Mit PQC sichern“ / „PQC entschlüsseln“ (später „Signieren“/„Prüfen“) im Dateimanager. Registrierung nur auf Benutzerebene, ohne Administratorrechte, vollständig rückgängig zu machen: Windows `HKCU\Software\Classes\…\shell`; Linux Nemo-Actions (Cinnamon/Mint), Nautilus-Skripte, Dolphin-Service-Menüs, Thunar-Aktionen (`uca.xml`, Xfce).
 - Ohne Terminal öffnet sich ein schlankes Eingabefenster für die Passphrase. **Abweichung von Abschnitt 1 („GUI ist Non-Goal“):** nur dieser Dialog, keine Anwendungsoberfläche; Umsetzung im Plan zu entscheiden (z. B. vorhandene Systemwerkzeuge wie `zenity`/`kdialog` unter Linux bzw. ein minimaler nativer Dialog unter Windows). Übergabe der Passphrase nur über Pipe/Speicher, nie über Argumente oder Umgebungsvariablen.
+
+### U5: Privatsphäre und Metadaten (optional, konfigurierbar)
+Alle Funktionen sind **optional und standardmäßig aus**; ohne Option bleiben Formate und Ausgaben unverändert (Grundsatz D3: neues Format nur, wenn eine Option es verlangt; ältere Versionen melden „nicht unterstützt“, nie still). Konfiguration: Einzeloptionen pro Aufruf, Stufe `--privacy high` setzt die Privatsphäre-Optionen gemeinsam, Menü und Kontextmenü bieten nur diese Stufe, dauerhafte Voreinstellungen über Profil/Einrichtung (#136, #48–#50) – keine eigene Konfigurationsdatei.
+- **Zufällige äußere Dateinamen** (`--random-name`, #315): keine Rückschlüsse auf den Inhalt aus dem `.pqkf`-Namen; der Originalname steht verschlüsselt im Archiv und wird beim Entschlüsseln wiederhergestellt. Kein Formatwechsel.
+- **Padding** (`--pad`, #316): verbirgt die genaue Dateigröße durch authentisierte Füllbytes (Vorschlag PADMÉ, höchstens ~12 % Mehrgröße).
+- **Anonyme Empfänger** (`--anonymous-recipients`, #316): Zugänge ohne Empfänger-ID, Öffnen per Probe-Entkapselung; **optionale Ausnahme von D1** (sichtbare IDs bleiben Standard).
+- **Verborgener Absender** (`--hide-sender`, #316): Absenderschlüssel und Signatur (U1, Format v3) im verschlüsselten Teil; prüfbar nur für Empfänger, Schlüsselbindung bleibt.
+- **Verschlüsselte Zeitstempel** (`--keep-times`, #123): Änderungszeit verschlüsselt im Archiv-Eintrag, beim Entschlüsseln gesetzt (Abweichung von Abschnitt 4a nur mit dieser Option).
+- **Verschlüsselte erweiterte Attribute** (`--keep-xattr`, #123): standardmäßig nur `user.*`; `security.*` (z. B. Programmrechte), `trusted.*`, `system.*`/ACLs und SELinux-Kennungen nie automatisch wiederherstellen; Eigentümer und setuid/setgid nie; Größen- und Anzahlgrenzen; Windows eigener Schritt.
+- **Reihenfolge:** #315 → Formatentwurf #316 gemeinsam mit #83 und **vor #98** → Archiv-Erweiterung (Zeitstempel/Attribute) im Backup-Epic (#123, #113); Konzept abgestimmt mit dem Vault-Index (#263). Jeder Schritt mit eigenem Plan, Formatentwurf, Tests und Angriffskatalog-Fällen.
 
 ### Weitere Updates
 - Spiegel-Modus für Ordner (Struktur erhalten, Dateien einzeln verschlüsselt).
