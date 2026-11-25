@@ -6,9 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Vollständigen SliceRead-Parser einschließlich Scratch-Descriptor vor privater
+  Quellenbindung sperren; Scratch an Ort und Stelle reservieren und schützen (#147 R8).
+  EN: Prelock the concrete parser, bind once in place and discard private error
+  positions before retention. Preserve ordinary serde behavior and strict failures;
+  remaining provider, helper/process, other-owner and compiler boundaries stay open.
+
 - DE: Parser-Scratch-Schutzrecord vor Befüllung stabil sperren (#147 R8).
   EN: Acquire scratch page ownership directly inside prelocked range metadata;
-  retain strict failure and wiping order. Other parser metadata remains open.
+  retain strict failure and wiping order. Broader parser/compiler boundaries remain open.
 
 - DE: Feste HKDF/HMAC- und Archiv-Arbeitsbereichsdescriptoren vor privater Befüllung
   im bestehenden SecretWorkspace sperren; Hash-/HKDF-Ausgaben direkt in SecretBytes

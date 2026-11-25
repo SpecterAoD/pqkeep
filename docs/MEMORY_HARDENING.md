@@ -242,5 +242,21 @@ Konstruktorargument; Metadatenfehler verweigern die Payload-Akquisition. Bestehe
 Scratch-Wipe-/Unlock-/Free-Reihenfolge bleibt erhalten.
 EN: Stable locked range metadata precedes in-place population; preserve actual
 payload locking and wipe-before-unlock. No new unsafe, provider or policy change.
-Parser/read/index/depth/scratch-descriptor, shared-registry and compiler transit
-remain OPEN. [Plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
+DE: Der nachfolgende Parserowner ergänzt den Record-Schritt um den Parserzustand.
+EN: Parser ownership below extends this record-only step. Shared registry and
+compiler transit remain OPEN. [Plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
+
+## Concrete parser owner / Konkreter Parserowner (#147 R8)
+
+DE: Öffentlich leeren SliceRead-Parser zuerst in SecretState sperren, dann den
+eingebetteten Scratch-Descriptor an Ort und Stelle reservieren und Payload mit
+dem bestehenden ScratchLock sperren. Erst danach private Quelle direkt binden.
+EN: Stable prelocked parser/source/index/depth metadata and scratch descriptor;
+one-shot synchronous parsing, strict preparation failures and unchanged ordinary
+serde APIs. The existing concrete destructor wipes full scratch before unlock,
+then SecretState wipes the whole parser allocation before metadata unlock.
+DE: Private Zeile/Spalte vor Speicherung verwerfen, nicht nachträglich löschen.
+EN: Private error positions are discarded before retention, ordinary diagnostics
+and classification preserved. Native success/error/unwind/denial and public
+differential tests required. Other owners, R6/R7 and compiler/scalar/stack transit
+remain OPEN. [Plan](security/PARSER_STATE_OWNER_PLAN.md).
