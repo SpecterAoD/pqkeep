@@ -488,6 +488,23 @@ R8 Parser-Schutzrecord: Den leeren LockedRange zunächst in einem stabil gesperr
 SecretState halten, dann direkt dort akquirieren. Aktive/partielle Records nicht
 überschreiben; Metadatenfehler vor Payload-Nutzung ablehnen. Scratch-Wipe erfolgt
 weiter vor Payload-Unlock/Freigabe; der Record-Drop löscht seine Felder noch unter
-Metadatensperre. Parser-/Scratch-Vec-Descriptor, SliceRead/Index/Tiefe und Shared
-Registry sowie Compilertransit bleiben offen. Keine vollständige Parserzusage.
+Metadatensperre. Der nachfolgende Parserzustandsschritt ergänzt Parser-/Scratch-
+Descriptor und SliceRead/Index/Tiefe; Shared Registry und Compilertransit bleiben
+offen. Keine vollständige Parser-/Transitzusage.
 Siehe [Plan](security/PARSER_PROTECTION_OWNER_PLAN.md).
+
+R8 Parserzustand: Den ausschließlich öffentlich leeren konkreten SliceRead-Parser
+im bestehenden SecretState sperren, danach seinen eingebetteten Scratch-Vec
+reservieren und dessen volle Kapazität schützen. Erst dann Quelle/Index direkt
+im Parser binden. Synchroner Einmalscope; aktive/wiederverwendete Zustände,
+ungeeignete Kapazität, erweiterte Zahlenmodi und deaktivierte Rekursionsgrenze
+verweigern. SliceRead-
+Scratch und iterativer IgnoredAny-Stack sind durch Eingabelänge begrenzt; letzterer
+ist nicht auf Rekursion128 beschränkt. Eingabelänge+128 bleibt konservativ.
+Private Fehlerpositionen vor Heap-Speicherung verwerfen und nicht nachtragen;
+öffentliche Diagnose/Klassifikation erhalten. Der konkrete Parser-Drop wischt
+Scratch vor Unlock/Free, SecretState danach gesamten Inlinezustand vor Unlock.
+Keine Zusage über beliebige Besucher-Rückgaben, Fehlerkategorie, Providerinternas,
+GUI/Prozessschutz, andere Owner oder Scalar-/Compiler-/Stacktransit. Native Tests
+müssen Sperre vor Allokation/Bindung, Moves, Wipe/Unwind und echte Verweigerung
+belegen. Siehe [Parserzustandsplan](security/PARSER_STATE_OWNER_PLAN.md).

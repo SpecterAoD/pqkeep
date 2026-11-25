@@ -53,6 +53,13 @@ mod error_tests;
 #[path = "parser_protection_tests.rs"]
 mod protection_tests;
 
+#[cfg(test)]
+#[path = "parser_position_tests.rs"]
+mod position_tests;
+
+#[path = "locked_parser.rs"]
+mod locked_parser;
+
 fn content_type(headers: &HeaderMap) -> bool {
     headers
         .get(header::CONTENT_TYPE)
@@ -65,18 +72,7 @@ fn content_type(headers: &HeaderMap) -> bool {
 }
 
 pub(super) fn decode<T: DeserializeOwned>(bytes: &[u8]) -> Result<T, ApiError> {
-    let capacity = bytes
-        .len()
-        .checked_add(128)
-        .ok_or(ApiError::PayloadTooLarge)?;
-    let mut scratch: Vec<u8> = Vec::new();
-    scratch
-        .try_reserve_exact(capacity)
-        .map_err(|_| ApiError::Busy)?;
-    let address = scratch.as_ptr().addr();
-    let protection = Box::new(ScratchLock::new(address, scratch.capacity())?);
-    serde_json::de::from_slice_with_protection(bytes, scratch, protection)
-        .map_err(|_| ApiError::BadRequest)
+    locked_parser::decode(bytes)
 }
 
 impl<S, T> FromRequest<S> for LockedJson<T>

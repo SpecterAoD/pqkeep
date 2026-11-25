@@ -41,6 +41,12 @@ pub trait ScratchProtection: Send {
 mod protected_error;
 
 #[cfg(feature = "std")]
+#[path = "protected_slice.rs"]
+mod protected_slice;
+#[cfg(feature = "std")]
+pub use self::protected_slice::ProtectedScratchError;
+
+#[cfg(feature = "std")]
 pub(crate) fn private_errors_active() -> bool {
     protected_error::active()
 }
@@ -68,6 +74,8 @@ pub struct Deserializer<R> {
     scratch: Vec<u8>,
     #[cfg(feature = "std")]
     scratch_protection: Option<alloc::boxed::Box<dyn ScratchProtection>>,
+    #[cfg(feature = "std")]
+    protected_bound: bool,
     remaining_depth: u8,
     #[cfg(feature = "float_roundtrip")]
     single_precision: bool,
@@ -110,6 +118,8 @@ where
             scratch: Vec::new(),
             #[cfg(feature = "std")]
             scratch_protection: None,
+            #[cfg(feature = "std")]
+            protected_bound: false,
             remaining_depth: 128,
             #[cfg(feature = "float_roundtrip")]
             single_precision: false,
@@ -139,10 +149,10 @@ impl<'a> Deserializer<read::SliceRead<'a>> {
     /// EN: Use a scratch allocation already locked by the host.
     ///
     /// DE: Der Host muss die komplette Kapazität bis nach `wipe` gesperrt halten.
-    /// SliceRead kopiert höchstens die Eingabelänge; der IgnoredAny-Stack benötigt
-    /// höchstens die Rekursionstiefe128. Erweiterte Zahlenmodi sind nicht zugelassen.
+    /// SliceRead und der iterative IgnoredAny-Stack benötigen jeweils höchstens
+    /// die Eingabelänge. Erweiterte Zahlenmodi sind nicht zugelassen.
     /// EN: The host must retain the complete allocation lock through wiping. SliceRead
-    /// copies at most input length, and IgnoredAny uses at most depth128. Extended
+    /// and iterative IgnoredAny each use at most input length. Extended
     /// numeric modes are rejected; this entry point cannot fall back to plain scratch.
     #[cfg(feature = "std")]
     pub fn from_slice_with_protection(
@@ -163,6 +173,7 @@ impl<'a> Deserializer<read::SliceRead<'a>> {
         let mut de = Self::from_slice(bytes);
         de.scratch = scratch;
         de.scratch_protection = Some(protection);
+        de.protected_bound = true;
         Ok(de)
     }
 

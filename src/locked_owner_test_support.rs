@@ -16,7 +16,7 @@ pub(crate) fn locked<T>(value: &T) {
 }
 
 #[cfg(target_os = "linux")]
-fn own_mapping_locked(address: usize) -> bool {
+pub(crate) fn own_mapping_locked(address: usize) -> bool {
     let maps = std::fs::read_to_string("/proc/self/smaps").unwrap();
     let mut selected = false;
     for line in maps.lines() {

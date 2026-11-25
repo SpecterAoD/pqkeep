@@ -435,6 +435,23 @@ where
 //////////////////////////////////////////////////////////////////////////////
 
 impl<'a> SliceRead<'a> {
+    // DE: Nur öffentliche leere Quelle vor Bindung; keine private Reader-Kopie.
+    // EN: Only public-empty source before binding; no private reader temporary.
+    #[cfg(feature = "std")]
+    pub(crate) fn protected_empty(&self) -> bool {
+        self.slice.is_empty() && self.index == 0
+    }
+
+    #[cfg(feature = "std")]
+    pub(crate) fn bind_protected(&mut self, slice: &'a [u8]) {
+        self.slice = slice;
+        self.index = 0;
+        #[cfg(feature = "raw_value")]
+        {
+            self.raw_buffering_start_index = 0;
+        }
+    }
+
     /// Create a JSON input source to read from a slice of bytes.
     pub fn new(slice: &'a [u8]) -> Self {
         SliceRead {
