@@ -41,7 +41,7 @@ production hooks. No allocation is added for private range geometry.
 
 DE: Beide strengen Clippy-/Featurekonfigurationen, fmt, Limits, fokussierte
 Sperr-/Owner-/Unwind-/Wipe-/Denial-Tests und öffentlicher Freigabevertrag lokal.
-Vollständige native Linux-x86/ARM64-/Windows-CI, Audit/CodeQL/Sonar/Secret-Scan
+Vollständige native Linux-x86/ARM64-/Windows-CI, Audit/CodeQL/Secret-Scan (Sonar seit 25.11.2026 entfernt)
 und alle acht bestehenden Fuzz-Ziele am finalen Head vor Merge erforderlich.
 Linux-Denial nur im eigenen kurzlebigen Prozess mit reduziertem Limit;
 keine lokalen Rechteerweiterungen und keine schwächeren Sicherheitsparameter.

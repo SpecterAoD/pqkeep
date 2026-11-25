@@ -45,7 +45,11 @@ für Pull Requests.
 
 Bewusst **nicht** eingesetzt: Trivy, GitGuardian, SonarCloud, Semgrep, Checkov/KICS, ZAP, Renovate –
 sie doppeln vorhandene Prüfungen oder passen nicht zu einem CLI-Projekt ohne Container,
-Infrastruktur-Code und Webdienst.
+Infrastruktur-Code und Webdienst. Eine automatische SonarCloud-Analyse lief kurzzeitig (bis
+25.11.2026) und wurde wieder entfernt: keine Befunde im Rust-Code, 29 Befunde nur in Hilfsskripten und
+Workflows, davon 22 Fehlalarme; CodeQL (Rust, Python, Actions), clippy pedantic, `check_limits.sh`,
+zizmor und actionlint decken dasselbe ab. Die berechtigten Kleinigkeiten (HTTPS-Zwang bei `curl`,
+actionlint als geprüfte Binärdatei) sind umgesetzt.
 
 ## Downloads und Abfluss von Daten
 
@@ -165,7 +169,11 @@ workflows with write permissions do not run for pull requests.
 
 Deliberately **not** used: Trivy, GitGuardian, SonarCloud, Semgrep, Checkov/KICS, ZAP, Renovate –
 they duplicate existing checks or do not fit a CLI project without containers, infrastructure code
-or a web service.
+or a web service. An automatic SonarCloud analysis ran briefly (until 2026-11-25) and was removed
+again: no findings in the Rust code, 29 findings only in helper scripts and workflows, 22 of them false
+positives; CodeQL (Rust, Python, Actions), clippy pedantic, `check_limits.sh`, zizmor and actionlint
+cover the same ground. The valid minor points (HTTPS-only `curl`, actionlint as a verified binary) are
+implemented.
 
 ### Downloads and data exfiltration
 

@@ -53,6 +53,8 @@ complete R6/R7/R8 acceptance. Signed plan precedes implementation.
 
 ## Gemeinsamer Testprüfer / Shared test checker
 
+> Hinweis 25.11.2026: SonarCloud wurde inzwischen entfernt (`CI_SECURITY.md`); historische Angabe. / Note: SonarCloud has since been removed; historical statement.
+
 DE: Erste Sonar-Abnahme meldet8,9Prozent duplizierte neue Zeilen bei3Prozent
 Grenze, keine offenen Code-/Sicherheitsbefunde. Der neue Linux-VmFlags-Prüfer
 dupliziert bestehenden Archivtestcode. Vor Korrektur planen: gemeinsamen
