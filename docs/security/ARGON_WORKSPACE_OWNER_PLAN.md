@@ -57,3 +57,23 @@ process boundaries remain OPEN. No full Argon2 or issue147 closure claim.
 DE/EN: Keep local work and backups. Before merge discard nothing; after merge use
 an independently reviewed signed revert PR. No branch deletion without specific
 approval, installation, deployment or host-policy change.
+
+## Abnahme-Korrektur vor Testcode / Acceptance refinement before test code
+
+DE: Native CI auf13723f8 zeigt eine alte falsche Testannahme in
+`tests/files_v2_roundtrip.rs`: Version3 ist seit U1 unterstützt, nicht unbekannt.
+Wird v2 als v3 markiert, liest Signer::read das erste zufällige Hüllenbyte als
+Algorithmus. Bei1 folgt korrekt InvalidInput(header) wegen fehlendem Absenderblock;
+sonst Unsupported. Die bisherige Unsupported-Pflicht für3 ist daher zufallsabhängig.
+EN: Signed refinement before test changes: keep exact Unsupported checks for truly
+unknown versions0/4/255; explicitly retain rejection/no-output checks for relabeling
+v1/v2 as supported v3. Add deterministic algorithm0/1 fixtures at the actual metadata
+boundary to require both exact rejection variants and no leftover output.
+
+DE: Nur diese bestehende Testdatei ändern; Produktionsparser/Algorithmen/KDF/Policies
+bleiben bytegleich. Vor Änderungen die neuen Gegenproben als rot nachweisen;
+danach fmt, strenge Linux-/Windows-Clippies, Test mit/ohne API, vorhandene gültige
+v3-/v2-Tests und vollständige neue native/Fuzz/Sicherheits-CI. Den früheren
+RustSec-Netzfehler erhalten; neuer Head muss mit frischem Datenbankabruf bestehen.
+EN: No production or policy change, broad error acceptance, ignored test, lowered
+KDF or scanner exception. Preserve both original failures as historical evidence.
