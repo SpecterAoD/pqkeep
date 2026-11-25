@@ -127,33 +127,55 @@ fn lock_capacity(pages: usize, span: &Range<usize>) -> Option<usize> {
 /// DE: Sperrt alle Seiten von `[addr, addr + len)`; leere Bereiche werden ignoriert.
 /// EN: Locks all pages of `[addr, addr + len)`; empty ranges are ignored.
 pub(crate) fn lock_range(addr: usize, len: usize) -> LockedRange {
-    let mut locked = LockedRange { pages: 0..0 };
-    if len == 0 {
-        return locked;
-    }
-    let Some(span) = page_span(addr, len) else {
-        FAILED.fetch_add(1, Ordering::Relaxed);
-        return locked;
-    };
-    locked.pages = span.start..span.start;
-    let size = region::page::size();
-    let mut reg = registry();
-    let total = lock_capacity(reg.len(), &span);
-    if total.is_none_or(|n| region::prepare_lock_capacity(n).is_err()) {
-        FAILED.fetch_add(1, Ordering::Relaxed);
-        return locked;
-    }
-    for page in span.step_by(size) {
-        if !acquire_page(&mut reg, page, size) {
-            FAILED.fetch_add(1, Ordering::Relaxed);
-            break;
-        }
-        // DE: Die geprüfte Spanne umfasst bereits jede volle Seite ohne Überlauf.
-        // EN: The checked span already contains each full page without overflow.
-        locked.pages.end = page + size;
-    }
+    let mut locked = LockedRange::empty();
+    locked.acquire(addr, len);
     locked
 }
+
+impl LockedRange {
+    // DE: Nur öffentliche Anfangswerte vor einer optionalen Metadatensperre.
+    // EN: Only public initial values before an optional metadata lock.
+    pub(crate) fn empty() -> Self {
+        Self { pages: 0..0 }
+    }
+
+    // DE: Record direkt befüllen; bestehende vollständige/partielle Sperren behalten.
+    // EN: Populate in place; preserve existing complete or partial lock ownership.
+    pub(crate) fn acquire(&mut self, addr: usize, len: usize) -> bool {
+        if self.pages != (0..0) {
+            return false;
+        }
+        if len == 0 {
+            return true;
+        }
+        let Some(span) = page_span(addr, len) else {
+            FAILED.fetch_add(1, Ordering::Relaxed);
+            return false;
+        };
+        self.pages = span.start..span.start;
+        let size = region::page::size();
+        let mut reg = registry();
+        let total = lock_capacity(reg.len(), &span);
+        if total.is_none_or(|n| region::prepare_lock_capacity(n).is_err()) {
+            FAILED.fetch_add(1, Ordering::Relaxed);
+            return false;
+        }
+        for page in span.step_by(size) {
+            if !acquire_page(&mut reg, page, size) {
+                FAILED.fetch_add(1, Ordering::Relaxed);
+                break;
+            }
+            // DE: Die geprüfte Spanne umfasst bereits jede volle Seite ohne Überlauf.
+            // EN: The checked span already contains each full page without overflow.
+            self.pages.end = page + size;
+        }
+        self.complete(addr, len)
+    }
+}
+
+// DE: Der konkrete Drop löscht beide Felder nach Freigabe des Seitenzählers.
+// EN: The concrete destructor wipes both fields after releasing page references.
+impl zeroize::ZeroizeOnDrop for LockedRange {}
 
 impl Drop for LockedRange {
     fn drop(&mut self) {
