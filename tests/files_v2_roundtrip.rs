@@ -190,12 +190,14 @@ fn c06_downgrade_and_unknown_versions_are_rejected() {
     assert_eq!((v2::version(&v2_file), v2::version(&v1_file)), (2, 1));
 
     // DE: Version umetikettieren öffnet nie. EN: Relabelling the version never opens.
-    for (file, version) in [(&v2_file, 1u8), (&v1_file, 2)] {
+    for (file, version) in [(&v2_file, 1u8), (&v1_file, 2), (&v2_file, 3), (&v1_file, 3)] {
         let mut relabelled = file.clone();
         relabelled[8] = version;
         assert!(v2::try_decrypt(&w.work, &relabelled, &by_key).is_err());
     }
-    for version in [0u8, 3, 255] {
+    // DE: V3 ist unterstützt;4 ist tatsächlich unbekannt (V3_SIGNED).
+    // EN: V3 is supported;4 is actually unknown (V3_SIGNED).
+    for version in [0u8, 4, 255] {
         let mut unknown = v2_file.clone();
         unknown[8] = version;
         let result = v2::try_decrypt(&w.work, &unknown, &by_key);
@@ -207,6 +209,29 @@ fn c06_downgrade_and_unknown_versions_are_rejected() {
         reserved[23] = slot_type;
         let result = v2::try_decrypt(&w.work, &reserved, &by_key);
         assert_eq!(result.err(), Some(Error::Unsupported), "{slot_type}");
+    }
+}
+
+#[test]
+fn supported_v3_relabel_uses_exact_header_rejection_paths_without_output() {
+    let w = v2::workspace();
+    let pass = common::random_passphrase();
+    let factor = v2::factor();
+    let (public, unlocked) = v2::kem_key(KEMS[1]);
+    let source = encrypt(&w, Some(access(&pass, Some(&factor))), &[&public]).unwrap();
+    let header = files::HeaderV2::read(&mut source.as_slice()).unwrap();
+    let offset = header.metadata().unwrap().len();
+    // DE: V3_SIGNED S8: Algorithmus1 ist bekannt;0 ist unbekannt.
+    // EN: V3_SIGNED S8: algorithm1 is supported;0 is unknown.
+    for (algorithm, expected) in [(0, Error::Unsupported), (1, bad("header"))] {
+        let mut relabelled = source[..=offset].to_vec();
+        relabelled[8..10].copy_from_slice(&files::format_v2::VERSION_SIGNED.to_le_bytes());
+        relabelled[offset] = algorithm;
+        assert_eq!(
+            v2::try_decrypt(&w.work, &relabelled, &Unlock::Key(&unlocked)).err(),
+            Some(expected),
+            "algorithm {algorithm}"
+        );
     }
 }
 
