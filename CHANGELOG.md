@@ -16,15 +16,6 @@ German release notes: see `docs/releases/`.
   only via `--passphrase-file` (or recipients only), signature with `--sign-passphrase-file`; `--json`
   available; decryption into a file only. Format v4 "stream" – older versions cannot open such files.
 
-- DE: R6-Arbeitsstand (#147): ML-KEM-Entkapselung schreibt direkt in gesperrte Ausgabe;
-  Kapselung verwendet zusätzlich geliehenen, vorab gesperrten SHA3-512-Zustand ohne
-  konsumierende Finalisierung. Öffentlichen KEM-Anfangszustand und drei private Payloads
-  vor Seed-Verarbeitung sperren; Wipe vor Unlock und Boxfreigabe. Parameter/Bytes erhalten. Interne Konstruktoren,
-  interne Kandidaten/Arbeitsflächen und übrige R6-Pfade weiterhin offen.
-  EN: R6 work in progress: borrow prelocked decapsulation output and encapsulation hash
-  state; prelock initial KEM state and private payloads. Preserve algorithms/wire bytes;
-  internal private construction and scratch remain open.
-
 - DE: Kern von Format v4 (#316 Schritt 1, Grundlage für #83): Optionsbits, Schlüsselbindung in jeder
   v4-Datei, Inhaltstyp „Strom“ mit Abschluss-Block; `files::encrypt_stream`/`encrypt_stream_to`
   (vorläufig bis #98), Entschlüsseln/`check` erkennen v4. Ohne Strom bleiben v1–v3 Byte für Byte gleich;
@@ -33,6 +24,15 @@ German release notes: see `docs/releases/`.
   content type "stream" with a trailer; `files::encrypt_stream`/`encrypt_stream_to` (provisional until
   #98), decrypt/`check` understand v4. Without streams v1–v3 stay byte for byte; older versions report
   v4 as "unsupported". No command line yet (follows with #83).
+
+- DE: R6-Arbeitsstand (#147): ML-KEM-Entkapselung schreibt direkt in gesperrte Ausgabe;
+  Kapselung verwendet zusätzlich geliehenen, vorab gesperrten SHA3-512-Zustand ohne
+  konsumierende Finalisierung. Öffentlichen KEM-Anfangszustand und drei private Payloads
+  vor Seed-Verarbeitung sperren; Wipe vor Unlock und Boxfreigabe. Parameter/Bytes erhalten. Interne Konstruktoren,
+  interne Kandidaten/Arbeitsflächen und übrige R6-Pfade weiterhin offen.
+  EN: R6 work in progress: borrow prelocked decapsulation output and encapsulation hash
+  state; prelock initial KEM state and private payloads. Preserve algorithms/wire bytes;
+  internal private construction and scratch remain open.
 
 - DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
   Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.
