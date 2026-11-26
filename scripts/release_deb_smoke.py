@@ -14,7 +14,7 @@ import stat
 import subprocess
 import tempfile
 
-from release_deb_check import TARGETS, check_package
+from release_deb_check import CAP, TARGETS, check_package
 
 
 def command(*args: str) -> None:
@@ -61,6 +61,42 @@ def check_installed(data: dict[str, bytes]) -> None:
         if (path.is_symlink() or (s.st_uid, s.st_gid, stat.S_IMODE(s.st_mode)) != (0, 0, expected_mode)
                 or path.read_bytes() != content):
             raise ValueError(f"Installierter Inhalt oder Rechte abweichend: {name}")
+    # DE/EN: postinst setzt nur CAP_IPC_LOCK (#325) / postinst sets CAP_IPC_LOCK only (#325).
+    caps = subprocess.check_output(["getcap", "/usr/bin/pqkeep"], text=True).split()[1:]
+    # DE/EN: Ältere libcap schreiben „= cap_ipc_lock+p“ / older libcap prints "= cap_ipc_lock+p".
+    if caps not in ([CAP], ["=", "cap_ipc_lock+p"]):
+        raise ValueError(f"Unerwartete Capabilities auf /usr/bin/pqkeep: {caps}")
+
+
+LOW_LIMIT = "--memlock=8388608:8388608"
+
+
+def bounding_has_ipc_lock() -> bool:
+    """Darf dieser Container CAP_IPC_LOCK überhaupt vergeben? (Docker-Standard: nein)."""
+    for line in Path("/proc/self/status").read_text().splitlines():
+        if line.startswith("CapBnd:"):
+            return bool(int(line.split()[1], 16) & (1 << 14))
+    return False
+
+
+def low_limit(work: Path, source: Path, phrase: str) -> None:
+    """8-MiB-Limit wie auf dem Desktop (#325): ohne Capability sicherer Abbruch mit Abhilfe; das
+    installierte Programm startet immer (kein EPERM) und verschlüsselt, wo CAP_IPC_LOCK erlaubt ist."""
+    scratch = work / "low-limit"
+    scratch.mkdir(mode=0o700)
+    nobody = pwd.getpwnam("nobody")
+    (scratch / "a.txt").write_bytes(b"low limit")
+    for path in (scratch, scratch / "a.txt"):
+        os.chown(path, nobody.pw_uid, nobody.pw_gid)
+    for binary, ok in ((str(source), False), ("/usr/bin/pqkeep", bounding_has_ipc_lock())):
+        result = subprocess.run(
+            ["prlimit", LOW_LIMIT, "runuser", "-u", "nobody", "--", binary, "encrypt",
+             "--passphrase-stdin", "--out", str(scratch / f"{ok}.pqkf"), "--", str(scratch / "a.txt")],
+            input=phrase, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=scratch)
+        hint = result.returncode == 1 and "cap_ipc_lock+p" in result.stderr
+        if (result.returncode == 0) != ok or (not ok and not hint):
+            raise ValueError(f"8-MiB-Limit: {binary} Exit {result.returncode}: {result.stderr.strip()}")
+    print(f"8-MiB-Limit bestanden (CAP_IPC_LOCK im Container verfügbar: {bounding_has_ipc_lock()})")
 
 
 def guard(arch: str) -> None:
@@ -96,6 +132,7 @@ def exercise(package: Path, arch: str, work: Path) -> None:
     check_installed(data)
     smoke = Path(__file__).resolve().with_name("release_smoke.py")
     user_command(home, "python3", str(smoke), "/usr/bin/pqkeep")
+    low_limit(work, source, phrase)
     if snapshot(home) != before:
         raise ValueError("Installation oder Nutzung hat bestehende Nutzerdateien verändert")
     command("apt-get", "remove", "--yes", "--purge", "pqkeep")

@@ -55,11 +55,13 @@ for specific locked allocations does not establish complete coverage; retain str
 ## Platform behavior / Plattformverhalten
 
 DE: Linux benötigt ausreichend bereits erlaubtes RLIMIT_MEMLOCK für alle gleichzeitig lebenden
-Secrets und den gesamten KDF-Arbeitspuffer. Das Programm erhöht weder Limits noch Rechte.
+Secrets und den gesamten KDF-Arbeitspuffer. Das Programm erhöht weder Limits noch Rechte; das
+Debian-Paket gibt nur `/usr/bin/pqkeep` `CAP_IPC_LOCK` (#325, `docs/INSTALL.md`).
 Mit zu kleinem Budget schlägt die Operation sicher fehl. KDF-Parameter werden niemals reduziert.
 Windows fordert beim eigenen Prozess Working-Set-Kapazität vor dem Sperren an; dies kann das OS
 verweigern und dann wird abgebrochen. Keine Privilegien-/Token-Manipulation, kein Admin-Zwang.
-EN: Linux requires an existing sufficient lock budget; no limit/privilege elevation or KDF downgrade.
+EN: Linux requires an existing sufficient lock budget; no limit/privilege elevation or KDF downgrade
+by the program; the Debian package grants only `/usr/bin/pqkeep` `CAP_IPC_LOCK` (#325).
 Windows requests current-process working-set capacity before locking and fails if denied.
 
 DE: Seitensperren verhindern keinen kompromittierten Administrator, Kernelzugriff, Ruhezustands-

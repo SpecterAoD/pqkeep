@@ -24,7 +24,7 @@ def fixture_tar(files: dict) -> bytes:
     with tarfile.open(fileobj=data, mode="w") as tar:
         for name, content in files.items():
             member = tarfile.TarInfo(name)
-            member.mode = 0o755 if name == "usr/bin/pqkeep" else 0o644
+            member.mode = 0o755 if name in ("usr/bin/pqkeep", "postinst") else 0o644
             member.size = len(content)
             tar.addfile(member, io.BytesIO(content))
     return data.getvalue()
@@ -43,7 +43,13 @@ def fixture_data(binary: bytes, target: str) -> dict:
     return data
 
 
+POSTINST = Path(__file__).resolve().parents[1] / "packaging/debian/postinst"
+
+
 class DebianTests(unittest.TestCase):
+    def test_postinst_digest_matches_file(self):
+        self.assertEqual(hashlib.sha256(POSTINST.read_bytes()).hexdigest(), check.POSTINST_SHA256)
+
     def test_container_includes_filtered_parent_directories(self):
         options = include_options({"usr/share/man/de/man1/pqkeep.1.gz": b"manual"})
         self.assertEqual(options[::2], ["-o"] * 6)
@@ -70,7 +76,7 @@ class DebianTests(unittest.TestCase):
         elf = bytearray(64)
         elf[:7] = b"\x7fELF\x02\x01\x01"
         struct.pack_into("<HH", elf, 16, 3, machine)
-        for case in ("valid", "missing", "extra", "script", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha", "license", "rust-license", "wrong-inventory"):
+        for case in ("valid", "missing", "extra", "script", "no-script", "no-libcap", "wrong-elf", "wrong-arch", "bad-md5", "bad-sha", "license", "rust-license", "wrong-inventory"):
             data = fixture_data(bytes(elf), target)
             if case == "wrong-inventory":
                 data = fixture_data(bytes(elf), "aarch64-unknown-linux-gnu" if arch == "amd64" else "x86_64-unknown-linux-gnu")
@@ -89,10 +95,14 @@ class DebianTests(unittest.TestCase):
             control_arch = ("arm64" if arch == "amd64" else "amd64") if case == "wrong-arch" else arch
             sums = "".join(hashlib.md5(data[n], usedforsecurity=False).hexdigest() + "  " + n + "\n"
                            for n in sorted(data))
-            controls = {"control": f"Package: pqkeep\nArchitecture: {control_arch}\n".encode(),
-                        "md5sums": b"broken" if case == "bad-md5" else sums.encode()}
+            depends = "libc6 (>= 2.34)" + ("" if case == "no-libcap" else ", libcap2-bin")
+            controls = {"control": f"Package: pqkeep\nArchitecture: {control_arch}\nDepends: {depends}\n".encode(),
+                        "md5sums": b"broken" if case == "bad-md5" else sums.encode(),
+                        "postinst": POSTINST.read_bytes()}
             if case == "script":
                 controls["postinst"] = b"#!/bin/sh\nexit 0\n"
+            if case == "no-script":
+                del controls["postinst"]
             expected_sha = "0" * 64 if case == "bad-sha" else hashlib.sha256(elf).hexdigest()
             with self.subTest(arch=arch, case=case), patch.object(check.subprocess, "check_output",
                                                        side_effect=[fixture_tar(controls), fixture_tar(data)]):
@@ -174,7 +184,8 @@ class DebianTests(unittest.TestCase):
                         deb.dependencies(Path(tmp), Path(tmp))
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(deb.subprocess, "check_output", return_value="shlibs:Depends=libc6 (>= 2.34), libgcc-s1 (>= 4.2)\n"):
-                self.assertEqual(deb.dependencies(Path(tmp), Path(tmp)), "libc6 (>= 2.34), libgcc-s1 (>= 4.2)")
+                self.assertEqual(deb.dependencies(Path(tmp), Path(tmp)),
+                                 "libc6 (>= 2.34), libgcc-s1 (>= 4.2), libcap2-bin")
 
     def test_tar_rejects_unsafe_members(self):
         for name, mode, kind, uid in [("../escape", 0o644, tarfile.REGTYPE, 0),

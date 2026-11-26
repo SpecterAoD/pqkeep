@@ -54,6 +54,7 @@ mod platform {
     use super::HardeningReport;
 
     pub(super) fn harden() -> HardeningReport {
+        raise_lock_capability();
         let zero = Rlimit {
             current: Some(0),
             maximum: Some(0),
@@ -62,6 +63,25 @@ mod platform {
             core_dumps_disabled: setrlimit(Resource::Core, zero).is_ok(),
             not_dumpable: set_dumpable_behavior(DumpableBehavior::NotDumpable).is_ok(),
             wer_heap_reporting_disabled: false,
+        }
+    }
+
+    /// DE: Das Debian-Paket gibt `CAP_IPC_LOCK` nur als „permitted“ (#325): so startet das
+    /// Programm auch dort, wo die Fähigkeit fehlt (Container), statt mit `EPERM` abzubrechen. Hier
+    /// wird sie – falls erlaubt – für diesen Thread wirksam gemacht, vor allen weiteren Threads.
+    /// Nichts sonst ändert sich; ohne sie gilt `RLIMIT_MEMLOCK` wie bisher.
+    /// EN: The Debian package grants `CAP_IPC_LOCK` as "permitted" only (#325) so the program also
+    /// starts where the capability is missing (containers) instead of failing with `EPERM`. Here it
+    /// is made effective for this thread – if permitted – before any further threads. Nothing else
+    /// changes; without it `RLIMIT_MEMLOCK` applies as before.
+    fn raise_lock_capability() {
+        use rustix::thread::{CapabilitySet, capabilities, set_capabilities};
+        if let Ok(mut sets) = capabilities(None)
+            && sets.permitted.contains(CapabilitySet::IPC_LOCK)
+            && !sets.effective.contains(CapabilitySet::IPC_LOCK)
+        {
+            sets.effective |= CapabilitySet::IPC_LOCK;
+            let _ = set_capabilities(None, sets);
         }
     }
 }

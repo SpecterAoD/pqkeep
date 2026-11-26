@@ -88,6 +88,8 @@ today's common public-key encryption ("harvest now, decrypt later").
 - **Hardening:** `unsafe` forbidden in the application crate, mandatory secret memory locking
   (including KDF workspace; operation fails if unavailable), wiping before release and Linux
   Landlock/seccomp. Narrow provider FFI and OS limits: [locked secrets](docs/security/LOCKED_SECRETS.md).
+  Locking needs up to 1 GiB; the Debian package grants `/usr/bin/pqkeep` `CAP_IPC_LOCK` for this
+  ([`docs/INSTALL.md`](docs/INSTALL.md#locked-memory-memlock)).
 
 ### Command overview
 
@@ -298,6 +300,8 @@ sammeln, später entschlüsseln“).
 - **Härtung:** `unsafe` im Anwendungscode verboten, Secret-Speichersperren einschließlich
   KDF-Arbeitspuffer zwingend (sonst Abbruch), Löschen vor Freigabe und Linux-Landlock/Seccomp.
   Begrenzte Provider-FFI und OS-Grenzen: [Secret-Speicher](docs/security/LOCKED_SECRETS.md).
+  Das Sperren braucht bis zu 1 GiB; das Debian-Paket gibt `/usr/bin/pqkeep` dafür `CAP_IPC_LOCK`
+  ([`docs/INSTALL.md`](docs/INSTALL.md#gesperrter-speicher-memlock)).
 
 ### Befehlsübersicht
 

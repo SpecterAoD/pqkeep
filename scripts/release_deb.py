@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Debian-Paket (CI-Kandidat oder Release) aus einem nativ geprüften GNU-Release-Binary erzeugen.
 
-Keine Installation, Maintainerskripte oder Änderungen an Nutzerdateien.
+Keine Installation und keine Änderungen an Nutzerdateien. Einziges Maintainerskript ist
+`postinst`: es setzt nur `CAP_IPC_LOCK` auf `/usr/bin/pqkeep` (#325, gesperrter Speicher).
 Gemeinsame Paketlogik für amd64 und arm64; jede Architektur wird nativ gebaut und geprüft.
 `--release` ergibt die Paketversion ohne CI-Suffix (nur für signierte Tags), `--successor`
 ein höher sortierendes Testpaket für Upgrade-/Downgrade-Prüfungen, das nie veröffentlicht wird.
@@ -29,6 +30,7 @@ from release_package import EXTRA_FILES, epoch
 
 
 DOC = "usr/share/doc/pqkeep"
+CAP_DEPENDENCY = "libcap2-bin"
 
 
 def regular(path: Path) -> Path:
@@ -127,11 +129,12 @@ def dependencies(stage: Path, work: Path) -> str:
         for p in parts
     ):
         raise ValueError("Ungültige oder unvollständige Paketabhängigkeiten")
-    return depends
+    # DE/EN: `setcap` für postinst (#325) / `setcap` for postinst (#325).
+    return depends + ", " + CAP_DEPENDENCY
 
 
 def control(stage: Path, arch: str, version: str, depends: str, metadata: dict) -> None:
-    """Metadaten und Dateiprüfsummen; keine Installationsskripte oder Conffiles."""
+    """Metadaten und Dateiprüfsummen; keine Conffiles (postinst folgt danach, ohne Prüfsumme)."""
     files = sorted(p for p in stage.rglob("*") if p.is_file())
     size = sum((p.stat().st_size + 1023) // 1024 for p in files)
     text = (f"Package: pqkeep\nVersion: {version}\nArchitecture: {arch}\n"
@@ -149,7 +152,8 @@ def normalize(stage: Path, stamp: int) -> None:
     for path in [stage, *stage.rglob("*")]:
         if path.is_symlink() or not (path.is_file() or path.is_dir()):
             raise ValueError("Unerwarteter Eintrag im Paketbaum")
-        path.chmod(0o755 if path.is_dir() or path == stage / "usr/bin/pqkeep" else 0o644)
+        executable = path in (stage / "usr/bin/pqkeep", stage / "DEBIAN/postinst")
+        path.chmod(0o755 if path.is_dir() or executable else 0o644)
         os.utime(path, (stamp, stamp))
 
 
@@ -190,6 +194,7 @@ def build(binary: Path, target: str, out: Path, sha: str, root: Path,
         docs(stage, root, staged, version, metadata, stamp, release and not successor)
         write_licenses(root, target, stage / DOC)
         control(stage, arch, version, dependencies(stage, work), metadata)
+        put(stage, "DEBIAN/postinst", regular(root / "packaging/debian/postinst").read_bytes())
         normalize(stage, stamp)
         package = work / "candidate.deb"
         subprocess.run(["dpkg-deb", "--root-owner-group", "-Zxz", "-z9",

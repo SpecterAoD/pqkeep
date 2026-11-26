@@ -35,6 +35,7 @@ mod list_cmd;
 mod list_json;
 mod list_text;
 mod many_text;
+mod memlock_hint;
 mod menu;
 mod notices;
 mod preview;

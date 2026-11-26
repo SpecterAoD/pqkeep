@@ -58,7 +58,8 @@ sudo apt remove pqkeep
 ```
 
 Auch `sudo apt purge pqkeep` entfernt keine selbst angelegten Schlüssel oder Dateien im
-Benutzerverzeichnis. Das Paket enthält keine Maintainerskripte oder Conffiles. Manuell
+Benutzerverzeichnis. Das Paket enthält keine Conffiles; einziges Maintainerskript ist `postinst`
+für die Speichersperre (siehe unten). Manuell
 mit `pqkeep integrate` erzeugte Kontextmenüs gehören weiterhin dem Benutzer und können
 nach der Deinstallation verwaisen; bei Bedarf vorher ausdrücklich über die bestehende
 CLI entfernen. Das Paket führt diesen Befehl niemals automatisch aus.
@@ -68,6 +69,30 @@ Vorabversionen vor `0.1.0-1`); der Dateiname folgt dem Schema der übrigen Relea
 CI-Versionen wie `0.1.0~beta.2-1~ci.<UTC-Zeit>.<Commit>` sortieren vor der entsprechenden
 Release-Version. `pqkeep --version` zeigt die Upstream-Version aus Cargo an. Paket- und
 Programmversion haben unterschiedliche Zwecke.
+
+### Gesperrter Speicher (memlock)
+
+PQKeep sperrt Geheimnisse und den Argon2id-Arbeitsspeicher im RAM, damit nichts in die
+Auslagerung (Swap) gelangt: 256 MiB im Profil `standard`, 1 GiB im Profil `hardened`. Das übliche
+Benutzerlimit (`ulimit -l`, oft nur 8 MiB) reicht dafür nicht. **Ohne Anhebung ist PQKeep nicht
+unsicher:** Es bricht dann ab („Geheimer Speicher konnte nicht gesperrt werden …“, mit Limit und
+Abhilfe), statt ungesperrt zu arbeiten.
+
+- **Debian-Paket:** `postinst` gibt bei jeder Installation und Aktualisierung nur
+  `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK` (`setcap cap_ipc_lock+p`, Paket `libcap2-bin`).
+  Sie ist nur „erlaubt“ (permitted); pqkeep schaltet sie beim Start selbst ein. So startet das
+  Programm auch dort, wo die Fähigkeit fehlt (z. B. Docker-Container); dort gilt dann das normale
+  Limit (`--ulimit memlock=…`).
+  Dauerhaft, für alle Benutzer, ohne Gruppe und ohne Neuanmeldung; andere Programme und Limits
+  bleiben unverändert. Prüfen: `getcap /usr/bin/pqkeep` → `cap_ipc_lock=p`. Mit dem Paket
+  verschwindet auch die Fähigkeit.
+- **tar.gz:** einmal `sudo setcap cap_ipc_lock+p /pfad/zu/pqkeep` (nach jedem Austausch des
+  Programms erneut; nicht auf Dateisystemen mit `nosuid`).
+- **Alternativ** das Limit anheben, z. B. `/etc/security/limits.d/90-pqkeep.conf` mit
+  `@pqkeep - memlock 1200000` (KiB, gilt nach neuer Anmeldung für die Gruppe), für Dienste
+  `LimitMEMLOCK=1200M` in der systemd-Unit, für Container `--ulimit memlock=1258291200`.
+- Die Fähigkeit erlaubt nur das Sperren von Speicher; Linux behandelt das Programm dann strenger
+  (z. B. wird `LD_PRELOAD` ignoriert). Windows braucht nichts davon.
 
 ### Paket lokal bauen
 
@@ -142,10 +167,32 @@ Existing commands and the default `api` feature remain available; the server req
 an explicit CLI invocation.
 
 Remove the package with `sudo apt remove pqkeep`. Even `sudo apt purge pqkeep` leaves
-user-created keys and files untouched: there are no maintainer scripts or conffiles.
+user-created keys and files untouched: there are no conffiles, and the only maintainer script is
+`postinst` for memory locking (see "Locked memory").
 Context menus created manually with `pqkeep integrate` remain user data and can become
 stale; remove them explicitly with the existing CLI beforehand if desired. Packaging
 never invokes integration commands automatically.
+
+### Locked memory (memlock)
+
+PQKeep locks secrets and the Argon2id workspace in RAM so nothing is swapped out: 256 MiB for the
+`standard` profile, 1 GiB for `hardened`. The usual user limit (`ulimit -l`, often only 8 MiB) is too
+small. **Without raising it PQKeep is not insecure:** it stops ("secret memory could not be locked …",
+naming limit and remedy) instead of running unlocked.
+
+- **Debian package:** `postinst` gives only `/usr/bin/pqkeep` `CAP_IPC_LOCK` on every install and
+  upgrade (`setcap cap_ipc_lock+p`, package `libcap2-bin`). It is only "permitted"; pqkeep enables it
+  itself at startup, so the program also starts where the capability is unavailable (e.g. Docker
+  containers), where the normal limit then applies (`--ulimit memlock=…`) – permanent, for all users, no group and no
+  re-login; other programs and limits stay unchanged. Check: `getcap /usr/bin/pqkeep` →
+  `cap_ipc_lock=p`. Removing the package removes it as well.
+- **tar.gz:** once `sudo setcap cap_ipc_lock+p /path/to/pqkeep` (again after replacing the binary;
+  not on `nosuid` file systems).
+- **Alternatively** raise the limit, e.g. `/etc/security/limits.d/90-pqkeep.conf` with
+  `@pqkeep - memlock 1200000` (KiB, for the group after a new login), `LimitMEMLOCK=1200M` in a systemd
+  unit, `--ulimit memlock=1258291200` for containers.
+- The capability only allows locking memory; Linux then treats the program more strictly (e.g.
+  `LD_PRELOAD` is ignored). Windows needs none of this.
 
 A release package version looks like `0.1.0~beta.2-1` (the tilde sorts pre-releases before
 `0.1.0-1`); the file name follows the scheme of the other release files. CI versions such as
