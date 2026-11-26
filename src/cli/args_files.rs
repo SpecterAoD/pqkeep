@@ -48,6 +48,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
                     .hide(true)
                     .requires("passphrase-stdin"),
             )
+            .args(super::privacy::encrypt_args(lang))
             .arg(super::json_out::arg(lang)),
         base("decrypt", t.dec_about, t.dec_after, lang)
             .arg(path("source", m.arg_encrypted).num_args(1..=MAX_SOURCES))
@@ -63,6 +64,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
             .arg(flag("passphrase-stdin", t.arg_passphrase_stdin))
             .arg(super::factor_cmd::arg(lang))
             .arg(super::signing::signer_arg(lang))
+            .arg(super::privacy::decrypt_arg(lang))
             .arg(super::json_out::arg(lang)),
         super::check_cmd::command(lang),
     ]

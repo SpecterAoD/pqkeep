@@ -14,7 +14,7 @@ use super::context_dialog::{Ui, cancelled};
 use super::context_many::{all_pqkf, container_default, container_target, selection_dir};
 use super::factor_cmd::FLAG;
 use super::factor_ui::{Ask, for_decrypt};
-use super::files_cmd::{default_decrypted, default_encrypted};
+use super::files_cmd::default_encrypted;
 use super::io::{CliResult, Failure, code};
 use super::many_text::{ManyTexts, many_texts};
 use super::recipients_ui;
@@ -200,9 +200,11 @@ fn decrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     }
     // DE: Die erste Datei bestimmt, wonach gefragt wird. EN: The first file decides what is asked.
     let extra = for_decrypt(&sources[0], ui.lang, |what| ui.ask_for(&sources[0], what))?;
+    // DE: Bei zufälligen Namen heißen Reste nach der Quelle (#315). EN: For random names leftovers
+    //     are named after the source (#315).
     let targets: Vec<PathBuf> = sources
         .iter()
-        .filter_map(|s| default_decrypted(s))
+        .filter_map(|s| super::privacy::cleanup_target(s))
         .collect();
     let mut cmd = vec!["decrypt", "--rename", "--progress"];
     cmd.extend(extra.refs());

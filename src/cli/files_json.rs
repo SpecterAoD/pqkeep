@@ -96,9 +96,20 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
             .ok_or_else(|| Failure::new(code::USAGE, s.need_out))?;
         let protection = read_protection(t, lang, m).map_err(weak(t))?;
         let list: Vec<&Path> = all.iter().map(PathBuf::as_path).collect();
-        let report = protection.encrypt_many(&list, out).map_err(fail)?;
+        let (out, report) = if super::privacy::random(m) {
+            super::privacy::encrypt_container(&protection, &list, out).map_err(fail)?
+        } else {
+            (
+                out.clone(),
+                protection.encrypt_many(&list, out).map_err(fail)?,
+            )
+        };
         let names = all.iter().map(|p| path_value(p)).collect::<Vec<_>>();
-        return Ok(body(&[(names.into(), Some(out.clone()), Ok(report))]));
+        return Ok(body(&[(names.into(), Some(out), Ok(report))]));
+    }
+    super::privacy::check_out(m, false, lang)?;
+    if super::privacy::random(m) {
+        return encrypt_random(t, lang, m, &all);
     }
     if all.len() == 1 && !m.get_flag("each") {
         let src = source(m);
@@ -122,12 +133,34 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
     Ok(body(&entries))
 }
 
+/// DE: Jede Quelle unter zufälligem Namen (#315). EN: Each source under a random name (#315).
+fn encrypt_random(
+    t: &Texts,
+    lang: Lang,
+    m: &ArgMatches,
+    all: &[PathBuf],
+) -> CliResult<(Map<String, Value>, u8)> {
+    let protection = read_protection(t, lang, m).map_err(weak(t))?;
+    let entries: Vec<_> = all
+        .iter()
+        .map(|src| {
+            let (out, r) = super::privacy::encrypt_random(&protection, src);
+            (
+                path_value(src),
+                out,
+                r.map_err(|e| Failure::from_error(&e, lang)),
+            )
+        })
+        .collect();
+    Ok(body(&entries))
+}
+
 /// DE: `pqkeep decrypt --json`. EN: `pqkeep decrypt --json`.
 pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Value>, u8)> {
     apply_temp_tag(m, lang)?;
     let all = sources(m);
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
-    if all.len() == 1 {
+    if all.len() == 1 && !super::privacy::restore(m, &all[0]) {
         let src = source(m);
         let access = super::unlock::Access::read(&src).map_err(fail)?;
         let out = target(t, m, default_for(m, default_decrypted(&src)))?;
@@ -143,6 +176,10 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, 
     let entries: Vec<_> = all
         .iter()
         .map(|src| {
+            if super::privacy::restore(m, src) {
+                let (out, r) = super::privacy::decrypt_original(m, src, &unlock, expected.as_ref());
+                return (path_value(src), out, r.map_err(fail));
+            }
             let out = default_for(m, default_decrypted(src));
             let r = match &out {
                 Some(out) => {

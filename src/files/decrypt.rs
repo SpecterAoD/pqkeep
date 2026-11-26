@@ -197,14 +197,31 @@ fn extract_file<R: Read>(
     target: &Path,
     check: Option<SignatureCheck>,
 ) -> Result<Report> {
-    let entry = archive
+    let entry = first_file(&mut archive)?;
+    paths::validate_only(entry.path()?.expose()?)?;
+    write_file(&entry, archive, TempOutput::file(target)?, check)
+}
+
+/// DE: Erster Eintrag eines Datei-Archivs (muss eine Datei sein).
+/// EN: First entry of a file archive (must be a file).
+pub(super) fn first_file<R: Read>(archive: &mut ArchiveReader<R>) -> Result<Entry> {
+    archive
         .next_entry()?
         .filter(Entry::is_file)
-        .ok_or(Error::InvalidInput { field: "archive" })?;
+        .ok_or(Error::InvalidInput { field: "archive" })
+}
+
+/// DE: Schreibt die (geprüfte) Datei `entry` in die Temporärausgabe und veröffentlicht sie; danach
+/// darf nichts mehr folgen.
+/// EN: Writes the (validated) file `entry` into the temporary output and publishes it; nothing may
+/// follow it.
+pub(super) fn write_file<R: Read>(
+    entry: &Entry,
+    mut archive: ArchiveReader<R>,
+    (temp, mut out): (TempOutput, crate::fsutil::OutputFile),
+    check: Option<SignatureCheck>,
+) -> Result<Report> {
     let size = entry.size();
-    paths::validate_only(entry.path()?.expose()?)?;
-    let (temp, file) = TempOutput::file(target)?;
-    let mut out = file;
     archive.copy_file(size, &mut out)?;
     if archive.next_entry()?.is_some() {
         return Err(Error::InvalidInput { field: "archive" });
@@ -222,30 +239,46 @@ fn extract_file<R: Read>(
 }
 
 fn extract_dir<R: Read>(
-    mut archive: ArchiveReader<R>,
+    archive: ArchiveReader<R>,
     target: &Path,
     check: Option<SignatureCheck>,
 ) -> Result<Report> {
     let temp = TempOutput::dir(target)?;
+    let report = fill_dir(archive, temp.path(), check, |_, _| Ok(()))?;
+    temp.publish()?;
+    Ok(report)
+}
+
+/// DE: Entpackt alle Einträge unter `root` (Temporärordner) und prüft Ende und Signatur;
+/// `each` sieht vorher jeden geprüften Pfad (Ordner: `false`, Datei: `true`).
+/// EN: Extracts all entries below `root` (temporary directory) and verifies end and signature;
+/// `each` sees every validated path first (directory: `false`, file: `true`).
+pub(super) fn fill_dir<R: Read>(
+    mut archive: ArchiveReader<R>,
+    root: &Path,
+    check: Option<SignatureCheck>,
+    mut each: impl FnMut(&str, bool) -> Result<()>,
+) -> Result<Report> {
     let mut seen = PathSet::default();
     let mut report = Report::default();
     while let Some(entry) = archive.next_entry()? {
-        let parts = paths::components(entry.path()?.expose()?)?;
+        let path = entry.path()?.expose()?;
+        let parts = paths::components(path)?;
+        each(path, entry.is_file())?;
         seen.insert_components(parts.clone(), entry.is_file())?;
         if entry.is_file() {
-            let mut out = output::create_file(temp.path(), parts)?;
+            let mut out = output::create_file(root, parts)?;
             archive.copy_file(entry.size(), &mut out)?;
             finish_file(out)?;
             report.files += 1;
             report.bytes += entry.size();
         } else {
-            output::create_dir(temp.path(), parts)?;
+            output::create_dir(root, parts)?;
             report.directories += 1;
         }
     }
     archive.finish()?;
     verify(check, &mut report)?;
-    temp.publish()?;
     Ok(report)
 }
 

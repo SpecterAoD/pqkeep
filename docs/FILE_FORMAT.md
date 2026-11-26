@@ -78,6 +78,28 @@ Alle Zahlen Little Endian; Pfade UTF-8, Trenner „/“.
   Schutzarten brechen vorab ab. `--rename` wählt bei belegtem Ziel einen freien Namen. Höchstens 1000
   Quellen pro Aufruf.
 
+## Zufällige äußere Namen (#315)
+
+- `encrypt --random-name` bzw. `--privacy high` gibt der `.pqkf` einen zufälligen Namen neben der
+  Quelle: 128 Bit aus dem Betriebssystem-Zufall als 26 Zeichen Base32 (Kleinbuchstaben, `a–z2–7`)
+  plus `.pqkf`, z. B. `k7f3q9…x2.pqkf`. **Kein Formatwechsel** (v1/v2/v3 unverändert).
+- Der Originalname steht ohnehin verschlüsselt im Archiv: bei einer Datei der eine Eintrag; ein
+  **Ordner** wird mit seinem Namen als oberstem Eintrag verschlüsselt (wie ein Container mit einer
+  Quelle); ein **Container** (mehrere Quellen ohne `--each`) legt alles unter einen obersten Ordner mit
+  dem Namen aus `--out` (ohne `.pqkf`) – die Datei selbst bekommt trotzdem einen zufälligen Namen im
+  Ordner von `--out`. Mit `--each` bekommt jede Quelle einen eigenen zufälligen Namen. Ohne Container
+  schließen sich zufälliger Name und `--out` aus.
+- `decrypt` stellt den Originalnamen **neben der Quelle** her: automatisch, wenn der Name die
+  zufällige Form hat und kein `--out` angegeben ist, sonst mit `--original-name` (schließt `--out`
+  aus). Es gelten dieselben Pfadregeln wie immer; bei einer Datei muss der Name ein einzelner
+  portabler Name sein, bei einem Ordner müssen alle Einträge unter **einem** obersten Ordner liegen
+  (sonst Meldung „kein einzelner Originalname“, nichts entsteht). Nie überschreiben; `--rename` wählt
+  einen freien Namen. Temporärausgaben heißen dabei nach der Quelle.
+- `inspect` zeigt nur den Header (ohne Namen); `list` zeigt die Archivnamen erst nach dem Entsperren.
+- Grenzen: Größe und – bei vielen Dateien – die Anzahl der `.pqkf` bleiben sichtbar (Padding folgt im
+  Formatentwurf #316). Menü: Stufe „Privatsphäre hoch“ beim Verschlüsseln; das Kontextmenü
+  entschlüsselt zufällig benannte Dateien unter dem Originalnamen.
+
 ## Grenzen
 
 - Die ungefähre Gesamtgröße ist sichtbar (Größe der `.pqkf`-Datei).
@@ -125,6 +147,22 @@ writes one `.pqkf` per source with its own file key and, in passphrase mode, its
 Argon2id derivation (about 1–2 s per file with "standard"); the passphrase is entered once and a
 failing file does not stop the others. `decrypt` with several files uses the same passphrase or key
 for all; mixed protection aborts up front. `--rename` picks a free name; at most 1000 sources.
+
+**Random outer names (#315):** `encrypt --random-name` or `--privacy high` gives the `.pqkf` a
+random name next to the source: 128 bits of OS randomness as 26 base32 characters (lower case,
+`a–z2–7`) plus `.pqkf`. **No format change.** The original name lives encrypted in the archive: the
+single entry of a file; a **directory** is encrypted with its name as the top-level entry; a
+**container** puts everything below one top-level directory named after `--out` (without `.pqkf`),
+while the file itself still gets a random name in the directory of `--out`; with `--each` every
+source gets its own random name. Outside a container a random name and `--out` exclude each other.
+`decrypt` restores the original name **next to the source** – automatically if the name has the random
+shape and no `--out` is given, otherwise with `--original-name` (excludes `--out`). The usual path
+rules apply; a file name must be a single portable name, a directory archive must have all entries
+below **one** top-level directory (else "no single original name", nothing is created). Never
+overwrites; `--rename` picks a free name; temporary output is named after the source. `inspect` shows
+no names; `list` shows archive names only after unlocking. Size and the number of `.pqkf` files stay
+visible (padding follows in the format draft #316). Menu: level "privacy high" when encrypting; the
+context menu decrypts randomly named files under their original name.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a

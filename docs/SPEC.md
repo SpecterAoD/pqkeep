@@ -313,7 +313,7 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 
 ### U5: Privatsphäre und Metadaten (optional, konfigurierbar)
 Alle Funktionen sind **optional und standardmäßig aus**; ohne Option bleiben Formate und Ausgaben unverändert (Grundsatz D3: neues Format nur, wenn eine Option es verlangt; ältere Versionen melden „nicht unterstützt“, nie still). Konfiguration: Einzeloptionen pro Aufruf, Stufe `--privacy high` setzt die Privatsphäre-Optionen gemeinsam, Menü und Kontextmenü bieten nur diese Stufe, dauerhafte Voreinstellungen über Profil/Einrichtung (#136, #48–#50) – keine eigene Konfigurationsdatei.
-- **Zufällige äußere Dateinamen** (`--random-name`, #315): keine Rückschlüsse auf den Inhalt aus dem `.pqkf`-Namen; der Originalname steht verschlüsselt im Archiv und wird beim Entschlüsseln wiederhergestellt. Kein Formatwechsel.
+- **Zufällige äußere Dateinamen** (`--random-name`, #315): keine Rückschlüsse auf den Inhalt aus dem `.pqkf`-Namen; der Originalname steht verschlüsselt im Archiv und wird beim Entschlüsseln wiederhergestellt. Kein Formatwechsel. **Umgesetzt** (CLI `--random-name`/`--privacy high`, `decrypt --original-name` bzw. automatisch, Menü; Kontextmenü entschlüsselt; Details [FILE_FORMAT.md](FILE_FORMAT.md)).
 - **Formatentwurf v4** für Padding, anonyme Empfänger, verborgenen Absender und Strom-Modus (#83): [V4_DRAFT.md](V4_DRAFT.md) (Entscheidungen P1–P9).
 - **Padding** (`--pad`, #316): verbirgt die genaue Dateigröße durch authentisierte Füllbytes (PADMÉ, höchstens ~12 % Mehrgröße).
 - **Anonyme Empfänger** (`--anonymous-recipients`, #316): Zugänge ohne Empfänger-ID, Öffnen per Probe-Entkapselung; **optionale Ausnahme von D1** (sichtbare IDs bleiben Standard).
