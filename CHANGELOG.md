@@ -6,6 +6,13 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: ML-KEM-Kapselung (#147): OS-Entropie und vollständige G-Ausgabe K || r direkt
+  in vorab gesperrten SecretBytes; nur öffentliches Chiffrat als Provider-Rückgabe.
+  Keine Ableitungs-/Formatänderung. Weitere Provider-/Plattformkopien bleiben offen.
+  EN: Prelock encapsulation entropy/derived output for all three parameter sets;
+  same-version additive provider output path, no private SharedKey return tuple.
+  Other provider/platform boundaries remain open; native acceptance required.
+
 - DE: Gesperrter Speicher mit Standard-Linux (#325): Das Debian-Paket gibt nur `/usr/bin/pqkeep`
   `CAP_IPC_LOCK` (postinst, neue Abhängigkeit `libcap2-bin`), damit der Argon2id-Puffer trotz
   `ulimit -l` = 8 MiB gesperrt werden kann; ein zu kleines Budget meldet PQKeep jetzt mit Limit,

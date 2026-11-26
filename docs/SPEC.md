@@ -78,6 +78,12 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
   der Audit-PR behebt keine produktiven Speicherpfade.
 
 ### 3.2 Kryptografie
+
+DE: #147 R6-Kapselungsschritt: OS-Entropie, vollständige ML-KEM-G-Ausgabe K || r
+und Ergebnis vor privater Befüllung in SecretBytes sperren; Provider liefert nur
+öffentliches Chiffrat. Ableitungs-/Formatbytes bleiben gleich; Entkapselung,
+Schlüsselaufbau und interne Provider-/Compilerkopien bleiben offene Auditarbeit.
+Siehe [Plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md); native Abnahme erforderlich.
 - **Schlüsselaustausch:** ML-KEM (FIPS 203), Standard **ML-KEM-768**, wählbar ML-KEM-512/1024.
 - **Signaturen:** ML-DSA (FIPS 204), Standard **ML-DSA-65**, wählbar ML-DSA-44/87.
 - **Private Schlüssel** bevorzugt als kompakter **Seed** speichern und beim Laden neu ableiten (sofern die Crate das unterstützt), sonst als expandierter Schlüssel.

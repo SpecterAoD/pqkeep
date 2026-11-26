@@ -268,3 +268,23 @@ EN: Private error positions are discarded before retention, ordinary diagnostics
 and classification preserved. Native success/error/unwind/denial and public
 differential tests required. Other owners, R6/R7 and compiler/scalar/stack transit
 remain OPEN. [Plan](security/PARSER_STATE_OWNER_PLAN.md).
+
+## ML-KEM encapsulation output / Kapselungsausgabe (#147 R6)
+
+DE: Kapselung bereitet 32 Byte Ergebnis und 64 Byte G-Arbeitsfläche als gesperrte
+SecretBytes vor; erst danach erzeugt der vorhandene OS-RNG die ebenfalls vorab
+gesperrte 32-Byte-Entropie. Der neue gepinnte Provider-Einstieg finalisiert SHA3-512
+direkt in die geliehene Arbeitsfläche und leiht r daraus für die bestehende
+PKE-Verschlüsselung aus. Nur das öffentliche Chiffrat wird zurückgegeben.
+EN: Copy K only between locked caller buffers; existing owners retain locking
+through normal error/unwind and wipe before release. The old SharedKey return
+tuple and provider-owned encapsulation entropy/G-output arrays are absent from
+this caller path. Same ML-KEM version, algorithms, bytes and OS-CSPRNG quality.
+Actual native/security/fuzz acceptance remains required.
+
+DE: Das ist kein Abschluss aller Providerkopien: Entkapselungs-Rückgaben,
+Schlüsselaufbau/MaybeBox, Hash-/PKE-/Kompressions- und Compiler-/Stack-Zwischenwerte,
+Registry und Plattformgrenzen bleiben offen. Keine neue Berechtigung oder Installation.
+EN: A locked hash output does not prove protected internal compression state.
+The provider's ordinary upstream API retains its original ownership contract.
+[Plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
