@@ -33,6 +33,21 @@ pub enum Content {
     File,
     /// DE: Ordner. EN: Directory.
     Directory,
+    /// DE: Datenstrom ohne Archiv (nur Format v4, #83). EN: Data stream without archive (format v4 only, #83).
+    Stream,
+}
+
+impl Content {
+    /// DE: Kennzahl im Header. v1 schreibt nie 3 (Ströme gibt es nur in v4).
+    /// EN: Code in the header. v1 never writes 3 (streams exist only in v4).
+    #[must_use]
+    pub fn code(self) -> u8 {
+        match self {
+            Self::File => 1,
+            Self::Directory => 2,
+            Self::Stream => 3,
+        }
+    }
 }
 
 /// DE: Schutzart mit ihren öffentlichen Parametern. EN: Protection with its public parameters.
@@ -94,10 +109,7 @@ impl FileHeader {
         let mut out = Vec::with_capacity(128);
         out.extend_from_slice(MAGIC);
         out.extend_from_slice(&VERSION.to_le_bytes());
-        out.push(match self.content {
-            Content::File => 1,
-            Content::Directory => 2,
-        });
+        out.push(self.content.code());
         match &self.mode {
             HeaderMode::Passphrase { .. } => out.push(1),
             HeaderMode::Recipient { .. } => out.push(2),

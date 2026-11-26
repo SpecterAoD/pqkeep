@@ -60,6 +60,7 @@ pub fn decrypt_with(
     match content {
         Content::File => extract_file(archive, target, check),
         Content::Directory => extract_dir(archive, target, check),
+        Content::Stream => super::stream_v4::extract(archive.into_stream(), target, check),
     }
 }
 
@@ -97,8 +98,13 @@ pub(super) fn open(
         let header = HeaderV2::read(&mut reader)?;
         signed_io::require(signer, header.signer.as_ref())?;
         let file_key = decrypt_v2::unwrap_key(&header, unlock)?;
+        // DE: v4: `commit` immer prüfen (auch ohne Absender). EN: v4: always check `commit`.
+        match (&header.v4, &header.signer) {
+            (Some(v4), _) => super::format_v4::check_commit_v4(v4, file_key.expose())?,
+            (None, Some(s)) => check_commit(s, file_key.expose())?,
+            (None, None) => {}
+        }
         if let Some(s) = &header.signer {
-            check_commit(s, file_key.expose())?;
             let bytes = header.encode()?;
             let fixed = (bytes.len() + FILE_SIGNATURE_LEN) as u64;
             let body_len = file_len.checked_sub(fixed).ok_or(Error::Decrypt)?;
@@ -142,14 +148,18 @@ struct Opened {
     content: Content,
 }
 
-/// DE: Nur Magic + Version 2 oder 3 führt zum v2-Parser; alles andere prüft der v1-Parser wie
+/// DE: Nur Magic + Version 2, 3 oder 4 führt zum v2-Parser; alles andere prüft der v1-Parser wie
 /// bisher (unbekannte Version = „nicht unterstützt“).
-/// EN: Only magic + version 2 or 3 leads to the v2 parser; everything else is checked by the v1
+/// EN: Only magic + version 2, 3 or 4 leads to the v2 parser; everything else is checked by the v1
 /// parser as before (unknown version = "unsupported").
 fn is_v2(start: &[u8]) -> bool {
-    [format_v2::VERSION, format_v2::VERSION_SIGNED]
-        .iter()
-        .any(|v| start.strip_prefix(MAGIC) == Some(&v.to_le_bytes()[..]))
+    [
+        format_v2::VERSION,
+        format_v2::VERSION_SIGNED,
+        super::format_v4::VERSION_V4,
+    ]
+    .iter()
+    .any(|v| start.strip_prefix(MAGIC) == Some(&v.to_le_bytes()[..]))
 }
 
 fn unwrap_key(header: &FileHeader, unlock: &Unlock<'_>) -> Result<SecretBytes> {
@@ -282,7 +292,7 @@ pub(super) fn fill_dir<R: Read>(
     Ok(report)
 }
 
-fn finish_file(out: crate::fsutil::OutputFile) -> Result<()> {
+pub(super) fn finish_file(out: crate::fsutil::OutputFile) -> Result<()> {
     out.sync_all()?;
     drop(out);
     Ok(())

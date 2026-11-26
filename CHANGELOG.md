@@ -6,13 +6,14 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
-- DE: Windows-Terminaleingabe (#147): Record-Ausrichtung mit sicheren Bounds-Prüfungen;
-  geliehene initialisierte Feldsichten statt zusätzlicher roher Dereferenzen.
-  Vier vermeidbare produktive unsafe-Stellen entfernt; gesperrter Speicher und
-  vollständiges volatiles Löschen bleiben erhalten. Kein Gesamtabschluss von #147.
-  EN: Reduce four avoidable production unsafe sites in protected Windows console
-  input; exclusive read borrows guard initialized field views without record copies.
-  Native FFI and padding wipe remain justified boundaries; other findings stay open.
+- DE: Kern von Format v4 (#316 Schritt 1, Grundlage für #83): Optionsbits, Schlüsselbindung in jeder
+  v4-Datei, Inhaltstyp „Strom“ mit Abschluss-Block; `files::encrypt_stream`/`encrypt_stream_to`
+  (vorläufig bis #98), Entschlüsseln/`check` erkennen v4. Ohne Strom bleiben v1–v3 Byte für Byte gleich;
+  ältere Versionen melden v4 als „nicht unterstützt“. Noch keine Kommandozeile (folgt mit #83).
+  EN: Core of format v4 (#316 step 1, basis for #83): option bits, key commitment in every v4 file,
+  content type "stream" with a trailer; `files::encrypt_stream`/`encrypt_stream_to` (provisional until
+  #98), decrypt/`check` understand v4. Without streams v1–v3 stay byte for byte; older versions report
+  v4 as "unsupported". No command line yet (follows with #83).
 
 - DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
   Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.
@@ -25,6 +26,14 @@ German release notes: see `docs/releases/`.
   EN: Prelock encapsulation entropy/derived output for all three parameter sets;
   same-version additive provider output path, no private SharedKey return tuple.
   Other provider/platform boundaries remain open; native acceptance required.
+
+- DE: Windows-Terminaleingabe (#147): Record-Ausrichtung mit sicheren Bounds-Prüfungen;
+  geliehene initialisierte Feldsichten statt zusätzlicher roher Dereferenzen.
+  Vier vermeidbare produktive unsafe-Stellen entfernt; gesperrter Speicher und
+  vollständiges volatiles Löschen bleiben erhalten. Kein Gesamtabschluss von #147.
+  EN: Reduce four avoidable production unsafe sites in protected Windows console
+  input; exclusive read borrows guard initialized field views without record copies.
+  Native FFI and padding wipe remain justified boundaries; other findings stay open.
 
 ## [0.1.0-beta.4] – 2026-11-26
 

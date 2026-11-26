@@ -23,6 +23,7 @@ mod encrypt_header;
 mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
+pub mod format_v4;
 mod list;
 #[cfg(test)]
 mod locked_owner_tests;
@@ -34,6 +35,7 @@ mod scan;
 mod signed_io;
 mod signer_v3;
 mod slot_v2;
+mod stream_v4;
 mod walk;
 
 use std::fs::File;
@@ -54,6 +56,7 @@ pub use random_name::{is_random_name, random_name, random_target};
 pub use signed_io::SignedBy;
 pub use signer_v3::Signer;
 pub use slot_v2::MAX_RECIPIENTS;
+pub use stream_v4::{encrypt_stream, encrypt_stream_to};
 pub use walk::{SkipReason, Skipped};
 
 use crate::Result;

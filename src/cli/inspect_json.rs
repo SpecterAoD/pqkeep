@@ -31,6 +31,7 @@ fn content(c: Content) -> &'static str {
     match c {
         Content::File => "file",
         Content::Directory => "directory",
+        Content::Stream => "stream",
     }
 }
 

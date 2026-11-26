@@ -165,6 +165,12 @@ impl<R: Read> ArchiveReader<R> {
         }
     }
 
+    /// DE: Roher entschlüsselter Strom (Inhalt „Strom“, kein Archiv; #83).
+    /// EN: Raw decrypted stream (content "stream", no archive; #83).
+    pub fn into_stream(self) -> DecryptReader<R> {
+        self.dec
+    }
+
     /// DE: Bestätigt das Stromende (nichts mehr nach dem Ende-Eintrag).
     /// EN: Confirms the end of the stream (nothing after the end entry).
     pub fn finish(self) -> Result<()> {
