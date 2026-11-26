@@ -8,10 +8,12 @@ German release notes: see `docs/releases/`.
 
 - DE: R6-Arbeitsstand (#147): ML-KEM-Entkapselung schreibt direkt in gesperrte Ausgabe;
   Kapselung verwendet zusätzlich geliehenen, vorab gesperrten SHA3-512-Zustand ohne
-  konsumierende Finalisierung. Bestehende Parameter und Bytes erhalten. Konstruktoren,
+  konsumierende Finalisierung. Öffentlichen KEM-Anfangszustand und drei private Payloads
+  vor Seed-Verarbeitung sperren; Wipe vor Unlock und Boxfreigabe. Parameter/Bytes erhalten. Interne Konstruktoren,
   interne Kandidaten/Arbeitsflächen und übrige R6-Pfade weiterhin offen.
   EN: R6 work in progress: borrow prelocked decapsulation output and encapsulation hash
-  state. Preserve algorithms/wire bytes; private construction and internal scratch remain open.
+  state; prelock initial KEM state and private payloads. Preserve algorithms/wire bytes;
+  internal private construction and scratch remain open.
 
 - DE: Kern von Format v4 (#316 Schritt 1, Grundlage für #83): Optionsbits, Schlüsselbindung in jeder
   v4-Datei, Inhaltstyp „Strom“ mit Abschluss-Block; `files::encrypt_stream`/`encrypt_stream_to`

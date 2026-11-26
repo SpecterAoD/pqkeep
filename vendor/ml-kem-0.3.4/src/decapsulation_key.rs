@@ -156,16 +156,67 @@ where
 }
 
 #[cfg(feature = "zeroize")]
-impl<P> Drop for DecapsulationKey<P>
+impl<P> Zeroize for DecapsulationKey<P>
 where
     P: KemParams,
 {
-    fn drop(&mut self) {
+    fn zeroize(&mut self) {
         self.dk_pke.zeroize();
         if let Some(d) = self.d.as_mut() {
             d.zeroize();
         }
         self.z.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P> Drop for DecapsulationKey<P>
+where
+    P: KemParams,
+{
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P> crate::SeedKeyInPlace for DecapsulationKey<P>
+where
+    P: KemParams,
+{
+    fn public_state() -> Self {
+        Self {
+            dk_pke: MaybeBox::new(DecryptionKey::default()),
+            ek: EncapsulationKey::from_encryption_key(EncryptionKey::default()),
+            d: Some(MaybeBox::new(B32::default())),
+            z: MaybeBox::new(B32::default()),
+        }
+    }
+
+    fn visit_private_storage(&self, mut visit: impl FnMut(usize, usize) -> bool) -> bool {
+        let Some(d) = self.d.as_ref() else {
+            return false;
+        };
+        visit(
+            core::ptr::from_ref(&*self.dk_pke).addr(),
+            size_of_val(&*self.dk_pke),
+        ) && visit(core::ptr::from_ref(&**d).addr(), size_of_val(&**d))
+            && visit(core::ptr::from_ref(&*self.z).addr(), size_of_val(&*self.z))
+    }
+
+    fn initialize_seed_in_place(&mut self, seed: &Seed) -> Result<(), InvalidKey> {
+        let Some(d) = self.d.as_mut() else {
+            return Err(InvalidKey);
+        };
+        let (seed_d, seed_z) = seed.split_ref::<U32>();
+        // DE: Private interne Rückgaben bleiben offen; feste Payload-Adressen erhalten.
+        // EN: Private internal return values remain open; retain fixed payload addresses.
+        let (dk_pke, ek_pke) = DecryptionKey::generate(seed_d);
+        *self.dk_pke = dk_pke;
+        self.ek = EncapsulationKey::from_encryption_key(ek_pke);
+        d.copy_from_slice(seed_d);
+        self.z.copy_from_slice(seed_z);
+        Ok(())
     }
 }
 

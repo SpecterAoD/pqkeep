@@ -4,7 +4,8 @@
 //! EN: ML-KEM (FIPS 203) via the RustCrypto crate `ml-kem`. Private keys are
 //! stored only as a 64-byte seed and re-derived when needed.
 
-use ml_kem::kem::{FromSeed, Kem, KeyExport, TryKeyInit};
+use ml_kem::SeedKeyInPlace;
+use ml_kem::kem::{Decapsulator, FromSeed, Kem, KeyExport, TryKeyInit};
 use ml_kem::{DecapsulateInto, EncapsulateWithHash};
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
@@ -19,6 +20,9 @@ mod tests;
 
 #[path = "kem_encapsulation.rs"]
 mod encapsulation;
+
+#[path = "kem_key_state.rs"]
+mod key_state;
 
 #[cfg(test)]
 #[path = "kem_decapsulation_tests.rs"]
@@ -117,11 +121,14 @@ fn parse_seed<K: FromSeed>(seed: &[u8]) -> Result<SecretBytes> {
     seed_state::parse(seed, ml_kem::kem::Seed::<K>::default().len())
 }
 
-fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>> {
+fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>>
+where
+    K::DecapsulationKey: SeedKeyInPlace + Decapsulator<Kem = K>,
+{
     let mut seed = parse_seed::<K>(seed)?;
-    let (_dk, ek) = K::from_seed(seed_state::view(&seed)?);
+    let dk = key_state::KeyState::<K::DecapsulationKey>::new(seed_state::view(&seed)?)?;
     seed.zeroize();
-    Ok(ek.to_bytes().to_vec())
+    Ok(dk.get().encapsulation_key().to_bytes().to_vec())
 }
 
 fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated>
@@ -139,20 +146,21 @@ where
 fn decaps<K>(seed: &[u8], ciphertext: &[u8]) -> Result<SecretBytes>
 where
     K: FromSeed,
-    K::DecapsulationKey: DecapsulateInto,
+    K::DecapsulationKey: DecapsulateInto + SeedKeyInPlace,
 {
     let mut out = SecretBytes::zeroed(32)?;
     let mut seed = parse_seed::<K>(seed)?;
-    let (dk, _ek) = K::from_seed(seed_state::view(&seed)?);
+    let dk = key_state::KeyState::<K::DecapsulationKey>::new(seed_state::view(&seed)?)?;
     seed.zeroize();
     // DE: Nur geliehene Ausgabe in vorab gesperrten SecretBytes; kein SharedKey-Rückgabearray.
     // EN: Borrow output directly from prelocked SecretBytes; no returned SharedKey array.
-    dk.decapsulate_slice_into(
-        ciphertext,
-        out.expose_mut().try_into().map_err(|_| Error::Crypto)?,
-    )
-    .map_err(|_| Error::InvalidInput {
-        field: "ciphertext",
-    })?;
+    dk.get()
+        .decapsulate_slice_into(
+            ciphertext,
+            out.expose_mut().try_into().map_err(|_| Error::Crypto)?,
+        )
+        .map_err(|_| Error::InvalidInput {
+            field: "ciphertext",
+        })?;
     Ok(out)
 }

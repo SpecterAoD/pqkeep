@@ -140,7 +140,7 @@
     },
     {
       "path": "src/decapsulation_key.rs",
-      "sha256": "d03fb1370e7a351e46b462634d6b2f4c849e63a2518743db3dd752dd11d1868c"
+      "sha256": "4c57ae20251d7bfc16be7b34b738fb29a2667b6b7fe1f95022ea005fc61998b8"
     },
     {
       "path": "src/encapsulation_into.rs",
@@ -152,7 +152,7 @@
     },
     {
       "path": "src/lib.rs",
-      "sha256": "faa57b688eaa8ade6fd8c23d76df2663ffcfa0fb79d24b16ed8a0689bdead433"
+      "sha256": "cbb2cd8b36a84fb5dd4baf6940d80e0255c41f5c9db6b1c23d79b52507d6486d"
     },
     {
       "path": "src/pke.rs",
@@ -161,6 +161,10 @@
     {
       "path": "src/decapsulation_into.rs",
       "sha256": "08e3f0d1917ee11ebfe669dbc02d9d464699d837889b09ae9e4d53a238f2cbab"
+    },
+    {
+      "path": "src/key_in_place.rs",
+      "sha256": "4bcf59b9d1faea354e3efe5de1c1979bd8f95a97c2fd38ed3fd9b177ab3f4824"
     }
   ]
 }

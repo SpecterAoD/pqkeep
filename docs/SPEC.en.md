@@ -91,6 +91,10 @@ and wire bytes remain unchanged. Encapsulation also prelocks its hash state and
 finalizes/resets it through a mutable borrow. Internal candidates, key construction and
 provider scratch remain open; see the [full plan](security/PROVIDER_IN_PLACE_PLAN.md).
 Native acceptance of the complete remediation is still pending.
+EN: The KEM owner also prelocks public initial state and three fixed private payloads
+before seed processing, retaining lock records in locked workspace. Wipe payloads
+before unlocking/freeing boxes. Internal expanded PKE-keygen return values remain
+open; do not reclassify them as unavoidable compiler limits.
 
 EN: #147 R6 encapsulation step: lock OS entropy, the full ML-KEM G output K || r
 and the result in SecretBytes before private population; the provider returns only

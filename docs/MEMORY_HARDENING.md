@@ -299,3 +299,25 @@ Registry und Plattformgrenzen bleiben offen. Keine neue Berechtigung oder Instal
 EN: A locked hash output does not prove protected internal compression state.
 The provider's ordinary upstream API retains its original ownership contract.
 [Plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
+## KEM private payload retention / Private KEM-Payloads (#147 R6 work)
+
+DE: Der R6-Arbeitsbranch erzeugt den äußeren ML-KEM-Zustand ausschließlich aus
+öffentlichen Anfangswerten, sperrt dessen stabile Allokation und anschließend
+alle drei festen privaten Payloads (expandierter PKE-Schlüssel, d und z). Erst
+danach liest der In-place-Einstieg den privaten Seed. Payload-Boxen werden dabei
+nicht ersetzt oder reallokiert. Ihre Sperrrecords liegen in gesperrtem Workspace.
+Bei Erfolg/Fehler/Unwind: Payload-Wipe bei voller Sperre, Guards freigeben, erst
+danach Boxen zerstören. Gemeinsame Seiten verwenden die vorhandene Registry.
+EN: Create only public initial KEM state, prelock its stable outer allocation and
+all three private payloads, then populate from the seed without replacing boxes.
+Wipe payloads while locked, release guards, then free boxes; keep lock records
+in locked workspace and preserve shared-page reference counts.
+
+DE: Dies schließt keine privaten internen Konstruktor-/Hash-/PKE-Arbeitsflächen:
+insbesondere liefert `DecryptionKey::generate` weiterhin einen privaten erweiterten
+Wert zurück. Dieser bekannte Übergang ist keine pauschale Compilergrenze und bleibt
+offen. ML-DSA-/AES-/Argon2-Pfade bleiben separat zu bearbeiten; kein R6-Gesamtabschluss.
+EN: Internal private construction/hash/PKE scratch remains open, including the
+private expanded value returned by DecryptionKey::generate. Do not relabel that
+known transfer as an unavoidable compiler limit. No complete R6 acceptance claim.
+

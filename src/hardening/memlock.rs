@@ -177,6 +177,18 @@ impl LockedRange {
 // EN: The concrete destructor wipes both fields after releasing page references.
 impl zeroize::ZeroizeOnDrop for LockedRange {}
 
+impl Default for LockedRange {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl Zeroize for LockedRange {
+    fn zeroize(&mut self) {
+        self.release();
+    }
+}
+
 impl Drop for LockedRange {
     fn drop(&mut self) {
         self.release();
