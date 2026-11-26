@@ -12,6 +12,7 @@
 use super::PassphraseAccess;
 use super::format::Content;
 use super::format_v2::{HeaderV2, MAX_RECIPIENTS, Slot};
+use super::format_v4;
 use super::signer_v3::{self, Signer};
 use crate::crypto::aead::{self, NONCE_LEN};
 use crate::crypto::kdf::SALT_LEN;
@@ -123,6 +124,13 @@ pub(super) fn build(
         slots.push(slot);
         keks.push(kek);
     }
+    // DE: Ströme nur als v4 (#83); `commit` dann mit v4-Domäne, auch im Absenderblock.
+    // EN: Streams only as v4 (#83); `commit` then with the v4 domain, also in the sender block.
+    let v4 = format_v4::for_encrypt(content, signer.is_some(), file_key.expose())?;
+    let commit = |key: &[u8]| match &v4 {
+        Some(v4) => Ok(v4.commit),
+        None => signer_v3::commit(key),
+    };
     let mut header = HeaderV2 {
         content,
         prefix,
@@ -132,14 +140,14 @@ pub(super) fn build(
             .map(|public_key| -> Result<Signer> {
                 Ok(Signer {
                     public_key: public_key.to_vec(),
-                    commit: signer_v3::commit(file_key.expose())?,
+                    commit: commit(file_key.expose())?,
                 })
             })
             .transpose()?,
+        v4: v4.clone(),
     };
-    let metadata = header.metadata()?;
     for (index, kek) in keks.iter().enumerate() {
-        let aad = super::format_v2::wrap_aad(Domain::File, &metadata, index)?;
+        let aad = header.wrap_aad(index)?;
         let nonce = nonce_of(&header.slots[index]);
         let wrap = aead::seal_with_nonce(kek.expose(), nonce, file_key.expose(), &aad)?;
         let wrap: [u8; WRAPPED_LEN] = wrap.try_into().map_err(|_| Error::Crypto)?;

@@ -180,6 +180,7 @@ fn inspect_encrypted(t: &Texts, lang: Lang, path: &Path) -> CliResult {
     let content = match header.content {
         Content::File => t.content_file,
         Content::Directory => t.content_dir,
+        Content::Stream => t.content_stream,
     };
     println!("{}: {content}", t.lbl_content);
     match header.mode {

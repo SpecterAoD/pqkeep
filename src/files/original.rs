@@ -56,6 +56,8 @@ pub fn decrypt_original(
     let pick =
         |name: &str| choose(&dir.join(name)).ok_or(Error::Io(std::io::ErrorKind::AlreadyExists));
     match content {
+        // DE: Ein Strom trägt keinen Namen. EN: A stream carries no name.
+        Content::Stream => Err(not_restorable()),
         Content::File => {
             let entry = first_file(&mut archive)?;
             let name = entry.path()?.expose()?;

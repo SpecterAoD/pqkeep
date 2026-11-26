@@ -101,6 +101,15 @@ Alle Zahlen Little Endian; Pfade UTF-8, Trenner „/“.
   beim Verschlüsseln nach der Stufe „Privatsphäre hoch“; das Kontextmenü entschlüsselt zufällig
   benannte Dateien unter dem Originalnamen.
 
+## Datenstrom (Format v4, #83)
+
+Inhaltstyp 3 „Strom“: beliebige Daten unbekannter Länge (z. B. aus einer Pipe) ohne Archiv, nur in
+Format v4 ([V4_DRAFT.md](V4_DRAFT.md)). Header wie v2 mit Version 4, Optionsbits und Schlüsselbindung;
+der Klartext endet mit einem Abschluss-Block (Nutzlänge, Füllung, `PQKFEND\0`), der beim Entschlüsseln
+geprüft und nie ausgegeben wird. Abschneiden – auch genau an einer Blockgrenze – wird immer erkannt.
+Entschlüsselt wird nur in eine Datei (keine Teilausgabe). Ältere Versionen melden „nicht unterstützt“.
+Kommandozeile folgt mit #83 (`encrypt --stdin`).
+
 ## Grenzen
 
 - Die ungefähre Gesamtgröße ist sichtbar (Größe der `.pqkf`-Datei).
@@ -165,6 +174,13 @@ no names; `list` shows archive names only after unlocking. Size and the number o
 visible (padding follows in the format draft #316). Menu and context menu (terminal and windows,
 single and several files) ask for the level "privacy high" when encrypting; the context menu
 decrypts randomly named files under their original name.
+
+**Data stream (format v4, #83):** content type 3 "stream" holds arbitrary data of unknown length
+(e.g. from a pipe) without an archive, format v4 only ([V4_DRAFT.md](V4_DRAFT.md)): v2 header with version
+4, option bits and key commitment; the plaintext ends with a trailer (payload length, padding,
+`PQKFEND\0`) that is checked and never output. Truncation – also exactly at a chunk boundary – is always
+detected; decryption goes into a file only; older versions report "unsupported". The command line follows
+with #83 (`encrypt --stdin`).
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a

@@ -21,6 +21,11 @@ pub(super) fn read(
     let mut report = match content {
         Content::File => file(archive, &mut visit)?,
         Content::Directory => directory(archive, &mut visit)?,
+        Content::Stream => Report {
+            files: 1,
+            bytes: super::stream_v4::copy_payload(archive.into_stream(), &mut sink())?,
+            ..Report::default()
+        },
     };
     decrypt::verify(check, &mut report)?;
     Ok(report)

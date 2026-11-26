@@ -80,6 +80,7 @@ pub static DE: Texts = Texts {
     lbl_recipient: "Empfänger",
     content_file: "Datei",
     content_dir: "Ordner",
+    content_stream: "Datenstrom (Format v4, entschlüsselt in eine Datei)",
     mode_passphrase: "Passphrase",
     mode_recipient: "Empfänger (ML-KEM)",
     enc_about: "Datei oder Ordner verschlüsseln (Passphrase oder für einen Empfänger)",

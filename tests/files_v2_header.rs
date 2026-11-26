@@ -222,9 +222,13 @@ fn v04_recipient_and_header_limits() {
     let full = largest.encode().unwrap();
     // DE: Größter v2-Header unverändert; MAX_ENCODED_LEN deckt seit #44 auch den Absenderblock von
     //     v3 ab (1 + 2592 + 32 Byte). EN: Largest v2 header unchanged; since #44 MAX_ENCODED_LEN
-    //     also covers the v3 sender block (1 + 2592 + 32 bytes).
+    //     also covers the v3 sender block (1 + 2592 + 32 bytes); seit #316 zusätzlich die 2 Byte
+    //     v4-Optionsbits. EN: since #316 also the 2 bytes of v4 option bits.
     assert_eq!(full.len(), 106_530);
-    assert_eq!((MAX_ENCODED_LEN, HEADER_LIMIT), (106_530 + 2625, 262_144));
+    assert_eq!(
+        (MAX_ENCODED_LEN, HEADER_LIMIT),
+        (106_530 + 2625 + 2, 262_144)
+    );
     assert_eq!(parse(&full).unwrap(), largest);
     let mut signed = largest.clone();
     signed.signer = Some(Signer {
@@ -232,7 +236,8 @@ fn v04_recipient_and_header_limits() {
         commit: [6; 32],
     });
     let signed_full = signed.encode().unwrap();
-    assert_eq!(signed_full.len(), MAX_ENCODED_LEN);
+    // DE: v3 hat keine Optionsbits. EN: v3 has no option bits.
+    assert_eq!(signed_full.len(), MAX_ENCODED_LEN - 2);
     assert_eq!(u16::from_le_bytes([signed_full[8], signed_full[9]]), 3);
     assert_eq!(parse(&signed_full).unwrap(), signed);
 

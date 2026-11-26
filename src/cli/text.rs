@@ -84,6 +84,7 @@ pub struct Texts {
     pub lbl_recipient: &'static str,
     pub content_file: &'static str,
     pub content_dir: &'static str,
+    pub content_stream: &'static str,
     pub mode_passphrase: &'static str,
     pub mode_recipient: &'static str,
     pub enc_about: &'static str,

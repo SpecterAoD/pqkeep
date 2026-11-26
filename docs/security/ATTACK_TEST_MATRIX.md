@@ -20,6 +20,7 @@ fuzzing and sanitizer work, #154 reproducible builds, independent audit and the 
 Approved #152 A–E finalizes 1.1.0: 59 cases; twelve new bounded cases have native execution proof.
 1.2.0 adds QA1-FMT-010 (#44, sender signature in `.pqkf`, format v3): 60 cases; its CI evidence
 follows with the next baseline run.
+1.3.0 adds QA1-FMT-011 (#316/#83, format v4 stream core): 61 cases; CI evidence follows likewise.
 [Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
@@ -181,6 +182,7 @@ Fuzzing und Sanitizer-Ausbau, #154 reproduzierbare Builds, unabhängigen Audit u
 Freigegebenes #152-A–E finalisiert 1.1.0: 59 Fälle; zwölf neue begrenzte Fälle sind nativ belegt.
 1.2.0 ergänzt QA1-FMT-010 (#44, Absender-Signatur in `.pqkf`, Format v3): 60 Fälle; der
 CI-Nachweis folgt mit dem nächsten Baseline-Lauf.
+1.3.0 ergänzt QA1-FMT-011 (#316/#83, Kern Format v4/Strom): 61 Fälle; CI-Nachweis folgt ebenso.
 [Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung
