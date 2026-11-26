@@ -2,7 +2,7 @@
 
 Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt braucht Plan-Freigabe, grüne Tests und die [Checkliste](CHECKLIST.md).
 
-**Stand / status (19.11.2026):** Schritte 0–7 abgeschlossen, Betas [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) und [`v0.1.0-beta.2`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2) veröffentlicht, `v0.1.0-beta.3` in Vorbereitung; U0, U1 (mit Absender-Signatur in `.pqkf`, #44), U2 und U4 umgesetzt. / Steps 0–7 done, two betas published, beta.3 in preparation; U0, U1 (including the sender signature in `.pqkf`, #44), U2 and U4 implemented.
+**Stand / status (26.11.2026):** Schritte 0–7 abgeschlossen, Betas [`v0.1.0-beta.1`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1) bis [`v0.1.0-beta.3`](https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.3) veröffentlicht, `v0.1.0-beta.4` in Vorbereitung; U0, U1 (mit Absender-Signatur in `.pqkf`, #44), U2 und U4 umgesetzt, U5 begonnen (zufällige Namen #315, Formatentwurf v4 #316/#83). / Steps 0–7 done, three betas published, beta.4 in preparation; U0, U1 (including the sender signature in `.pqkf`, #44), U2 and U4 implemented, U5 started (random names #315, format draft v4 #316/#83).
 
 **Aktuelle Planung / current planning:** [Meilensteine M0–M7 / milestones](https://github.com/SpecterAoD/pqkeep/milestones) und [Project-Board](https://github.com/users/SpecterAoD/projects/1). Diese Datei zeigt den bisherigen Weg. / This file shows the way so far.
 
