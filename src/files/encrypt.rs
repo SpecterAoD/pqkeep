@@ -13,7 +13,7 @@ use super::format::Content;
 use super::output::TempOutput;
 use super::signed_io::{HashingWriter, check_signing_key};
 use super::walk::{self, SourceEntry, SourceKind};
-use super::{Protection, Report};
+use super::{EncryptOptions, Protection, Report};
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
 use crate::crypto::{aead, rng};
 use crate::envelope::UnlockedKey;
@@ -26,7 +26,7 @@ use crate::{Error, Result};
 /// DE/EN: [`Error::Io`] (u. a. `AlreadyExists`), [`Error::InvalidInput`] (Quelle, Empfänger,
 /// geänderte Quelldatei / source, recipient, changed source file), [`Error::KdfParams`].
 pub fn encrypt(source: &Path, target: &Path, protection: &Protection<'_>) -> Result<Report> {
-    encrypt_with(source, target, protection, None)
+    encrypt_with(source, target, protection, None, EncryptOptions::default())
 }
 
 /// DE: Wie [`encrypt`], zusätzlich mit der Absender-Signatur von `signer` (ML-DSA-87; Format v3,
@@ -44,7 +44,31 @@ pub fn encrypt_signed(
     signer: &UnlockedKey,
 ) -> Result<Report> {
     check_signing_key(signer)?;
-    encrypt_with(source, target, protection, Some(signer))
+    encrypt_with(
+        source,
+        target,
+        protection,
+        Some(signer),
+        EncryptOptions::default(),
+    )
+}
+
+/// DE: Wie [`encrypt`] mit optionalem Absender und Optionen (z. B. Füllung, Format v4).
+/// EN: Like [`encrypt`] with optional sender and options (e.g. padding, format v4).
+///
+/// # Errors
+/// DE/EN: wie [`encrypt`] und [`encrypt_signed`] / as [`encrypt`] and [`encrypt_signed`].
+pub fn encrypt_with_options(
+    source: &Path,
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: Option<&UnlockedKey>,
+    options: EncryptOptions,
+) -> Result<Report> {
+    if let Some(key) = signer {
+        check_signing_key(key)?;
+    }
+    encrypt_with(source, target, protection, signer, options)
 }
 
 fn encrypt_with(
@@ -52,6 +76,7 @@ fn encrypt_with(
     target: &Path,
     protection: &Protection<'_>,
     signer: Option<&UnlockedKey>,
+    options: EncryptOptions,
 ) -> Result<Report> {
     let is_dir = fs::symlink_metadata(source)?.file_type().is_dir();
     let (entries, skipped, content) = if is_dir {
@@ -60,7 +85,21 @@ fn encrypt_with(
     } else {
         (vec![walk::collect_file(source)?], Vec::new(), Content::File)
     };
-    write_archive(&entries, skipped, content, target, protection, signer)
+    let job = Job {
+        target,
+        protection,
+        signer,
+        options,
+    };
+    write_archive(&entries, skipped, content, &job)
+}
+
+/// DE: Ziel, Schutz, Absender und Optionen eines Vorgangs. EN: Target, protection, sender, options.
+struct Job<'a> {
+    target: &'a Path,
+    protection: &'a Protection<'a>,
+    signer: Option<&'a UnlockedKey>,
+    options: EncryptOptions,
 }
 
 /// DE: Verschlüsselt mehrere Quellen als **einen** Container nach `target` (Inhalt „Ordner“,
@@ -76,7 +115,14 @@ pub fn encrypt_many(
     target: &Path,
     protection: &Protection<'_>,
 ) -> Result<Report> {
-    encrypt_many_with(sources, target, protection, None)
+    encrypt_many_with_options(
+        sources,
+        None,
+        target,
+        protection,
+        None,
+        EncryptOptions::default(),
+    )
 }
 
 /// DE: Wie [`encrypt_many`], zusätzlich mit Absender-Signatur (Format v3).
@@ -90,25 +136,45 @@ pub fn encrypt_many_signed(
     protection: &Protection<'_>,
     signer: &UnlockedKey,
 ) -> Result<Report> {
-    check_signing_key(signer)?;
-    encrypt_many_with(sources, target, protection, Some(signer))
+    encrypt_many_with_options(
+        sources,
+        None,
+        target,
+        protection,
+        Some(signer),
+        EncryptOptions::default(),
+    )
 }
 
-fn encrypt_many_with(
+/// DE: Mehrere Quellen als ein Container; mit `root` alles unter diesem obersten Ordner (#315), mit
+/// `signer` signiert, mit Optionen (z. B. Füllung, Format v4).
+/// EN: Several sources as one container; with `root` everything below that top-level directory
+/// (#315), with `signer` signed, with options (e.g. padding, format v4).
+///
+/// # Errors
+/// DE/EN: wie [`encrypt_many`] und [`encrypt_signed`]; [`Error::InvalidInput`] `path` (`root`).
+pub fn encrypt_many_with_options(
     sources: &[&Path],
+    root: Option<&str>,
     target: &Path,
     protection: &Protection<'_>,
     signer: Option<&UnlockedKey>,
+    options: EncryptOptions,
 ) -> Result<Report> {
-    let (entries, skipped) = walk::collect_many(sources)?;
-    write_archive(
-        &entries,
-        skipped,
-        Content::Directory,
+    if let Some(key) = signer {
+        check_signing_key(key)?;
+    }
+    let (entries, skipped) = match root {
+        Some(root) => walk::collect_under(sources, root)?,
+        None => walk::collect_many(sources)?,
+    };
+    let job = Job {
         target,
         protection,
         signer,
-    )
+        options,
+    };
+    write_archive(&entries, skipped, Content::Directory, &job)
 }
 
 /// DE: Mehrere Quellen als ein Container, alles unter dem obersten Ordner `root` (#315: der
@@ -126,17 +192,13 @@ pub fn encrypt_many_under(
     protection: &Protection<'_>,
     signer: Option<&UnlockedKey>,
 ) -> Result<Report> {
-    if let Some(key) = signer {
-        check_signing_key(key)?;
-    }
-    let (entries, skipped) = walk::collect_under(sources, root)?;
-    write_archive(
-        &entries,
-        skipped,
-        Content::Directory,
+    encrypt_many_with_options(
+        sources,
+        Some(root),
         target,
         protection,
         signer,
+        EncryptOptions::default(),
     )
 }
 
@@ -144,17 +206,16 @@ fn write_archive(
     entries: &[SourceEntry],
     skipped: Vec<super::Skipped>,
     content: Content,
-    target: &Path,
-    protection: &Protection<'_>,
-    signer: Option<&UnlockedKey>,
+    job: &Job<'_>,
 ) -> Result<Report> {
     let file_key = aead::generate_key()?;
     let prefix = rng::array::<PREFIX_LEN>()?;
-    let public = signer.map(|key| key.public_key.as_slice());
+    let public = job.signer.map(|key| key.public_key.as_slice());
+    let pad = job.options.pad;
     let (header, stream_aad) =
-        encrypt_header::build(content, prefix, protection, &file_key, public)?;
+        encrypt_header::build(content, prefix, job.protection, &file_key, (public, pad))?;
 
-    let (temp, file) = TempOutput::file(target)?;
+    let (temp, file) = TempOutput::file(job.target)?;
     let mut out = BufWriter::new(file);
     out.write_all(&header)?;
     let enc = EncryptWriter::new(
@@ -172,10 +233,11 @@ fn write_archive(
     for entry in entries {
         write_entry(&mut archive, entry, &mut report)?;
     }
-    let body = archive.finish()?;
+    // DE: Nur v4 (Füllung) hat einen Trailer. EN: Only v4 (padding) has a trailer.
+    let body = archive.finish_with(pad.then_some(true))?;
     // DE: Ohne Absender bleibt die Datei Byte für Byte wie bisher (`H ‖ C`).
     // EN: Without a sender the file stays byte for byte as before (`H ‖ C`).
-    let out = match signer {
+    let out = match job.signer {
         Some(key) => body.append_signature(key, &header)?,
         None => body.into_inner(),
     };

@@ -25,19 +25,28 @@ use super::io::{CliResult, Failure, code, localize};
 pub const ORIGINAL_NAME: &str = "original-name";
 
 /// DE: Argumente für `encrypt`. EN: Arguments for `encrypt`.
-pub fn encrypt_args(lang: Lang) -> [Arg; 2] {
+pub fn encrypt_args(lang: Lang) -> [Arg; 3] {
     let (random, level) = match lang {
         Lang::De => (
             "Zufälliger äußerer Name (26 Zeichen + .pqkf) neben der Quelle; der Originalname bleibt verschlüsselt im Archiv. Bei mehreren Quellen als Container gibt --out den Namen im Archiv vor",
-            "Privatsphäre-Stufe: standard (Vorgabe) oder high (setzt --random-name; künftige Privatsphäre-Optionen kommen hinzu)",
+            "Privatsphäre-Stufe: standard (Vorgabe) oder high (setzt --random-name und --pad; künftige Privatsphäre-Optionen kommen hinzu)",
         ),
         Lang::En => (
             "Random outer name (26 characters + .pqkf) next to the source; the original name stays encrypted in the archive. With several sources as a container --out sets the name inside the archive",
-            "Privacy level: standard (default) or high (sets --random-name; future privacy options will be added)",
+            "Privacy level: standard (default) or high (sets --random-name and --pad; future privacy options will be added)",
         ),
+    };
+    let pad = match lang {
+        Lang::De => {
+            "Genaue Größe verbergen: Füllung nach PADMÉ (höchstens ~12 %, meist < 3 % größer); schreibt Format v4 (lesbar ab beta.5)"
+        }
+        Lang::En => {
+            "Hide the exact size: PADMÉ padding (at most ~12 %, usually < 3 % larger); writes format v4 (readable from beta.5)"
+        }
     };
     [
         flag("random-name", random),
+        flag("pad", pad),
         opt("privacy", level).value_parser(["standard", "high"]),
     ]
 }
@@ -58,8 +67,8 @@ pub fn decrypt_arg(lang: Lang) -> Arg {
 /// DE: Frage im Menü. EN: Menu question.
 pub fn menu_question(lang: Lang) -> &'static str {
     match lang {
-        Lang::De => "Privatsphäre hoch (zufälliger Dateiname, Originalname nur verschlüsselt)?",
-        Lang::En => "Privacy high (random file name, original name encrypted only)?",
+        Lang::De => "Privatsphäre hoch (zufälliger Dateiname, verborgene Größe; lesbar ab beta.5)?",
+        Lang::En => "Privacy high (random file name, hidden size; readable from beta.5)?",
     }
 }
 
@@ -70,9 +79,20 @@ pub fn message(field: &str) -> Option<&'static str> {
     )
 }
 
+fn high(m: &ArgMatches) -> bool {
+    m.get_one::<String>("privacy").map(String::as_str) == Some("high")
+}
+
+/// DE: Optionen fürs Verschlüsseln: `--pad` oder Stufe hoch. EN: Encrypt options: `--pad` or level high.
+pub fn options(m: &ArgMatches) -> files::EncryptOptions {
+    files::EncryptOptions {
+        pad: m.get_flag("pad") || high(m),
+    }
+}
+
 /// DE: Zufällige Namen gewünscht? EN: Random names requested?
 pub fn random(m: &ArgMatches) -> bool {
-    m.get_flag("random-name") || m.get_one::<String>("privacy").map(String::as_str) == Some("high")
+    m.get_flag("random-name") || high(m)
 }
 
 /// DE: Mit zufälligem Namen passt `--out` nur zum Container (dort = Name im Archiv) oder als schon
@@ -170,10 +190,10 @@ pub const ANY_RANDOM: &str = ".pqkeep-any-random-name";
 pub fn context_question(lang: Lang) -> &'static str {
     match lang {
         Lang::De => {
-            "Privatsphäre hoch? Die Datei bekommt einen zufälligen Namen; der Originalname steht nur verschlüsselt darin."
+            "Privatsphäre hoch? Zufälliger Dateiname und verborgene genaue Größe; lesbar erst ab PQKeep beta.5."
         }
         Lang::En => {
-            "Privacy high? The file gets a random name; the original name is only stored encrypted inside."
+            "Privacy high? Random file name and hidden exact size; readable only from PQKeep beta.5."
         }
     }
 }

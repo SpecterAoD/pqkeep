@@ -23,7 +23,10 @@ pub(super) fn read(
         Content::Directory => directory(archive, &mut visit)?,
         Content::Stream => Report {
             files: 1,
-            bytes: super::stream_v4::copy_payload(archive.into_stream(), &mut sink())?,
+            bytes: {
+                let (dec, padded) = archive.into_stream();
+                super::stream_v4::copy_payload(dec, &mut sink(), padded)?.0
+            },
             ..Report::default()
         },
     };

@@ -42,7 +42,7 @@ fn recipient(algorithm: pqkeep::crypto::KemAlgorithm, id: &[u8]) -> Value {
 
 /// DE: Verschlüsselte Datei: Version, Inhalt, Zugänge. EN: Encrypted file: version, content, slots.
 fn encrypted(path: &Path) -> pqkeep::Result<Map<String, Value>> {
-    let (version, kind, slots, signer) = match files::inspect(path) {
+    let (version, kind, slots, signer, padded) = match files::inspect(path) {
         Err(pqkeep::Error::Unsupported) => {
             let header = files::inspect_v2(path)?;
             let slots = header.slots.iter().map(|slot| match slot {
@@ -60,7 +60,8 @@ fn encrypted(path: &Path) -> pqkeep::Result<Map<String, Value>> {
                 |s| json!({ "key_id": envelope::hex_encode(&s.key_id()), "verified": false }),
             );
             let slots = slots.collect::<Vec<_>>();
-            (header.version(), header.content, slots, signer)
+            let padded = super::inspect_v2::padded(&header);
+            (header.version(), header.content, slots, signer, padded)
         }
         other => {
             let header = other?;
@@ -73,13 +74,14 @@ fn encrypted(path: &Path) -> pqkeep::Result<Map<String, Value>> {
                     ..
                 } => recipient(*algorithm, recipient_id),
             };
-            (1, header.content, vec![slot], Value::Null)
+            (1, header.content, vec![slot], Value::Null, false)
         }
     };
     let mut body = Map::new();
     body.insert("type".into(), "encrypted_file".into());
     body.insert("format_version".into(), version.into());
     body.insert("content".into(), content(kind).into());
+    body.insert("padded".into(), padded.into());
     body.insert("slots".into(), slots.into());
     body.insert("signer".into(), signer);
     Ok(body)

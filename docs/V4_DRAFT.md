@@ -181,6 +181,14 @@ Temporärdatei, Meldungen auf stderr); Passphrase nur über `--passphrase-file` 
 mit `--sign-passphrase-file`; `--json` (Quelle `"-"`); Sandbox ohne Zielordner bei `--stdout`; abgebrochene
 Pipe = Exit 1. Entschlüsseln nur in eine Datei. Tests `tests/cli_stream.rs` (P10).
 
+**Schritt 3 (Füllung, `PAD`) umgesetzt:** `encrypt --pad` (auch mit `--stdin`), Stufe `--privacy high` setzt
+`--pad` und `--random-name`. Mit `PAD` wird v4 auch für Datei und Ordner geschrieben; Klartext = Archiv bzw.
+Nutzdaten ‖ Nullbytes ‖ Trailer, Füllung = PADMÉ(Länge + 24) − (Länge + 24). Der Leser prüft: nur Nullbytes,
+Längen addieren sich, Füllung exakt kanonisch, Archiv endet genau vor der Füllung; bei Strömen wird die
+Temporärdatei nach allen Prüfungen auf die Nutzlänge gekürzt. API: `files::EncryptOptions { pad }`,
+`encrypt_with_options`, `encrypt_many_with_options` (vorläufig bis #98). Tests: `tests/files_padding.rs`,
+`tests/cli_padding.rs`, Unit-Tests; PADMÉ-Referenz `scripts/v4_padme_reference.py` (P06); QA1-FMT-012.
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -289,7 +297,14 @@ QA1-FMT-011; the header fuzzer `pqkf_header_v2` also covers v4. **Step 2 (#83, c
 implemented:** `encrypt --stdin` with `--out` (atomic) or `--stdout` (no temporary file, messages on
 stderr); passphrase only via `--passphrase-file` or recipients only, signature with
 `--sign-passphrase-file`; `--json` (source `"-"`); no target directory in the sandbox with `--stdout`; a
-broken pipe exits with 1; decryption into a file only. Tests `tests/cli_stream.rs` (P10).
+broken pipe exits with 1; decryption into a file only. Tests `tests/cli_stream.rs` (P10). **Step 3
+(padding, `PAD`) implemented:** `encrypt --pad` (also with `--stdin`); level `--privacy high` sets `--pad` and
+`--random-name`. With `PAD`, v4 is also written for files and directories; plaintext = archive or payload ‖
+zero bytes ‖ trailer, padding = PADMÉ(length + 24) − (length + 24). The reader checks zero bytes only, lengths
+adding up, exactly canonical padding and an archive ending exactly before the padding; for streams the
+temporary file is truncated to the payload length after all checks. API: `files::EncryptOptions { pad }`,
+`encrypt_with_options`, `encrypt_many_with_options` (provisional until #98). Tests, PADMÉ reference
+`scripts/v4_padme_reference.py` (P06), QA1-FMT-012.
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.

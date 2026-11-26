@@ -56,8 +56,8 @@ nur mit neuer Schema-Kennung.
   (`name`, `organization`, `company`, `department`, `account_type`; fehlende Werte `null`).
 - Schlüsseldatei: `type: "key_file"`, dieselben Felder plus `kdf` (`memory_kib`, `iterations`,
   `parallelism`), `factor_required`, `warnings` (Texte nach `--lang`).
-- Verschlüsselte Datei: `type: "encrypted_file"`, `format_version` (1, 2 oder 3), `content`
-  (`file`/`directory`), `slots`: je Zugang `{"kind":"passphrase","kdf":{…},"factor_required":…}`
+- Verschlüsselte Datei: `type: "encrypted_file"`, `format_version` (1–4), `content`
+  (`file`/`directory`/`stream`), `padded` (Füllung, nur v4), `slots`: je Zugang `{"kind":"passphrase","kdf":{…},"factor_required":…}`
   oder `{"kind":"recipient","algorithm":"ML-KEM-768","recipient_id":"…"}`; `signer`: bei v3
   `{"key_id":"…","verified":false}` (nur aus dem Header, **ungeprüft**), sonst `null`.
 - Immer zusätzlich `file` (der angegebene Pfad).
@@ -115,7 +115,7 @@ and `summary` (`total`, `ok`, `failed`); `exit_code` is the first error of the l
 
 **`inspect --json`:** public key (`type: "public_key"`, `algorithm`, `key_id`, `created_utc`,
 `metadata` with `null` for missing values); key file (`type: "key_file"`, same fields plus `kdf`,
-`factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version` 1–3, `content`,
+`factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version` 1–4, `content` (`file`/`directory`/`stream`), `padded` (v4 padding),
 `slots` with `kind` `passphrase` – `kdf`, `factor_required` – or `recipient` – `algorithm`,
 `recipient_id`; `signer` for v3 `{"key_id":…,"verified":false}` – header only, **unverified** – else
 `null`). Always `file` as well.

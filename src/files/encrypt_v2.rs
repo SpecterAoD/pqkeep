@@ -106,7 +106,7 @@ pub(super) fn build(
     passphrase: Option<&PassphraseAccess<'_>>,
     recipients: &[&PublicKeyFile],
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    (signer, padded): (Option<&[u8]>, bool),
 ) -> Result<HeaderV2> {
     if file_key.expose().len() != FILE_KEY_LEN {
         return Err(Error::InvalidInput { field: "file_key" });
@@ -126,7 +126,7 @@ pub(super) fn build(
     }
     // DE: Ströme nur als v4 (#83); `commit` dann mit v4-Domäne, auch im Absenderblock.
     // EN: Streams only as v4 (#83); `commit` then with the v4 domain, also in the sender block.
-    let v4 = format_v4::for_encrypt(content, signer.is_some(), file_key.expose())?;
+    let v4 = format_v4::for_encrypt(content, (signer.is_some(), padded), file_key.expose())?;
     let commit = |key: &[u8]| match &v4 {
         Some(v4) => Ok(v4.commit),
         None => signer_v3::commit(key),

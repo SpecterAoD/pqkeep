@@ -9,16 +9,17 @@
 //! commit = SHA3-256("PQKeep/file/v4\0" ‖ "commit\0" ‖ dateischlüssel)
 //! ```
 //!
-//! Umgesetzt ist bisher nur `SIGNED`; `PAD`, `ANON` und `HIDDEN_SENDER` sind reserviert und „nicht
-//! unterstützt“, ebenso unbekannte Bits. v4 wird nur geschrieben, wenn eine Option es verlangt –
-//! derzeit also nur für Inhalt 3; v4 mit Inhalt 1/2 ist ungültig (D3 bleibt kanonisch).
+//! Umgesetzt sind `SIGNED` und `PAD` (Füllung nach PADMÉ, nur Nullbytes, kanonische Länge);
+//! `ANON` und `HIDDEN_SENDER` sind reserviert und „nicht unterstützt“, ebenso unbekannte Bits. v4
+//! wird nur geschrieben, wenn eine Option es verlangt (Inhalt 3 oder `PAD`); sonst ist v4 ungültig
+//! (D3 bleibt kanonisch).
 //!
 //! EN: Format v4 (`docs/V4_DRAFT.md`, #316/#83): v2 header with version 4, U16 option bits after
 //! the nonce prefix and a key commitment `commit` in every v4 file; new content type 3 "stream". A
-//! stream's plaintext ends with a trailer (layout above). Only `SIGNED` is implemented; `PAD`,
-//! `ANON` and `HIDDEN_SENDER` are reserved and "unsupported", like unknown bits. v4 is only written when an
-//! option requires it – currently only for content 3; v4 with content 1/2 is invalid (D3 stays
-//! canonical).
+//! stream's plaintext ends with a trailer (layout above). `SIGNED` and `PAD` (PADMÉ padding, zero
+//! bytes only, canonical length) are implemented; `ANON` and `HIDDEN_SENDER` are reserved and
+//! "unsupported", like unknown bits. v4 is only written when an option requires it (content 3 or
+//! `PAD`); otherwise v4 is invalid (D3 stays canonical).
 
 use sha3::Sha3_256;
 
@@ -97,15 +98,15 @@ pub fn check_commit_v4(v4: &V4, file_key: &[u8]) -> Result<()> {
 /// DE/EN: [`Error::Unsupported`] (reservierte/unbekannte Bits / reserved/unknown bits),
 /// [`Error::InvalidInput`] (Feld `header`).
 pub fn check_v4(content: Content, v4: &V4, signer: Option<&Signer>) -> Result<()> {
-    if v4.options & !OPT_SIGNED != 0 {
+    if v4.options & !(OPT_SIGNED | OPT_PAD) != 0 {
         return Err(Error::Unsupported);
     }
     let has_signed_bit = v4.options & OPT_SIGNED != 0;
     if has_signed_bit != signer.is_some() || signer.is_some_and(|s| s.commit != v4.commit) {
         return Err(bad());
     }
-    // DE: Ohne PAD/ANON/HIDDEN gibt es v4 nur für Ströme. EN: Without PAD/ANON/HIDDEN v4 is stream-only.
-    if content != Content::Stream {
+    // DE: v4 braucht einen Grund: Strom oder PAD. EN: v4 needs a reason: stream or PAD.
+    if content != Content::Stream && v4.options & OPT_PAD == 0 {
         return Err(bad());
     }
     Ok(())
@@ -116,40 +117,98 @@ pub fn check_v4(content: Content, v4: &V4, signer: Option<&Signer>) -> Result<()
 ///
 /// # Errors
 /// DE/EN: [`Error::MemoryLock`], [`Error::Crypto`].
-pub fn for_encrypt(content: Content, signed: bool, file_key: &[u8]) -> Result<Option<V4>> {
-    if content != Content::Stream {
+pub fn for_encrypt(
+    content: Content,
+    (signed, padded): (bool, bool),
+    file_key: &[u8],
+) -> Result<Option<V4>> {
+    if content != Content::Stream && !padded {
         return Ok(None);
     }
+    let mut options = 0;
+    if signed {
+        options |= OPT_SIGNED;
+    }
+    if padded {
+        options |= OPT_PAD;
+    }
     Ok(Some(V4 {
-        options: if signed { OPT_SIGNED } else { 0 },
+        options,
         commit: commit_v4(file_key)?,
     }))
 }
 
-/// DE: Trailer für `payload_len` Nutzbytes ohne Füllung. EN: Trailer for `payload_len` bytes, no padding.
+/// DE: PADMÉ (Nikitin u. a. 2019): gepolsterte Gesamtlänge für `len` Bytes (Nutzdaten + Trailer);
+/// verrät nur O(log log L) Bit, höchstens ~12 % Mehrgröße.
+/// EN: PADMÉ (Nikitin et al. 2019): padded total length for `len` bytes (payload + trailer); leaks
+/// only O(log log L) bits, at most ~12 % overhead.
+///
+/// # Errors
+/// DE/EN: [`Error::Crypto`] bei Überlauf / on overflow.
+pub fn padme(len: u64) -> Result<u64> {
+    if len < 2 {
+        return Ok(len);
+    }
+    let e = 63 - u64::from(len.leading_zeros());
+    let s = 64 - u64::from(e.leading_zeros());
+    let mask = (1u64 << (e - s)) - 1;
+    len.checked_add(mask)
+        .map(|v| v & !mask)
+        .ok_or(Error::Crypto)
+}
+
+/// DE: Füllung für `payload` Nutzbytes (mit `padded`, sonst 0). EN: Padding for `payload` bytes.
+///
+/// # Errors
+/// DE/EN: [`Error::Crypto`] bei Überlauf / on overflow.
+pub fn padding_for(payload: u64, padded: bool) -> Result<u64> {
+    if !padded {
+        return Ok(0);
+    }
+    let base = payload
+        .checked_add(TRAILER_LEN as u64)
+        .ok_or(Error::Crypto)?;
+    Ok(padme(base)? - base)
+}
+
+/// DE: Trailer für `payload_len` Nutzbytes und `pad_len` Füllbytes.
+/// EN: Trailer for `payload_len` payload bytes and `pad_len` padding bytes.
 #[must_use]
-pub fn trailer(payload_len: u64) -> [u8; TRAILER_LEN] {
+pub fn trailer(payload_len: u64, pad_len: u64) -> [u8; TRAILER_LEN] {
     let mut out = [0u8; TRAILER_LEN];
     out[..8].copy_from_slice(&payload_len.to_le_bytes());
+    out[8..16].copy_from_slice(&pad_len.to_le_bytes());
     out[16..].copy_from_slice(TRAILER_MAGIC);
     out
 }
 
-/// DE: Prüft den Trailer gegen die tatsächlich gelesene Nutzlänge.
-/// EN: Checks the trailer against the payload length actually read.
+fn trailer_error() -> Error {
+    Error::InvalidInput { field: "trailer" }
+}
+
+/// DE: Prüft den Trailer: `total` = gelesene Bytes vor dem Trailer (Nutzdaten + Füllung); die
+/// Füllung muss mit `padded` genau PADMÉ sein, sonst 0. Liefert die Nutzlänge. Dass die Füllung aus
+/// Nullbytes besteht, prüft der Aufrufer.
+/// EN: Checks the trailer: `total` = bytes read before the trailer (payload + padding); with
+/// `padded` the padding must be exactly PADMÉ, else 0. Returns the payload length. The caller checks
+/// that the padding consists of zero bytes.
 ///
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] (Feld `trailer`).
-pub fn check_trailer(bytes: &[u8], payload_len: u64) -> Result<()> {
-    let ok = bytes.len() == TRAILER_LEN
-        && bytes[..8] == payload_len.to_le_bytes()
-        && bytes[8..16] == [0u8; 8]
-        && &bytes[16..] == TRAILER_MAGIC;
-    if ok {
-        Ok(())
-    } else {
-        Err(Error::InvalidInput { field: "trailer" })
+pub fn check_trailer(bytes: &[u8], total: u64, padded: bool) -> Result<u64> {
+    if bytes.len() != TRAILER_LEN || &bytes[16..] != TRAILER_MAGIC {
+        return Err(trailer_error());
     }
+    let word = |i: usize| -> Result<u64> {
+        let raw: [u8; 8] = bytes[i..i + 8].try_into().map_err(|_| trailer_error())?;
+        Ok(u64::from_le_bytes(raw))
+    };
+    let (payload, pad) = (word(0)?, word(8)?);
+    let canonical = padding_for(payload, padded).map_err(|_| trailer_error())?;
+    if payload.checked_add(pad) != Some(total) || pad != canonical {
+        return Err(trailer_error());
+    }
+    Ok(payload)
 }
 
 #[cfg(test)]
