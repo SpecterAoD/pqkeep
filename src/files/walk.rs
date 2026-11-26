@@ -119,6 +119,32 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<S
     Ok((entries, skipped))
 }
 
+/// DE: Wie [`collect_many`], aber alles unter dem obersten Ordner `root` (#315: zufälliger äußerer
+/// Name, der Containername bleibt im Archiv erhalten).
+/// EN: Like [`collect_many`], but everything below the top-level directory `root` (#315: random
+/// outer name, the container name is kept in the archive).
+pub(crate) fn collect_under(
+    sources: &[&Path],
+    root: &str,
+) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
+    if paths::validate(root)?.len() != 1 {
+        return Err(Error::InvalidInput { field: "path" });
+    }
+    let (inner, skipped) = collect_many(sources)?;
+    let mut entries = Vec::with_capacity(inner.len() + 1);
+    entries.push(SourceEntry {
+        rel: root.to_owned(),
+        abs: PathBuf::new(),
+        kind: SourceKind::Dir,
+    });
+    for mut entry in inner {
+        entry.rel = format!("{root}/{}", entry.rel);
+        paths::validate_only(&entry.rel)?;
+        entries.push(entry);
+    }
+    Ok((entries, skipped))
+}
+
 /// DE: Inhalt von `root` mit Präfix `base` anhängen. EN: Append the content of `root` with prefix `base`.
 fn collect_tree(
     root: &Path,

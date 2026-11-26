@@ -38,6 +38,7 @@ mod many_text;
 mod menu;
 mod notices;
 mod preview;
+mod privacy;
 mod recipients;
 mod recipients_ui;
 mod rekey_cmd;

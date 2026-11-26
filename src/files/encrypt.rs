@@ -111,6 +111,35 @@ fn encrypt_many_with(
     )
 }
 
+/// DE: Mehrere Quellen als ein Container, alles unter dem obersten Ordner `root` (#315: der
+/// Containername bleibt bei zufälligem äußerem Namen im Archiv erhalten); mit `signer` Format v3.
+/// EN: Several sources as one container, everything below the top-level directory `root` (#315:
+/// the container name is kept in the archive with a random outer name); with `signer` format v3.
+///
+/// # Errors
+/// DE/EN: wie [`encrypt_many`] und [`encrypt_signed`]; [`Error::InvalidInput`] `path` (`root` kein
+/// einzelner portabler Name / not a single portable name).
+pub fn encrypt_many_under(
+    sources: &[&Path],
+    root: &str,
+    target: &Path,
+    protection: &Protection<'_>,
+    signer: Option<&UnlockedKey>,
+) -> Result<Report> {
+    if let Some(key) = signer {
+        check_signing_key(key)?;
+    }
+    let (entries, skipped) = walk::collect_under(sources, root)?;
+    write_archive(
+        &entries,
+        skipped,
+        Content::Directory,
+        target,
+        protection,
+        signer,
+    )
+}
+
 fn write_archive(
     entries: &[SourceEntry],
     skipped: Vec<super::Skipped>,

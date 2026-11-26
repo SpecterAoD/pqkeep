@@ -169,10 +169,17 @@ fn decrypt(s: &IntegrateTexts, lang: Lang, source: &Path, path: &str) -> CliResu
         return Err(Failure::new(code::USAGE, s.ctx_not_pqkf));
     }
     let extra = for_decrypt(source, lang, |what| ask_for(s, lang, what))?;
-    let out = out_arg(default_decrypted(source).as_deref(), lang)?;
     let mut args = vec!["decrypt"];
     args.extend(extra.refs());
-    args.extend(["--out", &out, "--", path]);
+    // DE: Zufälliger Name (#315): Originalname aus dem Archiv. EN: Random name: original name.
+    let out;
+    if super::privacy::is_random_path(source) {
+        args.extend(super::privacy::CONTEXT_RESTORE);
+    } else {
+        out = out_arg(default_decrypted(source).as_deref(), lang)?;
+        args.extend(["--out", &out]);
+    }
+    args.extend(["--", path]);
     child(lang, &args)
 }
 

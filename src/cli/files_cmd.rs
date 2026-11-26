@@ -103,6 +103,17 @@ impl OwnedProtection {
         })
     }
 
+    /// DE: Mehrere Quellen als Container unter dem obersten Ordner `root` (#315).
+    /// EN: Several sources as a container below the top-level directory `root` (#315).
+    pub(super) fn encrypt_under(
+        &self,
+        list: &[&Path],
+        root: &str,
+        out: &Path,
+    ) -> pqkeep::Result<Report> {
+        self.with(|p| files::encrypt_many_under(list, root, out, p, self.signer.as_ref()))
+    }
+
     /// DE: Mehrere Quellen als ein Container. EN: Several sources as one container.
     pub(super) fn encrypt_many(&self, list: &[&Path], out: &Path) -> pqkeep::Result<Report> {
         self.with(|p| match &self.signer {
@@ -229,6 +240,20 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
         return super::files_many::encrypt(t, lang, m, &all);
     }
     let src = source(m);
+    super::privacy::check_out(m, false, lang)?;
+    if super::privacy::random(m) {
+        let protection = read_protection(t, lang, m)?;
+        let (out, r) = super::privacy::encrypt_random(&protection, &src);
+        let report = r.map_err(|e| Failure::from_error(&e, lang))?;
+        print_report(
+            t,
+            lang,
+            t.msg_encrypted,
+            out.as_deref().unwrap_or(&src),
+            &report,
+        );
+        return Ok(());
+    }
     let out = target(t, m, default_for(m, default_encrypted(&src)))?;
     let protection = read_protection(t, lang, m)?;
     let report = protection
@@ -248,11 +273,22 @@ pub fn decrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     let src = source(m);
     let access = super::unlock::Access::read(&src).map_err(fail)?;
-    let out = target(t, m, default_for(m, default_decrypted(&src)))?;
+    let restore = super::privacy::restore(m, &src);
+    let out = if restore {
+        None
+    } else {
+        Some(target(t, m, default_for(m, default_decrypted(&src)))?)
+    };
     let use_key = access.use_key(m.get_one::<PathBuf>("key").is_some());
     let expected = super::signing::load_expected(lang, m)?;
     let opened = super::unlock::for_decrypt(t, lang, m, use_key, access.passphrase)?;
-    let report = files::decrypt_with(&src, &out, &opened.get(), expected.as_ref()).map_err(fail)?;
+    let (out, report) = if let Some(out) = out {
+        let r = files::decrypt_with(&src, &out, &opened.get(), expected.as_ref());
+        (out, r.map_err(fail)?)
+    } else {
+        let (out, r) = super::privacy::decrypt_original(m, &src, &opened.get(), expected.as_ref());
+        (out.unwrap_or_default(), r.map_err(fail)?)
+    };
     drop(opened);
     print_report(t, lang, t.msg_decrypted, &out, &report);
     Ok(())

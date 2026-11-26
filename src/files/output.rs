@@ -60,6 +60,17 @@ impl TempOutput {
         Ok((output, file))
     }
 
+    /// DE: Temporärdatei neben `base` (Name der Quelle) für das Ziel `target` (#315): so findet das
+    /// Kontextmenü eigene Reste auch, wenn der Originalname vorher unbekannt war.
+    /// EN: Temporary file next to `base` (the source's name) for the target `target` (#315): this
+    /// way the context menu finds own leftovers even if the original name was unknown before.
+    pub fn file_near(base: &Path, target: &Path) -> Result<(Self, OutputFile)> {
+        ensure_absent(target)?;
+        let temp = temp_path(base)?;
+        let file = open_new(&temp)?;
+        Ok((Self::new(temp, target, false), file))
+    }
+
     /// DE: Temporärordner für ein Ordnerziel. EN: Temporary directory for a directory target.
     pub fn dir(target: &Path) -> Result<Self> {
         ensure_absent(target)?;
@@ -71,6 +82,31 @@ impl TempOutput {
         #[cfg(test)]
         checkpoint(output.path(), Point::AfterTempCreate)?;
         Ok(output)
+    }
+
+    /// DE: Temporärordner neben `base`, ohne Ziel (Originalname wird erst beim Entpacken bekannt,
+    /// #315); veröffentlicht wird mit [`Self::publish_child`].
+    /// EN: Temporary directory next to `base`, without a target (the original name is only known
+    /// while extracting, #315); published with [`Self::publish_child`].
+    pub fn scratch_dir(base: &Path) -> Result<Self> {
+        let temp = temp_path(base)?;
+        let mut builder = dir_builder();
+        builder.recursive(false);
+        builder.create(&temp)?;
+        Ok(Self::new(temp, base, true))
+    }
+
+    /// DE: Veröffentlicht den Unterordner `child` als `target` (ohne Überschreiben) und entfernt
+    /// den dann leeren Temporärordner.
+    /// EN: Publishes the subdirectory `child` as `target` (no overwriting) and removes the then
+    /// empty temporary directory.
+    pub fn publish_child(mut self, child: &str, target: &Path) -> Result<()> {
+        ensure_absent(target)?;
+        fs::rename(self.temp.join(child), target)?;
+        sync_dir(target);
+        self.published = true;
+        let _ = fs::remove_dir(&self.temp);
+        Ok(())
     }
 
     fn new(temp: PathBuf, target: &Path, is_dir: bool) -> Self {

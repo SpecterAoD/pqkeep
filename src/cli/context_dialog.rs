@@ -20,7 +20,7 @@ use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
 use super::factor_cmd::FLAG;
 use super::factor_ui::{Ask, Extra, for_decrypt, ui_texts};
-use super::files_cmd::{default_decrypted, default_encrypted};
+use super::files_cmd::default_encrypted;
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
 
@@ -244,9 +244,10 @@ impl Ui<'_> {
             return Err(Failure::new(code::USAGE, self.s.ctx_not_pqkf));
         }
         let extra = for_decrypt(source, self.lang, |what| self.ask_for(source, what))?;
-        let out = out_arg(default_decrypted(source).as_deref(), self.lang)?;
+        let (out, restore) = super::privacy::context_out(source, path, self.lang)?;
         let targets = [PathBuf::from(&out)];
-        let mut cmd = vec!["decrypt", "--out", &out];
+        let mut cmd = vec!["decrypt"];
+        cmd.extend(restore.unwrap_or(["--out", out.as_str()]));
         cmd.extend(extra.refs());
         let prompt = self.pass_prompt(&extra);
         self.repeat(&out, || {
