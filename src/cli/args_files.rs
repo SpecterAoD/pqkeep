@@ -12,12 +12,20 @@ use super::text::texts;
 /// DE: Höchstzahl an Quellen je Aufruf. EN: Maximum number of sources per call.
 pub const MAX_SOURCES: usize = 1000;
 
+/// DE: Quellen beim Verschlüsseln; mit `--stdin` keine (#83). EN: Sources when encrypting; none with `--stdin`.
+fn encrypt_sources(help: &'static str) -> clap::Arg {
+    path("source", help)
+        .num_args(1..=MAX_SOURCES)
+        .required(false)
+        .required_unless_present(super::stream_cmd::STDIN)
+}
+
 pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
     let t = texts(lang);
     let m = super::many_text::many_texts(lang);
     [
         base("encrypt", t.enc_about, t.enc_after, lang)
-            .arg(path("source", m.arg_sources).num_args(1..=MAX_SOURCES))
+            .arg(encrypt_sources(m.arg_sources))
             .arg(flag("each", m.arg_each).conflicts_with("out"))
             .arg(flag("rename", m.arg_rename))
             .arg(opt("temp-tag", "").hide(true))
@@ -49,6 +57,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
                     .requires("passphrase-stdin"),
             )
             .args(super::privacy::encrypt_args(lang))
+            .args(super::stream_cmd::args(lang))
             .arg(super::json_out::arg(lang)),
         base("decrypt", t.dec_about, t.dec_after, lang)
             .arg(path("source", m.arg_encrypted).num_args(1..=MAX_SOURCES))

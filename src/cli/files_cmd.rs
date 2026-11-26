@@ -70,7 +70,7 @@ pub(super) struct OwnedProtection {
     passphrase: Option<(StrongPassphrase, KdfParams, Option<Factor>)>,
     recipients: Vec<envelope::PublicKeyFile>,
     /// DE: Signaturschlüssel des Absenders (#44). EN: Sender's signing key (#44).
-    signer: Option<envelope::UnlockedKey>,
+    pub(super) signer: Option<envelope::UnlockedKey>,
 }
 
 impl OwnedProtection {
@@ -235,6 +235,9 @@ pub(super) fn apply_temp_tag(m: &ArgMatches, lang: Lang) -> CliResult {
 /// DE: `pqkeep encrypt`. EN: `pqkeep encrypt`.
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     apply_temp_tag(m, lang)?;
+    if super::stream_cmd::wanted(m, lang)? {
+        return super::stream_cmd::encrypt(t, lang, m);
+    }
     let all = sources(m);
     if all.len() > 1 || m.get_flag("each") {
         return super::files_many::encrypt(t, lang, m, &all);

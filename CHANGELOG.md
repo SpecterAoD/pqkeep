@@ -6,6 +6,16 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Verschlüsseln aus einer Pipe** (#83): `encrypt --stdin` mit `--out` oder `--stdout`, z. B.
+  `pg_dump db | pqkeep --batch encrypt --stdin --to backup.pub.json --out db.pqkf` – kein Klartext auf
+  der Platte. Passphrase nur über `--passphrase-file` (oder nur Empfänger), Signatur mit
+  `--sign-passphrase-file`; `--json` möglich; Entschlüsseln nur in eine Datei. Format v4 „Strom“ –
+  ältere Versionen können solche Dateien nicht öffnen.
+  EN: **Encrypting from a pipe** (#83): `encrypt --stdin` with `--out` or `--stdout`, e.g. `pg_dump db |
+  pqkeep --batch encrypt --stdin --to backup.pub.json --out db.pqkf` – no plaintext on disk. Passphrase
+  only via `--passphrase-file` (or recipients only), signature with `--sign-passphrase-file`; `--json`
+  available; decryption into a file only. Format v4 "stream" – older versions cannot open such files.
+
 - DE: R6-Arbeitsstand (#147): ML-KEM-Entkapselung schreibt direkt in gesperrte Ausgabe;
   Kapselung verwendet zusätzlich geliehenen, vorab gesperrten SHA3-512-Zustand ohne
   konsumierende Finalisierung. Öffentlichen KEM-Anfangszustand und drei private Payloads
