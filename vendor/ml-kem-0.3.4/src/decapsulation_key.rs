@@ -209,10 +209,9 @@ where
             return Err(InvalidKey);
         };
         let (seed_d, seed_z) = seed.split_ref::<U32>();
-        // DE: Private interne Rückgaben bleiben offen; feste Payload-Adressen erhalten.
-        // EN: Private internal return values remain open; retain fixed payload addresses.
-        let (dk_pke, ek_pke) = DecryptionKey::generate(seed_d);
-        *self.dk_pke = dk_pke;
+        // DE: Erweiterten Schlüssel direkt befüllen; interne Sampling-/Hashflächen bleiben offen.
+        // EN: Populate expanded key directly; internal sampling/hash storage remains open.
+        let ek_pke = self.dk_pke.generate_in_place(seed_d);
         self.ek = EncapsulationKey::from_encryption_key(ek_pke);
         d.copy_from_slice(seed_d);
         self.z.copy_from_slice(seed_z);

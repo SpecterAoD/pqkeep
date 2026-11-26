@@ -88,8 +88,9 @@ Schlüsselkonstruktion und Provider-Scratch bleiben offen; siehe
 [Gesamtplan](security/PROVIDER_IN_PLACE_PLAN.md). Noch keine native Gesamtabnahme.
 DE: Der KEM-Owner sperrt außerdem öffentlichen Anfangszustand und drei feste private
 Payloads vor Seed-Verarbeitung; Sperrrecords bleiben im gesperrten Workspace.
-Payload-Wipe erfolgt vor Unlock und Boxfreigabe. Interne erweiterte Rückgabewerte
-aus PKE-Keygen bleiben ausdrücklich offen, nicht als Compilergrenze umklassifizieren.
+Payload-Wipe erfolgt vor Unlock und Boxfreigabe. PKE-Keygen schreibt erweiterten
+Zustand über geliehene NTT-Ausgabe direkt in das gesperrte Ziel. Private Sampling-/
+Hash-/PKE-Zwischenpuffer bleiben offen, nicht als Compilergrenze umklassifizieren.
 
 DE: #147 R6-Kapselungsschritt: OS-Entropie, vollständige ML-KEM-G-Ausgabe K || r
 und Ergebnis vor privater Befüllung in SecretBytes sperren; Provider liefert nur

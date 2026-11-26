@@ -142,8 +142,16 @@ where
 /// defined over a finite field that turns costly polynomial multiplications into simple
 /// coefficient-wise multiplications modulo a fixed prime.
 pub(crate) trait Ntt {
-    type Output;
-    fn ntt(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_into(&mut out);
+        out
+    }
+
+    // DE: Bestehende Transformation in die geliehene Fläche schreiben.
+    // EN: Write the existing transform into borrowed storage.
+    fn ntt_into(&self, out: &mut Self::Output);
 }
 
 /// One layer of the forward NTT butterfly.
@@ -171,27 +179,28 @@ fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(f: &mut Array<Elem, U256
 impl Ntt for Polynomial {
     type Output = NttPolynomial;
 
-    fn ntt(&self) -> NttPolynomial {
+    fn ntt_into(&self, out: &mut NttPolynomial) {
         let mut k = 1;
-        let mut f = self.0;
+        let f = &mut out.0;
+        f.copy_from_slice(&self.0);
 
-        ntt_layer::<128, 1>(&mut f, &mut k);
-        ntt_layer::<64, 2>(&mut f, &mut k);
-        ntt_layer::<32, 4>(&mut f, &mut k);
-        ntt_layer::<16, 8>(&mut f, &mut k);
-        ntt_layer::<8, 16>(&mut f, &mut k);
-        ntt_layer::<4, 32>(&mut f, &mut k);
-        ntt_layer::<2, 64>(&mut f, &mut k);
-
-        f.into()
+        ntt_layer::<128, 1>(f, &mut k);
+        ntt_layer::<64, 2>(f, &mut k);
+        ntt_layer::<32, 4>(f, &mut k);
+        ntt_layer::<16, 8>(f, &mut k);
+        ntt_layer::<8, 16>(f, &mut k);
+        ntt_layer::<4, 32>(f, &mut k);
+        ntt_layer::<2, 64>(f, &mut k);
     }
 }
 
 impl<K: ArraySize> Ntt for Vector<K> {
     type Output = NttVector<K>;
 
-    fn ntt(&self) -> NttVector<K> {
-        NttVector::new(self.0.iter().map(Ntt::ntt).collect())
+    fn ntt_into(&self, out: &mut NttVector<K>) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_into(target);
+        }
     }
 }
 

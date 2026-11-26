@@ -74,6 +74,14 @@ where
     /// Generate a new random decryption key according to the `K-PKE.KeyGen` procedure.
     // Algorithm 12. K-PKE.KeyGen()
     pub(crate) fn generate(d: &B32) -> (Self, EncryptionKey<P>) {
+        let mut dk = Self::default();
+        let ek = dk.generate_in_place(d);
+        (dk, ek)
+    }
+
+    // DE: Erweiterten Schlüssel direkt im bestehenden Ziel befüllen; kein privates Self zurück.
+    // EN: Populate the expanded key in existing storage; never return private Self here.
+    pub(crate) fn generate_in_place(&mut self, d: &B32) -> EncryptionKey<P> {
         // Generate random seeds
         let k = P::K::U8;
         let (rho, sigma) = G(&[&d[..], &[k]]);
@@ -84,16 +92,14 @@ where
         let e: Vector<P::K> = sample_poly_vec_cbd::<P::Eta1, P::K>(&sigma, P::K::U8);
 
         // NTT the vectors
-        let s_hat = s.ntt();
+        s.ntt_into(&mut self.s_hat);
         let e_hat = e.ntt();
 
         // Compute the public value
-        let t_hat = &(&A_hat * &s_hat) + &e_hat;
+        let t_hat = &(&A_hat * &self.s_hat) + &e_hat;
 
         // Assemble the keys
-        let dk = DecryptionKey { s_hat };
-        let ek = EncryptionKey { t_hat, rho };
-        (dk, ek)
+        EncryptionKey { t_hat, rho }
     }
 
     /// Decrypt ciphertext to obtain the encrypted value, according to the K-PKE.Decrypt procedure.

@@ -314,10 +314,14 @@ Wipe payloads while locked, release guards, then free boxes; keep lock records
 in locked workspace and preserve shared-page reference counts.
 
 DE: Dies schließt keine privaten internen Konstruktor-/Hash-/PKE-Arbeitsflächen:
-insbesondere liefert `DecryptionKey::generate` weiterhin einen privaten erweiterten
-Wert zurück. Dieser bekannte Übergang ist keine pauschale Compilergrenze und bleibt
-offen. ML-DSA-/AES-/Argon2-Pfade bleiben separat zu bearbeiten; kein R6-Gesamtabschluss.
+der tatsächliche Root-Pfad befüllt den erweiterten PKE-Schlüssel nun über
+`generate_in_place` und geliehene NTT-Ausgabe direkt im gesperrten Ziel. Die
+bisherigen NTT-Schleifen bleiben gemeinsam verwendet. Private Sampling-Vektoren,
+G-/PRF-/PKE-Zwischenwerte sind weiterhin bekannte offene Puffer, keine pauschale
+Compilergrenze. ML-DSA-/AES-/Argon2-Pfade bleiben separat; kein R6-Gesamtabschluss.
 EN: Internal private construction/hash/PKE scratch remains open, including the
-private expanded value returned by DecryptionKey::generate. Do not relabel that
-known transfer as an unavoidable compiler limit. No complete R6 acceptance claim.
+actual root keygen now writes expanded state through generate_in_place and borrowed
+NTT output, sharing the existing transform loops. Private sampling vectors and
+G/PRF/PKE intermediates remain known open buffers, not unavoidable compiler limits.
+No complete R6 acceptance claim.
 

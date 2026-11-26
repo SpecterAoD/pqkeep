@@ -50,8 +50,9 @@ Root muss Zustand und Payloads vorher sperren und vor Guard-/Boxfreigabe explizi
 zeroisieren. `Zeroize` und Drop verwenden dieselbe bisherige Payload-Löschung.
 EN: Public initial state plus fixed private-storage visitation enables host prelocks
 before seed population. Explicit Zeroize and Drop share the original wiping body;
-private boxes are never replaced during initialization. Internal PKE-keygen/hash
-returns and scratch remain OPEN, so this is not copy-free private construction.
+private boxes are never replaced during initialization. Root PKE keygen writes
+expanded state through borrowed NTT output, sharing the original transform loops.
+Sampling/hash/PKE intermediates remain OPEN; this is not copy-free private construction.
 
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.
