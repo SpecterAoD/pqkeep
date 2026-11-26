@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Formatentwurf v4 (`docs/V4_DRAFT.md`, SPEC v2.21) für Padding, anonyme Empfänger, verborgenen
+  Absender und Strom-Modus – nur Entwurf, Umsetzung folgt (#316, #83).
+  EN: Format draft v4 (`docs/V4_DRAFT.md`, SPEC v2.21) for padding, anonymous recipients, hidden
+  sender and stream mode – draft only, implementation follows (#316, #83).
+
 - DE: Zufällige äußere Dateinamen (#315): `encrypt --random-name` bzw. `--privacy high` (auch
   `--each` und Container), `decrypt` stellt den Originalnamen aus dem Archiv her (automatisch bei
   zufälligem Namen ohne `--out`, sonst `--original-name`); Menü-Stufe „Privatsphäre hoch“,

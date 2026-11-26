@@ -92,7 +92,7 @@ Entschlüsseln.
 ## Abgrenzung
 
 - `.pqsig` (abgesetzte Signatur beliebiger Dateien) bleibt unverändert bestehen.
-- Stream-Modus (#83) kann später denselben Absenderblock nutzen; die Versionsregel ist dieselbe.
+- Stream-Modus (#83) und Privatsphäre-Optionen (#316): gemeinsamer Formatentwurf v4 ([V4_DRAFT.md](V4_DRAFT.md)), der diesen Absenderblock übernimmt.
 - Ob man einem Absender vertraut, entscheidet später das Kontaktverzeichnis (#105/#107).
 - Krypto-Richtlinie und Suite-Migration (#275/#276): die Algorithmus-Kennung im Absenderblock ist
   dafür vorgesehen; weitere Algorithmen nur mit eigener Formatänderung.
@@ -150,7 +150,7 @@ sender's name is impossible (the recipient list is signed). It does **not** prov
 name (inherent to any encryption). Not an eIDAS signature, no trusted timestamp. The visible sender ID
 reveals who a file comes from.
 
-**Scope:** `.pqsig` stays; stream mode (#83) can reuse the sender block; trust decisions belong to the
+**Scope:** `.pqsig` stays; stream mode (#83) and the privacy options (#316) share format draft v4 ([V4_DRAFT.md](V4_DRAFT.md)), which reuses the sender block; trust decisions belong to the
 contacts directory (#105/#107); the algorithm ID is ready for the crypto policy (#275/#276); not offered
 via the REST API (it deliberately offers no file encryption). Menu and context menu (#287) ask
 "Sign as sender?" when encrypting and name the verified sender after decrypting; with passphrase

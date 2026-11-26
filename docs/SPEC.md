@@ -1,10 +1,12 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.20: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.21: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
 
 > Änderung v2.20 (24.11.2026, freigegeben von SpecterAoD): neues geplantes Update **U5 Privatsphäre und Metadaten** (Abschnitt 9) – zufällige äußere Dateinamen, Padding, anonyme Empfänger (optionale Ausnahme von D1), verborgener Absender, verschlüsselte Zeitstempel und erweiterte Attribute; alles optional und konfigurierbar, Standard aus; Abschnitt 4a entsprechend ergänzt (#315, #316, #123).
+
+> Änderung v2.21 (25.11.2026, Auftrag SpecterAoD: #315/#316 bis zum Merge): **Formatentwurf v4** ([V4_DRAFT.md](V4_DRAFT.md)) für Padding, anonyme Empfänger (**D1-Ausnahme nur auf Wunsch, D1 bleibt Standard**), verborgenen Absender und den Strom-Modus (#83) – ein Versionsschema mit Optionsbits, Inhaltstyp „Strom“, Abschluss-Block im verschlüsselten Strom, Schlüsselbindung in jeder v4-Datei; nur Entwurf, Umsetzung in eigenen PRs vor #98 (#316, #83).
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).
@@ -312,7 +314,8 @@ Jedes Update ist ein eigener Schritt mit Plan, Freigabe, Tests und Definition of
 ### U5: Privatsphäre und Metadaten (optional, konfigurierbar)
 Alle Funktionen sind **optional und standardmäßig aus**; ohne Option bleiben Formate und Ausgaben unverändert (Grundsatz D3: neues Format nur, wenn eine Option es verlangt; ältere Versionen melden „nicht unterstützt“, nie still). Konfiguration: Einzeloptionen pro Aufruf, Stufe `--privacy high` setzt die Privatsphäre-Optionen gemeinsam, Menü und Kontextmenü bieten nur diese Stufe, dauerhafte Voreinstellungen über Profil/Einrichtung (#136, #48–#50) – keine eigene Konfigurationsdatei.
 - **Zufällige äußere Dateinamen** (`--random-name`, #315): keine Rückschlüsse auf den Inhalt aus dem `.pqkf`-Namen; der Originalname steht verschlüsselt im Archiv und wird beim Entschlüsseln wiederhergestellt. Kein Formatwechsel. **Umgesetzt** (CLI `--random-name`/`--privacy high`, `decrypt --original-name` bzw. automatisch, Menü; Kontextmenü entschlüsselt; Details [FILE_FORMAT.md](FILE_FORMAT.md)).
-- **Padding** (`--pad`, #316): verbirgt die genaue Dateigröße durch authentisierte Füllbytes (Vorschlag PADMÉ, höchstens ~12 % Mehrgröße).
+- **Formatentwurf v4** für Padding, anonyme Empfänger, verborgenen Absender und Strom-Modus (#83): [V4_DRAFT.md](V4_DRAFT.md) (Entscheidungen P1–P9).
+- **Padding** (`--pad`, #316): verbirgt die genaue Dateigröße durch authentisierte Füllbytes (PADMÉ, höchstens ~12 % Mehrgröße).
 - **Anonyme Empfänger** (`--anonymous-recipients`, #316): Zugänge ohne Empfänger-ID, Öffnen per Probe-Entkapselung; **optionale Ausnahme von D1** (sichtbare IDs bleiben Standard).
 - **Verborgener Absender** (`--hide-sender`, #316): Absenderschlüssel und Signatur (U1, Format v3) im verschlüsselten Teil; prüfbar nur für Empfänger, Schlüsselbindung bleibt.
 - **Verschlüsselte Zeitstempel** (`--keep-times`, #123): Änderungszeit verschlüsselt im Archiv-Eintrag, beim Entschlüsseln gesetzt (Abweichung von Abschnitt 4a nur mit dieser Option).
