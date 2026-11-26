@@ -132,6 +132,16 @@ fn directory_each_and_container() {
         common::read_tree(&root.join("Urlaub"))
     );
     assert_eq!(fs::read(out_dir.join("a.txt")).unwrap(), b"a");
+}
+
+#[test]
+fn container_name_kept_inside() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path();
+    fs::create_dir(root.join("Urlaub")).unwrap();
+    common::write_sample_tree(&root.join("Urlaub"));
+    fs::write(root.join("a.txt"), b"a").unwrap();
+    let p = pass();
     // DE: Container: Name aus --out nur im Archiv. EN: Container: name from --out only inside.
     let args = [
         "encrypt",
