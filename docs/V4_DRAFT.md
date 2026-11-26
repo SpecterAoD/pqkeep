@@ -176,6 +176,11 @@ gegenüber dem Entwurf:
 - Tests: `tests/files_stream_v4.rs`, `src/files/{format_v4,stream_v4}_tests.rs`; Angriffsmatrix
   QA1-FMT-011; der Header-Fuzzer `pqkf_header_v2` deckt v4 mit ab.
 
+**Schritt 2 (#83, Kommandozeile) umgesetzt:** `encrypt --stdin` mit `--out` (atomar) oder `--stdout` (keine
+Temporärdatei, Meldungen auf stderr); Passphrase nur über `--passphrase-file` oder nur Empfänger, Signatur
+mit `--sign-passphrase-file`; `--json` (Quelle `"-"`); Sandbox ohne Zielordner bei `--stdout`; abgebrochene
+Pipe = Exit 1. Entschlüsseln nur in eine Datei. Tests `tests/cli_stream.rs` (P10).
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -280,7 +285,11 @@ version and option bits); with `SIGNED` the sender block is byte-identical to v3
 the signature message is v3's; `PAD`, `ANON`, `HIDDEN_SENDER` and unknown bits are "unsupported", v4 only
 with content 3; the reader holds the 24 trailer bytes back in the locked buffer; `list` shows no entries
 for streams; streams have no original name. Tests: `tests/files_stream_v4.rs`, unit tests, attack case
-QA1-FMT-011; the header fuzzer `pqkf_header_v2` also covers v4.
+QA1-FMT-011; the header fuzzer `pqkf_header_v2` also covers v4. **Step 2 (#83, command line)
+implemented:** `encrypt --stdin` with `--out` (atomic) or `--stdout` (no temporary file, messages on
+stderr); passphrase only via `--passphrase-file` or recipients only, signature with
+`--sign-passphrase-file`; `--json` (source `"-"`); no target directory in the sandbox with `--stdout`; a
+broken pipe exits with 1; decryption into a file only. Tests `tests/cli_stream.rs` (P10).
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.

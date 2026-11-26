@@ -108,7 +108,7 @@ Format v4 ([V4_DRAFT.md](V4_DRAFT.md)). Header wie v2 mit Version 4, Optionsbits
 der Klartext endet mit einem Abschluss-Block (Nutzlänge, Füllung, `PQKFEND\0`), der beim Entschlüsseln
 geprüft und nie ausgegeben wird. Abschneiden – auch genau an einer Blockgrenze – wird immer erkannt.
 Entschlüsselt wird nur in eine Datei (keine Teilausgabe). Ältere Versionen melden „nicht unterstützt“.
-Kommandozeile folgt mit #83 (`encrypt --stdin`).
+Kommandozeile: `encrypt --stdin --out …` bzw. `--stdout` ([SERVER.md](SERVER.md)).
 
 ## Grenzen
 
@@ -179,8 +179,8 @@ decrypts randomly named files under their original name.
 (e.g. from a pipe) without an archive, format v4 only ([V4_DRAFT.md](V4_DRAFT.md)): v2 header with version
 4, option bits and key commitment; the plaintext ends with a trailer (payload length, padding,
 `PQKFEND\0`) that is checked and never output. Truncation – also exactly at a chunk boundary – is always
-detected; decryption goes into a file only; older versions report "unsupported". The command line follows
-with #83 (`encrypt --stdin`).
+detected; decryption goes into a file only; older versions report "unsupported". Command line:
+`encrypt --stdin --out …` or `--stdout` ([SERVER.md](SERVER.md)).
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a

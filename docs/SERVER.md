@@ -42,8 +42,20 @@ rm -f "$dir/db-$stamp.dump"                      # Klartext-Dump sofort entferne
 rclone copy "$dir/db-$stamp.dump.pqkf" remote:backups/   # oder rsync, aws s3 cp, …
 ```
 
-- Der Klartext-Dump liegt kurz auf der Platte: Ordner mit `umask 077`, besser auf `tmpfs`.
-  Verschlüsseln direkt aus einer Pipe ist geplant (#83, nur Verschlüsseln).
+- Der Klartext-Dump liegt kurz auf der Platte: Ordner mit `umask 077`, besser auf `tmpfs`. **Ohne
+  Klartext auf der Platte** direkt aus einer Pipe (#83, Format v4 „Strom“):
+
+  ```sh
+  pg_dump -Fc meine_db | pqkeep --batch encrypt --stdin --to /etc/pqkeep/backup.pub.json \
+      --out "$dir/db-$stamp.dump.pqkf"
+  pg_dump -Fc meine_db | pqkeep --batch encrypt --stdin --to backup.pub.json --stdout | rclone rcat remote:backups/db.pqkf
+  ```
+
+  Mit `--stdin` kommt die Passphrase nur aus `--passphrase-file` (stdin trägt die Daten) oder es gibt nur
+  Empfänger; `--sign-with` braucht `--sign-passphrase-file`. `--stdout` schreibt ohne Temporärdatei,
+  Meldungen gehen dann auf stderr; bricht der Empfänger ab, endet PQKeep mit Exit 1. Wiederherstellen nur
+  in eine Datei (`pqkeep decrypt db.pqkf -o db.dump`), dann einspielen – nie direkt aus einer Pipe.
+  Ältere PQKeep-Versionen (bis beta.4) können Ströme nicht öffnen.
 - **restic/Borg** verschlüsseln selbst (nicht post-quanten-sicher); PQKeep davor schalten, wenn die
   Backup-Dateien zusätzlich quantenfest geschützt sein sollen.
 - Mehrere Admins mit eigenem Schlüssel: `--to` mehrfach (bis 64 Empfänger, Format v2).
@@ -218,8 +230,12 @@ pair once on a trusted machine (ML-KEM-1024 = NIST category 5; default ML-KEM-76
 ideally on tmpfs; encrypt with `--batch --to`; delete the plaintext dump; upload with rclone/rsync/S3 CLI;
 systemd hardening with `NoNewPrivileges`, `ProtectSystem=strict`, `ReadWritePaths`; optional
 `LoadCredential=` plus `--passphrase-file "$CREDENTIALS_DIRECTORY/…"`). restic/Borg encrypt themselves (not
-post-quantum); put PQKeep in front for quantum-resistant backup files. Encrypting from a pipe is planned
-(#83, encryption only); several admins with their own keys: repeated `--to` (up to 64 recipients, format v2).
+post-quantum); put PQKeep in front for quantum-resistant backup files. **From a pipe without plaintext on
+disk** (#83, format v4 "stream"): `pg_dump -Fc db | pqkeep --batch encrypt --stdin --to backup.pub.json --out
+db.pqkf` or `--stdout | rclone rcat …`; with `--stdin` the passphrase only comes from `--passphrase-file` (or
+recipients only), `--sign-with` needs `--sign-passphrase-file`; `--stdout` writes without a temporary file and
+sends messages to stderr; a broken pipe ends with exit 1. Restore into a file only (`pqkeep decrypt db.pqkf -o
+db.dump`), never from a pipe; versions up to beta.4 cannot open streams. Several admins with their own keys: repeated `--to` (up to 64 recipients, format v2).
 
 **Checking backups (`pqkeep check`):** checks encrypted files **completely** – all chunks, checksums and
 archive paths as when decrypting – but writes **nothing** (no target or temporary files; the sandbox only

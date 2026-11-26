@@ -6,6 +6,16 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Verschlüsseln aus einer Pipe** (#83): `encrypt --stdin` mit `--out` oder `--stdout`, z. B.
+  `pg_dump db | pqkeep --batch encrypt --stdin --to backup.pub.json --out db.pqkf` – kein Klartext auf
+  der Platte. Passphrase nur über `--passphrase-file` (oder nur Empfänger), Signatur mit
+  `--sign-passphrase-file`; `--json` möglich; Entschlüsseln nur in eine Datei. Format v4 „Strom“ –
+  ältere Versionen können solche Dateien nicht öffnen.
+  EN: **Encrypting from a pipe** (#83): `encrypt --stdin` with `--out` or `--stdout`, e.g. `pg_dump db |
+  pqkeep --batch encrypt --stdin --to backup.pub.json --out db.pqkf` – no plaintext on disk. Passphrase
+  only via `--passphrase-file` (or recipients only), signature with `--sign-passphrase-file`; `--json`
+  available; decryption into a file only. Format v4 "stream" – older versions cannot open such files.
+
 - DE: Kern von Format v4 (#316 Schritt 1, Grundlage für #83): Optionsbits, Schlüsselbindung in jeder
   v4-Datei, Inhaltstyp „Strom“ mit Abschluss-Block; `files::encrypt_stream`/`encrypt_stream_to`
   (vorläufig bis #98), Entschlüsseln/`check` erkennen v4. Ohne Strom bleiben v1–v3 Byte für Byte gleich;

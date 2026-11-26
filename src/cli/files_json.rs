@@ -84,9 +84,21 @@ fn weak(t: &Texts) -> impl Fn(Failure) -> Failure + '_ {
     }
 }
 
+/// DE: `encrypt --stdin --json` (#83); Quelle „-“. EN: `encrypt --stdin --json` (#83); source "-".
+fn encrypt_stdin(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Value>, u8)> {
+    super::stream_cmd::check(m, lang)?;
+    let protection = read_protection(t, lang, m).map_err(weak(t))?;
+    let (out, report) =
+        super::stream_cmd::run(&protection, m).map_err(|e| Failure::from_error(&e, lang))?;
+    Ok(body(&[(Value::from("-"), out, Ok(report))]))
+}
+
 /// DE: `pqkeep encrypt --json`. EN: `pqkeep encrypt --json`.
 pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<(Map<String, Value>, u8)> {
     apply_temp_tag(m, lang)?;
+    if super::stream_cmd::wanted(m, lang)? {
+        return encrypt_stdin(t, lang, m);
+    }
     let all = sources(m);
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     if all.len() > 1 && !m.get_flag("each") {
