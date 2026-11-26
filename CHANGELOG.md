@@ -6,6 +6,13 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: ML-KEM-Kapselung (#147): OS-Entropie und vollständige G-Ausgabe K || r direkt
+  in vorab gesperrten SecretBytes; nur öffentliches Chiffrat als Provider-Rückgabe.
+  Keine Ableitungs-/Formatänderung. Weitere Provider-/Plattformkopien bleiben offen.
+  EN: Prelock encapsulation entropy/derived output for all three parameter sets;
+  same-version additive provider output path, no private SharedKey return tuple.
+  Other provider/platform boundaries remain open; native acceptance required.
+
 ## [0.1.0-beta.4] – 2026-11-26
 
 Fourth public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**

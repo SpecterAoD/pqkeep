@@ -4,7 +4,8 @@
 //! EN: ML-KEM (FIPS 203) via the RustCrypto crate `ml-kem`. Private keys are
 //! stored only as a 64-byte seed and re-derived when needed.
 
-use ml_kem::kem::{Decapsulate, Encapsulate, FromSeed, Kem, KeyExport, TryKeyInit};
+use ml_kem::EncapsulateInto;
+use ml_kem::kem::{Decapsulate, FromSeed, Kem, KeyExport, TryKeyInit};
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
 
@@ -15,6 +16,9 @@ use crate::{Error, Result};
 #[cfg(test)]
 #[path = "kem_seed_tests.rs"]
 mod tests;
+
+#[path = "kem_encapsulation.rs"]
+mod encapsulation;
 
 /// DE: Länge des Seeds (d ‖ z) in Bytes. EN: Seed length (d ‖ z) in bytes.
 pub const SEED_LEN: usize = 64;
@@ -79,7 +83,9 @@ pub fn from_seed(algorithm: KemAlgorithm, seed: &[u8]) -> Result<KemKeyPair> {
 /// EN: Encapsulates a fresh shared secret to the public key.
 ///
 /// # Errors
-/// DE/EN: [`Error::InvalidInput`] bei ungültigem Schlüssel / on invalid key.
+/// DE/EN: [`Error::InvalidInput`] bei ungültigem Schlüssel / on invalid key;
+/// [`Error::MemoryLock`] ohne volle Sperre / without complete locks;
+/// [`Error::Rng`] ohne OS-Zufall / if OS randomness fails.
 pub fn encapsulate(algorithm: KemAlgorithm, public_key: &[u8]) -> Result<Encapsulated> {
     match algorithm {
         KemAlgorithm::MlKem512 => encaps::<MlKem512>(public_key),
@@ -114,18 +120,14 @@ fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>> {
     Ok(ek.to_bytes().to_vec())
 }
 
-fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated> {
+fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated>
+where
+    K::EncapsulationKey: EncapsulateInto,
+{
     let ek = K::EncapsulationKey::new_from_slice(public_key).map_err(|_| Error::InvalidInput {
         field: "public_key",
     })?;
-    let mut shared_secret = SecretBytes::zeroed(32)?;
-    let (ct, mut shared) = ek.encapsulate();
-    shared_secret.expose_mut().copy_from_slice(&shared);
-    shared.zeroize();
-    Ok(Encapsulated {
-        ciphertext: ct.to_vec(),
-        shared_secret,
-    })
+    encapsulation::run(|entropy, workspace| ek.encapsulate_into(entropy, workspace).to_vec())
 }
 
 fn decaps<K>(seed: &[u8], ciphertext: &[u8]) -> Result<SecretBytes>

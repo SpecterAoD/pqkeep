@@ -744,8 +744,6 @@ dependencies = [
 [[package]]
 name = "ml-kem"
 version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84ca78b66f46050d49fa21693ae8adab2081d8101b65d8067316b6b70b64a0d1"
 dependencies = [
  "hybrid-array",
  "kem",
@@ -838,12 +836,13 @@ dependencies = [
 
 [[package]]
 name = "pqkeep"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.4"
 dependencies = [
  "aes-gcm",
  "argon2",
  "axum",
  "base64ct",
+ "blake2",
  "clap",
  "clap_complete",
  "clap_mangen",

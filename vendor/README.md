@@ -15,6 +15,17 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | hmac 0.13.0 | RustCrypto/MACs, MIT OR Apache-2.0 | In-place rekey/finalize using caller-provided scratch; zeroize opad on Drop and keyed state on explicit wipe. Existing API preserved. |
 | hkdf 0.13.0 | RustCrypto/KDFs, MIT OR Apache-2.0 | Allocation-free first HKDF block over caller-owned HMAC/PRK/output. Same extract/expand steps; no hidden PRK or cloned keyed state. Existing API preserved. |
 | region 4.0.1 | darfink/region-rs, MIT | Safe current-process Windows working-set capacity request before VirtualLock. No token, account, privilege or machine-policy changes; errors are propagated. Existing lock API preserved. |
+| ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Additive encapsulation into borrowed entropy/G-output storage; public ciphertext return only. Existing G/PKE/legacy APIs unchanged. |
+
+DE: ML-KEM stammt aus dem gegen das Basis-Cargo.lock geprüften Originalarchiv.
+Produktionsquellen/README/Lizenzen vollständig erhalten; nur Test-/Benchmarktargets,
+Dev-Abhängigkeiten und reine Inline-Testmodul-Suffixe aus dem Produktionssubset
+weggelassen und exakt im Patchregister erfasst. Keine Parameter-/Versionsänderung.
+EN: Preserve complete production code and original licenses, with per-file original
+hashes. The new output path does not imply protected private constructors, separate
+MaybeBox storage, decapsulation or internal hash/PKE/compiler copies. Root and fuzz
+select the same path provider. Refresh the existing Blake2 root dependency reference
+in the stale fuzz lockfile; no selected package version changes.
 
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.
