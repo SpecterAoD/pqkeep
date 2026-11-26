@@ -13,14 +13,13 @@ use std::process::Stdio;
 use pqkeep::files;
 use pqkeep::security::Lang;
 
-use super::context::{out_arg, utf8};
+use super::context::utf8;
 use super::context_child::{Outcome, Watch, finish, new_tag, spawn, with_tag};
 use super::context_sign::{SignChoice, two_passphrases};
 use super::dialog::Dialog;
 use super::dialog_text::{DialogTexts, dialog_texts};
 use super::factor_cmd::FLAG;
 use super::factor_ui::{Ask, Extra, for_decrypt, ui_texts};
-use super::files_cmd::default_encrypted;
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
 
@@ -212,7 +211,10 @@ impl Ui<'_> {
             .dlg
             .choose(self.s.ctx_mode, &modes)
             .ok_or_else(cancelled)?;
-        let out = out_arg(default_encrypted(Path::new(path)).as_deref(), self.lang)?;
+        let private = self
+            .dlg
+            .question(super::privacy::context_question(self.lang));
+        let (out, level) = super::privacy::context_encrypt_target(private, path, self.lang)?;
         let targets = [PathBuf::from(&out)];
         // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
         if mode != 1 {
@@ -222,6 +224,7 @@ impl Ui<'_> {
             let sign = super::context_sign::ask(self, Path::new(path))?;
             let sign_args = sign.as_ref().map(SignChoice::args).unwrap_or_default();
             let mut cmd = vec!["encrypt", "--out", &out];
+            cmd.extend(level);
             if let Some(f) = &factor {
                 cmd.extend([FLAG, f.as_str()]);
             }
@@ -236,7 +239,7 @@ impl Ui<'_> {
                 self.with_pass(new_pass, true, &cmd, &[path], &targets, false)
             });
         }
-        super::context_sign::for_recipients(self, path, &out, &targets)
+        super::context_sign::for_recipients(self, path, (&out, level), &targets)
     }
 
     fn decrypt(&self, source: &Path, path: &str) -> CliResult {

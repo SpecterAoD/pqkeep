@@ -55,6 +55,7 @@ fn each_separately_then_decrypt_several() {
         (0, "0\n"),
         (0, "0\n"),
         (1, ""),
+        (1, ""),
         (0, &format!("{p}\n{p}\n")),
         (0, ""),
     ]);
@@ -94,6 +95,7 @@ fn container_with_free_name_and_auto_decrypt() {
         (0, "1\n"),
         (0, "Belege 2026\n"),
         (0, "0\n"),
+        (1, ""),
         (1, ""),
         (0, &format!("{p}\n{p}\n")),
         (0, ""),
@@ -138,6 +140,7 @@ fn cancel_midway_leaves_no_temporary_files() {
         (0, "0\n"),
         (0, "0\n"),
         (1, ""),
+        (1, ""),
         (0, &format!("{p}\n{p}\n")),
         (0, ""),
     ]);
@@ -166,6 +169,7 @@ fn weak_passphrase_may_be_retried_but_wrong_one_not() {
         (0, "0\n"),
         (0, "0\n"),
         (1, ""),
+        (1, ""),
         (0, "abc\nabc\n"),
         (0, ""),
         (0, ""),
@@ -173,7 +177,7 @@ fn weak_passphrase_may_be_retried_but_wrong_one_not() {
         (0, ""),
     ]);
     assert_eq!(e.context_many("encrypt", &refs(&src)), 0);
-    assert!(e.calls()[5].contains(&"--question".to_owned()));
+    assert!(e.calls()[6].contains(&"--question".to_owned()));
     let enc = [e.work().join("a.txt.pqkf"), e.work().join("b.txt.pqkf")];
     e.answer(&[(0, &format!("{}\n", pass())), (0, "")]);
     assert_ne!(e.context_many("decrypt", &refs(&enc)), 0);

@@ -144,7 +144,8 @@ fn encrypt_random(
     let entries: Vec<_> = all
         .iter()
         .map(|src| {
-            let (out, r) = super::privacy::encrypt_random(&protection, src);
+            let given = m.get_one::<PathBuf>("out").map(PathBuf::as_path);
+            let (out, r) = super::privacy::encrypt_random(&protection, src, given);
             (
                 path_value(src),
                 out,

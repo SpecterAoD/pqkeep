@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
+  Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.
+  EN: The context menu asks for the level "privacy high" when encrypting (#315; terminal and windows,
+  single and several files): random outer name, leftovers are cleaned up when cancelling.
+
 ## [0.1.0-beta.4] – 2026-11-26
 
 Fourth public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**

@@ -221,6 +221,10 @@ pub(super) fn own_temp(name: &str, base: &str, tag: &str) -> bool {
     if middle == base {
         return true;
     }
+    // DE: Platzhalter für zufällige Namen (#315). EN: Placeholder for random names (#315).
+    if base == super::privacy::ANY_RANDOM {
+        return pqkeep::files::is_random_name(middle);
+    }
     (2..100).any(|n| middle == super::files_cmd::numbered(base, n))
 }
 

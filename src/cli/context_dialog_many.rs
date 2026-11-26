@@ -123,6 +123,14 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     };
     let modes: Vec<&str> = ui.s.ctx_modes.split('|').collect();
     let mode = ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)?;
+    // DE: Stufe „Privatsphäre hoch“ (#315): Reste über den Platzhalter aufräumen.
+    // EN: Level "privacy high" (#315): clean leftovers via the placeholder.
+    let targets = if ui.dlg.question(super::privacy::context_question(ui.lang)) {
+        cmd.push(super::privacy::RANDOM_FLAG.into());
+        super::privacy::any_random_targets(targets.iter().map(|t| super::privacy::dir_of(t)))
+    } else {
+        targets
+    };
     if mode == 1 {
         cmd.extend(recipients_ui::to_args(&recipients(ui, &sources[0])?));
     }

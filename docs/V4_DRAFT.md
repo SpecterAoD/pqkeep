@@ -172,8 +172,8 @@ Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Opt
 3. Padding (PAD) – Kern + `--pad`.
 4. Anonyme Empfänger (ANON) – Kern + `--anonymous-recipients`, CRYPTO.md-Beleg.
 5. Verborgener Absender (HIDDEN_SENDER) – Kern + `--hide-sender`.
-6. Stufe `--privacy high` vollständig, Menü/Kontextmenü (auch Kontextmenü-Verschlüsseln mit zufälligem
-   Namen aus #315), Doku, CHANGELOG.
+6. Stufe `--privacy high` vollständig (Menü und Kontextmenü fragen die Stufe seit #315 bereits ab),
+   Doku, CHANGELOG.
 
 ---
 
@@ -260,5 +260,5 @@ temporary file; P11 fuzz target `pqkf_header_v4` and trailer parser (#153), atta
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.
-anonymous recipients (with CRYPTO.md evidence); 5. hidden sender; 6. full `--privacy high`, menu/context
-menu (including context-menu encryption with random names from #315), docs, changelog.
+anonymous recipients (with CRYPTO.md evidence); 5. hidden sender; 6. full `--privacy high` (menu and
+context menu already ask for the level since #315), docs, changelog.

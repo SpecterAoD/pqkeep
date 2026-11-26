@@ -34,3 +34,23 @@ fn random_shape_is_recognised_by_path() {
     assert!(is_random_path(&Path::new("x").join(RANDOM)));
     assert!(!is_random_path(Path::new("x/brief.txt.pqkf")));
 }
+
+#[test]
+fn placeholder_cleans_only_own_random_temporaries() {
+    use super::super::context_child::own_temp;
+    let tag = "ab";
+    let own = format!(".{RANDOM}.tmp-ab0123456789abcdef");
+    assert!(own_temp(&own, ANY_RANDOM, tag));
+    assert!(!own_temp(&own, ANY_RANDOM, "cd"));
+    assert!(!own_temp(
+        ".brief.txt.pqkf.tmp-ab0123456789abcdef",
+        ANY_RANDOM,
+        tag
+    ));
+    let dirs = [
+        PathBuf::from("/a"),
+        PathBuf::from("/a"),
+        PathBuf::from("/b"),
+    ];
+    assert_eq!(any_random_targets(dirs).len(), 2);
+}

@@ -243,7 +243,8 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult {
     super::privacy::check_out(m, false, lang)?;
     if super::privacy::random(m) {
         let protection = read_protection(t, lang, m)?;
-        let (out, r) = super::privacy::encrypt_random(&protection, &src);
+        let given = m.get_one::<PathBuf>("out").map(PathBuf::as_path);
+        let (out, r) = super::privacy::encrypt_random(&protection, &src, given);
         let report = r.map_err(|e| Failure::from_error(&e, lang))?;
         print_report(
             t,

@@ -75,10 +75,13 @@ pub fn random(m: &ArgMatches) -> bool {
     m.get_flag("random-name") || m.get_one::<String>("privacy").map(String::as_str) == Some("high")
 }
 
-/// DE: Mit zufälligem Namen passt `--out` nur zum Container (dort = Name im Archiv).
-/// EN: With a random name `--out` only fits a container (there = name inside the archive).
+/// DE: Mit zufälligem Namen passt `--out` nur zum Container (dort = Name im Archiv) oder als schon
+/// zufälliges Ziel (so übergibt es das Kontextmenü, damit es Ziel und Reste kennt).
+/// EN: With a random name `--out` only fits a container (there = name inside the archive) or an
+/// already random target (the context menu passes it so it knows target and leftovers).
 pub fn check_out(m: &ArgMatches, container: bool, lang: Lang) -> CliResult {
-    if random(m) && !container && m.get_one::<PathBuf>("out").is_some() {
+    let out = m.get_one::<PathBuf>("out");
+    if random(m) && !container && out.is_some_and(|o| !is_random_path(o)) {
         return Err(Failure::new(
             code::USAGE,
             localize(
@@ -104,8 +107,12 @@ pub fn dir_of(path: &Path) -> PathBuf {
 pub fn encrypt_random(
     p: &OwnedProtection,
     src: &Path,
+    given: Option<&Path>,
 ) -> (Option<PathBuf>, pqkeep::Result<Report>) {
-    let out = match files::random_target(&dir_of(src)) {
+    let out = match given.map_or_else(
+        || files::random_target(&dir_of(src)),
+        |g| Ok(g.to_path_buf()),
+    ) {
         Ok(out) => out,
         Err(e) => return (None, Err(e)),
     };
@@ -150,6 +157,60 @@ pub fn is_random_path(src: &Path) -> bool {
 /// EN: Restore the original name? `--original-name` or random shape without `--out`.
 pub fn restore(m: &ArgMatches, src: &Path) -> bool {
     m.get_flag(ORIGINAL_NAME) || (m.get_one::<PathBuf>("out").is_none() && is_random_path(src))
+}
+
+/// DE: Schalter für Kindprozesse. EN: Switch for child processes.
+pub const RANDOM_FLAG: &str = "--random-name";
+
+/// DE: Platzhalter-Ziel fürs Aufräumen: passt auf jeden zufälligen Namen (mit eigener Kennung).
+/// EN: Placeholder target for cleanup: matches any random name (with own tag).
+pub const ANY_RANDOM: &str = ".pqkeep-any-random-name";
+
+/// DE: Frage im Kontextmenü (nur die Stufe, #315). EN: Context menu question (level only, #315).
+pub fn context_question(lang: Lang) -> &'static str {
+    match lang {
+        Lang::De => {
+            "Privatsphäre hoch? Die Datei bekommt einen zufälligen Namen; der Originalname steht nur verschlüsselt darin."
+        }
+        Lang::En => {
+            "Privacy high? The file gets a random name; the original name is only stored encrypted inside."
+        }
+    }
+}
+
+/// DE: Frage im Terminal (Standard Nein). EN: Question in the terminal (default no).
+pub fn ask_terminal(lang: Lang) -> CliResult<bool> {
+    dialoguer::Confirm::new()
+        .with_prompt(context_question(lang))
+        .default(false)
+        .interact()
+        .map_err(|_| Failure::new(code::ERROR, ""))
+}
+
+/// DE: Ziel beim Verschlüsseln im Kontextmenü (eine Quelle): zufällig oder freier Standardname,
+/// dazu die Zusatzargumente. EN: Target when encrypting from the context menu (one source): random
+/// or free default name, plus the extra arguments.
+pub fn context_encrypt_target(
+    private: bool,
+    path: &str,
+    lang: Lang,
+) -> CliResult<(String, &'static [&'static str])> {
+    let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
+    if private {
+        let target = files::random_target(&dir_of(Path::new(path))).map_err(fail)?;
+        return Ok((super::context::utf8(&target, lang)?, &[RANDOM_FLAG]));
+    }
+    let default = super::files_cmd::default_encrypted(Path::new(path));
+    Ok((super::context::out_arg(default.as_deref(), lang)?, &[]))
+}
+
+/// DE: Aufräumziele bei mehreren Quellen mit zufälligen Namen: je Ordner ein Platzhalter.
+/// EN: Cleanup targets for several sources with random names: one placeholder per directory.
+pub fn any_random_targets(dirs: impl IntoIterator<Item = PathBuf>) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = dirs.into_iter().map(|d| d.join(ANY_RANDOM)).collect();
+    out.sort();
+    out.dedup();
+    out
 }
 
 /// DE: Argumente fürs Kontextmenü: Originalname mit freiem Namen statt `--out`.
