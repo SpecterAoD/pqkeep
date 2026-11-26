@@ -189,3 +189,19 @@ pub fn is_locked(addr: usize) -> bool {
     let size = region::page::size();
     registry().contains_key(&(addr - addr % size))
 }
+
+/// DE: Erlaubtes Sperrbudget (weiches `RLIMIT_MEMLOCK`) in Byte, nur zur Diagnose (#325);
+/// `None` = unbegrenzt, unbekannt oder nicht Linux. Mit `CAP_IPC_LOCK` gilt das Limit nicht.
+/// EN: Allowed lock budget (soft `RLIMIT_MEMLOCK`) in bytes, for diagnosis only (#325); `None` =
+/// unlimited, unknown or not Linux. With `CAP_IPC_LOCK` the limit does not apply.
+#[must_use]
+pub fn lock_limit() -> Option<u64> {
+    #[cfg(target_os = "linux")]
+    {
+        rustix::process::getrlimit(rustix::process::Resource::Memlock).current
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
+}

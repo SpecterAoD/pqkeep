@@ -13,6 +13,8 @@ from release_elf import check_header
 
 TARGETS = {"x86_64-unknown-linux-gnu": "amd64", "aarch64-unknown-linux-gnu": "arm64"}
 DOC = "usr/share/doc/pqkeep/"
+POSTINST = Path(__file__).resolve().parents[1] / "packaging/debian/postinst"
+CAP = "cap_ipc_lock=ep"
 REQUIRED = {
     "usr/bin/pqkeep", "usr/share/man/man1/pqkeep.1.gz", "usr/share/man/de/man1/pqkeep.1.gz",
     "usr/share/bash-completion/completions/pqkeep", "usr/share/zsh/vendor-completions/_pqkeep",
@@ -70,7 +72,8 @@ def read_tar(data: bytes, control: bool = False) -> dict[str, bytes]:
             if member.isdir() and name not in ({""} if control else DIRECTORIES):
                 raise ValueError("Unerwartetes Paketverzeichnis")
             seen.add(name)
-            mode = 0o755 if member.isdir() or (not control and name == "usr/bin/pqkeep") else 0o644
+            executable = name == ("postinst" if control else "usr/bin/pqkeep")
+            mode = 0o755 if member.isdir() or executable else 0o644
             if member.uid != 0 or member.gid != 0 or member.mode != mode:
                 raise ValueError(f"Falsche Eigentümer oder Rechte: {name}")
             if member.isfile():
@@ -79,14 +82,18 @@ def read_tar(data: bytes, control: bool = False) -> dict[str, bytes]:
 
 
 def check_package(package: Path, arch: str, binary_sha256: str | None = None) -> dict[str, bytes]:
-    """Keine Maintainerskripte/Conffiles; Inhalt, ELF-Ziel und alle MD5-Einträge prüfen."""
+    """Nur das bekannte postinst (#325), keine Conffiles; Inhalt, ELF-Ziel und MD5-Einträge prüfen."""
     controls = read_tar(subprocess.check_output(["dpkg-deb", "--ctrl-tarfile", str(package)]), True)
-    if set(controls) != {"control", "md5sums"}:
+    if set(controls) != {"control", "md5sums", "postinst"}:
         raise ValueError("Unerwartete Steuerdateien oder Maintainerskripte")
+    if controls["postinst"] != POSTINST.read_bytes():
+        raise ValueError("postinst weicht von packaging/debian/postinst ab")
     fields = dict(line.split(": ", 1) for line in controls["control"].decode().splitlines()
                   if line and not line.startswith(" ") and ": " in line)
     if fields.get("Package") != "pqkeep" or fields.get("Architecture") != arch:
         raise ValueError("Paketname oder Architektur falsch")
+    if "libcap2-bin" not in fields.get("Depends", "").split(", "):
+        raise ValueError("Abhängigkeit libcap2-bin für postinst fehlt")
     data = read_tar(subprocess.check_output(["dpkg-deb", "--fsys-tarfile", str(package)]))
     extras = set(data) - REQUIRED
     if not REQUIRED <= set(data) or any(str(PurePosixPath(n).parent) != DOC + "rust-licenses/licenses"

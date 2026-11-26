@@ -1,4 +1,4 @@
-# MASTER-PROJEKT-SPEZIFIKATION v2.21: PQKeep (Core, CLI & API)
+# MASTER-PROJEKT-SPEZIFIKATION v2.22: PQKeep (Core, CLI & API)
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
@@ -7,6 +7,8 @@
 > Änderung v2.20 (24.11.2026, freigegeben von SpecterAoD): neues geplantes Update **U5 Privatsphäre und Metadaten** (Abschnitt 9) – zufällige äußere Dateinamen, Padding, anonyme Empfänger (optionale Ausnahme von D1), verborgener Absender, verschlüsselte Zeitstempel und erweiterte Attribute; alles optional und konfigurierbar, Standard aus; Abschnitt 4a entsprechend ergänzt (#315, #316, #123).
 
 > Änderung v2.21 (25.11.2026, Auftrag SpecterAoD: #315/#316 bis zum Merge): **Formatentwurf v4** ([V4_DRAFT.md](V4_DRAFT.md)) für Padding, anonyme Empfänger (**D1-Ausnahme nur auf Wunsch, D1 bleibt Standard**), verborgenen Absender und den Strom-Modus (#83) – ein Versionsschema mit Optionsbits, Inhaltstyp „Strom“, Abschluss-Block im verschlüsselten Strom, Schlüsselbindung in jeder v4-Datei; nur Entwurf, Umsetzung in eigenen PRs vor #98 (#316, #83).
+
+> Änderung v2.22 (26.11.2026, freigegeben von SpecterAoD): Speichersperre bleibt zwingend; weil das übliche `ulimit -l` (8 MiB) für den Argon2id-Puffer (256 MiB–1 GiB) nicht reicht, gibt das **Debian-Paket nur `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK`** (postinst, `libcap2-bin`); das Programm selbst erhöht weiterhin weder Limits noch Rechte und meldet ein zu kleines Budget verständlich mit Abhilfe (#325, `docs/INSTALL.md`).
 
 > Änderung v2.1 (06.11.2026, freigegeben von SpecterAoD): Datei- und Ordnerverschlüsselung (Abschnitt 4a, Schritt 3a).
 > Änderung v2.2 (06.11.2026, freigegeben von SpecterAoD): Speicherhärtung (Schritt 2a), Build-Härtung (`panic = "abort"`, Prüfung PIE/RELRO/NX bzw. ASLR/DEP/CFG), wöchentliches Audit, Sandboxing (Schritt 5a), Root-Warnung (Schritt 4), Zeitausgleich für `/v1/validate` (Schritt 5).

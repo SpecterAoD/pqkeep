@@ -88,6 +88,7 @@ impl Failure {
                 "Ziel existiert bereits, nichts überschrieben – anderes Ziel mit -o/--out, bei encrypt/decrypt auch --rename / target already exists, nothing overwritten – choose another target with -o/--out, for encrypt/decrypt also --rename"
                     .to_owned()
             }
+            Error::MemoryLock => super::memlock_hint::message(),
             Error::Io(ErrorKind::NotFound) => {
                 "Datei oder Ordner nicht gefunden / file or directory not found".to_owned()
             }

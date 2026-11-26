@@ -1,0 +1,21 @@
+#!/bin/sh
+# DE: PQKeep sperrt Geheimnisse und den Argon2id-Arbeitsspeicher (256 MiB bis 1 GiB) im RAM,
+#     damit nichts in die Auslagerung gelangt. Das übliche Benutzerlimit (ulimit -l, oft 8 MiB)
+#     reicht dafür nicht. Deshalb erhält nur /usr/bin/pqkeep die Fähigkeit CAP_IPC_LOCK
+#     (Speicher sperren); andere Programme und Grenzen bleiben unverändert. Ohne sie bricht
+#     PQKeep sicher ab, statt ungesperrt zu arbeiten (#325, docs/INSTALL.md).
+# EN: PQKeep locks secrets and the Argon2id workspace (256 MiB to 1 GiB) in RAM so nothing is
+#     swapped out. The usual user limit (ulimit -l, often 8 MiB) is too small, so only
+#     /usr/bin/pqkeep gets CAP_IPC_LOCK (lock memory); other programs and limits stay unchanged.
+#     Without it PQKeep fails safely instead of running unlocked (#325, docs/INSTALL.md).
+set -e
+
+if [ "$1" = "configure" ]; then
+    if setcap cap_ipc_lock+ep /usr/bin/pqkeep; then
+        echo "PQKeep: CAP_IPC_LOCK für /usr/bin/pqkeep gesetzt (nur Speicher sperren) / set for /usr/bin/pqkeep (memory locking only)"
+    else
+        echo "PQKeep: WARNUNG – CAP_IPC_LOCK konnte nicht gesetzt werden; Passphrase-Funktionen brauchen dann ein höheres 'ulimit -l' (siehe docs/INSTALL.md) / WARNING – could not set CAP_IPC_LOCK; passphrase features then need a higher 'ulimit -l'" >&2
+    fi
+fi
+
+exit 0

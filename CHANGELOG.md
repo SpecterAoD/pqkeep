@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Gesperrter Speicher mit Standard-Linux (#325): Das Debian-Paket gibt nur `/usr/bin/pqkeep`
+  `CAP_IPC_LOCK` (postinst, neue Abhängigkeit `libcap2-bin`), damit der Argon2id-Puffer trotz
+  `ulimit -l` = 8 MiB gesperrt werden kann; ein zu kleines Budget meldet PQKeep jetzt mit Limit,
+  Bedarf und Abhilfe. Anleitung für tar.gz/Dienste/Container in `docs/INSTALL.md`.
+  EN: Locked memory on default Linux (#325): the Debian package grants only `/usr/bin/pqkeep`
+  `CAP_IPC_LOCK` (postinst, new dependency `libcap2-bin`) so the Argon2id workspace can be locked
+  despite `ulimit -l` = 8 MiB; a too small budget is now reported with limit, need and remedy.
+  Instructions for tar.gz/services/containers in `docs/INSTALL.md`.
+
 - DE: Formatentwurf v4 (`docs/V4_DRAFT.md`, SPEC v2.21) für Padding, anonyme Empfänger, verborgenen
   Absender und Strom-Modus – nur Entwurf, Umsetzung folgt (#316, #83).
   EN: Format draft v4 (`docs/V4_DRAFT.md`, SPEC v2.21) for padding, anonymous recipients, hidden
