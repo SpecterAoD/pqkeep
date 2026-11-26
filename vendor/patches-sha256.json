@@ -120,5 +120,43 @@
       "path": "Cargo.toml",
       "sha256": "9af98989e6738e13ae8b735aeff0547e96b04bf107d07d6dd0ac51805ba34696"
     }
+  ],
+  "ml-kem-0.3.4": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "003d8a65731622ef0ac3e89b2ccbbc66c4c03246248725d09e38b0f48fea1531"
+    },
+    {
+      "path": "src/algebra.rs",
+      "sha256": "8a04ead189b9747e5eb332d60b6184219e60e0455368db025f20ba729ff5b159"
+    },
+    {
+      "path": "src/compress.rs",
+      "sha256": "f9693bac6bdfee7eccfb25d719b5e427364ff4907d6c3b687bd48e76decb1cbd"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "1e43fbeb12d9bc4d2eb490988767dcfede9363121981a8221a09b489e55afb20"
+    },
+    {
+      "path": "src/decapsulation_key.rs",
+      "sha256": "3f3d35b7c5880f59d683077bbdce9a13f49b5a91ec69270582ea64f6d4e407c9"
+    },
+    {
+      "path": "src/encapsulation_into.rs",
+      "sha256": "b0489b8745ba68ca1d039f76316e08534aa24dfe4b1b103414d12a367bc6acd0"
+    },
+    {
+      "path": "src/encapsulation_key.rs",
+      "sha256": "2b70138918f7b9a04884feee42bc9645514de88d6528488b4c96a0aefe62bb55"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "ec5d23f081ed63cdd86417a6377ef8f0c1ee88af831af050ca4663217bf0265e"
+    },
+    {
+      "path": "src/pke.rs",
+      "sha256": "f601a5bcea979ca1f8d2d31cc77b85fae8391ceb123604f58e5736d8ac774cd7"
+    }
   ]
 }

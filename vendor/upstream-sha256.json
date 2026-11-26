@@ -1128,5 +1128,59 @@
       "path": "src/service/oneshot.rs",
       "sha256": "55c2384ab2f5490faaf5f839cbd8abc8e3fd7bb24c870e7bd90ac760c6900f21"
     }
+  ],
+  "ml-kem-0.3.4": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "efd10b8ebc9c8eec9845a0221fad74e7943e4f848fdf57022d8eacc737793c51"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "d0fb27c23e807f1fc6f506d161984b294a1f05c9888ae31f056d1712685948ad"
+    },
+    {
+      "path": "README.md",
+      "sha256": "2c6828e14f5a519b944fff936e318fccb8d6b7c2a09aee116022464aea5b3c32"
+    },
+    {
+      "path": "src/algebra.rs",
+      "sha256": "00c06d3f870ab154625be498669ab9a7f25f60af53dc05cda7f049048d620f1b"
+    },
+    {
+      "path": "src/compress.rs",
+      "sha256": "866c6ce13fcc9a553506df719e24146e310b432f4f730b393ed4612b10271d7b"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "a13c10520df5144669caea4e210cb7409c2c2976b9f79a4d6bd664857ec62abd"
+    },
+    {
+      "path": "src/decapsulation_key.rs",
+      "sha256": "ec10172e2466352e2b68030444735b90a2f1dcdca4788f88bcd36238d382b3df"
+    },
+    {
+      "path": "src/encapsulation_key.rs",
+      "sha256": "ce8c44408cbb2647b3cec33701d11b6885d3135d6cd2bbee9ee86c384318f3d3"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "65c638bc6ca63e05dae60244b6f0b5c02a80736b76ecc645b19316b8dafbec61"
+    },
+    {
+      "path": "src/param.rs",
+      "sha256": "26fd79b9bb4824c65e4089eb3fccd66038f4afd25d6a90cb4090f2dc4c965e3f"
+    },
+    {
+      "path": "src/pkcs8.rs",
+      "sha256": "26047be34dc1dbb533ad5e7d4a2cea43283a4512e9463a91a777154a1276197e"
+    },
+    {
+      "path": "src/pke.rs",
+      "sha256": "5fd5a80785140adfa10a7fd96b2102a6cec8469b6fb63f0e94cf0ab50d89929f"
+    }
   ]
 }

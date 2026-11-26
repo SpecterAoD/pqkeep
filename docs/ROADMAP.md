@@ -147,3 +147,10 @@ und privater Bindung sperren; private Fehlerpositionen nicht speichern.
 EN: Prelock parser/source/index/depth/scratch descriptor; native/security/fuzz
 acceptance required. Other R6/R7/R8 boundaries remain OPEN. See
 [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
+
+DE: #147 R6 In Bearbeitung: ML-KEM-Kapselungsentropie und vollständige
+G-Ausgabe K || r vor privater Befüllung in SecretBytes sperren; nur Chiffrat
+aus dem Provider zurückgeben. Native/Sicherheits-/Fuzz-Abnahme erforderlich.
+EN: Prelocked caller encapsulation inputs/output for all three parameter sets;
+decapsulation, key construction, internal math/hash scratch and R7/R8 remain OPEN.
+See [plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
