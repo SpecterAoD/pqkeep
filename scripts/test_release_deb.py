@@ -43,7 +43,13 @@ def fixture_data(binary: bytes, target: str) -> dict:
     return data
 
 
+POSTINST = Path(__file__).resolve().parents[1] / "packaging/debian/postinst"
+
+
 class DebianTests(unittest.TestCase):
+    def test_postinst_digest_matches_file(self):
+        self.assertEqual(hashlib.sha256(POSTINST.read_bytes()).hexdigest(), check.POSTINST_SHA256)
+
     def test_container_includes_filtered_parent_directories(self):
         options = include_options({"usr/share/man/de/man1/pqkeep.1.gz": b"manual"})
         self.assertEqual(options[::2], ["-o"] * 6)
@@ -92,7 +98,7 @@ class DebianTests(unittest.TestCase):
             depends = "libc6 (>= 2.34)" + ("" if case == "no-libcap" else ", libcap2-bin")
             controls = {"control": f"Package: pqkeep\nArchitecture: {control_arch}\nDepends: {depends}\n".encode(),
                         "md5sums": b"broken" if case == "bad-md5" else sums.encode(),
-                        "postinst": check.POSTINST.read_bytes()}
+                        "postinst": POSTINST.read_bytes()}
             if case == "script":
                 controls["postinst"] = b"#!/bin/sh\nexit 0\n"
             if case == "no-script":

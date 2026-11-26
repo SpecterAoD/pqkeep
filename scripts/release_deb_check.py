@@ -13,7 +13,11 @@ from release_elf import check_header
 
 TARGETS = {"x86_64-unknown-linux-gnu": "amd64", "aarch64-unknown-linux-gnu": "arm64"}
 DOC = "usr/share/doc/pqkeep/"
-POSTINST = Path(__file__).resolve().parents[1] / "packaging/debian/postinst"
+# DE: SHA-256 von packaging/debian/postinst (Manifest-/Prüfjobs checken nur scripts/ aus);
+#     test_release_deb.py hält Datei und Wert gleich.
+# EN: SHA-256 of packaging/debian/postinst (manifest/verification jobs only check out scripts/);
+#     test_release_deb.py keeps file and value in sync.
+POSTINST_SHA256 = "5b89c4ab12299c5790c8c71e696f114d3982ef8eb6a450cf51afecb7f8b68b8f"
 CAP = "cap_ipc_lock=p"
 REQUIRED = {
     "usr/bin/pqkeep", "usr/share/man/man1/pqkeep.1.gz", "usr/share/man/de/man1/pqkeep.1.gz",
@@ -86,7 +90,7 @@ def check_package(package: Path, arch: str, binary_sha256: str | None = None) ->
     controls = read_tar(subprocess.check_output(["dpkg-deb", "--ctrl-tarfile", str(package)]), True)
     if set(controls) != {"control", "md5sums", "postinst"}:
         raise ValueError("Unerwartete Steuerdateien oder Maintainerskripte")
-    if controls["postinst"] != POSTINST.read_bytes():
+    if hashlib.sha256(controls["postinst"]).hexdigest() != POSTINST_SHA256:
         raise ValueError("postinst weicht von packaging/debian/postinst ab")
     fields = dict(line.split(": ", 1) for line in controls["control"].decode().splitlines()
                   if line and not line.startswith(" ") and ": " in line)
