@@ -84,6 +84,12 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
   changes no production memory path.
 
 ### 3.2 Cryptography
+
+EN: #147 R6 encapsulation step: lock OS entropy, the full ML-KEM G output K || r
+and the result in SecretBytes before private population; the provider returns only
+public ciphertext. Derivation/format bytes stay identical; decapsulation, key
+construction and internal provider/compiler copies remain open audit work.
+See [plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md); native acceptance required.
 - **Key exchange:** ML-KEM (FIPS 203), default **ML-KEM-768**, selectable ML-KEM-512/1024.
 - **Signatures:** ML-DSA (FIPS 204), default **ML-DSA-65**, selectable ML-DSA-44/87.
 - **Private keys** preferably stored as a compact **seed** and re-derived on loading (if the crate supports it), otherwise as an expanded key.

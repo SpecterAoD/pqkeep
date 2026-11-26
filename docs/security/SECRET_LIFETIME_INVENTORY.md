@@ -68,6 +68,14 @@ remain OPEN. Historical baseline rows below retain their original audit meaning.
 
 ## Secret processing / Verarbeitung
 
+DE: Aktueller enger ML-KEM-Kapselungsschritt: Caller-Entropie sowie K || r und
+Ergebnis liegen vor privater Befüllung in SecretBytes. Kein privates SharedKey-
+Rückgabetupel auf diesem Pfad; Chiffrat bleibt öffentlich. Historische Tabellenzeile
+unten beschreibt den Audit-Ausgangsstand und keine vollständige Provider-Abnahme.
+EN: All three parameter sets use borrowed protected encapsulation storage. Native
+acceptance required; decapsulation, private constructor/MaybeBox and internal
+hash/PKE/compiler copies remain OPEN. [Plan](KEM_ENCAPSULATION_OWNER_PLAN.md).
+
 | Class / Klasse | Owner and lifetime / Eigentümer und Lebensdauer | Lock/wipe and failure / Sperre, Wipe, Fehler | Source / Quelle |
 |---|---|---|---|
 | SecretBytes | Fixed owned Vec under typed SecretBuffer | Lock before use; incomplete lock rejects; wipe→unlock→free; no Debug/Clone/Display | [secret](../../src/crypto/secret.rs), [secret_buffer](../../src/crypto/secret_buffer.rs) |
