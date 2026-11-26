@@ -24,10 +24,21 @@ pub(crate) fn G(inputs: &[impl AsRef<[u8]>]) -> (B32, B32) {
 // EN: Finalize directly into existing caller storage, without a private output array.
 pub(crate) fn G_into(inputs: &[impl AsRef<[u8]>], out: &mut crate::EncapsulationWorkspace) {
     let mut h = Sha3_512::new();
+    G_into_with_hash(inputs, out, &mut h);
+}
+
+// DE: Stabilen Caller-Zustand nicht per finalize_into konsumieren/verschieben.
+// EN: Do not consume/move stable caller state through finalize_into.
+pub(crate) fn G_into_with_hash(
+    inputs: &[impl AsRef<[u8]>],
+    out: &mut crate::EncapsulationWorkspace,
+    h: &mut Sha3_512,
+) {
+    sha3::digest::Reset::reset(h);
     for x in inputs {
-        Digest::update(&mut h, x);
+        Digest::update(h, x);
     }
-    h.finalize_into(out);
+    sha3::digest::FixedOutputReset::finalize_into_reset(h, out);
 }
 
 pub(crate) fn H(x: impl AsRef<[u8]>) -> B32 {

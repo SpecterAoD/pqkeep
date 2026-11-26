@@ -101,6 +101,22 @@ where
     }
 }
 
+impl<P> crate::EncapsulateWithHash for EncapsulationKey<P>
+where
+    P: Kem + KemParams,
+{
+    fn encapsulate_with_hash(
+        &self,
+        m: &B32,
+        workspace: &mut crate::EncapsulationWorkspace,
+        hash: &mut sha3::Sha3_512,
+    ) -> Ciphertext<P> {
+        crate::crypto::G_into_with_hash(&[m, &self.h], workspace, hash);
+        let (_, r) = workspace.split_ref::<U32>();
+        self.ek_pke.encrypt(m, r)
+    }
+}
+
 impl<P> KeyExport for EncapsulationKey<P>
 where
     P: KemParams,

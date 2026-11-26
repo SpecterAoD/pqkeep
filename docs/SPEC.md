@@ -79,6 +79,14 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 
 ### 3.2 Kryptografie
 
+DE: R6-Arbeitsbranch: ML-KEM-Entkapselung nutzt geliehene Ausgabe in bereits
+gesperrten SecretBytes statt privatem SharedKey-Rückgabewert. Implizite Ablehnung
+und bestehende Parameter/Formatbytes bleiben erhalten. Der Kapselungs-Hashzustand
+wird ebenfalls vor privatem Absorb gesperrt und per Leihsicht finalisiert/zurückgesetzt.
+Interne Kandidaten,
+Schlüsselkonstruktion und Provider-Scratch bleiben offen; siehe
+[Gesamtplan](security/PROVIDER_IN_PLACE_PLAN.md). Noch keine native Gesamtabnahme.
+
 DE: #147 R6-Kapselungsschritt: OS-Entropie, vollständige ML-KEM-G-Ausgabe K || r
 und Ergebnis vor privater Befüllung in SecretBytes sperren; Provider liefert nur
 öffentliches Chiffrat. Ableitungs-/Formatbytes bleiben gleich; Entkapselung,

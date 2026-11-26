@@ -271,6 +271,17 @@ remain OPEN. [Plan](security/PARSER_STATE_OWNER_PLAN.md).
 
 ## ML-KEM encapsulation output / Kapselungsausgabe (#147 R6)
 
+DE: R6-Arbeitsbranch: Entkapselung schreibt über `DecapsulateInto` direkt in vorab
+gesperrte SecretBytes; der Root-Adapter erhält kein privates SharedKey-Array mehr.
+Kapselung leiht zusätzlich einen vor privatem Absorb gesperrten SHA3-512-Zustand;
+Finalisierung setzt ihn über eine mutable Leihsicht zurück statt ihn zu konsumieren.
+Dies schützt nicht rückwirkend die weiterhin offenen internen Kandidaten,
+Konstruktoren, MaybeBox-Payloads oder PKE-/Hash-Arbeitsflächen. Keine R6-Gesamtabnahme.
+EN: The R6 work branch uses borrowed decapsulation output in prelocked SecretBytes.
+There is no private SharedKey return array in the root adapter. Encapsulation also
+borrows prelocked SHA3-512 state and finalizes/resets without consuming it. Internal candidates,
+construction, nested heaps and PKE/hash scratch remain open; R6 is not closed.
+
 DE: Kapselung bereitet 32 Byte Ergebnis und 64 Byte G-Arbeitsfläche als gesperrte
 SecretBytes vor; erst danach erzeugt der vorhandene OS-RNG die ebenfalls vorab
 gesperrte 32-Byte-Entropie. Der neue gepinnte Provider-Einstieg finalisiert SHA3-512

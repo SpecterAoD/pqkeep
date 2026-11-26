@@ -1,5 +1,5 @@
 use crate::{
-    B32, EncapsulationKey, Seed, SharedKey,
+    B32, DecapsulateInto, EncapsulationKey, Seed, SharedKey,
     crypto::{G, J},
     param::{DecapsulationKeySize, ExpandedDecapsulationKey, KemParams},
     pke::{DecryptionKey, EncryptionKey},
@@ -15,7 +15,7 @@ use kem::{
 };
 use module_lattice::{
     MaybeBox,
-    ctutils::{Choice, CtEq, CtSelect},
+    ctutils::{Choice, CtAssign, CtEq, CtSelect},
 };
 use rand_core::{TryCryptoRng, TryRng};
 
@@ -186,11 +186,40 @@ where
     P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
 {
     fn decapsulate(&self, encapsulated_key: &Ciphertext<P>) -> SharedKey {
+        self.with_decapsulation_candidates(encapsulated_key, |Kbar, Kp, valid| {
+            Kbar.ct_select(Kp, valid)
+        })
+    }
+}
+
+impl<P> DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    // DE: Dieselbe Providerberechnung für beide Ausgaben; interne Flächen noch ungeschützt.
+    // EN: One provider computation for both output paths; internal storage remains unprotected.
+    fn with_decapsulation_candidates<R>(
+        &self,
+        encapsulated_key: &Ciphertext<P>,
+        write: impl FnOnce(&B32, &B32, Choice) -> R,
+    ) -> R {
         let mp = self.dk_pke.decrypt(encapsulated_key);
         let (Kp, rp) = G(&[&mp, &self.ek.h()]);
         let Kbar = J(&[self.z.as_slice(), encapsulated_key.as_ref()]);
         let cp = self.ek.ek_pke().encrypt(&mp, &rp);
-        Kbar.ct_select(&Kp, cp.ct_eq(encapsulated_key))
+        write(&Kbar, &Kp, cp.ct_eq(encapsulated_key))
+    }
+}
+
+impl<P> DecapsulateInto for DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    fn decapsulate_into(&self, encapsulated_key: &Ciphertext<P>, out: &mut B32) {
+        self.with_decapsulation_candidates(encapsulated_key, |Kbar, Kp, valid| {
+            out.copy_from_slice(Kbar);
+            out.as_mut_slice().ct_assign(Kp.as_slice(), valid);
+        });
     }
 }
 

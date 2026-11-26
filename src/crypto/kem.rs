@@ -4,8 +4,8 @@
 //! EN: ML-KEM (FIPS 203) via the RustCrypto crate `ml-kem`. Private keys are
 //! stored only as a 64-byte seed and re-derived when needed.
 
-use ml_kem::EncapsulateInto;
-use ml_kem::kem::{Decapsulate, FromSeed, Kem, KeyExport, TryKeyInit};
+use ml_kem::kem::{FromSeed, Kem, KeyExport, TryKeyInit};
+use ml_kem::{DecapsulateInto, EncapsulateWithHash};
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
 
@@ -19,6 +19,10 @@ mod tests;
 
 #[path = "kem_encapsulation.rs"]
 mod encapsulation;
+
+#[cfg(test)]
+#[path = "kem_decapsulation_tests.rs"]
+mod decapsulation_tests;
 
 /// DE: Länge des Seeds (d ‖ z) in Bytes. EN: Seed length (d ‖ z) in bytes.
 pub const SEED_LEN: usize = 64;
@@ -122,29 +126,33 @@ fn public_from_seed<K: FromSeed>(seed: &[u8]) -> Result<Vec<u8>> {
 
 fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated>
 where
-    K::EncapsulationKey: EncapsulateInto,
+    K::EncapsulationKey: EncapsulateWithHash,
 {
     let ek = K::EncapsulationKey::new_from_slice(public_key).map_err(|_| Error::InvalidInput {
         field: "public_key",
     })?;
-    encapsulation::run(|entropy, workspace| ek.encapsulate_into(entropy, workspace).to_vec())
+    encapsulation::run(|entropy, workspace, hash| {
+        ek.encapsulate_with_hash(entropy, workspace, hash).to_vec()
+    })
 }
 
 fn decaps<K>(seed: &[u8], ciphertext: &[u8]) -> Result<SecretBytes>
 where
     K: FromSeed,
-    K::DecapsulationKey: Decapsulate,
+    K::DecapsulationKey: DecapsulateInto,
 {
     let mut out = SecretBytes::zeroed(32)?;
     let mut seed = parse_seed::<K>(seed)?;
     let (dk, _ek) = K::from_seed(seed_state::view(&seed)?);
     seed.zeroize();
-    let mut shared = dk
-        .decapsulate_slice(ciphertext)
-        .map_err(|_| Error::InvalidInput {
-            field: "ciphertext",
-        })?;
-    out.expose_mut().copy_from_slice(&shared);
-    shared.zeroize();
+    // DE: Nur geliehene Ausgabe in vorab gesperrten SecretBytes; kein SharedKey-Rückgabearray.
+    // EN: Borrow output directly from prelocked SecretBytes; no returned SharedKey array.
+    dk.decapsulate_slice_into(
+        ciphertext,
+        out.expose_mut().try_into().map_err(|_| Error::Crypto)?,
+    )
+    .map_err(|_| Error::InvalidInput {
+        field: "ciphertext",
+    })?;
     Ok(out)
 }

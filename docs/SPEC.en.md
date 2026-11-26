@@ -85,6 +85,13 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 
 ### 3.2 Cryptography
 
+EN: R6 work branch: ML-KEM decapsulation borrows output in prelocked SecretBytes
+instead of returning a private SharedKey value. Implicit rejection, parameters
+and wire bytes remain unchanged. Encapsulation also prelocks its hash state and
+finalizes/resets it through a mutable borrow. Internal candidates, key construction and
+provider scratch remain open; see the [full plan](security/PROVIDER_IN_PLACE_PLAN.md).
+Native acceptance of the complete remediation is still pending.
+
 EN: #147 R6 encapsulation step: lock OS entropy, the full ML-KEM G output K || r
 and the result in SecretBytes before private population; the provider returns only
 public ciphertext. Derivation/format bytes stay identical; decapsulation, key

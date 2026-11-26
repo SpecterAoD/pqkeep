@@ -136,27 +136,31 @@
     },
     {
       "path": "src/crypto.rs",
-      "sha256": "1e43fbeb12d9bc4d2eb490988767dcfede9363121981a8221a09b489e55afb20"
+      "sha256": "4c3b266ffc96e6556cee6b8995d23558e94f2ae4beb053476737766b6138ab39"
     },
     {
       "path": "src/decapsulation_key.rs",
-      "sha256": "3f3d35b7c5880f59d683077bbdce9a13f49b5a91ec69270582ea64f6d4e407c9"
+      "sha256": "d03fb1370e7a351e46b462634d6b2f4c849e63a2518743db3dd752dd11d1868c"
     },
     {
       "path": "src/encapsulation_into.rs",
-      "sha256": "b0489b8745ba68ca1d039f76316e08534aa24dfe4b1b103414d12a367bc6acd0"
+      "sha256": "f9e9546676635ed5e67bacb4930eb4cd294a362db1c85d3cbf77a63581bd4e19"
     },
     {
       "path": "src/encapsulation_key.rs",
-      "sha256": "2b70138918f7b9a04884feee42bc9645514de88d6528488b4c96a0aefe62bb55"
+      "sha256": "96ec227c0456c8c4837f9df9a1bf8024dd018c3f4489aa421021fb93c84cf216"
     },
     {
       "path": "src/lib.rs",
-      "sha256": "ec5d23f081ed63cdd86417a6377ef8f0c1ee88af831af050ca4663217bf0265e"
+      "sha256": "faa57b688eaa8ade6fd8c23d76df2663ffcfa0fb79d24b16ed8a0689bdead433"
     },
     {
       "path": "src/pke.rs",
       "sha256": "f601a5bcea979ca1f8d2d31cc77b85fae8391ceb123604f58e5736d8ac774cd7"
+    },
+    {
+      "path": "src/decapsulation_into.rs",
+      "sha256": "08e3f0d1917ee11ebfe669dbc02d9d464699d837889b09ae9e4d53a238f2cbab"
     }
   ]
 }

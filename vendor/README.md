@@ -27,6 +27,23 @@ MaybeBox storage, decapsulation or internal hash/PKE/compiler copies. Root and f
 select the same path provider. Refresh the existing Blake2 root dependency reference
 in the stale fuzz lockfile; no selected package version changes.
 
+DE: Der R6-Arbeitsbranch ergänzt `DecapsulateInto`: Ausgabe direkt in geliehene,
+vom Caller vorab gesperrte 32 Byte. Die bestehende Berechnung der Kandidaten wird
+geteilt; die neue Ausgabe verwendet konstante bedingte Zuweisung von ctutils.
+Alte APIs/Parameter bleiben erhalten. Private Kandidaten, PKE-/Hash-Arbeitsflächen
+und Konstruktoren sind damit ausdrücklich noch nicht geschützt.
+EN: Borrowed-output decapsulation removes the returned private SharedKey array.
+Existing APIs share the original candidate computation, with ctutils conditional
+assignment for the borrowed destination. Internal candidates, scratch and private
+construction remain open; differential output tests alone do not close R6.
+
+DE: `EncapsulateWithHash` leiht zusätzlich den vorab gesperrten SHA3-512-Zustand des
+Callers. `FixedOutputReset` vermeidet dessen konsumierende private Wertübertragung;
+Reset vor und nach Absorb verhindert Altzustand. Die alte API bleibt verfügbar.
+EN: The additional encapsulation entry borrows caller-prelocked SHA3-512 state and
+uses FixedOutputReset, preserving the old API. Keccak/PKE internal scratch remains
+open; a protected top-level hash state is not proof of protected permutation scratch.
+
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.
 HMAC-Zustand und Scratch/PRK/Ausgabe liegen in typisierten gesperrten SecretBuffer-Instanzen.

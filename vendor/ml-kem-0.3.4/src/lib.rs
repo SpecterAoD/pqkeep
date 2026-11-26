@@ -56,6 +56,9 @@ mod compress;
 /// Section 6. The ML-KEM Key-Encapsulation Mechanism (Decapsulation)
 mod decapsulation_key;
 
+// DE: Additive geliehene Ausgabe. EN: Additive borrowed output.
+mod decapsulation_into;
+
 /// Section 6. The ML-KEM Key-Encapsulation Mechanism (Encapsulation)
 mod encapsulation_key;
 
@@ -72,10 +75,11 @@ mod param;
 pub mod pkcs8;
 
 pub use array::{self, ArraySize};
+pub use decapsulation_into::DecapsulateInto;
 pub use decapsulation_key::DecapsulationKey;
 #[allow(deprecated)]
 pub use decapsulation_key::ExpandedKeyEncoding;
-pub use encapsulation_into::{EncapsulateInto, EncapsulationWorkspace};
+pub use encapsulation_into::{EncapsulateInto, EncapsulateWithHash, EncapsulationWorkspace};
 pub use encapsulation_key::EncapsulationKey;
 pub use kem::{
     self, Ciphertext, Decapsulate, Encapsulate, FromSeed, Generate, InvalidKey, Kem, Key,

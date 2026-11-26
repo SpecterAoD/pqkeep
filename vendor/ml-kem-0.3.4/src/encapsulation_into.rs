@@ -29,3 +29,18 @@ pub trait EncapsulateInto: Encapsulate {
         workspace: &mut EncapsulationWorkspace,
     ) -> Ciphertext<Self::Kem>;
 }
+
+/// DE: Zusätzlicher Einstieg mit geliehenem Hashzustand statt privater Wertübertragung.
+/// EN: Additional entry borrowing hash state instead of transferring private state by value.
+pub trait EncapsulateWithHash: EncapsulateInto {
+    /// DE: Caller sperrt m, workspace und hash vor Befüllung; hash wird zurückgesetzt.
+    /// EN: Caller prelocks m, workspace and hash; hash is reset before and after use.
+    /// DE: Interne Keccak-/PKE-Arbeitsflächen sind hierdurch nicht automatisch geschützt.
+    /// EN: This does not automatically protect internal Keccak/PKE scratch storage.
+    fn encapsulate_with_hash(
+        &self,
+        m: &B32,
+        workspace: &mut EncapsulationWorkspace,
+        hash: &mut sha3::Sha3_512,
+    ) -> Ciphertext<Self::Kem>;
+}
