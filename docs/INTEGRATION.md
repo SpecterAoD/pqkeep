@@ -128,7 +128,9 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
 - **Entschlüsseln:** Der Modus wird aus der Datei erkannt; bei Empfänger-Dateien wird nach der
   eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
   sie verlangt. Weitergegeben wird nur ihr Pfad. Signierte Dateien werden immer geprüft; die
-  Fertig-Meldung nennt den **geprüften Absender** (Fingerabdruck). Dateien mit zufälligem Namen
+  Fertig-Meldung nennt den **geprüften Absender** (Fingerabdruck). Beim Verschlüsseln fragt das
+  Kontextmenü nach der Schutzart **„Privatsphäre hoch?“** (#315, Standard Nein): dann bekommt die
+  `.pqkf` einen zufälligen Namen. Dateien mit zufälligem Namen
   (#315) werden unter ihrem Originalnamen aus dem Archiv neben der Quelle entschlüsselt
   (`--original-name --rename`); die Fertig-Meldung nennt dann die Quelle.
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
@@ -250,7 +252,8 @@ for your key file in recipient mode and for the factor file only if the file or 
 passed on). The result is placed next to the source under a free name
 (`report (2).txt`, encrypted `report (2).txt.pqkf` – the extension survives decryption) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
 sandboxed process (on Linux also via small windows, see above). Optionally **"Sign as sender?"** (#287) when encrypting (own ML-DSA-87 key, its passphrase; format v3); after
-decrypting a signed file the final message names the **verified sender**. Randomly named files (#315) are decrypted under their original name from the archive next to the
+decrypting a signed file the final message names the **verified sender**. After the mode, encrypting
+asks **"Privacy high?"** (#315, default no) for a random outer name. Randomly named files (#315) are decrypted under their original name from the archive next to the
 source (`--original-name --rename`); the final message then names the source.
 
 **Several files:** Linux: Nemo (`Selection=notnone`), Nautilus, Dolphin and Thunar (`%F`) pass all selected

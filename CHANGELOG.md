@@ -6,6 +6,11 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
+  Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.
+  EN: The context menu asks for the level "privacy high" when encrypting (#315; terminal and windows,
+  single and several files): random outer name, leftovers are cleaned up when cancelling.
+
 - DE: ML-KEM-Kapselung (#147): OS-Entropie und vollständige G-Ausgabe K || r direkt
   in vorab gesperrten SecretBytes; nur öffentliches Chiffrat als Provider-Rückgabe.
   Keine Ableitungs-/Formatänderung. Weitere Provider-/Plattformkopien bleiben offen.

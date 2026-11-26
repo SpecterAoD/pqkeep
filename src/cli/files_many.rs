@@ -114,7 +114,7 @@ pub fn encrypt(t: &Texts, lang: Lang, m: &ArgMatches, sources: &[PathBuf]) -> Cl
     for src in sources {
         tally.begin();
         if super::privacy::random(m) {
-            let (out, r) = super::privacy::encrypt_random(&protection, src);
+            let (out, r) = super::privacy::encrypt_random(&protection, src, None);
             let out = out.unwrap_or_else(|| src.clone());
             tally.record(t, lang, src, &out, r.map(|r| (t.msg_encrypted, r)));
             continue;

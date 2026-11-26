@@ -15,7 +15,7 @@ use pqkeep::security::Lang;
 
 use super::factor_cmd::FLAG;
 use super::factor_ui::{Ask, for_decrypt, ui_texts};
-use super::files_cmd::{default_decrypted, default_encrypted, free_target};
+use super::files_cmd::{default_decrypted, free_target};
 use super::integrate_text::{IntegrateTexts, integrate_texts};
 use super::io::{CliResult, Failure, code};
 use super::text::Texts;
@@ -140,7 +140,8 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
         .default(0)
         .interact()
         .map_err(|_| Failure::new(code::ERROR, ""))?;
-    let out = out_arg(default_encrypted(Path::new(path)).as_deref(), lang)?;
+    let private = super::privacy::ask_terminal(lang)?;
+    let (out, level) = super::privacy::context_encrypt_target(private, path, lang)?;
     // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
     if mode != 1 {
         let factor = (mode == 2)
@@ -152,6 +153,7 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
             args.extend([FLAG, f.as_str()]);
         }
         args.extend(sign.iter().map(String::as_str));
+        args.extend(level);
         args.extend(["--out", &out, "--", path]);
         return child(lang, &args);
     }
@@ -160,6 +162,7 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
     let mut args = vec!["encrypt"];
     args.extend(to.iter().map(String::as_str));
     args.extend(sign.iter().map(String::as_str));
+    args.extend(level);
     args.extend(["--out", &out, "--", path]);
     child(lang, &args)
 }

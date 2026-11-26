@@ -55,7 +55,13 @@ pub(super) fn ask(ui: &Ui<'_>, near: &Path) -> CliResult<Option<SignChoice>> {
 /// Signaturschlüssels (ein Passwortfenster), sonst keine.
 /// EN: Encrypting for recipients, optionally signed: then only the signing key passphrase is
 /// needed (one password window), otherwise none.
-pub(super) fn for_recipients(ui: &Ui<'_>, path: &str, out: &str, targets: &[PathBuf]) -> CliResult {
+/// `out`: DE: Ziel und Zusatzargumente (#315). EN: target and extra arguments (#315).
+pub(super) fn for_recipients(
+    ui: &Ui<'_>,
+    path: &str,
+    (out, level): (&str, &[&str]),
+    targets: &[PathBuf],
+) -> CliResult {
     let all = super::context_dialog_many::recipients(ui, Path::new(path))?;
     let to = super::recipients_ui::to_args(&all);
     let sign = ask(ui, Path::new(path))?;
@@ -63,6 +69,7 @@ pub(super) fn for_recipients(ui: &Ui<'_>, path: &str, out: &str, targets: &[Path
     let mut cmd = vec!["encrypt"];
     cmd.extend(to.iter().map(String::as_str));
     cmd.extend(["--out", out]);
+    cmd.extend(level);
     cmd.extend(sign_args.iter().map(String::as_str));
     if sign.is_some() {
         let prompt = texts(ui.lang).prompt;

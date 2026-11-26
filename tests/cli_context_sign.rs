@@ -59,10 +59,11 @@ fn passphrase_and_signature_use_two_windows_and_one_pipe() {
     fs::write(&file, b"Hallo").unwrap();
     let p = common::random_passphrase().as_ref().expose_str().to_owned();
     let key_path = format!("{}\n", e.work().join("anna.key.json").display());
-    // DE: Modus, signieren ja, Schlüssel, neue Passphrase (zweimal), Signatur-Passphrase, Fertig.
+    // DE: Modus, „Privatsphäre hoch“ nein, signieren ja, Schlüssel, neue Passphrase (zweimal), Signatur-Passphrase, Fertig.
     // EN: Mode, sign yes, key, new passphrase (twice), signing passphrase, done.
     e.answer(&[
         (0, "0\n"),
+        (1, ""),
         (0, ""),
         (0, &key_path),
         (0, &format!("{p}\n{p}\n")),
@@ -71,7 +72,7 @@ fn passphrase_and_signature_use_two_windows_and_one_pipe() {
     ]);
     assert_eq!(e.context("encrypt", &file), 0, "{:?}", e.calls());
     let calls = e.calls();
-    assert!(calls[4].contains(&"--hide-text".to_owned()), "{calls:?}");
+    assert!(calls[5].contains(&"--hide-text".to_owned()), "{calls:?}");
     let all = joined(&e);
     assert!(
         !all.contains(&p) && !all.contains(&anna),
@@ -93,6 +94,7 @@ fn recipients_and_signature_need_only_the_signing_passphrase() {
     //     yes, key, signing passphrase, done.
     e.answer(&[
         (0, "1\n"),
+        (1, ""),
         (0, &pick("ben.pub.json")),
         (0, ""),
         (1, ""),
@@ -152,6 +154,7 @@ fn oversized_password_input_does_not_block() {
     let huge = format!("{}\n", "x".repeat(200 * 1024));
     e.answer(&[
         (0, "0\n"),
+        (1, ""),
         (0, ""),
         (0, &key_path),
         (0, &huge),

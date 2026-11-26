@@ -97,8 +97,9 @@ Alle Zahlen Little Endian; Pfade UTF-8, Trenner „/“.
   einen freien Namen. Temporärausgaben heißen dabei nach der Quelle.
 - `inspect` zeigt nur den Header (ohne Namen); `list` zeigt die Archivnamen erst nach dem Entsperren.
 - Grenzen: Größe und – bei vielen Dateien – die Anzahl der `.pqkf` bleiben sichtbar (Padding folgt im
-  Formatentwurf #316). Menü: Stufe „Privatsphäre hoch“ beim Verschlüsseln; das Kontextmenü
-  entschlüsselt zufällig benannte Dateien unter dem Originalnamen.
+  Formatentwurf #316). Menü und Kontextmenü (Terminal und Fenster, einzeln und mehrfach) fragen
+  beim Verschlüsseln nach der Stufe „Privatsphäre hoch“; das Kontextmenü entschlüsselt zufällig
+  benannte Dateien unter dem Originalnamen.
 
 ## Grenzen
 
@@ -161,8 +162,9 @@ rules apply; a file name must be a single portable name, a directory archive mus
 below **one** top-level directory (else "no single original name", nothing is created). Never
 overwrites; `--rename` picks a free name; temporary output is named after the source. `inspect` shows
 no names; `list` shows archive names only after unlocking. Size and the number of `.pqkf` files stay
-visible (padding follows in the format draft #316). Menu: level "privacy high" when encrypting; the
-context menu decrypts randomly named files under their original name.
+visible (padding follows in the format draft #316). Menu and context menu (terminal and windows,
+single and several files) ask for the level "privacy high" when encrypting; the context menu
+decrypts randomly named files under their original name.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a
