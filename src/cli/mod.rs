@@ -54,6 +54,7 @@ mod serve_text;
 mod sign_cmd;
 mod sign_text;
 mod signing;
+mod stream_cmd;
 mod terminal_input;
 #[cfg(target_os = "linux")]
 mod terminal_input_linux;

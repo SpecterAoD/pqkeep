@@ -80,7 +80,8 @@ angegebenen Schlüssel?), Exit 7. Immer zusätzlich `file`.
 - `results`: je erzeugtem Ziel `source`, `target`, `ok`, dann `files`, `directories`, `bytes`,
   `skipped` (Anzahl übersprungener Einträge wie Symlinks – ohne Pfade), `signer` (beim
   Entschlüsseln: Schlüssel-ID des geprüften Absenders oder `null`; beim Verschlüsseln `null`) oder `error`.
-- Beim Container (`encrypt` mit mehreren Quellen und `--out`) ist `source` eine **Liste**.
+- Beim Container (`encrypt` mit mehreren Quellen und `--out`) ist `source` eine **Liste**; bei
+  `encrypt --stdin` ist `source` `"-"` (`--json` nicht zusammen mit `--stdout`).
 - Mehrere Einträge gibt es nur bei `encrypt --each` und `decrypt` mit mehreren Dateien; dort läuft
   jede Datei, auch wenn eine scheitert, und `exit_code` ist der erste Fehler.
 - Scheitert der Befehl als Ganzes (eine Quelle, Container, zu schwache oder falsche Passphrase,
@@ -124,7 +125,8 @@ the signer, not trusted), exit 0; invalid → `"valid": false`, `signer_matches`
 
 **`encrypt --json`, `decrypt --json`:** `results` per created target (`source`, `target`, `ok`, then
 `files`, `directories`, `bytes`, `skipped` – a count, no paths – or `error`) and `summary`. For a
-container (`encrypt` with several sources and `--out`) `source` is a **list**. Several entries only
+container (`encrypt` with several sources and `--out`) `source` is a **list**; with `encrypt --stdin` it is
+`"-"` (`--json` not together with `--stdout`). Several entries only
 with `encrypt --each` and `decrypt` with several files; every file is processed even if one fails and
 `exit_code` is the first error. If the command fails as a whole (one source, container, weak or wrong
 passphrase, existing target with one source) there is only `error`, no `results`.
