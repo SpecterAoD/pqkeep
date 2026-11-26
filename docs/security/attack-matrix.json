@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.2.0",
+  "matrix_version": "1.3.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -5345,6 +5345,102 @@
       "issues": [
         44,
         151
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-011",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format_v4.rs",
+        "src/files/format_v2.rs",
+        "src/files/stream_v4.rs",
+        "src/files/decrypt.rs"
+      ],
+      "scenario": {
+        "de": "Format v4/Strom (.pqkf): Version, Inhaltstyp oder Optionsbits ändern (Downgrade), reservierte Bits setzen, Strom an Blockgrenzen oder im Abschluss-Block abschneiden, Daten anhängen, Abschluss-Block mit bekanntem Schlüssel neu verschlüsseln (Länge, Füllung, Kennung)",
+        "en": "Format v4/stream (.pqkf): change version, content type or option bits (downgrade), set reserved bits, truncate the stream at chunk boundaries or inside the trailer, append data, re-encrypt the trailer with a known key (length, padding, marker)."
+      },
+      "expected_behavior": {
+        "de": "Fehler ohne Ausgabe; reservierte/unbekannte Bits „nicht unterstützt“; Trailer-Bytes gelangen nie in die Ausgabe",
+        "en": "error without output; reserved/unknown bits \"unsupported\"; trailer bytes never reach the output"
+      },
+      "boundary": {
+        "de": "Nur Kern (#316 Schritt 1); Padding, anonyme Empfänger und verborgener Absender folgen mit eigenen Fällen.",
+        "en": "Core only (#316 step 1); padding, anonymous recipients and hidden sender follow with their own cases."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_stream_v4.rs",
+          "symbol": "downgrade_truncation_and_appending_are_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_stream_v4.rs",
+          "symbol": "older_v1_reader_and_original_name_refuse_streams",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_stream_v4.rs",
+          "symbol": "passphrase_roundtrip_at_chunk_boundaries",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/stream_v4_tests.rs",
+          "symbol": "tampered_trailers_are_rejected",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/format_v4_tests.rs",
+          "symbol": "option_rules",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        83,
+        151,
+        316
       ],
       "v2_ids": [],
       "evidence_refs": [],

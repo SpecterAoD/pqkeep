@@ -161,6 +161,21 @@ entschlüsselt (Temporärdatei, am Ende auf die Nutzlänge gekürzt, dann veröf
 | P10 | `--stdin`/`--stdout`: große Ströme mit konstantem Speicher, leere Eingabe, SIGPIPE, keine Temporärdatei |
 | P11 | Fuzz-Ziel `pqkf_header_v4` und Trailer-Parser (#153); Angriffskatalog QA1-FMT-* ergänzen |
 
+## Umsetzungsstand
+
+**Schritt 1 (Kern) umgesetzt** (`src/files/format_v4.rs`, `stream_v4.rs`; API vorläufig bis #98:
+`files::encrypt_stream`, `files::encrypt_stream_to`; Entschlüsseln über `decrypt`/`check`). Präzisierungen
+gegenüber dem Entwurf:
+- Zugänge und Schlüsselableitungen (KEK) unverändert wie v2; nur WrapAAD nutzt die Domäne
+  `PQKeep/file/v4\0`. `M` enthält Version und Optionsbits, ist also an jede Hülle und jeden Block gebunden.
+- Mit `SIGNED` ist der Absenderblock bytegleich der v3-Block (Algorithmus ‖ Schlüssel ‖ `commit`), dort
+  steht das v4-`commit`; die Signaturnachricht ist die von v3 (H enthält Version 4).
+- `PAD`, `ANON`, `HIDDEN_SENDER` und unbekannte Bits: „nicht unterstützt“; v4 nur mit Inhalt 3.
+- Der Leser hält die 24 Trailer-Bytes im gesperrten Puffer zurück; `list` zeigt bei Strömen keine Einträge,
+  nur Bytes; `decrypt` unter Originalnamen ist für Ströme nicht möglich (kein Name).
+- Tests: `tests/files_stream_v4.rs`, `src/files/{format_v4,stream_v4}_tests.rs`; Angriffsmatrix
+  QA1-FMT-011; der Header-Fuzzer `pqkf_header_v2` deckt v4 mit ab.
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -257,6 +272,15 @@ reference values from an independent script; P07 anonymous slots at every positi
 mixing/level/order rejected; P08 hidden sender tampering incl. a shifted payload/padding boundary (re-encrypted trailer), `--signer`, SIGNED + HIDDEN rejected; P09 wrong
 `commit` with several recipients; P10 `--stdin`/`--stdout` large streams, empty input, SIGPIPE, no
 temporary file; P11 fuzz target `pqkf_header_v4` and trailer parser (#153), attack catalogue QA1-FMT-*.
+
+**Status: step 1 (core) implemented** (`src/files/format_v4.rs`, `stream_v4.rs`; provisional API until
+#98: `files::encrypt_stream`, `files::encrypt_stream_to`; decrypting via `decrypt`/`check`). Refinements:
+slots and KEK derivations unchanged from v2, only WrapAAD uses the domain `PQKeep/file/v4\0` (M carries
+version and option bits); with `SIGNED` the sender block is byte-identical to v3 and holds the v4 `commit`,
+the signature message is v3's; `PAD`, `ANON`, `HIDDEN_SENDER` and unknown bits are "unsupported", v4 only
+with content 3; the reader holds the 24 trailer bytes back in the locked buffer; `list` shows no entries
+for streams; streams have no original name. Tests: `tests/files_stream_v4.rs`, unit tests, attack case
+QA1-FMT-011; the header fuzzer `pqkf_header_v2` also covers v4.
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.

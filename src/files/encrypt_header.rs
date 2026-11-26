@@ -25,9 +25,9 @@ pub(super) fn build(
     file_key: &SecretBytes,
     signer: Option<&[u8]>,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
-    if signer.is_some() {
-        // DE: Mit Absender immer Format v3 (auch bei einem einzelnen Zugang).
-        // EN: With a sender always format v3 (even for a single slot).
+    if signer.is_some() || content == Content::Stream {
+        // DE: Mit Absender immer v3, Ströme immer v4 (auch bei einem einzelnen Zugang).
+        // EN: With a sender always v3, streams always v4 (even for a single slot).
         let header = v3_header(content, prefix, protection, file_key, signer)?;
         return Ok((header.encode()?, header.stream_aad()?));
     }

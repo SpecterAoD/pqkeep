@@ -31,7 +31,8 @@ use std::io::Read;
 use sha3::{Digest, Sha3_256};
 
 use super::format::{Content, MAGIC, Reader, bad};
-use super::signer_v3::{SIGNER_BLOCK_LEN, Signer};
+use super::format_v4::{DOMAIN_V4, OPT_SIGNED, V4, VERSION_V4, check_v4};
+use super::signer_v3::{COMMIT_LEN, SIGNER_BLOCK_LEN, Signer};
 pub use super::slot_v2::{MAX_RECIPIENTS, MAX_SLOTS, Slot, check_slots};
 use crate::crypto::aead::NONCE_LEN;
 use crate::crypto::kdf::MAX_SALT_LEN;
@@ -60,6 +61,7 @@ pub const MAX_ENCODED_LEN: usize = FIXED_LEN
     + (2 + 12 + 1 + MAX_SALT_LEN + NONCE_LEN)
     + MAX_RECIPIENTS * (2 + RECIPIENT_ID_LEN + 1568 + NONCE_LEN)
     + MAX_SLOTS * WRAPPED_LEN
+    + 2
     + SIGNER_BLOCK_LEN;
 const _: () = assert!(MAX_ENCODED_LEN <= HEADER_LIMIT);
 
@@ -71,11 +73,17 @@ const _: () = assert!(MAX_ENCODED_LEN <= HEADER_LIMIT);
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] (Feld `header`) bei Index > 64 oder zu großem `M`.
 pub fn wrap_aad(domain: Domain, metadata: &[u8], index: usize) -> Result<Vec<u8>> {
+    wrap_aad_tag(domain.tag(), metadata, index)
+}
+
+/// DE: Wie [`wrap_aad`] mit freiem Domänen-Tag (v4: `PQKeep/file/v4\0`).
+/// EN: Like [`wrap_aad`] with a free domain tag (v4: `PQKeep/file/v4\0`).
+pub(super) fn wrap_aad_tag(tag: &[u8], metadata: &[u8], index: usize) -> Result<Vec<u8>> {
     if index > MAX_RECIPIENTS || metadata.len() > HEADER_LIMIT {
         return Err(bad());
     }
     let len = u32::try_from(metadata.len()).map_err(|_| bad())?;
-    let mut out = [domain.tag(), b"aad/wrap\0", &len.to_le_bytes(), metadata].concat();
+    let mut out = [tag, b"aad/wrap\0", &len.to_le_bytes(), metadata].concat();
     out.push(u8::try_from(index).map_err(|_| bad())?);
     Ok(out)
 }
@@ -92,8 +100,10 @@ pub struct HeaderV2 {
     /// DE: Je Zugang der eingepackte Dateischlüssel (Chiffrat + Tag).
     /// EN: Per slot the wrapped file key (ciphertext + tag).
     pub wraps: Vec<[u8; WRAPPED_LEN]>,
-    /// DE: Absender (nur Format v3). EN: Sender (format v3 only).
+    /// DE: Absender (Format v3 bzw. v4 mit SIGNED). EN: Sender (format v3 or v4 with SIGNED).
     pub signer: Option<Signer>,
+    /// DE: Optionsbits und Schlüsselbindung (nur Format v4). EN: Option bits and key commitment (v4 only).
+    pub v4: Option<V4>,
 }
 
 impl HeaderV2 {
@@ -103,29 +113,40 @@ impl HeaderV2 {
     /// DE/EN: [`Error::InvalidInput`] (Feld `header`), [`Error::KdfParams`], [`Error::Unsupported`].
     pub fn metadata(&self) -> Result<Vec<u8>> {
         check_slots(&self.slots)?;
+        match &self.v4 {
+            Some(v4) => check_v4(self.content, v4, self.signer.as_ref())?,
+            None if self.content == Content::Stream => return Err(bad()),
+            None => {}
+        }
         let mut out = Vec::with_capacity(FIXED_LEN);
         out.extend_from_slice(MAGIC);
         out.extend_from_slice(&self.version().to_le_bytes());
-        out.push(match self.content {
-            Content::File => 1,
-            Content::Directory => 2,
-        });
+        out.push(self.content.code());
         out.extend_from_slice(&u32::try_from(CHUNK_SIZE).unwrap_or(u32::MAX).to_le_bytes());
         out.extend_from_slice(&self.prefix);
+        if let Some(v4) = &self.v4 {
+            out.extend_from_slice(&v4.options.to_le_bytes());
+        }
         out.push(u8::try_from(self.slots.len()).map_err(|_| bad())?);
         for slot in &self.slots {
             out.extend_from_slice(&slot.encode()?);
         }
-        if let Some(signer) = &self.signer {
-            out.extend_from_slice(&signer.encode()?);
+        // DE: Der Absenderblock endet mit `commit`; ohne Absender steht v4-`commit` allein.
+        // EN: The sender block ends with `commit`; without a sender the v4 `commit` stands alone.
+        match (&self.signer, &self.v4) {
+            (Some(signer), _) => out.extend_from_slice(&signer.encode()?),
+            (None, Some(v4)) => out.extend_from_slice(&v4.commit),
+            (None, None) => {}
         }
         Ok(out)
     }
 
-    /// DE: 3 mit Absender, sonst 2. EN: 3 with a sender, else 2.
+    /// DE: 4 mit v4-Feldern, 3 mit Absender, sonst 2. EN: 4 with v4 fields, 3 with a sender, else 2.
     #[must_use]
     pub fn version(&self) -> u16 {
-        if self.signer.is_some() {
+        if self.v4.is_some() {
+            VERSION_V4
+        } else if self.signer.is_some() {
             VERSION_SIGNED
         } else {
             VERSION
@@ -156,7 +177,12 @@ impl HeaderV2 {
         if index >= self.slots.len() {
             return Err(bad());
         }
-        wrap_aad(Domain::File, &self.metadata()?, index)
+        let tag = if self.v4.is_some() {
+            DOMAIN_V4
+        } else {
+            Domain::File.tag()
+        };
+        wrap_aad_tag(tag, &self.metadata()?, index)
     }
 
     /// DE: AAD aller Stromblöcke = SHA3-256 des ganzen Headers samt aller Hüllen.
@@ -179,20 +205,15 @@ impl HeaderV2 {
         if &r.array::<8>()? != MAGIC {
             return Err(bad());
         }
-        let has_sender = match u16::from_le_bytes(r.array()?) {
-            VERSION => false,
-            VERSION_SIGNED => true,
-            _ => return Err(Error::Unsupported),
-        };
-        let content = match r.byte()? {
-            1 => Content::File,
-            2 => Content::Directory,
-            _ => return Err(bad()),
-        };
+        let (version, content) = read_version(&mut r)?;
         if u32::from_le_bytes(r.array()?) != u32::try_from(CHUNK_SIZE).unwrap_or(0) {
             return Err(bad());
         }
         let prefix = r.array::<PREFIX_LEN>()?;
+        let options = (version == VERSION_V4)
+            .then(|| r.array::<2>().map(u16::from_le_bytes))
+            .transpose()?;
+        let has_sender = version == VERSION_SIGNED || options.is_some_and(|o| o & OPT_SIGNED != 0);
         let count = usize::from(r.byte()?);
         if count == 0 || count > MAX_SLOTS {
             return Err(bad());
@@ -207,6 +228,9 @@ impl HeaderV2 {
         } else {
             None
         };
+        let v4 = options
+            .map(|options| read_v4(&mut r, content, options, signer.as_ref()))
+            .transpose()?;
         let mut wraps = Vec::with_capacity(count);
         for _ in 0..count {
             wraps.push(r.array::<WRAPPED_LEN>()?);
@@ -217,6 +241,39 @@ impl HeaderV2 {
             slots,
             wraps,
             signer,
+            v4,
         })
     }
+}
+
+/// DE: v4-Teil nach den Zugängen: `commit` (allein oder aus dem Absenderblock), dann Regeln.
+/// EN: v4 part after the slots: `commit` (alone or from the sender block), then the rules.
+fn read_v4<R: Read>(
+    r: &mut Reader<'_, R>,
+    content: Content,
+    options: u16,
+    signer: Option<&Signer>,
+) -> Result<V4> {
+    let commit = match signer {
+        Some(s) => s.commit,
+        None => r.array::<COMMIT_LEN>()?,
+    };
+    let v4 = V4 { options, commit };
+    check_v4(content, &v4, signer)?;
+    Ok(v4)
+}
+
+/// DE: Version (2, 3 oder 4) und Inhalt; Strom nur in v4. EN: Version (2, 3 or 4) and content; stream only in v4.
+fn read_version<R: Read>(r: &mut Reader<'_, R>) -> Result<(u16, Content)> {
+    let version = u16::from_le_bytes(r.array()?);
+    if ![VERSION, VERSION_SIGNED, VERSION_V4].contains(&version) {
+        return Err(Error::Unsupported);
+    }
+    let content = match (r.byte()?, version) {
+        (1, _) => Content::File,
+        (2, _) => Content::Directory,
+        (3, VERSION_V4) => Content::Stream,
+        _ => return Err(bad()),
+    };
+    Ok((version, content))
 }
