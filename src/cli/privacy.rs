@@ -156,6 +156,18 @@ pub fn restore(m: &ArgMatches, src: &Path) -> bool {
 /// EN: Arguments for the context menu: original name with a free name instead of `--out`.
 pub const CONTEXT_RESTORE: [&str; 2] = ["--original-name", "--rename"];
 
+/// DE: Ziel zum Aufräumen eigener Reste beim Entschlüsseln: bei zufälligem Namen die Quelle (die
+/// Temporärausgaben heißen nach ihr), sonst das Standardziel.
+/// EN: Target for cleaning up own leftovers when decrypting: for a random name the source (the
+/// temporary output is named after it), else the default target.
+pub fn cleanup_target(source: &Path) -> Option<PathBuf> {
+    if is_random_path(source) {
+        Some(source.to_path_buf())
+    } else {
+        super::files_cmd::default_decrypted(source)
+    }
+}
+
 /// DE: Ziel fürs Fenster-Kontextmenü: bei zufälligem Namen die Quelle selbst (Anzeige; Reste heißen
 /// nach ihr) und [`CONTEXT_RESTORE`], sonst ein freies `--out`-Ziel.
 /// EN: Target for the window context menu: for a random name the source itself (display; leftovers
@@ -193,3 +205,7 @@ pub fn decrypt_original(
         Err(e) => (None, Err(e)),
     }
 }
+
+#[cfg(test)]
+#[path = "privacy_tests.rs"]
+mod privacy_tests;
