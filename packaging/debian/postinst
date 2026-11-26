@@ -11,7 +11,7 @@
 set -e
 
 if [ "$1" = "configure" ]; then
-    if setcap cap_ipc_lock+ep /usr/bin/pqkeep; then
+    if setcap cap_ipc_lock+p /usr/bin/pqkeep; then
         echo "PQKeep: CAP_IPC_LOCK für /usr/bin/pqkeep gesetzt (nur Speicher sperren) / set for /usr/bin/pqkeep (memory locking only)"
     else
         echo "PQKeep: WARNUNG – CAP_IPC_LOCK konnte nicht gesetzt werden; Passphrase-Funktionen brauchen dann ein höheres 'ulimit -l' (siehe docs/INSTALL.md) / WARNING – could not set CAP_IPC_LOCK; passphrase features then need a higher 'ulimit -l'" >&2

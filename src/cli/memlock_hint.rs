@@ -16,8 +16,8 @@ pub fn message() -> String {
         None => ("Limit unbekannt".to_owned(), "limit unknown".to_owned()),
     };
     format!(
-        "Geheimer Speicher konnte nicht gesperrt werden ({de}; Passphrasen brauchen 256 MiB, Profil hardened 1 GiB). Abhilfe: sudo setcap cap_ipc_lock+ep \"$(command -v pqkeep)\" (das Debian-Paket macht das selbst) oder 'ulimit -l' anheben – siehe docs/INSTALL.md \
-         / secret memory could not be locked ({en}; passphrases need 256 MiB, profile hardened 1 GiB). Fix: sudo setcap cap_ipc_lock+ep \"$(command -v pqkeep)\" (the Debian package does this itself) or raise 'ulimit -l' – see docs/INSTALL.md"
+        "Geheimer Speicher konnte nicht gesperrt werden ({de}; Passphrasen brauchen 256 MiB, Profil hardened 1 GiB). Abhilfe: sudo setcap cap_ipc_lock+p \"$(command -v pqkeep)\" (das Debian-Paket macht das selbst) oder 'ulimit -l' anheben – siehe docs/INSTALL.md \
+         / secret memory could not be locked ({en}; passphrases need 256 MiB, profile hardened 1 GiB). Fix: sudo setcap cap_ipc_lock+p \"$(command -v pqkeep)\" (the Debian package does this itself) or raise 'ulimit -l' – see docs/INSTALL.md"
     )
 }
 

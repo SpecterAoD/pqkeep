@@ -14,7 +14,7 @@
 
 > Change v2.21 (2026-11-25, instructed by SpecterAoD: #315/#316 through merge): **format draft v4** ([V4_DRAFT.md](V4_DRAFT.md)) for padding, anonymous recipients (**D1 exception only on request, D1 stays the default**), hidden sender and stream mode (#83) – one version scheme with option bits, content type "stream", trailer inside the encrypted stream, key commitment in every v4 file; draft only, implementation in separate PRs before #98 (#316, #83).
 
-> Change v2.22 (2026-11-26, approved by SpecterAoD): locking stays mandatory; because the usual `ulimit -l` (8 MiB) is too small for the Argon2id workspace (256 MiB–1 GiB), the **Debian package grants only `/usr/bin/pqkeep` `CAP_IPC_LOCK`** (postinst, `libcap2-bin`); the program itself still raises neither limits nor privileges and reports a too small budget clearly with a remedy (#325, `docs/INSTALL.md`).
+> Change v2.22 (2026-11-26, approved by SpecterAoD): locking stays mandatory; because the usual `ulimit -l` (8 MiB) is too small for the Argon2id workspace (256 MiB–1 GiB), the **Debian package grants only `/usr/bin/pqkeep` `CAP_IPC_LOCK`** (permitted only, made effective at startup; postinst, `libcap2-bin`); the program itself still raises neither limits nor privileges and reports a too small budget clearly with a remedy (#325, `docs/INSTALL.md`).
 
 > Change v2.1 (2026-11-06, approved by SpecterAoD): file and folder encryption (section 4a, step 3a).
 > Change v2.2 (2026-11-06, approved by SpecterAoD): memory hardening (step 2a), build hardening (`panic = "abort"`, checks for PIE/RELRO/NX and ASLR/DEP/CFG), weekly audit, sandboxing (step 5a), root warning (step 4), timing equalisation for `/v1/validate` (step 5).

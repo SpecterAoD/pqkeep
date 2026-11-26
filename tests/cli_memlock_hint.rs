@@ -56,7 +56,7 @@ fn low_memlock_limit_fails_with_clear_hint() {
     assert_eq!(out.status.code(), Some(1), "{err}");
     assert!(err.contains("allowed: 8 MiB"), "{err}");
     assert!(
-        err.contains("cap_ipc_lock+ep") && err.contains("INSTALL.md"),
+        err.contains("cap_ipc_lock+p") && err.contains("INSTALL.md"),
         "{err}"
     );
     assert_eq!(common::dir_names(dir.path()), vec!["a.txt"]);

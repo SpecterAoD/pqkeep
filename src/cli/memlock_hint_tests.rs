@@ -15,7 +15,7 @@ fn message_splits_into_both_languages() {
     #[cfg(target_os = "linux")]
     for part in [&de, &en] {
         assert!(
-            part.contains("cap_ipc_lock+ep") && part.contains("MiB"),
+            part.contains("cap_ipc_lock+p") && part.contains("MiB"),
             "{part}"
         );
     }

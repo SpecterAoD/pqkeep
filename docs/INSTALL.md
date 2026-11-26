@@ -79,11 +79,14 @@ unsicher:** Es bricht dann ab („Geheimer Speicher konnte nicht gesperrt werden
 Abhilfe), statt ungesperrt zu arbeiten.
 
 - **Debian-Paket:** `postinst` gibt bei jeder Installation und Aktualisierung nur
-  `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK` (`setcap cap_ipc_lock+ep`, Paket `libcap2-bin`).
+  `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK` (`setcap cap_ipc_lock+p`, Paket `libcap2-bin`).
+  Sie ist nur „erlaubt“ (permitted); pqkeep schaltet sie beim Start selbst ein. So startet das
+  Programm auch dort, wo die Fähigkeit fehlt (z. B. Docker-Container); dort gilt dann das normale
+  Limit (`--ulimit memlock=…`).
   Dauerhaft, für alle Benutzer, ohne Gruppe und ohne Neuanmeldung; andere Programme und Limits
-  bleiben unverändert. Prüfen: `getcap /usr/bin/pqkeep` → `cap_ipc_lock=ep`. Mit dem Paket
+  bleiben unverändert. Prüfen: `getcap /usr/bin/pqkeep` → `cap_ipc_lock=p`. Mit dem Paket
   verschwindet auch die Fähigkeit.
-- **tar.gz:** einmal `sudo setcap cap_ipc_lock+ep /pfad/zu/pqkeep` (nach jedem Austausch des
+- **tar.gz:** einmal `sudo setcap cap_ipc_lock+p /pfad/zu/pqkeep` (nach jedem Austausch des
   Programms erneut; nicht auf Dateisystemen mit `nosuid`).
 - **Alternativ** das Limit anheben, z. B. `/etc/security/limits.d/90-pqkeep.conf` mit
   `@pqkeep - memlock 1200000` (KiB, gilt nach neuer Anmeldung für die Gruppe), für Dienste
@@ -178,10 +181,12 @@ small. **Without raising it PQKeep is not insecure:** it stops ("secret memory c
 naming limit and remedy) instead of running unlocked.
 
 - **Debian package:** `postinst` gives only `/usr/bin/pqkeep` `CAP_IPC_LOCK` on every install and
-  upgrade (`setcap cap_ipc_lock+ep`, package `libcap2-bin`) – permanent, for all users, no group and no
+  upgrade (`setcap cap_ipc_lock+p`, package `libcap2-bin`). It is only "permitted"; pqkeep enables it
+  itself at startup, so the program also starts where the capability is unavailable (e.g. Docker
+  containers), where the normal limit then applies (`--ulimit memlock=…`) – permanent, for all users, no group and no
   re-login; other programs and limits stay unchanged. Check: `getcap /usr/bin/pqkeep` →
-  `cap_ipc_lock=ep`. Removing the package removes it as well.
-- **tar.gz:** once `sudo setcap cap_ipc_lock+ep /path/to/pqkeep` (again after replacing the binary;
+  `cap_ipc_lock=p`. Removing the package removes it as well.
+- **tar.gz:** once `sudo setcap cap_ipc_lock+p /path/to/pqkeep` (again after replacing the binary;
   not on `nosuid` file systems).
 - **Alternatively** raise the limit, e.g. `/etc/security/limits.d/90-pqkeep.conf` with
   `@pqkeep - memlock 1200000` (KiB, for the group after a new login), `LimitMEMLOCK=1200M` in a systemd

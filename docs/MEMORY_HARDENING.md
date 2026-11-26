@@ -96,7 +96,8 @@ eine begrenzte Windows-FFI-Erweiterung. Genutzt werden `region` (Speichersperre)
 - Linux erlaubt normalen Benutzern meist nur wenige MiB gesperrten Speicher (`ulimit -l`, oft 8 MiB).
   Das Budget muss jetzt auch den gesamten KDF-Arbeitspuffer abdecken; sonst sicherer Fehler.
   Das Programm erhöht unter Linux weder Limits noch Rechte. Das **Debian-Paket** gibt deshalb nur
-  `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK` (Speicher sperren, #325); bei tar.gz einmal von
+  `/usr/bin/pqkeep` die Fähigkeit `CAP_IPC_LOCK` (Speicher sperren, #325; nur „permitted“, beim
+  Start wirksam gemacht); bei tar.gz einmal von
   Hand (`docs/INSTALL.md`, Abschnitt „Gesperrter Speicher“). Ohne sie: klare Meldung mit Limit und
   Abhilfe, sicherer Abbruch. Windows fordert nur Working-Set-
   Kapazität im eigenen Prozess an; Verweigerung führt ebenfalls zum Fehler.
@@ -196,7 +197,8 @@ System/compiler limits are distinct from the enforced lock policy. See [LOCKED_S
    Argon2 blocks, HKDF/HMAC intermediates/state and explicit SecretBytes archive/STREAM buffers
    are locked; additional std/provider copies require separate remediation.
    Linux requires sufficient existing RLIMIT_MEMLOCK; the Debian package therefore grants only
-   `/usr/bin/pqkeep` `CAP_IPC_LOCK` (memory locking, #325), tar.gz users set it once by hand
+   `/usr/bin/pqkeep` `CAP_IPC_LOCK` (memory locking, #325; permitted only, made effective at
+   startup), tar.gz users set it once by hand
    (`docs/INSTALL.md`, "Locked memory"); without it a clear message names limit and remedy and the
    operation fails safely. Windows requests current-process working-set
    capacity and fails if denied. Temporary provider stack/register copies remain outside this guarantee;
