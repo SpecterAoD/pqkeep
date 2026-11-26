@@ -6,6 +6,14 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: Windows-Terminaleingabe (#147): Record-Ausrichtung mit sicheren Bounds-Prüfungen;
+  geliehene initialisierte Feldsichten statt zusätzlicher roher Dereferenzen.
+  Vier vermeidbare produktive unsafe-Stellen entfernt; gesperrter Speicher und
+  vollständiges volatiles Löschen bleiben erhalten. Kein Gesamtabschluss von #147.
+  EN: Reduce four avoidable production unsafe sites in protected Windows console
+  input; exclusive read borrows guard initialized field views without record copies.
+  Native FFI and padding wipe remain justified boundaries; other findings stay open.
+
 - DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
   Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.
   EN: The context menu asks for the level "privacy high" when encrypting (#315; terminal and windows,

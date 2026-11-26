@@ -7,8 +7,8 @@ checked Win32 FFI and locked caller storage. This does not close R6 or #147.
 
 ## Files and invariants / Dateien und Invarianten
 
-- `console_input_record.rs`: align_offset plus checked mutable subslices and a
-  safe raw-pointer cast select a complete aligned record. Retain exclusive
+- `console_input_record.rs`: align_offset plus checked slice bounds and safe
+  pointer arithmetic select a complete aligned record. Retain exclusive
   backing-storage lifetime and write-only volatile full-allocation padding wipe.
 - `console_input.rs`: native read requires an exclusive mutable Record borrow;
   only success plus count1 yields a lifetime-bound initialized shared record view.
