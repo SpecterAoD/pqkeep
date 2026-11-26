@@ -38,7 +38,7 @@ Vorschläge; mit dem Merge dieses Entwurfs freigegeben (Auftrag Thomas 25.11.202
 | P6 | Reihenfolge anonymer Zugänge | **aufsteigend nach KEM-Chiffrat** (kanonisch, aber zufällig – verrät nichts) | aufsteigend nach ID (gibt es nicht mehr) oder beliebig (nicht kanonisch) |
 | P7 | Padding-Verfahren | **PADMÉ** (Nikitin u. a. 2019) über die Länge des ganzen Klartexts; höchstens ~12 % Mehrgröße, meist < 3 %; verrät nur O(log log L) Bit | feste Blöcke (verraten mehr bei großen Dateien) oder Zufallslänge (mittelt sich über viele Dateien heraus) |
 | P8 | Schlüsselbindung | `commit` (wie v3, S4) **in jeder v4-Datei** – 32 Byte, schützt Mehr-Empfänger-Dateien auch ohne Signatur gegen „verschiedene Klartexte je Empfänger“ | nur mit Signatur |
-| P9 | Was signiert der verborgene Absender? | Header **und Klartext samt Füllung** (`SHA3-512(H) ‖ SHA3-512(N) ‖ U64(Länge N)`, Domäne „hidden“); zusammen mit `commit` ist das Chiffrat damit eindeutig bestimmt | das Chiffrat (wie v3): unmöglich, weil die Signatur selbst im Chiffrat steht |
+| P9 | Was signiert der verborgene Absender? | Header, **Klartext samt Füllung und die Grenze dazwischen** (`SHA3-512(H) ‖ SHA3-512(N) ‖ U64(Länge Nutzdaten) ‖ U64(Länge Füllung)`, Domäne „hidden“); ohne die Längen könnte ein Empfänger mit neu verschlüsseltem Trailer Füll-Nullbytes als signierten Inhalt ausgeben (Codex-Fund #324). Zusammen mit `commit` ist das Chiffrat damit eindeutig bestimmt | das Chiffrat (wie v3): unmöglich, weil die Signatur selbst im Chiffrat steht |
 
 ## Aufbau `.pqkf` v4
 
@@ -81,7 +81,7 @@ Typ 5. Header ≤ 256 KiB.
 ```text
 T = [absender_verborgen, nur HIDDEN_SENDER] ‖ U64(länge Nutzdaten) ‖ U64(länge Füllung) ‖ "PQKFEND\0"
 absender_verborgen = U8(algorithmus = 1) ‖ öffentlicher_schlüssel[2592] ‖ Σh[4627]
-Nachricht_h = D ‖ "sig/hidden\0" ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ U64(länge N)
+Nachricht_h = D ‖ "sig/hidden\0" ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ U64(länge Nutzdaten) ‖ U64(länge Füllung)
 Σh = ML-DSA-87.Sign(sk, Nachricht_h, Kontext "PQKeep/pqkf-sig/v1")
 Füllung: lauter Nullbytes; länge Füllung = PADMÉ(|N ohne Füllung| + |T|) − (|N ohne Füllung| + |T|), ohne PAD 0
 ```
@@ -156,7 +156,7 @@ entschlüsselt (Temporärdatei, am Ende auf die Nutzlänge gekürzt, dann veröf
 | P05 | Trailer: falsche Kennung, Längen ± 1, Füllung ≠ 0, nicht-PADMÉ-Länge, Archiv endet vor/nach der Füllung |
 | P06 | PADMÉ-Referenzwerte (unabhängiges Python-Skript) und Höchst-Mehrgröße |
 | P07 | anonym: richtiger Schlüssel an jeder Position 1–64; falscher Schlüssel → Meldung erst nach allen; Mischen Typ 2/5 abgelehnt; kem ≠ 3 abgelehnt; Reihenfolge nicht kanonisch abgelehnt |
-| P08 | verborgener Absender: Signatur kippen, anderer Absender, `--signer`, Header-/Klartext-Änderung, SIGNED + HIDDEN abgelehnt |
+| P08 | verborgener Absender: Signatur kippen, anderer Absender, `--signer`, Header-/Klartext-Änderung, **Grenze Nutzdaten/Füllung verschoben (neu verschlüsselter Trailer)**, SIGNED + HIDDEN abgelehnt |
 | P09 | `commit` falsch bei mehreren Empfängern (unterschiedliche Dateischlüssel je Hülle) → Fehler |
 | P10 | `--stdin`/`--stdout`: große Ströme mit konstantem Speicher, leere Eingabe, SIGPIPE, keine Temporärdatei |
 | P11 | Fuzz-Ziel `pqkf_header_v4` und Trailer-Parser (#153); Angriffskatalog QA1-FMT-* ergänzen |
@@ -200,8 +200,9 @@ option bits (reader holds back only that many bytes); P4 **D1 exception: anonymo
 request, visible IDs (D1) stay the default**; P5 anonymous slots **ML-KEM-1024 only** (equal ciphertext
 length); P6 anonymous slots sorted ascending by KEM ciphertext; P7 **PADMÉ** padding over the whole
 plaintext length (at most ~12 %, usually < 3 %, leaks O(log log L) bits); P8 key commitment `commit` in
-**every** v4 file; P9 the hidden sender signs `SHA3-512(H) ‖ SHA3-512(N) ‖ U64(len N)` (header and
-plaintext including padding), which together with `commit` fixes the ciphertext.
+**every** v4 file; P9 the hidden sender signs `SHA3-512(H) ‖ SHA3-512(N) ‖ U64(payload length) ‖ U64(padding length)`
+(header, plaintext including padding and the boundary between them – otherwise a recipient could
+re-encrypt the trailer and pass padding zeros off as signed content, Codex finding on #324), which together with `commit` fixes the ciphertext.
 
 **Layout:**
 
@@ -215,7 +216,7 @@ anonymous slot = U8(5) ‖ U8(kem = 3) ‖ KEM ciphertext[1568] ‖ nonce[12]
 Wanon  = HKDF-SHA3-256(salt = ct, IKM = ss, info = D ‖ "wrap/anonymous\0", 32),  D = "PQKeep/file/v4\0"
 commit = SHA3-256(D ‖ "commit\0" ‖ file key)
 T = [hidden sender: U8(1) ‖ public key[2592] ‖ Σh[4627]] ‖ U64(payload length) ‖ U64(padding length) ‖ "PQKFEND\0"
-Σh = ML-DSA-87.Sign(sk, D ‖ "sig/hidden\0" ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ U64(len N), ctx "PQKeep/pqkf-sig/v1")
+Σh = ML-DSA-87.Sign(sk, D ‖ "sig/hidden\0" ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ U64(payload len) ‖ U64(padding len), ctx "PQKeep/pqkf-sig/v1")
 padding = zero bytes up to PADMÉ(|payload| + |T|);  PADMÉ(L): E = ⌊log2 L⌋, S = ⌊log2 E⌋ + 1, z = E − S, round up to 2^z
 ```
 
@@ -253,7 +254,7 @@ truncation is always detected, decryption never produces partial output.
 content combination incl. empty and boundary streams; P03 downgrade attempts; P04 truncation at every
 chunk boundary and inside the trailer, appending, reordering; P05 trailer tampering; P06 PADMÉ
 reference values from an independent script; P07 anonymous slots at every position 1–64, wrong key,
-mixing/level/order rejected; P08 hidden sender tampering, `--signer`, SIGNED + HIDDEN rejected; P09 wrong
+mixing/level/order rejected; P08 hidden sender tampering incl. a shifted payload/padding boundary (re-encrypted trailer), `--signer`, SIGNED + HIDDEN rejected; P09 wrong
 `commit` with several recipients; P10 `--stdin`/`--stdout` large streams, empty input, SIGPIPE, no
 temporary file; P11 fuzz target `pqkf_header_v4` and trailer parser (#153), attack catalogue QA1-FMT-*.
 
