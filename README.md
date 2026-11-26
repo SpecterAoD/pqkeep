@@ -12,7 +12,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-> **Status: beta (`v0.1.0-beta.3`) – not audited, not FIPS 140 validated.**
+> **Status: beta (`v0.1.0-beta.4`) – not audited, not FIPS 140 validated.**
 > File formats and options may still change before 1.0. Please do not use PQKeep to protect
 > secrets you cannot afford to lose. See [Status and limitations](#status-and-limitations).
 
@@ -74,9 +74,11 @@ today's common public-key encryption ("harvest now, decrypt later").
   64 recipients), streaming AEAD, safe extraction rules, no partial output.
 - **Optional second factor** (since beta.3): a factor file (`pqkeep factor`, `--factor-file`; also in
   the menu and the context menu) in addition to the passphrase – see [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
-- **Sender signature in `.pqkf`** (since #44): `encrypt --sign-with` signs the encrypted file itself;
+- **Sender signature in `.pqkf`** (since beta.4): `encrypt --sign-with` signs the encrypted file itself;
   `decrypt`/`check` verify it and name the sender, `--signer` requires a specific one
   ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
+- **Random outer file names** (since beta.4): `encrypt --random-name` / `--privacy high` hides the
+  original name; `decrypt` restores it from the archive ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
 - **Backup checks** (since beta.3): `pqkeep check` verifies encrypted files completely without
@@ -141,7 +143,7 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
 
 ### Status and limitations
 
-- **Development status:** third beta (`v0.1.0-beta.3`), active development. Formats and options
+- **Development status:** fourth beta (`v0.1.0-beta.4`), active development. Formats and options
   may change before 1.0. Changes: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit status:** no external security audit has been performed. An independent review is
   planned before 1.0.
@@ -286,9 +288,11 @@ sammeln, später entschlüsseln“).
 - **Optionaler zweiter Faktor** (seit beta.3): eine Faktordatei (`pqkeep factor`, `--factor-file`;
   auch im Menü und im Kontextmenü) zusätzlich zur Passphrase – siehe
   [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md).
-- **Absender-Signatur in `.pqkf`** (seit #44): `encrypt --sign-with` signiert die verschlüsselte Datei
+- **Absender-Signatur in `.pqkf`** (seit beta.4): `encrypt --sign-with` signiert die verschlüsselte Datei
   selbst; `decrypt`/`check` prüfen sie und nennen den Absender, `--signer` verlangt einen bestimmten
   ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
+- **Zufällige äußere Dateinamen** (seit beta.4): `encrypt --random-name` / `--privacy high` verbirgt
+  den Originalnamen; `decrypt` stellt ihn aus dem Archiv her ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)).
 - **Signaturen:** `sign`/`verify` mit ML-DSA-87 über den SHA3-512 der Datei (abgesetzte `.pqsig`;
   keine eIDAS-Signatur).
 - **Backup-Prüfung** (seit beta.3): `pqkeep check` prüft verschlüsselte Dateien vollständig, ohne
@@ -355,7 +359,7 @@ verwenden; `--passphrase-file` wird nicht unterstützt. Siehe [`docs/REKEY.md`](
 
 ### Stand und Grenzen
 
-- **Entwicklungsstand:** dritte Beta (`v0.1.0-beta.3`), aktive Entwicklung. Formate und Optionen
+- **Entwicklungsstand:** vierte Beta (`v0.1.0-beta.4`), aktive Entwicklung. Formate und Optionen
   können sich bis 1.0 ändern. Änderungen: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit:** Es gab noch kein externes Sicherheitsaudit; eine unabhängige Prüfung ist vor 1.0
   geplant.

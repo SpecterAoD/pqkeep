@@ -6,6 +6,26 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+## [0.1.0-beta.4] – 2026-11-26
+
+Fourth public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
+
+### Known limitations
+- No external audit; cryptographic crates are 0.x versions.
+- Signed files (`--sign-with`) use the new **format v3**; beta.1 to beta.3 cannot open them (they report
+  "unsupported"). Files with a factor file or several recipients use format v2 (not readable by beta.1
+  and beta.2). Everything else is still written as v1.
+- Random outer names need no new format, but restoring the original name automatically needs beta.4;
+  older betas decrypt such files with `-o/--out`.
+- Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
+  The window and context menu flows were **not hand-tested on Windows** (#259).
+- Locked memory is mandatory (up to 1 GiB for the Argon2id workspace). The Debian package grants
+  `/usr/bin/pqkeep` `CAP_IPC_LOCK` for this (#325); with the `.tar.gz` run `sudo setcap cap_ipc_lock+p`
+  once or raise `ulimit -l` (`docs/INSTALL.md`, "Locked memory"). Without it PQKeep stops with a clear
+  message instead of running unlocked.
+- ARM64 with 64 KiB pages is untested (#163).
+- See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
+
 - DE: Gesperrter Speicher mit Standard-Linux (#325): Das Debian-Paket gibt nur `/usr/bin/pqkeep`
   `CAP_IPC_LOCK` (postinst, neue Abhängigkeit `libcap2-bin`), damit der Argon2id-Puffer trotz
   `ulimit -l` = 8 MiB gesperrt werden kann; ein zu kleines Budget meldet PQKeep jetzt mit Limit,
@@ -401,6 +421,7 @@ First public beta. **Not audited, not FIPS 140 validated – do not use for secr
 - Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
 - See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
 
+[0.1.0-beta.4]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.4
 [0.1.0-beta.3]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.1
