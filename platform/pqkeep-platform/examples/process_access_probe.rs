@@ -4,6 +4,10 @@
 //! No thread protection, existing-handle revocation, dump guarantee or R7 acceptance.
 
 #[cfg(windows)]
+#[path = "process_access_probe/privileges.rs"]
+mod privileges;
+
+#[cfg(windows)]
 mod windows {
     use std::io::{self, Read, Write};
     use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle};
@@ -124,6 +128,10 @@ mod windows {
     }
 
     fn inspect(pid: u32) -> io::Result<()> {
+        eprintln!(
+            "INSPECTOR debug_privilege_enabled={}",
+            super::privileges::debug_enabled()?
+        );
         for rights in [0x10, 0x20, 0x08, 0x40, 0x02, WRITE_DAC, 0x80000] {
             match open(pid, rights) {
                 Ok(_) => {
