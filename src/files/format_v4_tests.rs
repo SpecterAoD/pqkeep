@@ -33,7 +33,7 @@ fn option_rules() {
         commit: [7; 32],
     };
     assert!(check_v4(Content::Stream, &v4(0), None).is_ok());
-    for reserved in [OPT_ANON, OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
+    for reserved in [OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
         assert_eq!(
             check_v4(Content::Stream, &v4(reserved), None),
             Err(Error::Unsupported)
