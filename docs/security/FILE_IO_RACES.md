@@ -27,16 +27,21 @@ Reihenfolge freigegeben: Veröffentlichung Linux → Windows → Quellen → Res
 | Ordnerziel veröffentlichen | prüfen, dann `rename` – unter POSIX ersetzt `rename` einen leeren Ordner | **Lücke** (2) | `directory_target_created_before_rename_is_not_replaced` (ignoriert bis PR 2) |
 | Quellen öffnen | Durchlauf prüft mit `symlink_metadata`, später `File::open` folgt Symlinks | **Lücke** (1): ein dazwischen gesetzter Symlink lässt eine andere, für den Nutzer lesbare Datei verschlüsseln | `source_swapped_for_symlink_is_never_read` (ignoriert bis PR 4) |
 | Pfade der Elternordner | Operationen über Pfade, nicht über Verzeichnis-Handles | Restrisiko: Austausch eines Elternordners gegen einen Symlink | PR 4 (Durchlauf über Handles) |
+| Temporärausgabe nach dem Anlegen | Weitere Schritte über Pfade, nicht über Handles | **Offenes Risiko** in fremd beschreibbaren Zielordnern ohne Sticky-Bit (Austausch der Temporärausgabe); Behebung mit Vorrang in Arbeit | folgt mit der Behebung |
 | Rest nach Kill | benannte Temporärdatei kann bleiben (Audit #335, L1) | Restrisiko (5) | `tests/integrity_kill.rs` |
 
-Alle Lücken waren bereits in [FILE_FORMAT.md](../FILE_FORMAT.md) unter „Grenzen“ dokumentiert;
-keine erlaubt einen Pfadausbruch. Die Tests stellen sie über Test-Haltepunkte (nur `cfg(test)`,
+Die ersten drei Lücken waren bereits in [FILE_FORMAT.md](../FILE_FORMAT.md) unter „Grenzen“
+dokumentiert. Der Austausch der Temporärausgabe in fremd beschreibbaren Zielordnern ist ein
+**offenes Risiko** (Hinweis aus dem Review von #357) und wird mit Vorrang behoben; bis dahin nur
+vertrauenswürdige Zielordner (nur Eigentümer schreibt, oder Sticky-Bit) verwenden. Die Tests stellen sie über Test-Haltepunkte (nur `cfg(test)`,
 kein produktiver Hook) deterministisch nach: `cargo test --lib race_tests -- --include-ignored`
 zeigt heute drei Fehlschläge, die mit PR 2 bzw. PR 4 verschwinden und dann scharf geschaltet
 werden.
 
 ## Geplante Abhilfe
 
+- **Vorrang (Linux und Windows):** Ausgabe durchgehend über Handles statt Pfade, Prüfung des
+  veröffentlichten Objekts.
 - **PR 2 (Linux):** Datei-, Strom- und `.pqkf`-Ziele als namenlose Datei (`O_TMPFILE`) im
   Zielordner, Veröffentlichung per `linkat` (scheitert bei vorhandenem Ziel; zuerst
   `AT_EMPTY_PATH`, sonst `/proc/self/fd`); Ordner per `renameat2(RENAME_NOREPLACE)`; Rückfall auf
@@ -71,11 +76,15 @@ directory publication are check-then-`rename`, which replaces a target created i
 during the walk but opened later with `File::open`, which follows symlinks – a symlink swapped in
 between makes PQKeep encrypt another file readable by the user – goal (1); parent directories are
 handled by path, not by directory handles; a named temporary file may remain after a kill (audit
-#335, L1). All gaps were already documented in [FILE_FORMAT.md](../FILE_FORMAT.md); none allows a
-path escape. `src/files/race_tests.rs` reproduces them deterministically via test checkpoints
+#335, L1). The first three gaps were already documented in [FILE_FORMAT.md](../FILE_FORMAT.md).
+Further steps after creating the temporary output also use paths instead of handles – an **open
+risk** in foreign-writable target directories without the sticky bit (replacement of the temporary
+output; pointed out in the review of #357), fixed with priority; until then use trusted target
+directories only (owner-only or sticky). `src/files/race_tests.rs` reproduces them deterministically via test checkpoints
 (`cfg(test)` only, no productive hook); the gap tests are `#[ignore]` until PR 2 or PR 4 fixes them.
 
-**Planned remedy:** PR 2 Linux – unnamed `O_TMPFILE` outputs published with `linkat` (fails if the
+**Planned remedy:** priority – handle-based output throughout and verification of the published
+object (Linux and Windows); PR 2 Linux – unnamed `O_TMPFILE` outputs published with `linkat` (fails if the
 target exists; `AT_EMPTY_PATH` first, else `/proc/self/fd`), directories via
 `renameat2(RENAME_NOREPLACE)`, fallback to today's path only where the file system cannot – never
 weaker than today; PR 3 Windows – delete-pending file, handle-based rename without replace; PR 4
