@@ -106,16 +106,18 @@ pub fn run(p: &OwnedProtection, m: &ArgMatches) -> pqkeep::Result<(Option<PathBu
     let mut input = std::io::stdin().lock();
     if m.get_flag(STDOUT) {
         let out = std::io::stdout().lock();
-        let report =
-            p.with(|prot| files::encrypt_stream(&mut input, out, prot, p.signer.as_ref()))?;
+        let report = p.with(|prot| {
+            files::encrypt_stream(&mut input, out, prot, p.signer.as_ref(), p.options)
+        })?;
         return Ok((None, report));
     }
     let out = m
         .get_one::<PathBuf>("out")
         .cloned()
         .ok_or(pqkeep::Error::InvalidInput { field: "out" })?;
-    let report =
-        p.with(|prot| files::encrypt_stream_to(&mut input, &out, prot, p.signer.as_ref()))?;
+    let report = p.with(|prot| {
+        files::encrypt_stream_to(&mut input, &out, prot, p.signer.as_ref(), p.options)
+    })?;
     Ok((Some(out), report))
 }
 

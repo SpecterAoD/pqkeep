@@ -92,9 +92,19 @@ impl<W: Write> ArchiveWriter<W> {
         Ok(())
     }
 
-    pub fn finish(mut self) -> Result<W> {
+    #[cfg(test)]
+    pub fn finish(self) -> Result<W> {
+        self.finish_with(None)
+    }
+
+    /// DE: Wie [`Self::finish`]; `tail` = Format v4 mit Füllung/Trailer (`true` = PAD).
+    /// EN: Like [`Self::finish`]; `tail` = format v4 with padding/trailer (`true` = PAD).
+    pub fn finish_with(mut self, tail: Option<bool>) -> Result<W> {
         self.framing.write(&mut self.enc, u64::from(TAG_END), 1)?;
         self.framing.write(&mut self.enc, self.framing.count(), 8)?;
+        if let Some(padded) = tail {
+            super::stream_v4::push_tail(&mut self.enc, padded)?;
+        }
         Ok(self.enc.finish()?.0)
     }
 }
@@ -103,13 +113,23 @@ impl<W: Write> ArchiveWriter<W> {
 pub(crate) struct ArchiveReader<R: Read> {
     dec: DecryptReader<R>,
     framing: Framing,
+    /// DE: Format v4: nach dem Archiv folgen Füllung (`true` = PAD) und Trailer.
+    /// EN: Format v4: padding (`true` = PAD) and trailer follow the archive.
+    tail: Option<bool>,
 }
 
 impl<R: Read> ArchiveReader<R> {
+    #[cfg(test)]
     pub fn new(dec: DecryptReader<R>) -> Result<Self> {
+        Self::with_tail(dec, None)
+    }
+
+    /// DE: Wie [`Self::new`]; `tail` für Format v4. EN: Like [`Self::new`]; `tail` for format v4.
+    pub fn with_tail(dec: DecryptReader<R>, tail: Option<bool>) -> Result<Self> {
         Ok(Self {
             dec,
             framing: Framing::new()?,
+            tail,
         })
     }
 
@@ -167,13 +187,19 @@ impl<R: Read> ArchiveReader<R> {
 
     /// DE: Roher entschlüsselter Strom (Inhalt „Strom“, kein Archiv; #83).
     /// EN: Raw decrypted stream (content "stream", no archive; #83).
-    pub fn into_stream(self) -> DecryptReader<R> {
-        self.dec
+    pub fn into_stream(self) -> (DecryptReader<R>, bool) {
+        (self.dec, self.tail.unwrap_or(false))
     }
 
     /// DE: Bestätigt das Stromende (nichts mehr nach dem Ende-Eintrag).
     /// EN: Confirms the end of the stream (nothing after the end entry).
     pub fn finish(self) -> Result<()> {
-        self.dec.finish()
+        match self.tail {
+            None => self.dec.finish(),
+            Some(padded) => {
+                let len = self.dec.position();
+                super::stream_v4::finish_tail(self.dec, len, padded)
+            }
+        }
     }
 }

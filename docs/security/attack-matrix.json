@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.3.0",
+  "matrix_version": "1.4.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -5411,7 +5411,7 @@
         },
         {
           "path": "src/files/stream_v4_tests.rs",
-          "symbol": "tampered_trailers_are_rejected",
+          "symbol": "tampered_trailers_and_padding_are_rejected",
           "kind": "rust-unit",
           "stage": "existing"
         },
@@ -5439,6 +5439,101 @@
       "priority": "P1",
       "issues": [
         83,
+        151,
+        316
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-012",
+      "category": "Container",
+      "component_paths": [
+        "src/files/format_v4.rs",
+        "src/files/stream_v4.rs",
+        "src/files/archive.rs",
+        "src/files/encrypt.rs"
+      ],
+      "scenario": {
+        "de": "Füllung (Format v4, PAD): PAD-Bit kippen, Füllung mit Nicht-Null-Bytes, nicht kanonische Füllungslänge, Längen im Abschluss-Block verschieben, Archiv endet vor/nach der Füllung (mit bekanntem Schlüssel neu verschlüsselt)",
+        "en": "Padding (format v4, PAD): flip the PAD bit, non-zero padding bytes, non-canonical padding length, shifted lengths in the trailer, archive ending before/after the padding (re-encrypted with a known key)."
+      },
+      "expected_behavior": {
+        "de": "Fehler ohne Ausgabe; Füllung gelangt nie in die entschlüsselte Datei; Dateigröße folgt PADMÉ",
+        "en": "error without output; padding never reaches the decrypted file; file size follows PADMÉ"
+      },
+      "boundary": {
+        "de": "Füllung verbirgt die genaue Größe, nicht die Größenordnung (PADMÉ verrät O(log log L) Bit), nicht Anzahl oder Zeitpunkt der Dateien.",
+        "en": "Padding hides the exact size, not its order of magnitude (PADMÉ leaks O(log log L) bits), nor the number or timing of files."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_padding.rs",
+          "symbol": "toggling_the_pad_bit_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_padding.rs",
+          "symbol": "padded_stream_size_follows_padme_and_hides_small_differences",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/stream_v4_tests.rs",
+          "symbol": "tampered_trailers_and_padding_are_rejected",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/stream_v4_tests.rs",
+          "symbol": "archive_tail_accepts_only_zero_padding_after_the_archive",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/format_v4_tests.rs",
+          "symbol": "padme_reference_values",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
         151,
         316
       ],

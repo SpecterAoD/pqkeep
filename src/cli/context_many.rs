@@ -194,7 +194,7 @@ pub(super) fn terminal(
     // DE: 1 = Empfänger, 2 = Passphrase und Faktordatei. EN: 1 = recipients, 2 = with factor file.
     let mode = select(s.ctx_mode, &modes)?;
     if super::privacy::ask_terminal(lang)? {
-        args.push(super::privacy::RANDOM_FLAG);
+        args.extend(super::privacy::LEVEL_HIGH);
     }
     let extra = match mode {
         1 => recipients_ui::to_args(&recipients(s, lang)?),

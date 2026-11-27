@@ -71,6 +71,8 @@ pub(super) struct OwnedProtection {
     recipients: Vec<envelope::PublicKeyFile>,
     /// DE: Signaturschlüssel des Absenders (#44). EN: Sender's signing key (#44).
     pub(super) signer: Option<envelope::UnlockedKey>,
+    /// DE: Optionen wie Füllung (#316). EN: Options such as padding (#316).
+    pub(super) options: files::EncryptOptions,
 }
 
 impl OwnedProtection {
@@ -97,10 +99,8 @@ impl OwnedProtection {
     /// DE: Verschlüsselt eine Quelle, mit `--sign-with` signiert (Format v3).
     /// EN: Encrypts one source, signed with `--sign-with` (format v3).
     pub(super) fn encrypt(&self, src: &Path, out: &Path) -> pqkeep::Result<Report> {
-        self.with(|p| match &self.signer {
-            Some(key) => files::encrypt_signed(src, out, p, key),
-            None => files::encrypt(src, out, p),
-        })
+        let key = self.signer.as_ref();
+        self.with(|p| files::encrypt_with_options(src, out, p, key, self.options))
     }
 
     /// DE: Mehrere Quellen als Container unter dem obersten Ordner `root` (#315).
@@ -111,15 +111,14 @@ impl OwnedProtection {
         root: &str,
         out: &Path,
     ) -> pqkeep::Result<Report> {
-        self.with(|p| files::encrypt_many_under(list, root, out, p, self.signer.as_ref()))
+        let (key, root) = (self.signer.as_ref(), Some(root));
+        self.with(|p| files::encrypt_many_with_options(list, root, out, p, key, self.options))
     }
 
     /// DE: Mehrere Quellen als ein Container. EN: Several sources as one container.
     pub(super) fn encrypt_many(&self, list: &[&Path], out: &Path) -> pqkeep::Result<Report> {
-        self.with(|p| match &self.signer {
-            Some(key) => files::encrypt_many_signed(list, out, p, key),
-            None => files::encrypt_many(list, out, p),
-        })
+        let key = self.signer.as_ref();
+        self.with(|p| files::encrypt_many_with_options(list, None, out, p, key, self.options))
     }
 }
 
@@ -139,6 +138,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
             passphrase: None,
             recipients,
             signer,
+            options: super::privacy::options(m),
         });
     }
     let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
@@ -161,6 +161,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
         passphrase: Some((strong, profile.params(), factor)),
         recipients,
         signer,
+        options: super::privacy::options(m),
     })
 }
 

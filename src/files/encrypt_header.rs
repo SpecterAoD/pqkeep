@@ -23,12 +23,12 @@ pub(super) fn build(
     prefix: [u8; PREFIX_LEN],
     protection: &Protection<'_>,
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    (signer, padded): (Option<&[u8]>, bool),
 ) -> Result<(Vec<u8>, Vec<u8>)> {
-    if signer.is_some() || content == Content::Stream {
+    if signer.is_some() || padded || content == Content::Stream {
         // DE: Mit Absender immer v3, Ströme immer v4 (auch bei einem einzelnen Zugang).
         // EN: With a sender always v3, streams always v4 (even for a single slot).
-        let header = v3_header(content, prefix, protection, file_key, signer)?;
+        let header = v3_header(content, prefix, protection, file_key, (signer, padded))?;
         return Ok((header.encode()?, header.stream_aad()?));
     }
     let v1 = match protection {
@@ -57,7 +57,7 @@ pub(super) fn build(
                 passphrase.as_ref(),
                 recipients,
                 file_key,
-                signer,
+                (signer, false),
             )?;
             return Ok((header.encode()?, header.stream_aad()?));
         }
@@ -71,7 +71,7 @@ fn v3_header(
     prefix: [u8; PREFIX_LEN],
     protection: &Protection<'_>,
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    signer: (Option<&[u8]>, bool),
 ) -> Result<super::HeaderV2> {
     match protection {
         Protection::Passphrase { passphrase, params } => {

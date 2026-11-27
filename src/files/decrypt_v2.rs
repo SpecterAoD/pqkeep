@@ -13,10 +13,16 @@
 use sha3::{Digest, Sha3_256};
 
 use super::Unlock;
+use super::format::Content;
 use super::format_v2::{HeaderV2, Slot};
+use super::format_v4::{OPT_PAD, check_commit_v4};
+use super::signed_io::{self, SignatureCheck};
+use super::signer_v3::{FILE_SIGNATURE_LEN, check_commit};
 use crate::crypto::factor::Factor;
+use crate::crypto::stream::PREFIX_LEN;
 use crate::crypto::v2::{self, Domain};
 use crate::crypto::{KeyAlgorithm, SecretBytes, aead, kem};
+use crate::envelope::PublicKeyFile;
 use crate::envelope::UnlockedKey;
 use crate::security::Passphrase;
 use crate::{Error, Result};
@@ -104,4 +110,50 @@ fn with_key(header: &HeaderV2, key: &UnlockedKey) -> Result<SecretBytes> {
     // EN: Clear message before any decapsulation (IDs are visible, D1).
     let field = if any { "recipient" } else { "key_kind" };
     Err(Error::InvalidInput { field })
+}
+
+/// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
+pub(super) struct Opened {
+    pub file_key: SecretBytes,
+    pub stream_aad: Vec<u8>,
+    pub prefix: [u8; PREFIX_LEN],
+    pub content: Content,
+    /// DE: Format v4: Füllung/Trailer folgen (`true` = PAD). EN: Format v4: padding/trailer follow.
+    pub tail: Option<bool>,
+}
+
+/// DE: v2/v3/v4 öffnen: verlangter Absender, Dateischlüssel, Schlüsselbindung (v4 immer), bei
+/// Signatur die Prüfung samt Länge des Chiffrats.
+/// EN: Opening v2/v3/v4: required sender, file key, key commitment (always for v4), with a signature
+/// the check including the ciphertext length.
+pub(super) fn open_header(
+    header: &HeaderV2,
+    unlock: &Unlock<'_>,
+    signer: Option<&PublicKeyFile>,
+    file_len: u64,
+) -> Result<(Opened, Option<(SignatureCheck, u64)>)> {
+    signed_io::require(signer, header.signer.as_ref())?;
+    let file_key = unwrap_key(header, unlock)?;
+    match (&header.v4, &header.signer) {
+        (Some(v4), _) => check_commit_v4(v4, file_key.expose())?,
+        (None, Some(s)) => check_commit(s, file_key.expose())?,
+        (None, None) => {}
+    }
+    let check = match &header.signer {
+        Some(s) => {
+            let bytes = header.encode()?;
+            let fixed = (bytes.len() + FILE_SIGNATURE_LEN) as u64;
+            let body_len = file_len.checked_sub(fixed).ok_or(Error::Decrypt)?;
+            Some((SignatureCheck::new(bytes, s.clone()), body_len))
+        }
+        None => None,
+    };
+    let opened = Opened {
+        file_key,
+        stream_aad: header.stream_aad()?,
+        prefix: header.prefix,
+        content: header.content,
+        tail: header.v4.as_ref().map(|v4| v4.options & OPT_PAD != 0),
+    };
+    Ok((opened, check))
 }
