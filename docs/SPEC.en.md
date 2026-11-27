@@ -472,6 +472,13 @@ GUI/real IME, private scalars/compiler/stack/registers and complete process/dump
 isolation remain OPEN. No new unprotected fallback. See the
 [terminal plan](security/TERMINAL_INPUT_PLAN.md).
 
+Select record alignment using checked byte ranges only. Only a successful native
+read with exactly one record yields an initialized borrowed view; its exclusive
+guard borrow prevents another overwrite. Check EventType before borrowing the key
+union variant, then read ordinary fields safely. Native calls, checked union
+access and full padding wiping retain their justified unsafe boundaries. See the
+[borrow plan](security/SAFE_RECORD_BORROW_PLAN.md).
+
 Hold safe mode continuously through confirmation/retries. Linux verifies flags/read
 timing before the first prompt; error/cancel/unwind uses TCSAFLUSH to discard queued
 suffixes before releasing echo, while success preserves typeahead. Windows verifies
