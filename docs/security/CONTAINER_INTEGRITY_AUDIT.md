@@ -47,7 +47,16 @@ Geheimnis-Lebensdauer im Speicher (#147).
 
 Alle Pfade: Abbruch durch Kill (G6), Frische (G4), Zählergrenze (G7).
 
-## Lücken (Tests folgen in PR 2)
+## Lücken und Stand
+
+Stand nach PR 2 (#335): **G1–G6 geschlossen, ohne Befund** – alle Varianten werden abgewiesen, nie
+eine Ausgabe. Belege: `fuzz/fuzz_targets/pqkf_header.rs` (G1, verlangt `encode == gelesene Bytes`;
+lokal 5,8 Mio. Läufe mit echten v1-Headern als Startdaten), `tests/integrity_headers.rs` (G2, jedes
+Header-Byte aller acht Formatvarianten mit `decrypt`, reihum `check`/`list`/`--original-name`),
+`tests/integrity_chunks.rs` (G3, G4), `src/files/recovery_v4_tests.rs` (G5),
+`tests/integrity_kill.rs` (G6, Linux). Offen: **G7** (nach #147). Angriffsmatrix 1.7.0:
+QA1-FMT-003 abgedeckt, QA1-REC-003 teilweise (Grenze L1), neu QA1-FMT-015.
+
 
 - **G1** v1-Header-Fuzzer prüft nur, dass erneutes Kodieren stabil ist, nicht `encode == gelesene
   Bytes` wie bei v2. Da die AAD aus dem neu kodierten Header entsteht, soll auch v1 strikt
@@ -118,6 +127,12 @@ paths), G3 (file-level chunk swap/duplicate/remove, cuts at every boundary and i
 a chunk from a second file) and G5 (fault plans for v4); all paths: kill during decrypt (G6),
 freshness at file level (G4), counter limit (G7, code reading only – a test needs a test hook in
 `src/crypto`, deferred until after #147).
+
+**Status after PR 2 (#335): G1–G6 closed, no finding** – every variant is rejected, never any
+output (evidence: `fuzz/fuzz_targets/pqkf_header.rs`, `tests/integrity_headers.rs`,
+`tests/integrity_chunks.rs`, `src/files/recovery_v4_tests.rs`, `tests/integrity_kill.rs`); open: G7
+(after #147). Attack matrix 1.7.0: QA1-FMT-003 covered, QA1-REC-003 partial (limit L1), new
+QA1-FMT-015.
 
 **Note (no finding):** `fill_dir` sums `report.bytes` without `checked_add` (`scan::directory`
 uses it); an overflow needs 2^64 bytes actually read and is unreachable; aligning is optional and

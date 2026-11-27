@@ -143,6 +143,11 @@ sehen nur „signiert, Absender verborgen“; wer entschlüsseln kann, prüft de
   tauschen (TOCTOU); das betrifft nur Angreifer mit Schreibrechten im Quellordner.
 - Ordner werden per „Prüfen + Umbenennen“ veröffentlicht; ein exakt gleichzeitig angelegtes Ziel
   wäre ein theoretisches Rennen (unter Windows schlägt das Umbenennen dann fehl).
+- Wird PQKeep beim Entschlüsseln hart beendet (Kill, Absturz, Stromausfall), kann eine
+  **temporäre Klartextdatei** mit verstecktem Namen (`.name.tmp-…`, Linux 0600) liegen bleiben; unter
+  dem Zielnamen erscheint nie etwas Ungeprüftes. Gegen Reste auf dem Datenträger hilft nur eine
+  **Vollverschlüsselung** (LUKS, BitLocker); namenlose Temporärdateien sind in #338 geplant
+  ([Audit](security/CONTAINER_INTEGRITY_AUDIT.md)).
 - Speicherbedarf konstant (etwa zwei Blöcke), unabhängig von der Dateigröße.
 
 ---
@@ -227,7 +232,10 @@ decrypting, but before any output. The file grows by about 7 KB.
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a
 file for a symlink between check and open (TOCTOU); directory publishing is check + rename; memory use
-is constant.
+is constant; if PQKeep is killed while decrypting (kill, crash, power loss) a **temporary plaintext
+file** with a hidden name (`.name.tmp-…`, Linux 0600) may remain – nothing unverified ever appears under
+the target name; against leftovers on the medium only **full-disk encryption** (LUKS, BitLocker) helps;
+unnamed temporary files are planned in #338 ([audit](security/CONTAINER_INTEGRITY_AUDIT.md)).
 
 
 ## Archivliste / Archive listing (#117)

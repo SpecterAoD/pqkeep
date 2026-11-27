@@ -24,6 +24,7 @@ follows with the next baseline run.
 1.4.0 adds QA1-FMT-012 (#316, PADMÉ padding): 62 cases; CI evidence follows likewise.
 1.5.0 adds QA1-FMT-013 (#316/#340, anonymous recipients, experimental, partial): 63 cases.
 1.6.0 adds QA1-FMT-014 (#316, hidden sender): 64 cases.
+1.7.0 adds QA1-FMT-015 (#335, container integrity matrix); QA1-FMT-003 covered, QA1-REC-003 partial (kill test, limit L1 → #338): 65 cases.
 [Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
@@ -189,6 +190,7 @@ CI-Nachweis folgt mit dem nächsten Baseline-Lauf.
 1.4.0 ergänzt QA1-FMT-012 (#316, Füllung nach PADMÉ): 62 Fälle; CI-Nachweis folgt ebenso.
 1.5.0 ergänzt QA1-FMT-013 (#316/#340, anonyme Empfänger, experimentell, teilweise): 63 Fälle.
 1.6.0 ergänzt QA1-FMT-014 (#316, verborgener Absender): 64 Fälle.
+1.7.0 ergänzt QA1-FMT-015 (#335, Integritätsmatrix der Container); QA1-FMT-003 abgedeckt, QA1-REC-003 teilweise (Kill-Test, Grenze L1 → #338): 65 Fälle.
 [Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung

@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Integritäts-Audit der Container** (#335): alle Entschlüsselungspfade (v1–v4) geprüft, kein Befund;
+  neue Regressionstests (jedes Header-Byte, Blocktausch/Abschneiden auf Dateiebene, Frische, Fehlerpläne
+  v4, Kill während `decrypt`). Hinweis: Nach Kill/Stromausfall kann temporärer Klartext unter verstecktem
+  Namen bleiben – Vollverschlüsselung empfohlen, namenlose Temporärdateien folgen in #338.
+  EN: **Container integrity audit** (#335): all decrypt paths (v1–v4) reviewed, no finding; new
+  regression tests (every header byte, file-level chunk swap/cut, freshness, v4 fault plans, kill during
+  `decrypt`). Note: after kill/power loss temporary plaintext may remain under a hidden name – full-disk
+  encryption recommended, unnamed temporary files follow in #338.
+
 - DE: **Stufe „Privatsphäre hoch“ vollständig** (#316): `--privacy high` (Menü, Kontextmenü) setzt
   zufälligen Namen, Füllung, beim Signieren den verborgenen Absender und bei ML-KEM-1024-Empfängern die
   **experimentellen anonymen Empfänger** – mit Warnung; abwählbar mit `--no-anonymous-recipients` bzw. per
