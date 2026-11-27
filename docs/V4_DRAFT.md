@@ -200,7 +200,7 @@ Trailer). Öffnen probiert alle anonymen Zugänge; erst danach „kein Zugang f�
 **Schritt 5 (verborgener Absender, `HIDDEN_SENDER`) umgesetzt:** `encrypt --sign-with … --hide-sender`
 (ohne `--sign-with` Bedienfehler, Exit 2); die Stufe `--privacy high` verbirgt den Absender, wenn signiert
 wird. Mit `HIDDEN_SENDER` wird v4 für jeden Inhalt geschrieben; der Header hat keinen Absenderblock, der
-Trailer trägt `U8(1) ‖ Schlüssel ‖ Σh` (7220 Byte) vor den Längen. Schreiber und Leser hashen den Klartext
+Trailer trägt `U8(1) ‖ Schlüssel ‖ Σh` (7220 Byte) vor den Längen; PADMÉ rechnet mit dem ganzen Trailer (7244 Byte). Schreiber und Leser hashen den Klartext
 (Nutzdaten ‖ Füllung) beim Streamen in gesperrtem Speicher; der Leser hält 7244 Byte zurück, prüft Σh über
 Header, Hash und beide Längen **vor** dem Veröffentlichen und vergleicht erst danach mit `--signer` (die
 Identität ist vorher nicht sichtbar). `inspect` zeigt „signiert, Absender verborgen“ (JSON
@@ -333,7 +333,7 @@ this key" only afterwards. Tests and QA1-FMT-013 (partial, gap #340). **Step 5 (
 `HIDDEN_SENDER`) implemented:** `encrypt --sign-with … --hide-sender` (usage error, exit 2, without
 `--sign-with`); level `--privacy high` hides the sender when signing. With `HIDDEN_SENDER`, v4 is written
 for every content type; the header has no sender block, the trailer carries `U8(1) ‖ key ‖ Σh` (7220 bytes)
-before the lengths. Writer and reader hash the plaintext (payload ‖ padding) while streaming in locked
+before the lengths; PADMÉ counts the whole trailer (7244 bytes). Writer and reader hash the plaintext (payload ‖ padding) while streaming in locked
 memory; the reader holds back 7244 bytes, verifies Σh over header, hash and both lengths **before**
 publishing and only then compares with `--signer` (the identity is not visible earlier). `inspect` shows
 "signed, sender hidden" (JSON `signer: {hidden: true, verified: false}`). API: `EncryptOptions {

@@ -45,7 +45,7 @@ pub(crate) struct TailRead {
 /// must hash from the start (`start_hash`).
 pub(crate) fn push_tail<W: Write>(enc: &mut EncryptWriter<W>, tail: &TailWrite<'_>) -> Result<()> {
     let payload = enc.written();
-    let pad = padding_for(payload, tail.padded)?;
+    let pad = padding_for(payload, tail.padded, trailer_len(tail.hidden.is_some()))?;
     let zeros = [0u8; 4096];
     let mut left = pad;
     while left > 0 {
@@ -55,10 +55,21 @@ pub(crate) fn push_tail<W: Write>(enc: &mut EncryptWriter<W>, tail: &TailWrite<'
     }
     if let Some((key, header)) = tail.hidden {
         let hash = enc.take_hash().ok_or(Error::Crypto)?.finalize()?;
-        let msg = hidden_message(header, hash.expose(), payload, pad);
-        let sig = dsa::sign(SIGNER_DSA, key.secret().expose(), &msg, FILE_SIG_CONTEXT)?;
+        let msg = hidden_message(header, hash.expose(), payload, pad)?;
+        let sig = dsa::sign(
+            SIGNER_DSA,
+            key.secret().expose(),
+            msg.expose(),
+            FILE_SIG_CONTEXT,
+        )?;
         // DE: Gegenprobe wie bei v3. EN: Cross-check as in v3.
-        if !dsa::verify(SIGNER_DSA, &key.public_key, &msg, FILE_SIG_CONTEXT, &sig) {
+        if !dsa::verify(
+            SIGNER_DSA,
+            &key.public_key,
+            msg.expose(),
+            FILE_SIG_CONTEXT,
+            &sig,
+        ) {
             return Err(Error::Crypto);
         }
         enc.push(&[SIGNER_ML_DSA_87])?;
@@ -127,7 +138,7 @@ fn check_tail(d: &Drained, before: u64, tail: &TailRead, hash: Option<PlainHash>
     let bytes = d.tail.expose();
     let (block, end) = bytes.split_at(bytes.len() - TRAILER_LEN);
     let total = before.checked_add(d.written).ok_or(Error::Decrypt)?;
-    let payload = check_trailer(end, total, tail.padded)?;
+    let payload = check_trailer(end, total, tail.padded, bytes.len())?;
     let pad = total - payload;
     if d.zeros < pad.min(d.written) || payload < before {
         return Err(Error::InvalidInput { field: "padding" });
@@ -154,8 +165,8 @@ fn hidden_sender(
         return Err(Error::Unsupported);
     }
     let (key, sig) = block[1..].split_at(SIGNER_KEY_LEN);
-    let msg = hidden_message(header, hash, payload, pad);
-    if !dsa::verify(SIGNER_DSA, key, &msg, FILE_SIG_CONTEXT, sig) {
+    let msg = hidden_message(header, hash, payload, pad)?;
+    if !dsa::verify(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig) {
         return Err(Error::InvalidSignature);
     }
     let signer = Signer {

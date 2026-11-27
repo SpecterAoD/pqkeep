@@ -17,7 +17,7 @@ use std::path::Path;
 use pqkeep::Error;
 use pqkeep::crypto::{DsaAlgorithm, KemAlgorithm, KeyAlgorithm};
 use pqkeep::envelope::{PublicKeyFile, UnlockedKey};
-use pqkeep::files::format_v4::{OPT_ANON, OPT_HIDDEN_SENDER, OPT_PAD, OPT_SIGNED};
+use pqkeep::files::format_v4::{OPT_ANON, OPT_HIDDEN_SENDER, OPT_PAD, OPT_SIGNED, padme};
 use pqkeep::files::{self, Content, EncryptOptions, Protection, Unlock};
 
 const HIDE: EncryptOptions = EncryptOptions {
@@ -110,7 +110,17 @@ fn file_directory_and_stream_roundtrip_with_hidden_sender() {
         );
         assert_eq!(std::fs::read(enc.with_file_name("klar")).unwrap(), plain);
         let header = files::inspect_v2(&enc).unwrap();
-        assert_eq!(header.v4.unwrap().options & OPT_PAD != 0, options.pad);
+        assert_eq!(
+            header.v4.as_ref().unwrap().options & OPT_PAD != 0,
+            options.pad
+        );
+        if options.pad {
+            // DE: PADMÉ über Nutzdaten und ganzen Trailer (7244 B). EN: PADMÉ over payload + whole trailer.
+            let total = padme(70_000 + 7244).unwrap();
+            let cipher = total + 16 * total.div_ceil(64 * 1024);
+            let head = header.encode().unwrap().len() as u64;
+            assert_eq!(std::fs::metadata(&enc).unwrap().len(), head + cipher);
+        }
     }
 }
 

@@ -34,7 +34,7 @@ fn payload_of(plain: &[u8], padded: bool) -> (Result<(u64, u64)>, Vec<u8>) {
 
 /// DE: Nutzdaten ‖ Füllung (Nullbytes) ‖ Trailer. EN: payload ‖ padding (zero bytes) ‖ trailer.
 fn framed(data: &[u8], padded: bool) -> Vec<u8> {
-    let pad = padding_for(data.len() as u64, padded).unwrap();
+    let pad = padding_for(data.len() as u64, padded, TRAILER_LEN).unwrap();
     let zeros = vec![0u8; usize::try_from(pad).unwrap()];
     [data, &zeros, &trailer(data.len() as u64, pad)].concat()
 }
@@ -68,7 +68,7 @@ fn tampered_trailers_and_padding_are_rejected() {
     wrong_len[0] ^= 1;
     let mut magic = good;
     magic[TRAILER_LEN - 2] ^= 1;
-    let pad = padding_for(1001, true).unwrap();
+    let pad = padding_for(1001, true, TRAILER_LEN).unwrap();
     let mut dirty = framed(&data, true);
     dirty[1001 + 3] = 1;
     let off_by_one = [&data[..], &[0u8; 25], &trailer(1001, 25)].concat();
@@ -99,7 +99,7 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
     let archive = vec![9u8; 500];
     for padded in [false, true] {
         let plain = {
-            let pad = padding_for(500, padded).unwrap();
+            let pad = padding_for(500, padded, TRAILER_LEN).unwrap();
             let zeros = vec![0u8; usize::try_from(pad).unwrap()];
             [&archive[..], &zeros, &trailer(500, pad)].concat()
         };
@@ -113,7 +113,7 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
         );
     }
     // DE: Füllung mit Nicht-Null-Byte oder falscher Archivlänge. EN: non-zero padding or wrong length.
-    let pad = padding_for(500, true).unwrap();
+    let pad = padding_for(500, true, TRAILER_LEN).unwrap();
     let mut zeros = vec![0u8; usize::try_from(pad).unwrap()];
     zeros[0] = 1;
     let bad = sealed(&[&archive[..], &zeros, &trailer(500, pad)].concat());
@@ -131,11 +131,34 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
 /// EN: Plaintext with hidden sender; `signed` = (payload, padding) inside the signature.
 fn hidden_plain(kp: &dsa::DsaKeyPair, data: &[u8], header: &[u8], signed: (u64, u64)) -> Vec<u8> {
     use sha3::{Digest, Sha3_512};
-    let pad = padding_for(data.len() as u64, true).unwrap();
+    let pad = padding_for(data.len() as u64, true, trailer_len(true)).unwrap();
     let zeros = vec![0u8; usize::try_from(pad).unwrap()];
     let hash = Sha3_512::digest([data, &zeros].concat());
-    let msg = hidden_message(header, &hash, signed.0, signed.1);
-    let sig = dsa::sign(SIGNER_DSA, kp.seed().expose(), &msg, FILE_SIG_CONTEXT).unwrap();
+    let msg = hidden_message(header, &hash, signed.0, signed.1).unwrap();
+    let sig = dsa::sign(
+        SIGNER_DSA,
+        kp.seed().expose(),
+        msg.expose(),
+        FILE_SIG_CONTEXT,
+    )
+    .unwrap();
+    let block = [&[SIGNER_ML_DSA_87][..], &kp.public_key, &sig].concat();
+    [data, &zeros, &block, &trailer(data.len() as u64, pad)].concat()
+}
+
+/// DE: Wie `hidden_plain`, aber mit frei gewählter Füllung. EN: Like `hidden_plain` with chosen padding.
+fn hidden_plain_with_pad(kp: &dsa::DsaKeyPair, data: &[u8], pad: u64) -> Vec<u8> {
+    use sha3::{Digest, Sha3_512};
+    let zeros = vec![0u8; usize::try_from(pad).unwrap()];
+    let hash = Sha3_512::digest([data, &zeros].concat());
+    let msg = hidden_message(b"H", &hash, data.len() as u64, pad).unwrap();
+    let sig = dsa::sign(
+        SIGNER_DSA,
+        kp.seed().expose(),
+        msg.expose(),
+        FILE_SIG_CONTEXT,
+    )
+    .unwrap();
     let block = [&[SIGNER_ML_DSA_87][..], &kp.public_key, &sig].concat();
     [data, &zeros, &block, &trailer(data.len() as u64, pad)].concat()
 }
@@ -158,7 +181,10 @@ fn hidden_check(plain: &[u8], header: &[u8]) -> (Result<(u64, u64)>, Option<Sign
 fn hidden_sender_block_is_verified_and_tampering_rejected() {
     let kp = dsa::generate(SIGNER_DSA).unwrap();
     let data = vec![3u8; 1500];
-    let pad = padding_for(1500, true).unwrap();
+    let pad = padding_for(1500, true, trailer_len(true)).unwrap();
+    // DE: PADMÉ über Nutzdaten und ganzen Trailer (Codex-Fund #342): 1500 + 472 + 7244 = 9216.
+    // EN: PADMÉ over payload and the whole trailer (Codex finding #342).
+    assert_eq!(1500 + pad + trailer_len(true) as u64, 9216);
     let good = hidden_plain(&kp, &data, b"H", (1500, pad));
     let (r, signed) = hidden_check(&good, b"H");
     assert_eq!(r.unwrap().0, 1500);
@@ -183,6 +209,10 @@ fn hidden_sender_block_is_verified_and_tampering_rejected() {
     let mut kind = good.clone();
     kind[1500 + usize::try_from(pad).unwrap()] = 0x7f;
     assert_eq!(hidden_check(&kind, b"H").0, Err(Error::Unsupported));
+    // DE: Füllung nur für den kurzen Trailer berechnet. EN: Padding computed for the short trailer.
+    let short_pad = padding_for(1500, true, TRAILER_LEN).unwrap();
+    let wrong = hidden_plain_with_pad(&kp, &data, short_pad);
+    assert!(hidden_check(&wrong, b"H").0.is_err());
     // DE: Ohne Absenderblock (nur Trailer) zu kurz. EN: Without the sender block too short.
     let (r, signed) = hidden_check(&framed(&data, true), b"H");
     assert!(r.is_err() && signed.is_none());

@@ -27,6 +27,7 @@ use sha3::Sha3_256;
 use super::format::{Content, bad};
 use super::signer_v3::{COMMIT_LEN, FILE_SIGNATURE_LEN, SIGNER_KEY_LEN, Signer};
 use super::slot_v2::Slot;
+use crate::crypto::SecretBytes;
 use crate::crypto::locked_hash::LockedHash;
 use crate::{Error, Result};
 
@@ -63,17 +64,40 @@ pub const fn trailer_len(hidden: bool) -> usize {
 }
 
 /// DE: Signierte Nachricht des verborgenen Absenders: Domäne ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ beide
-/// Längen (Grenze Nutzdaten/Füllung, Codex-Fund #324).
+/// Längen (Grenze Nutzdaten/Füllung, Codex-Fund #324) – in gesperrtem, beim Freigeben gelöschtem
+/// Speicher, weil sie einen Hash des Klartexts enthält.
 /// EN: Signed message of the hidden sender: domain ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ both lengths
-/// (payload/padding boundary, Codex finding #324).
-#[must_use]
-pub fn hidden_message(header: &[u8], plain_hash: &[u8], payload: u64, pad: u64) -> Vec<u8> {
-    let mut out = [DOMAIN_V4, b"sig/hidden\0"].concat();
-    out.extend_from_slice(&<sha3::Sha3_512 as sha3::Digest>::digest(header));
-    out.extend_from_slice(plain_hash);
-    out.extend_from_slice(&payload.to_le_bytes());
-    out.extend_from_slice(&pad.to_le_bytes());
-    out
+/// (payload/padding boundary, Codex finding #324) – in locked memory wiped on drop, because it holds
+/// a hash of the plaintext.
+///
+/// # Errors
+/// DE/EN: [`Error::MemoryLock`], [`Error::Crypto`] (falsche Hashlänge / wrong hash length).
+pub fn hidden_message(
+    header: &[u8],
+    plain_hash: &[u8],
+    payload: u64,
+    pad: u64,
+) -> Result<SecretBytes> {
+    const TAG: &[u8] = b"sig/hidden\0";
+    if plain_hash.len() != 64 {
+        return Err(Error::Crypto);
+    }
+    let header_hash = <sha3::Sha3_512 as sha3::Digest>::digest(header);
+    let parts: [&[u8]; 6] = [
+        DOMAIN_V4,
+        TAG,
+        &header_hash,
+        plain_hash,
+        &payload.to_le_bytes(),
+        &pad.to_le_bytes(),
+    ];
+    let mut out = SecretBytes::zeroed(parts.iter().map(|p| p.len()).sum())?;
+    let mut at = 0;
+    for part in parts {
+        out.expose_mut()[at..at + part.len()].copy_from_slice(part);
+        at += part.len();
+    }
+    Ok(out)
 }
 
 /// DE: v4-Zusatzfelder des Headers. EN: v4 extra fields of the header.
@@ -211,17 +235,18 @@ pub fn padme(len: u64) -> Result<u64> {
         .ok_or(Error::Crypto)
 }
 
-/// DE: Füllung für `payload` Nutzbytes (mit `padded`, sonst 0). EN: Padding for `payload` bytes.
+/// DE: Füllung für `payload` Nutzbytes (mit `padded`, sonst 0); PADMÉ über Nutzdaten und den ganzen
+/// Trailer (`trailer` Bytes, siehe [`trailer_len`]).
+/// EN: Padding for `payload` bytes (with `padded`, else 0); PADMÉ over payload and the whole trailer
+/// (`trailer` bytes, see [`trailer_len`]).
 ///
 /// # Errors
 /// DE/EN: [`Error::Crypto`] bei Überlauf / on overflow.
-pub fn padding_for(payload: u64, padded: bool) -> Result<u64> {
+pub fn padding_for(payload: u64, padded: bool, trailer: usize) -> Result<u64> {
     if !padded {
         return Ok(0);
     }
-    let base = payload
-        .checked_add(TRAILER_LEN as u64)
-        .ok_or(Error::Crypto)?;
+    let base = payload.checked_add(trailer as u64).ok_or(Error::Crypto)?;
     Ok(padme(base)? - base)
 }
 
@@ -245,11 +270,11 @@ fn trailer_error() -> Error {
 /// Nullbytes besteht, prüft der Aufrufer.
 /// EN: Checks the trailer: `total` = bytes read before the trailer (payload + padding); with
 /// `padded` the padding must be exactly PADMÉ, else 0. Returns the payload length. The caller checks
-/// that the padding consists of zero bytes.
+/// that the padding consists of zero bytes. `trailer` = whole trailer length ([`trailer_len`]).
 ///
 /// # Errors
 /// DE/EN: [`Error::InvalidInput`] (Feld `trailer`).
-pub fn check_trailer(bytes: &[u8], total: u64, padded: bool) -> Result<u64> {
+pub fn check_trailer(bytes: &[u8], total: u64, padded: bool, trailer: usize) -> Result<u64> {
     if bytes.len() != TRAILER_LEN || &bytes[16..] != TRAILER_MAGIC {
         return Err(trailer_error());
     }
@@ -258,7 +283,7 @@ pub fn check_trailer(bytes: &[u8], total: u64, padded: bool) -> Result<u64> {
         Ok(u64::from_le_bytes(raw))
     };
     let (payload, pad) = (word(0)?, word(8)?);
-    let canonical = padding_for(payload, padded).map_err(|_| trailer_error())?;
+    let canonical = padding_for(payload, padded, trailer).map_err(|_| trailer_error())?;
     if payload.checked_add(pad) != Some(total) || pad != canonical {
         return Err(trailer_error());
     }

@@ -5,25 +5,28 @@ use super::*;
 #[test]
 fn trailer_roundtrip_and_rejections() {
     let t = trailer(1234, 0);
-    assert_eq!(check_trailer(&t, 1234, false), Ok(1234));
-    assert!(check_trailer(&t, 1233, false).is_err());
+    assert_eq!(check_trailer(&t, 1234, false, TRAILER_LEN), Ok(1234));
+    assert!(check_trailer(&t, 1233, false, TRAILER_LEN).is_err());
     assert!(
-        check_trailer(&t, 1234, true).is_err(),
+        check_trailer(&t, 1234, true, TRAILER_LEN).is_err(),
         "PAD verlangt Füllung / PAD needs padding"
     );
     let mut padded = t;
     padded[8] = 1;
-    assert!(check_trailer(&padded, 1235, false).is_err());
+    assert!(check_trailer(&padded, 1235, false, TRAILER_LEN).is_err());
     let mut magic = t;
     magic[TRAILER_LEN - 1] = 1;
-    assert!(check_trailer(&magic, 1234, false).is_err());
-    assert!(check_trailer(&t[..TRAILER_LEN - 1], 1234, false).is_err());
+    assert!(check_trailer(&magic, 1234, false, TRAILER_LEN).is_err());
+    assert!(check_trailer(&t[..TRAILER_LEN - 1], 1234, false, TRAILER_LEN).is_err());
     // DE: Kanonische PADMÉ-Füllung. EN: Canonical PADMÉ padding.
-    let pad = padding_for(1234, true).unwrap();
+    let pad = padding_for(1234, true, TRAILER_LEN).unwrap();
     let good = trailer(1234, pad);
-    assert_eq!(check_trailer(&good, 1234 + pad, true), Ok(1234));
+    assert_eq!(
+        check_trailer(&good, 1234 + pad, true, TRAILER_LEN),
+        Ok(1234)
+    );
     let other = trailer(1234, pad + 1);
-    assert!(check_trailer(&other, 1235 + pad, true).is_err());
+    assert!(check_trailer(&other, 1235 + pad, true, TRAILER_LEN).is_err());
 }
 
 #[test]
