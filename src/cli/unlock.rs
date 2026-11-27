@@ -45,7 +45,7 @@ impl Access {
                 for slot in files::inspect_v2(source)?.slots {
                     match slot {
                         Slot::Passphrase { factor, .. } => access.passphrase = Some(factor),
-                        Slot::Recipient { .. } => access.recipient = true,
+                        Slot::Recipient { .. } | Slot::Anonymous { .. } => access.recipient = true,
                     }
                 }
             }

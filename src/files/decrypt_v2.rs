@@ -86,6 +86,14 @@ fn with_passphrase(
 }
 
 fn with_key(header: &HeaderV2, key: &UnlockedKey) -> Result<SecretBytes> {
+    // DE: Anonyme Zugänge (experimentell, #340): alle probieren. EN: Anonymous slots: try all.
+    if header
+        .slots
+        .iter()
+        .any(|s| matches!(s, Slot::Anonymous { .. }))
+    {
+        return super::anon_v4::open(header, key);
+    }
     let own_id = Sha3_256::digest(&key.public_key);
     let mut any = false;
     for (index, slot) in header.slots.iter().enumerate() {

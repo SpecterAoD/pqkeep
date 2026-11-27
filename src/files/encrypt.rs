@@ -212,8 +212,13 @@ fn write_archive(
     let prefix = rng::array::<PREFIX_LEN>()?;
     let public = job.signer.map(|key| key.public_key.as_slice());
     let pad = job.options.pad;
-    let (header, stream_aad) =
-        encrypt_header::build(content, prefix, job.protection, &file_key, (public, pad))?;
+    let (header, stream_aad) = encrypt_header::build(
+        content,
+        prefix,
+        job.protection,
+        &file_key,
+        (public, job.options),
+    )?;
 
     let (temp, file) = TempOutput::file(job.target)?;
     let mut out = BufWriter::new(file);
@@ -233,8 +238,10 @@ fn write_archive(
     for entry in entries {
         write_entry(&mut archive, entry, &mut report)?;
     }
-    // DE: Nur v4 (Füllung) hat einen Trailer. EN: Only v4 (padding) has a trailer.
-    let body = archive.finish_with(pad.then_some(true))?;
+    // DE: Jede v4-Datei (Füllung oder anonym) hat einen Trailer; Füllung nur mit PAD.
+    // EN: Every v4 file (padding or anonymous) has a trailer; padding only with PAD.
+    let v4 = pad || job.options.anonymous;
+    let body = archive.finish_with(v4.then_some(pad))?;
     // DE: Ohne Absender bleibt die Datei Byte für Byte wie bisher (`H ‖ C`).
     // EN: Without a sender the file stays byte for byte as before (`H ‖ C`).
     let out = match job.signer {

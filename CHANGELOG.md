@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Anonyme Empfänger – EXPERIMENTELL** (#316, Recherche #340): `encrypt --anonymous-recipients --to …`
+  schreibt Zugänge ohne Empfänger-ID (nur ML-KEM-1024, Format v4, lesbar ab beta.5); Öffnen probiert alle
+  Zugänge. Die Anonymität ist für FIPS 203 noch nicht formal belegt – Warnung bei jeder Nutzung, nicht Teil
+  von „Privatsphäre hoch“.
+  EN: **Anonymous recipients – EXPERIMENTAL** (#316, research #340): `encrypt --anonymous-recipients --to …`
+  writes slots without recipient ID (ML-KEM-1024 only, format v4, readable from beta.5); opening tries all
+  slots. Anonymity is not yet formally established for FIPS 203 – warning on every use, not part of "privacy
+  high".
+
 - DE: **Füllung** (#316): `encrypt --pad` verbirgt die genaue Größe (PADMÉ, höchstens ~12 %, meist < 3 %
   größer; Format v4, lesbar ab beta.5), auch mit `--stdin`; die Stufe „Privatsphäre hoch“ (`--privacy
   high`, Menü, Kontextmenü) setzt jetzt zufälligen Namen **und** Füllung. `inspect` zeigt „Größe

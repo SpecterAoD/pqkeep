@@ -24,6 +24,22 @@ pub const WITH_PASSPHRASE: &str = "with-passphrase";
 /// DE: Derselbe Schalter als Argument (für Menü-Kindprozesse). EN: The same switch as an argument.
 pub const WITH_PASSPHRASE_FLAG: &str = "--with-passphrase";
 
+/// DE: Name des Schalters „anonyme Empfänger“ (experimentell, #316/#340).
+/// EN: Name of the switch "anonymous recipients" (experimental, #316/#340).
+pub const ANONYMOUS: &str = "anonymous-recipients";
+
+/// DE: Hilfetext für `--anonymous-recipients`. EN: Help text for `--anonymous-recipients`.
+pub fn anonymous_help(lang: Lang) -> &'static str {
+    match lang {
+        Lang::De => {
+            "EXPERIMENTELL: Empfänger ohne sichtbare Schlüssel-ID (nur ML-KEM-1024, Format v4, lesbar ab beta.5); Anonymität für FIPS 203 noch nicht belegt (#340)"
+        }
+        Lang::En => {
+            "EXPERIMENTAL: recipients without visible key ID (ML-KEM-1024 only, format v4, readable from beta.5); anonymity not yet established for FIPS 203 (#340)"
+        }
+    }
+}
+
 /// DE: Hilfetext für `--with-passphrase`. EN: Help text for `--with-passphrase`.
 pub fn help(lang: Lang) -> &'static str {
     match lang {
@@ -51,6 +67,12 @@ pub fn message(field: &str) -> Option<&'static str> {
         "recipient_count" => "Höchstens 64 Empfänger je Datei / at most 64 recipients per file",
         "recipient_duplicate" => {
             "Derselbe Empfänger ist mehrfach angegeben / the same recipient is given more than once"
+        }
+        "anonymous_kem" => {
+            "Anonyme Empfänger nur mit ML-KEM-1024-Schlüsseln (pqkeep generate -a ml-kem-1024) / anonymous recipients need ML-KEM-1024 keys (pqkeep generate -a ml-kem-1024)"
+        }
+        "anonymous_recipient" => {
+            "Kein Zugang für diesen Schlüssel (Datei mit anonymen Empfängern) / no slot for this key (file with anonymous recipients)"
         }
         "factor_needs_passphrase" => {
             "--factor-file gehört zur Passphrase – zusammen mit --to nur mit --with-passphrase / --factor-file belongs to the passphrase – with --to only together with --with-passphrase"
@@ -112,12 +134,37 @@ pub fn load(m: &ArgMatches, lang: Lang) -> CliResult<Vec<PublicKeyFile>> {
         keys.push(envelope::load_public(path).map_err(|e| Failure::from_error(&e, lang))?);
     }
     check(&keys).map_err(|field| usage(field, lang))?;
+    if anonymous(m) {
+        let wrong = keys
+            .iter()
+            .any(|k| k.algorithm() != KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::MlKem1024));
+        if wrong {
+            return Err(usage("anonymous_kem", lang));
+        }
+        eprintln!(
+            "{}",
+            localize(
+                "Warnung: anonyme Empfänger sind EXPERIMENTELL – die Anonymität von ML-KEM (FIPS 203) ist noch nicht formal belegt (#340). / Warning: anonymous recipients are EXPERIMENTAL – the anonymity of ML-KEM (FIPS 203) is not yet formally established (#340).",
+                lang
+            )
+        );
+    }
     if keys.len() > 1 || m.get_flag(WITH_PASSPHRASE) {
         for (i, key) in keys.iter().enumerate() {
             eprintln!("{}", line(lang, i, keys.len(), key));
         }
     }
     Ok(keys)
+}
+
+/// DE: `--anonymous-recipients` gesetzt? (Nicht jeder Befehl kennt den Schalter.)
+/// EN: `--anonymous-recipients` set? (Not every command knows the switch.)
+pub fn anonymous(m: &ArgMatches) -> bool {
+    m.try_get_one::<bool>(ANONYMOUS)
+        .ok()
+        .flatten()
+        .copied()
+        .unwrap_or(false)
 }
 
 /// DE: `--factor-file` mit `--to` nur zusammen mit `--with-passphrase`.

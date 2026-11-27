@@ -14,7 +14,10 @@ use pqkeep::files::format_v4::{OPT_PAD, padme};
 use pqkeep::files::{self, Content, EncryptOptions, Protection, Unlock};
 
 const CHUNK: u64 = 64 * 1024;
-const PAD: EncryptOptions = EncryptOptions { pad: true };
+const PAD: EncryptOptions = EncryptOptions {
+    pad: true,
+    anonymous: false,
+};
 
 /// DE: Länge des STREAM-Chiffrats für `plain` Klartextbytes. EN: STREAM ciphertext length.
 fn stream_len(plain: u64) -> u64 {
