@@ -540,5 +540,6 @@ polynomial. KEM key generation prelocks state, three private payloads and comple
 sampling/NTT/product/hash/XOF workspace before seed processing. Root selects the
 opt-in SHA3/SHAKE provider with borrowed portable Keccak scratch and reader finalization
 without private return values. No private sponge conversion arrays or new unsafe
-casts. This protected mode may lose ARM SHA3 acceleration. Native acceptance and
-remaining KEM PKE/DSA/AES/Argon2 proofs stay open; no full R6 closure.
+casts. This protected mode may lose ARM SHA3 acceleration. KEM PKE also uses complete
+borrowed prelocked operation storage, including confidential recomputed candidate
+ciphertext. Native acceptance and DSA/AES/Argon2 proofs stay open; no full R6 closure.

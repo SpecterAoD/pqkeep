@@ -236,8 +236,15 @@ impl<K: ArraySize> Ntt for Vector<K> {
 /// products back into standard polynomial form while preserving correctness modulo the same prime.
 #[allow(clippy::module_name_repetitions)]
 pub(crate) trait NttInverse {
-    type Output;
-    fn ntt_inverse(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt_inverse(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_inverse_into(&mut out);
+        out
+    }
+    // DE: Die vorhandene inverse Transformation direkt ins Caller-Ziel schreiben.
+    // EN: Write the existing inverse transform directly into caller storage.
+    fn ntt_inverse_into(&self, out: &mut Self::Output);
 }
 
 /// One layer of the inverse NTT butterfly.
@@ -265,27 +272,32 @@ fn ntt_inverse_layer<const LEN: usize, const ITERATIONS: usize>(
 impl NttInverse for NttPolynomial {
     type Output = Polynomial;
 
-    fn ntt_inverse(&self) -> Polynomial {
-        let mut f: Array<Elem, U256> = self.0.clone();
+    fn ntt_inverse_into(&self, out: &mut Polynomial) {
+        let f = &mut out.0;
+        f.copy_from_slice(&self.0);
         let mut k = 127;
 
-        ntt_inverse_layer::<2, 64>(&mut f, &mut k);
-        ntt_inverse_layer::<4, 32>(&mut f, &mut k);
-        ntt_inverse_layer::<8, 16>(&mut f, &mut k);
-        ntt_inverse_layer::<16, 8>(&mut f, &mut k);
-        ntt_inverse_layer::<32, 4>(&mut f, &mut k);
-        ntt_inverse_layer::<64, 2>(&mut f, &mut k);
-        ntt_inverse_layer::<128, 1>(&mut f, &mut k);
+        ntt_inverse_layer::<2, 64>(f, &mut k);
+        ntt_inverse_layer::<4, 32>(f, &mut k);
+        ntt_inverse_layer::<8, 16>(f, &mut k);
+        ntt_inverse_layer::<16, 8>(f, &mut k);
+        ntt_inverse_layer::<32, 4>(f, &mut k);
+        ntt_inverse_layer::<64, 2>(f, &mut k);
+        ntt_inverse_layer::<128, 1>(f, &mut k);
 
-        Elem::new(3303) * &Polynomial::new(f)
+        for value in f {
+            *value = Elem::new(3303) * *value;
+        }
     }
 }
 
 impl<K: ArraySize> NttInverse for NttVector<K> {
     type Output = Vector<K>;
 
-    fn ntt_inverse(&self) -> Vector<K> {
-        Vector::new(self.0.iter().map(NttInverse::ntt_inverse).collect())
+    fn ntt_inverse_into(&self, out: &mut Vector<K>) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_inverse_into(target);
+        }
     }
 }
 
@@ -312,6 +324,23 @@ pub(crate) fn multiply_ntt_into(lhs: &NttPolynomial, rhs: &NttPolynomial, out: &
 
         out.0[2 * i] = c0;
         out.0[2 * i + 1] = c1;
+    }
+}
+
+// DE: Das vorhandene Skalarprodukt ohne private Polynom-Rückgaben auswerten.
+// EN: Evaluate the existing dot product without private polynomial returns.
+pub(crate) fn dot_ntt_into<K: ArraySize>(
+    lhs: &NttVector<K>,
+    rhs: &NttVector<K>,
+    out: &mut NttPolynomial,
+    product: &mut NttPolynomial,
+) {
+    out.0.fill(Default::default());
+    for (x, y) in lhs.0.iter().zip(rhs.0.iter()) {
+        multiply_ntt_into(x, y, product);
+        for (sum, value) in out.0.iter_mut().zip(product.0.iter()) {
+            *sum = *sum + *value;
+        }
     }
 }
 

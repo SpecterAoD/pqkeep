@@ -82,6 +82,9 @@ pub trait PkeParams: Kem<SharedKeySize = U32> + ParameterSet {
 
     fn concat_ct(u: EncodedU<Self>, v: EncodedV<Self>) -> Ciphertext<Self>;
     fn split_ct(ct: &Ciphertext<Self>) -> (&EncodedU<Self>, &EncodedV<Self>);
+    // DE: Disjunkte geliehene Ziele, kein privater concat-Rückgabewert.
+    // EN: Disjoint borrowed destinations without a private concat return value.
+    fn split_ct_mut(ct: &mut Ciphertext<Self>) -> (&mut EncodedU<Self>, &mut EncodedV<Self>);
 
     fn concat_ek(t_hat: EncodedNttVector<Self>, rho: B32) -> EncodedEncryptionKey<Self>;
     fn split_ek(ek: &EncodedEncryptionKey<Self>) -> (&EncodedNttVector<Self>, &B32);
@@ -121,6 +124,10 @@ where
 
     fn split_ct(ct: &Ciphertext<Self>) -> (&EncodedU<Self>, &EncodedV<Self>) {
         ct.split_ref()
+    }
+
+    fn split_ct_mut(ct: &mut Ciphertext<Self>) -> (&mut EncodedU<Self>, &mut EncodedV<Self>) {
+        ct.split_ref_mut()
     }
 
     fn concat_ek(t_hat: EncodedNttVector<Self>, rho: B32) -> EncodedEncryptionKey<Self> {

@@ -58,7 +58,7 @@ fn encapsulation_denial_child() {
     let visited = std::cell::Cell::new(false);
     let result = run(|_, _, _| {
         visited.set(true);
-        Vec::new()
+        Ok(Vec::new())
     });
     assert!(matches!(result, Err(Error::MemoryLock)));
     assert!(!visited.get());

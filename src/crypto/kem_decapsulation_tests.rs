@@ -4,6 +4,7 @@
 
 use super::*;
 use crate::locked_owner_test_support::locked;
+use ml_kem::DecapsulateInto;
 use ml_kem::{B32, kem::Decapsulate};
 
 macro_rules! compare_variant {

@@ -6,10 +6,11 @@
 
 use ml_kem::SeedKeyInPlace;
 use ml_kem::kem::{Decapsulator, FromSeed, Kem, KeyExport, TryKeyInit};
-use ml_kem::{DecapsulateInto, EncapsulateWithHash};
+use ml_kem::{DecapsulateWithWorkspace, EncapsulateWithWorkspace};
 use ml_kem::{MlKem512, MlKem768, MlKem1024};
 use zeroize::Zeroize;
 
+use super::secret_state::SecretState;
 use super::seed_state;
 use crate::crypto::{KemAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
@@ -27,6 +28,9 @@ mod key_state;
 #[cfg(test)]
 #[path = "kem_decapsulation_tests.rs"]
 mod decapsulation_tests;
+#[cfg(test)]
+#[path = "kem_operation_workspace_tests.rs"]
+mod operation_workspace_tests;
 
 /// DE: Länge des Seeds (d ‖ z) in Bytes. EN: Seed length (d ‖ z) in bytes.
 pub const SEED_LEN: usize = 64;
@@ -133,34 +137,43 @@ where
 
 fn encaps<K: Kem>(public_key: &[u8]) -> Result<Encapsulated>
 where
-    K::EncapsulationKey: EncapsulateWithHash,
+    K::EncapsulationKey: EncapsulateWithWorkspace,
 {
     let ek = K::EncapsulationKey::new_from_slice(public_key).map_err(|_| Error::InvalidInput {
         field: "public_key",
     })?;
+    let mut pke =
+        SecretState::new(<K::EncapsulationKey as EncapsulateWithWorkspace>::Workspace::default())?;
     encapsulation::run(|entropy, workspace, hash| {
-        ek.encapsulate_with_hash(entropy, workspace, hash).to_vec()
+        ek.encapsulate_with_workspace(entropy, workspace, hash, pke.get_mut())
+            .map(|ciphertext| ciphertext.to_vec())
+            .map_err(|_| Error::Crypto)
     })
 }
 
 fn decaps<K>(seed: &[u8], ciphertext: &[u8]) -> Result<SecretBytes>
 where
     K: FromSeed,
-    K::DecapsulationKey: DecapsulateInto + SeedKeyInPlace,
+    K::DecapsulationKey: DecapsulateWithWorkspace + SeedKeyInPlace,
 {
     let mut out = SecretBytes::zeroed(32)?;
     let mut seed = parse_seed::<K>(seed)?;
+    let ciphertext: &ml_kem::kem::Ciphertext<K> =
+        ciphertext.try_into().map_err(|_| Error::InvalidInput {
+            field: "ciphertext",
+        })?;
+    let mut workspace =
+        SecretState::new(<K::DecapsulationKey as DecapsulateWithWorkspace>::Workspace::default())?;
     let dk = key_state::KeyState::<K::DecapsulationKey>::new(seed_state::view(&seed)?)?;
     seed.zeroize();
     // DE: Nur geliehene Ausgabe in vorab gesperrten SecretBytes; kein SharedKey-Rückgabearray.
     // EN: Borrow output directly from prelocked SecretBytes; no returned SharedKey array.
     dk.get()
-        .decapsulate_slice_into(
+        .decapsulate_with_workspace(
             ciphertext,
+            workspace.get_mut(),
             out.expose_mut().try_into().map_err(|_| Error::Crypto)?,
         )
-        .map_err(|_| Error::InvalidInput {
-            field: "ciphertext",
-        })?;
+        .map_err(|_| Error::Crypto)?;
     Ok(out)
 }

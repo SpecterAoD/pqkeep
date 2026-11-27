@@ -21,6 +21,7 @@ mod maybe_box;
 
 /// Integer truncation support.
 mod truncate;
+mod vector_codec;
 
 pub use algebra::{
     Elem, Field, MultiplyNtt, NttMatrix, NttPolynomial, NttVector, Polynomial, Vector,
@@ -32,5 +33,6 @@ pub use encoding::{
 };
 pub use maybe_box::MaybeBox;
 pub use truncate::Truncate;
+pub use vector_codec::{InvalidEncodingGeometry, byte_encode_vector_into};
 
 pub use ctutils;

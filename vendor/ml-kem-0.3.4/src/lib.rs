@@ -65,9 +65,13 @@ mod encapsulation_key;
 // DE: Additiver Ausgabeweg. EN: Additive caller-owned output path.
 mod encapsulation_into;
 
+#[cfg(feature = "protected-workspace")]
+mod kem_workspace_into;
 mod key_generation;
 #[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
 mod key_in_place;
+#[cfg(feature = "protected-workspace")]
+mod pke_workspace;
 
 /// Section 5. The K-PKE Component Scheme
 mod pke;
@@ -89,6 +93,8 @@ pub use kem::{
     self, Ciphertext, Decapsulate, Encapsulate, FromSeed, Generate, InvalidKey, Kem, Key,
     KeyExport, KeyInit, KeySizeUser, TryKeyInit,
 };
+#[cfg(feature = "protected-workspace")]
+pub use kem_workspace_into::{DecapsulateWithWorkspace, EncapsulateWithWorkspace};
 pub use key_generation::KeyGenerationWorkspace;
 #[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
 pub use key_in_place::SeedKeyInPlace;
@@ -96,6 +102,8 @@ pub use ml_kem_512::MlKem512;
 pub use ml_kem_768::MlKem768;
 pub use ml_kem_1024::MlKem1024;
 pub use param::{ExpandedDecapsulationKey, ParameterSet};
+#[cfg(feature = "protected-workspace")]
+pub use pke_workspace::{DecapsulationWorkspace, DecryptionWorkspace, EncryptionWorkspace};
 
 use array::{
     Array,

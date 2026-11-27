@@ -546,5 +546,6 @@ Payloads und komplette Sampling-/NTT-/Produkt-/Hash-/XOF-Arbeitsfläche vor dem 
 Einstieg. SHA3/SHAKE verwenden im Root den opt-in-Provider mit geliehenem portablen
 Keccak-Scratch und Reader-Finalisierung ohne privaten Rückgabewert. Keine privaten
 Sponge-Konvertierungsarrays oder neuen unsafe-Casts. Auf ARM kann diese geschützte
-Variante Hardwarebeschleunigung kosten. Native Abnahme sowie übrige KEM-PKE-/DSA-/
-AES-/Argon2-Nachweise bleiben offen; kein R6-Gesamtabschluss.
+Variante Hardwarebeschleunigung kosten. KEM-PKE nutzt ebenfalls vollständig geliehene vorab gesperrte Operationsflächen,
+einschließlich vertraulichem internem Vergleichs-Chiffrat. Native Abnahme und
+DSA-/AES-/Argon2-Nachweise bleiben offen; kein R6-Gesamtabschluss.

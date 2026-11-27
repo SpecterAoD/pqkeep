@@ -5,7 +5,7 @@
 use super::*;
 use crate::locked_owner_test_support::locked;
 use ml_kem::{
-    EncapsulateWithHash,
+    EncapsulateWithWorkspace,
     kem::{Decapsulate, FromSeed, KeyExport},
 };
 use sha3::{Digest, Sha3_256, Sha3_512};
@@ -30,6 +30,8 @@ macro_rules! compare_variant {
         let seed = rng::secret(64).unwrap();
         let (dk, ek) = <$parameter>::from_seed(seed_state::view(&seed).unwrap());
         let visited = std::cell::Cell::new(0);
+        let mut pke =
+            SecretState::new(ml_kem::EncryptionWorkspace::<$parameter>::default()).unwrap();
         let result = run(|entropy, workspace, hash| {
             locked(entropy);
             locked(workspace);
@@ -39,7 +41,11 @@ macro_rules! compare_variant {
             // DE: Öffentliche Altlast muss vor privatem Absorb verworfen werden.
             // EN: Public stale state must be reset before private absorption.
             hash.update(b"public stale hash state");
-            let ciphertext = ek.encapsulate_with_hash(entropy, workspace, hash);
+            locked(pke.get());
+            let ciphertext = ek
+                .encapsulate_with_workspace(entropy, workspace, hash, pke.get_mut())
+                .map_err(|_| Error::Crypto)?;
+            locked(pke.get());
             visited.set(visited.get() + 1);
             assert!(base == workspace.as_ptr());
             assert!(ciphertext == expected_ct);
@@ -58,7 +64,7 @@ macro_rules! compare_variant {
             locked(entropy);
             locked(workspace);
             locked(hash);
-            ciphertext.to_vec()
+            Ok(ciphertext.to_vec())
         })
         .unwrap();
         assert_eq!(visited.get(), 1);

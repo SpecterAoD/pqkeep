@@ -65,6 +65,22 @@ pub(crate) fn J(inputs: &[impl AsRef<[u8]>]) -> B32 {
     out
 }
 
+// DE: J direkt mit vorab gesperrtem Zustand/Reader/Ziel auswerten.
+// EN: Evaluate J directly with prelocked state, reader and destination.
+pub(crate) fn J_into_with_xof(
+    inputs: &[impl AsRef<[u8]>],
+    out: &mut B32,
+    hash: &mut Shake256,
+    reader: &mut shake::Shake256Reader,
+) {
+    sha3::digest::Reset::reset(hash);
+    for input in inputs {
+        hash.update(input.as_ref());
+    }
+    hash.finalize_reader_into(reader);
+    reader.read(out);
+}
+
 pub(crate) type PrfOutput<Eta> = EncodedPolynomial<<Eta as CbdSamplingSize>::SampleSize>;
 
 pub(crate) fn PRF<Eta>(s: &B32, b: u8) -> PrfOutput<Eta>

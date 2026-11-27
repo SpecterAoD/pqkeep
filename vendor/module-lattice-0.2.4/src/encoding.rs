@@ -159,7 +159,6 @@ pub fn byte_decode_into<F: Field, D: EncodingSize>(
             }
         }
     }
-
 }
 
 /// Encoding trait.

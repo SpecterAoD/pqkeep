@@ -147,3 +147,93 @@ fn same<T: PartialEq>(left: &T, right: &T) {
 fn one_bit(index: usize, width: usize) -> usize {
     1 << (index % width)
 }
+
+struct GuardedVector<D, K>
+where
+    K: module_lattice::ArraySize,
+    D: module_lattice::VectorEncodingSize<K>,
+{
+    before: [u8; 5],
+    values: module_lattice::Vector<KemField, K>,
+    encoded: module_lattice::EncodedVector<D, K>,
+    after: [u8; 7],
+}
+
+impl<D, K> ZeroizeOnDrop for GuardedVector<D, K>
+where
+    K: module_lattice::ArraySize,
+    D: module_lattice::VectorEncodingSize<K>,
+{
+}
+
+impl<D, K> Drop for GuardedVector<D, K>
+where
+    K: module_lattice::ArraySize,
+    D: module_lattice::VectorEncodingSize<K>,
+{
+    fn drop(&mut self) {
+        self.values.zeroize();
+        self.encoded.zeroize();
+    }
+}
+
+fn vector_output<D, K>()
+where
+    K: module_lattice::ArraySize,
+    D: module_lattice::VectorEncodingSize<K>,
+{
+    let mut owner = SecretState::new(GuardedVector::<D, K> {
+        before: [0xa5; 5],
+        values: module_lattice::Vector::default(),
+        encoded: module_lattice::EncodedVector::<D, K>::default(),
+        after: [0x5a; 7],
+    })
+    .unwrap();
+    locked(owner.get());
+    let storage = owner.get_mut();
+    for (i, polynomial) in storage.values.0.iter_mut().enumerate() {
+        for (j, value) in polynomial.0.iter_mut().enumerate() {
+            *value = Elem::new(u16::try_from((i * 257 + j * 17) & ((1 << D::USIZE) - 1)).unwrap());
+        }
+    }
+    module_lattice::byte_encode_vector_into::<KemField, D, K>(
+        &storage.values,
+        &mut storage.encoded,
+    )
+    .unwrap();
+    let mut legacy = module_lattice::Encode::<D>::encode(&storage.values);
+    same(&storage.encoded, &legacy);
+    legacy.zeroize();
+    assert!(storage.before == [0xa5; 5] && storage.after == [0x5a; 7]);
+    locked(owner.get());
+}
+
+#[test]
+fn private_ciphertext_vector_encoding_borrows_locked_output_for_all_kem_variants() {
+    vector_output::<U10, U2>();
+    vector_output::<U10, U3>();
+    vector_output::<U11, U4>();
+}
+
+#[test]
+fn unsupported_vector_encoding_geometry_is_rejected_before_output_writes() {
+    use ml_kem::array::typenum::U256;
+    let mut owner = SecretState::new(GuardedVector::<U256, U1> {
+        before: [0xa5; 5],
+        values: module_lattice::Vector::default(),
+        encoded: module_lattice::EncodedVector::<U256, U1>::default(),
+        after: [0x5a; 7],
+    })
+    .unwrap();
+    let storage = owner.get_mut();
+    storage.encoded.fill(0xa5);
+    assert!(
+        module_lattice::byte_encode_vector_into::<KemField, U256, U1>(
+            &storage.values,
+            &mut storage.encoded,
+        )
+        .is_err()
+    );
+    assert!(storage.encoded.iter().all(|byte| *byte == 0xa5));
+    locked(owner.get());
+}

@@ -17,6 +17,13 @@ use module_lattice::{
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "protected-workspace")]
+#[path = "pke_decrypt.rs"]
+mod protected_decrypt;
+#[cfg(feature = "protected-workspace")]
+#[path = "pke_encrypt.rs"]
+mod protected_encrypt;
+
 /// A `DecryptionKey` provides the ability to generate a new key pair, and decrypt an
 /// encrypted value.
 #[derive(Clone, Default)]

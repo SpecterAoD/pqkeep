@@ -8,7 +8,7 @@ use ml_kem::{B32, EncapsulationWorkspace};
 use sha3::{Digest, Sha3_512};
 
 pub(super) fn run(
-    encapsulate: impl FnOnce(&B32, &mut EncapsulationWorkspace, &mut Sha3_512) -> Vec<u8>,
+    encapsulate: impl FnOnce(&B32, &mut EncapsulationWorkspace, &mut Sha3_512) -> Result<Vec<u8>>,
 ) -> Result<Encapsulated> {
     let mut shared_secret = SecretBytes::zeroed(32)?;
     let mut derived = SecretBytes::zeroed(64)?;
@@ -22,7 +22,7 @@ pub(super) fn run(
         .map_err(|_| Error::InvalidInput {
             field: "kem_workspace",
         })?;
-    let ciphertext = encapsulate(seed_state::view(&entropy)?, workspace, hash.get_mut());
+    let ciphertext = encapsulate(seed_state::view(&entropy)?, workspace, hash.get_mut())?;
     // DE: Nur zwischen gesperrten Flächen kopieren; K || r bleibt bis Drop geschützt.
     // EN: Copy only between locked buffers; K || r remains protected until drop.
     shared_secret

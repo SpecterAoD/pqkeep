@@ -27,11 +27,12 @@ struct Probe {
     witness: Arc<Witness>,
 }
 
+#[cfg_attr(not(target_os = "linux"), derive(Default))]
 struct ProbeWorkspace(ml_kem::KeyGenerationWorkspace<ml_kem::MlKem512>);
 
+#[cfg(target_os = "linux")]
 impl Default for ProbeWorkspace {
     fn default() -> Self {
-        #[cfg(target_os = "linux")]
         if CURRENT.with(|current| current.borrow().as_ref().unwrap().mode == 5) {
             // DE: Nur im ausdrücklich gestarteten eigenen Denial-Testkind.
             // EN: Only in the explicitly launched own denial-test child.

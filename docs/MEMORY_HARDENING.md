@@ -285,7 +285,8 @@ G-Ausgabe64, SHA3-512-Zustand und frische OS-Entropie32 vor Verarbeitung. Finali
 über mutable Leihsicht vermeidet konsumierende private Hashzustandsübertragung.
 EN: Borrowed output and prelocked hash owners remove private caller return arrays.
 Keep constant-time implicit rejection and all three parameter sets unchanged.
-Remaining encapsulation/decryption PKE scratch and decapsulation candidates are OPEN.
+The current work branch additionally borrows complete operation workspaces as
+described below; native acceptance of that new path remains pending.
 See the [encapsulation plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
 
 ## KEM private payload retention / Private KEM-Payloads (#147 R6 work)
@@ -328,9 +329,33 @@ correctness; no custom algorithm, assembly or weakened gate is introduced.
 
 DE: Unabhängige Python/hashlib/OpenSSL-Vektoren prüfen SHA3-256/512 und SHAKE128/256
 an Rate-Grenzen, geteilte Eingabe/Ausgabe, leere Leseaufrufe und Reader-Neustart.
-Native Abnahme dieses Arbeitsstands bleibt erforderlich. Interne KEM-Entkapselungs-
-Kandidaten/PKE-Arbeitsflächen, DSA-, AES/GCM- und Argon2-Providerpfade bleiben offen.
+Native Abnahme dieses Arbeitsstands bleibt erforderlich. Die nachfolgend
+beschriebenen KEM-Operationsflächen sind implementiert; DSA-, AES/GCM- und
+Argon2-Providerpfade bleiben offen.
 EN: Full R6 remains OPEN. Known remaining provider buffers are not compiler limits.
 Compiler/register/scalar copies, shared registry metadata and full R7 process/helper
 boundaries remain separately classified. See [hash plan](security/HASH_WORKSPACE_PLAN.md)
 and the [full R6 matrix](security/PROVIDER_IN_PLACE_PLAN.md).
+
+## R6: private KEM operations / Private KEM-Operationen
+
+DE: Root verwendet ausschließlich EncapsulateWithWorkspace/DecapsulateWithWorkspace.
+Feste Inline-Flächen enthalten Sampling-/Fehler-/Nachrichtenvektoren, NTT-/Produkt-/
+Inverse-NTT-/Kompressionswerte, PRF/G/J-Ausgaben, Hash/Reader/Scratch und das private
+Vergleichs-Chiffrat. Dieses intern neu berechnete Chiffrat wird nicht als öffentliche
+Kapselungsausgabe umklassifiziert. Empfangene Chiffrate und öffentliche Matrizen sind
+getrennte öffentliche Operanden. Keine private Ciphertext-/Polynom-Rückgabe im Root-Pfad.
+EN: Prelock every required workspace before private processing. Share original
+forward/inverse NTT, dot product, sampling and packing loops; byte-encode vectors
+directly into disjoint borrowed ciphertext parts, rejecting bad geometry before
+writes. Preserve constant-time selection of the ordinary and rejection candidates.
+
+DE: Root bereitet Kapselungs-PKE-Flächen vor frischer OS-Entropie vor. Entkapselung
+prüft die öffentliche Chiffratlänge und sperrt Operationsflächen vor privater Keygen.
+Fehler propagieren; kein Legacy-Fallback. Alle drei Parametersätze werden an
+Erfolg/manipulierten Chiffraten gegen Legacy und unabhängige KATs geprüft; feste
+Adressen/Sperren/Randmarkierungen, Wipe unter Sperre bei Fehler/Unwind und tatsächliche
+öffentliche KEM-Verweigerung unter reduziertem Limit im isolierten Linux-Kind prüfen.
+EN: Local implementation is not final native acceptance. R6 remains OPEN for
+DSA/AES/Argon2 and remaining matrix proofs. Preserve public PQKeep APIs and formats.
+See [operation plan](security/KEM_OPERATION_WORKSPACE_PLAN.md).

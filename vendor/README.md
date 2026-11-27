@@ -15,7 +15,7 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | hmac 0.13.0 | RustCrypto/MACs, MIT OR Apache-2.0 | In-place rekey/finalize using caller-provided scratch; zeroize opad on Drop and keyed state on explicit wipe. Existing API preserved. |
 | hkdf 0.13.0 | RustCrypto/KDFs, MIT OR Apache-2.0 | Allocation-free first HKDF block over caller-owned HMAC/PRK/output. Same extract/expand steps; no hidden PRK or cloned keyed state. Existing API preserved. |
 | region 4.0.1 | darfink/region-rs, MIT | Safe current-process Windows working-set capacity request before VirtualLock. No token, account, privilege or machine-policy changes; errors are propagated. Existing lock API preserved. |
-| ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed encapsulation/decapsulation, prelockable key payloads, direct NTT output and shared CBD decoding; preserve legacy APIs and algorithms. |
+| ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed keygen and complete PKE operation workspaces, prelockable payloads, direct codecs/transforms and protected hash/XOF state; preserve legacy APIs and algorithms. |
 | module-lattice 0.2.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed codec destinations; shared original packing loops with scalar little-endian accesses instead of private conversion arrays. |
 | ml-dsa 0.1.2 | RustCrypto/signatures, Apache-2.0 OR MIT | Versioned dependency-path bridge to the same lattice provider; production algorithms unchanged. |
 | sha3 0.12.0 / shake 0.1.0 | RustCrypto/hashes / sponges, MIT OR Apache-2.0 | Opt-in inline permutation scratch; borrowed XOF reader finalization and explicit wipe. |
@@ -85,8 +85,8 @@ EN: Public initial state plus fixed private-storage visitation enables host prel
 before seed population. Explicit Zeroize and Drop share the original wiping body;
 private boxes are never replaced during initialization. Root PKE keygen writes
 expanded state through borrowed NTT output, sharing the original transform loops.
-Remaining encryption/decryption PKE and candidate storage stays OPEN; native acceptance
-of the complete key-generation workspace is still required.
+The operation workspace extension below also covers private encryption/decryption
+and candidate storage; native acceptance remains required.
 
 DE: KeyGenerationWorkspace ergänzt feste Inline-Flächen für Samplingvektor,
 Fehler-NTT, Produktpolynom, noch private öffentliche-Schlüssel-Zwischensummen,
@@ -97,7 +97,7 @@ EN: Key generation borrows prelocked fixed storage, with no nested workspace hea
 Root refuses failed workspace locks before private initialization. ML-KEM/zeroize
 now forwards SHA3/SHAKE zeroization explicitly, including standalone consumers.
 Keygen also borrows prelocked SHAKE hash/reader state and inline Keccak scratch in
-the protected mode below. Encryption/decryption scratch remains OPEN.
+the protected mode below. Operation scratch is now borrowed as described next.
 
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.
@@ -180,3 +180,19 @@ RAII-Scope wird bei Erfolg/Fehler/Unwind wiederhergestellt; normale Parseraufruf
 ihre bisherigen Fehlermeldungen. Kein beweglicher/async gespeicherter Schutz-Scope.
 EN: Protected parsing prevents pre-sanitization error-message copies; formatter probes
 and ordinary-error restoration tests exercise the actual provider error constructor.
+
+## Private KEM operation storage / Private KEM-Operationsflächen
+
+DE: EncapsulateWithWorkspace/DecapsulateWithWorkspace teilen ursprüngliche PKE-
+Arithmetik mit geliehenen Zielen. Feste vollständige Workspaces müssen vor privater
+Verarbeitung gesperrt sein; generierte Feldlisten koppeln Default und vollständiges
+Zeroize/Drop. Private Inverse-NTT-/Skalarprodukt-/Packing-Zwischenwerte werden nicht
+als Arrays zurückgegeben. Disjunkte Chiffratteilsichten verwenden geprüfte sichere
+hybrid-array-APIs der unveränderten ausgewählten Version. Ungültige öffentliche
+Vektorgeometrie führt vor Ausgabe-Schreibzugriffen zum Fehler, ohne neuen Panic-Fallback.
+EN: Recomputed decapsulation ciphertext is confidential and stays in the locked
+workspace. Only actual intended encapsulation ciphertext leaves by value. Root
+selects the strict workspace traits, propagates failures and never falls back to
+the ordinary provider APIs. Constant-time candidate selection and implicit rejection
+are preserved. Three parameter sets, tampering, sentinel/stability/lock/cleanup
+and independent KAT proofs remain required, including final native CI acceptance.

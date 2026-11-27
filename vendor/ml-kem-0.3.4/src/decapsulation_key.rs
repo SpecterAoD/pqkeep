@@ -289,6 +289,46 @@ where
     }
 }
 
+#[cfg(feature = "protected-workspace")]
+impl<P> crate::DecapsulateWithWorkspace for DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    type Workspace = crate::DecapsulationWorkspace<P>;
+
+    fn decapsulate_with_workspace(
+        &self,
+        ciphertext: &Ciphertext<P>,
+        workspace: &mut Self::Workspace,
+        out: &mut B32,
+    ) -> Result<(), InvalidKey> {
+        self.dk_pke.decrypt_into(
+            ciphertext,
+            &mut workspace.decryption,
+            &mut workspace.message,
+        );
+        crate::crypto::G_into_with_hash(
+            &[&workspace.message, &self.ek.h()],
+            &mut workspace.g,
+            &mut workspace.hash,
+        );
+        crate::crypto::J_into_with_xof(
+            &[self.z.as_slice(), ciphertext.as_ref()],
+            &mut workspace.rejection,
+            &mut workspace.xof,
+            &mut workspace.reader,
+        );
+        let (candidate, randomness) = workspace.g.split_ref::<U32>();
+        self.ek
+            .ek_pke()
+            .encrypt_into(&workspace.message, randomness, &mut workspace.encryption)?;
+        let valid = workspace.encryption.ciphertext.ct_eq(ciphertext);
+        out.copy_from_slice(&workspace.rejection);
+        out.as_mut_slice().ct_assign(candidate.as_slice(), valid);
+        Ok(())
+    }
+}
+
 impl<P> Generate for DecapsulationKey<P>
 where
     P: KemParams,

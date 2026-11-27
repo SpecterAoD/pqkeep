@@ -128,7 +128,7 @@
     },
     {
       "path": "src/algebra.rs",
-      "sha256": "e5b71bf81d2c96dd34a4f9439e690da5791e2ddfc855fc748975b9fd8f02dd4e"
+      "sha256": "a7c0af825c7d40de879054a468792d06230b2e30d97d5682077aa53c4c4437a6"
     },
     {
       "path": "src/compress.rs",
@@ -136,7 +136,7 @@
     },
     {
       "path": "src/crypto.rs",
-      "sha256": "2dc83c9ac2ce8860169e697dcddfcd5855f0523e764e626a44d62c95edfa2ad8"
+      "sha256": "189b73e189e57029c997373dfb7cfc17469226a3a4892da1700de741de068dae"
     },
     {
       "path": "src/decapsulation_into.rs",
@@ -144,7 +144,7 @@
     },
     {
       "path": "src/decapsulation_key.rs",
-      "sha256": "f7da8fbab5fe1a749a66e33d8e592cb021f6d032ed048fd42e8635f18fef36cd"
+      "sha256": "571fd397557b0874515912b82f2b69e0863f08b45bd876c6a5ea49866bd92820"
     },
     {
       "path": "src/encapsulation_into.rs",
@@ -152,11 +152,15 @@
     },
     {
       "path": "src/encapsulation_key.rs",
-      "sha256": "96ec227c0456c8c4837f9df9a1bf8024dd018c3f4489aa421021fb93c84cf216"
+      "sha256": "767f76d560dbd0a000e0ea397ba9e219cbf8e0ba383a2e5575a55d4214f40c28"
+    },
+    {
+      "path": "src/kem_workspace_into.rs",
+      "sha256": "6f984130aca1ac825735b2e91109a052a218175e60dc42a1f891360fdc38346a"
     },
     {
       "path": "src/key_generation.rs",
-      "sha256": "eb61cc42b706ff6d969122bcd1b44cef13080a595ef32e40fbef6bd0ad09493b"
+      "sha256": "b3c300579cdc73436b9da9a93db70ec51c6ce8a288aea9b90f838eba94db9f81"
     },
     {
       "path": "src/key_in_place.rs",
@@ -164,11 +168,27 @@
     },
     {
       "path": "src/lib.rs",
-      "sha256": "f9492ca1a60a1b6d2a804835dfd7464a36515870e802d8acdf5cffefa9778d21"
+      "sha256": "f87e10b7a8ab2b67cd49199c689b417e9bba650e8d78f69ec1c7b49b02853062"
+    },
+    {
+      "path": "src/param.rs",
+      "sha256": "c7d51929d09ae96f1da0ee9879fccd32b99c60496ca19f404c92183221c7e849"
     },
     {
       "path": "src/pke.rs",
-      "sha256": "518a151c8f73701c41e279b84c9b2ecbfd03a6f1c25e1644a166a634d92dd7d4"
+      "sha256": "4d9bb65e9593f60f18fd46ac892a6b3929ea1895d03f673ddbc7a057f65e428f"
+    },
+    {
+      "path": "src/pke_decrypt.rs",
+      "sha256": "987ee06b30910f2e8c098a6395a1f984df9591f8b263e248f737da67c20713aa"
+    },
+    {
+      "path": "src/pke_encrypt.rs",
+      "sha256": "04017d6592edd326c32151a4945d789223dcab90d8e210e1650e378b226c47a0"
+    },
+    {
+      "path": "src/pke_workspace.rs",
+      "sha256": "8ce31e676ff0d53503342cf98738c4d22c22d59b0350e6d3b085165f535e8d45"
     }
   ],
   "module-lattice-0.2.4": [
@@ -178,11 +198,15 @@
     },
     {
       "path": "src/encoding.rs",
-      "sha256": "0a63870bfb8cd4abae9157301e37eac66465075a779f0d7f10b56c9ec29aa7b0"
+      "sha256": "5b609ff9c79f148bf5b07bf91204a83ad3e3145f247959c6ab7f1d801ddf1bdf"
     },
     {
       "path": "src/lib.rs",
-      "sha256": "f58edffec2ac50c8ee9f2f357a489084c2bef4b1ad933246c4efabfa49ca303a"
+      "sha256": "9a6201c20804902b4b20febb3aa0cab11edc6e708a85a125acc69a2c4abd313f"
+    },
+    {
+      "path": "src/vector_codec.rs",
+      "sha256": "350ad66704f8508f2671091ad021db30f031116b0cf2e4f59d2837c95ea80eab"
     }
   ],
   "ml-dsa-0.1.2": [

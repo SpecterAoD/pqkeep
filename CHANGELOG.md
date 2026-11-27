@@ -25,14 +25,18 @@ German release notes: see `docs/releases/`.
   #98), decrypt/`check` understand v4. Without streams v1–v3 stay byte for byte; older versions report
   v4 as "unsupported". No command line yet (follows with #83).
 
-- DE: R6-Arbeitsstand (#147): ML-KEM-Entkapselung schreibt direkt in gesperrte Ausgabe;
-  Kapselung verwendet zusätzlich geliehenen, vorab gesperrten SHA3-512-Zustand ohne
-  konsumierende Finalisierung. Öffentlichen KEM-Anfangszustand und drei private Payloads
-  vor Seed-Verarbeitung sperren; Wipe vor Unlock und Boxfreigabe. Parameter/Bytes erhalten. Interne Konstruktoren,
-  interne Kandidaten/Arbeitsflächen und übrige R6-Pfade weiterhin offen.
-  EN: R6 work in progress: borrow prelocked decapsulation output and encapsulation hash
-  state; prelock initial KEM state and private payloads. Preserve algorithms/wire bytes;
-  internal private construction and scratch remain open.
+- DE: R6-Arbeitsstand (#147): ML-KEM-Keygen sowie Kapselung/Entkapselung verwenden
+  vollständig vorab gesperrte Zustände, private Payloads und feste geliehene
+  Sampling-/NTT-/Produkt-/Hash-/XOF-/Packing-Flächen. Auch internes Vergleichs-Chiffrat
+  und Ablehnungskandidaten bleiben darin. Keine privaten Array-Rückgaben im Root-Pfad,
+  Wipe vor Unlock/Free. Gepinnte SHA3/SHAKE nutzen geliehenen portablen Keccak-Scratch;
+  dies kann ARM-Beschleunigung kosten. Parameter/Versionen/Formatbytes erhalten.
+  Native Gesamtabnahme und weitere DSA-/AES-/Argon2-R6-Pfade bleiben offen.
+  EN: R6 work in progress: prelock complete KEM construction/operation workspaces,
+  including confidential recomputed ciphertext, and borrow codec/transform/hash/XOF
+  outputs. Preserve constant-time rejection and all parameter sets. Protected hash
+  mode shares portable permutation loops; full native acceptance and remaining
+  DSA/AES/Argon2 provider remediation are still required.
 
 - DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
   Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.

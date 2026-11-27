@@ -86,13 +86,7 @@ impl<P: ParameterSet> KeyGenerationWorkspace<P> {
             .zip(self.public.0.iter_mut())
             .zip(self.error.0.iter())
         {
-            target.0.fill(Default::default());
-            for (a, s) in row.0.iter().zip(secret.0.iter()) {
-                crate::algebra::multiply_ntt_into(a, s, &mut self.product);
-                for (sum, product) in target.0.iter_mut().zip(self.product.0.iter()) {
-                    *sum = *sum + *product;
-                }
-            }
+            crate::algebra::dot_ntt_into(row, secret, target, &mut self.product);
             for (sum, error) in target.0.iter_mut().zip(error.0.iter()) {
                 *sum = *sum + *error;
             }
