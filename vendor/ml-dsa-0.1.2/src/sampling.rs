@@ -9,6 +9,9 @@ use module_lattice::{ArraySize, Field, Truncate};
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "protected-workspace")]
+pub(crate) mod in_place;
+
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {
     let bit_index = i & 0x07;

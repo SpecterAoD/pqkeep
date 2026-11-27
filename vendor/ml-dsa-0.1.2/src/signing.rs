@@ -31,7 +31,13 @@ use {
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+#[cfg(all(feature = "protected-workspace", feature = "rand_core"))]
+mod borrowed;
+#[cfg(all(feature = "protected-workspace", feature = "alloc"))]
+pub(crate) mod in_place;
 mod steps;
+#[cfg(all(feature = "protected-workspace", feature = "rand_core"))]
+pub(crate) mod workspace;
 
 /// ML-DSA signing key (i.e. private/secret key).
 ///
@@ -660,17 +666,30 @@ impl<P: MlDsaParams> fmt::Debug for ExpandedSigningKey<P> {
 impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
     fn drop(&mut self) {
         #[cfg(feature = "zeroize")]
-        {
-            self.rho.zeroize();
-            self.K.zeroize();
-            self.tr.zeroize();
-            self.s1.zeroize();
-            self.s2.zeroize();
-            self.t0.zeroize();
-            self.s1_hat.zeroize();
-            self.s2_hat.zeroize();
-            self.t0_hat.zeroize();
-        }
+        self.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> Zeroize for ExpandedSigningKey<P> {
+    fn zeroize(&mut self) {
+        self.rho.zeroize();
+        self.K.zeroize();
+        self.tr.zeroize();
+        self.s1.zeroize();
+        self.s2.zeroize();
+        self.t0.zeroize();
+        self.s1_hat.zeroize();
+        self.s2_hat.zeroize();
+        self.t0_hat.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> Zeroize for SigningKey<P> {
+    fn zeroize(&mut self) {
+        self.expanded_key.zeroize();
+        self.seed.zeroize();
     }
 }
 

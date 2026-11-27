@@ -25,6 +25,24 @@ impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
     pub(crate) fn from_fn(mut f: impl FnMut(usize) -> NttVector<L>) -> Self {
         Self(Array::from_fn(|i| MaybeBox::new(f(i))))
     }
+
+    #[cfg(feature = "protected-workspace")]
+    pub(crate) fn multiply_into(
+        &self,
+        rhs: &NttVector<L>,
+        out: &mut NttVector<K>,
+        product: &mut NttPolynomial,
+    ) {
+        for (row, target) in self.0.iter().zip(out.0.iter_mut()) {
+            target.0.fill(Elem::new(0));
+            for (left, right) in row.0.iter().zip(rhs.0.iter()) {
+                crate::ntt::multiply_ntt_into(left, right, product);
+                for (sum, value) in target.0.iter_mut().zip(product.0.iter()) {
+                    *sum = *sum + *value;
+                }
+            }
+        }
+    }
 }
 
 impl<K: ArraySize, L: ArraySize> Mul<&NttVector<L>> for &NttMatrix<K, L> {

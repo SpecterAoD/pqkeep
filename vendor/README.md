@@ -17,7 +17,7 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | region 4.0.1 | darfink/region-rs, MIT | Safe current-process Windows working-set capacity request before VirtualLock. No token, account, privilege or machine-policy changes; errors are propagated. Existing lock API preserved. |
 | ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed keygen and complete PKE operation workspaces, prelockable payloads, direct codecs/transforms and protected hash/XOF state; preserve legacy APIs and algorithms. |
 | module-lattice 0.2.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed codec destinations; shared original packing loops with scalar little-endian accesses instead of private conversion arrays. |
-| ml-dsa 0.1.2 | RustCrypto/signatures, Apache-2.0 OR MIT | Versioned dependency-path bridge to the same lattice provider; production algorithms unchanged. |
+| ml-dsa 0.1.2 | RustCrypto/signatures, Apache-2.0 OR MIT | Borrowed keygen/sign/verification workspaces; fixed private payloads prelocked by Root; existing arithmetic and hedged randomness preserved. |
 | sha3 0.12.0 / shake 0.1.0 | RustCrypto/hashes / sponges, MIT OR Apache-2.0 | Opt-in inline permutation scratch; borrowed XOF reader finalization and explicit wipe. |
 | keccak 0.2.2 | RustCrypto/sponges, MIT OR Apache-2.0 | Existing portable permutation with borrowed five-lane scratch. Ordinary backend dispatch preserved. |
 | sponge-cursor 0.1.0 | RustCrypto/sponges, MIT OR Apache-2.0 | Captured permutation closure; direct scalar byte accesses replace private arrays and three inherited pointer casts. |
@@ -196,3 +196,18 @@ selects the strict workspace traits, propagates failures and never falls back to
 the ordinary provider APIs. Constant-time candidate selection and implicit rejection
 are preserved. Three parameter sets, tampering, sentinel/stability/lock/cleanup
 and independent KAT proofs remain required, including final native CI acceptance.
+
+## Private DSA storage / Private DSA-Flächen
+
+DE: Root sperrt SigningKey, Seed-/Expanded-Key-Payloads und vollständige Inline-
+Workspaces vor privater Befüllung. Geliehene NTT-, Sampler-, Packing-, Hash-/Reader-
+Einstiege verwenden bestehende Konstanten und Koeffizientenoperationen. Beide
+Ablehnungsprüfungen und die vollständige ursprüngliche Noncesequenz bleiben erhalten;
+erst akzeptierte Signaturen dürfen gewöhnliche öffentliche Allokationen verwenden.
+EN: Secret-derived rejection candidates and hints stay in the prelocked workspace.
+Public rho-derived matrix caches contain no private products. Root uses fresh OS
+hedged randomness directly in locked storage; no deterministic or unprotected fallback.
+Verification also protects confidential message/context hashes, mu and recomputed
+challenges, using constant-time comparison. Explicit key wiping precedes payload
+unlock/free. Ordinary provider APIs remain compatibility/reference paths and are
+not used by the protected Root DSA operations. Native acceptance remains required.

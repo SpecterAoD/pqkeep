@@ -7,6 +7,24 @@ use module_lattice::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 
 use crate::algebra::{Elem, Polynomial, Vector};
 
+// DE: Dieselbe Bereichsdekodierung ohne privates Polynom als Rückgabewert.
+// EN: The same range decoding without returning a private polynomial.
+#[cfg(feature = "protected-workspace")]
+pub(crate) fn unpack_into<A, B>(enc: &RangeEncodedPolynomial<A, B>, out: &mut Polynomial)
+where
+    (A, B): RangeEncodingSize,
+{
+    let a = Elem::new(RangeMin::<A, B>::U32);
+    let b = Elem::new(RangeMax::<A, B>::U32);
+    module_lattice::byte_decode_into::<crate::algebra::BaseField, RangeEncodingBits<A, B>>(
+        enc, &mut out.0,
+    );
+    for value in &mut out.0 {
+        assert!(value.0 <= (a + b).0);
+        *value = b - *value;
+    }
+}
+
 /// A pair of integers that describes a range
 pub trait RangeEncodingSize {
     type Min: Unsigned;

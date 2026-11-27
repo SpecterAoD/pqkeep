@@ -49,12 +49,21 @@ pub mod pkcs8;
 mod algebra;
 mod crypto;
 mod encode;
+#[cfg(feature = "protected-workspace")]
+mod hash_workspace;
 mod hint;
 mod ntt;
 mod param;
 mod sampling;
 mod signing;
 mod verifying;
+
+#[cfg(all(feature = "protected-workspace", feature = "alloc"))]
+pub use signing::in_place::{KeyGenerationWorkspace, SeedKeyInPlace};
+#[cfg(all(feature = "protected-workspace", feature = "rand_core"))]
+pub use signing::workspace::SigningWorkspace;
+#[cfg(feature = "protected-workspace")]
+pub use verifying::in_place::VerificationWorkspace;
 
 pub use crate::{
     param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKeyBytes, MlDsaParams},

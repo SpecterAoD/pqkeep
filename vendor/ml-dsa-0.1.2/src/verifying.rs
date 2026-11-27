@@ -14,6 +14,9 @@ use module_lattice::MaybeBox;
 use shake::Shake256;
 use signature::{DigestVerifier, Error, MultipartVerifier};
 
+#[cfg(feature = "protected-workspace")]
+pub(crate) mod in_place;
+
 /// An ML-DSA verification key.
 #[derive(Clone, Debug, PartialEq)]
 pub struct VerifyingKey<P: ParameterSet> {
@@ -112,6 +115,18 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     where
         P: MlDsaParams,
     {
+        let w1p_tilde = self.reconstruct_w1(sigma);
+        let cp_tilde = H::default()
+            .absorb(mu)
+            .absorb(&w1p_tilde)
+            .squeeze_new::<P::Lambda>();
+
+        sigma.c_tilde == cp_tilde
+    }
+
+    // DE: Gemeinsame öffentliche Signaturarithmetik, kein Nachrichten-/mu-Eingang.
+    // EN: Shared public signature arithmetic; no message/mu input.
+    fn reconstruct_w1(&self, sigma: &Signature<P>) -> crate::param::EncodedW1<P> {
         // Reconstruct w
         let c = sample_in_ball(&sigma.c_tilde, P::TAU);
 
@@ -123,13 +138,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         let wp_approx = (&Az_hat - &ct1_2d_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);
 
-        let w1p_tilde = P::encode_w1(&w1p);
-        let cp_tilde = H::default()
-            .absorb(mu)
-            .absorb(&w1p_tilde)
-            .squeeze_new::<P::Lambda>();
-
-        sigma.c_tilde == cp_tilde
+        P::encode_w1(&w1p)
     }
 
     /// Implementation of Algorithm 3: `ML-DSA.Verify` from FIPS 204.

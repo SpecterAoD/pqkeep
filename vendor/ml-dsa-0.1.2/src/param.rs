@@ -62,6 +62,8 @@ pub trait MaskSamplingSize: Unsigned {
     type SampleSize: ArraySize;
 
     fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial;
+    #[cfg(feature = "protected-workspace")]
+    fn unpack_into(v: &Array<u8, Self::SampleSize>, out: &mut Polynomial);
 }
 
 impl<G> MaskSamplingSize for G
@@ -73,6 +75,11 @@ where
 
     fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial {
         BitPack::<Diff<G, U1>, G>::unpack(v)
+    }
+
+    #[cfg(feature = "protected-workspace")]
+    fn unpack_into(v: &Array<u8, Self::SampleSize>, out: &mut Polynomial) {
+        crate::encode::unpack_into::<Diff<G, U1>, G>(v, out);
     }
 }
 
@@ -334,6 +341,11 @@ pub trait SignatureParams: ParameterSet {
     fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>);
 
     fn encode_w1(t1: &Vector<Self::K>) -> EncodedW1<Self>;
+    #[cfg(feature = "protected-workspace")]
+    fn encode_w1_into(
+        t1: &Vector<Self::K>,
+        out: &mut EncodedW1<Self>,
+    ) -> Result<(), module_lattice::InvalidEncodingGeometry>;
     fn decode_w1(enc: &EncodedW1<Self>) -> Vector<Self::K>;
 
     fn encode_z(z: &Vector<Self::L>) -> EncodedZ<Self>;
@@ -411,6 +423,16 @@ where
 
     fn encode_w1(w1: &Vector<Self::K>) -> EncodedW1<Self> {
         Encode::<Self::W1Bits>::encode(w1)
+    }
+
+    #[cfg(feature = "protected-workspace")]
+    fn encode_w1_into(
+        w1: &Vector<Self::K>,
+        out: &mut EncodedW1<Self>,
+    ) -> Result<(), module_lattice::InvalidEncodingGeometry> {
+        module_lattice::byte_encode_vector_into::<crate::algebra::BaseField, Self::W1Bits, Self::K>(
+            w1, out,
+        )
     }
 
     fn decode_w1(enc: &EncodedW1<Self>) -> Vector<Self::K> {

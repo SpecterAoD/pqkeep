@@ -1,4 +1,5 @@
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
+use hybrid_array::{Array, typenum::U256};
 use module_lattice::{ArraySize, Field, MultiplyNtt};
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
@@ -43,8 +44,14 @@ const ZETA_POW_BITREV: [Elem; 256] = {
 };
 
 pub(crate) trait Ntt {
-    type Output;
-    fn ntt(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_into(&mut out);
+        out
+    }
+    // DE: Ziel vor privater Befüllung sperren. EN: Prelock destination before population.
+    fn ntt_into(&self, out: &mut Self::Output);
 }
 
 /// Constant-time NTT butterfly layer.
@@ -53,7 +60,7 @@ pub(crate) trait Ntt {
 /// avoiding UDIV instructions from runtime `step_by` calculations.
 #[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
 #[inline(always)]
-fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(w: &mut [Elem; 256], m: &mut usize) {
+fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(w: &mut Array<Elem, U256>, m: &mut usize) {
     for i in 0..ITERATIONS {
         let start = i * 2 * LEN;
         *m += 1;
@@ -73,35 +80,42 @@ impl Ntt for Polynomial {
     //
     // This implementation uses const-generic helper functions to ensure all loop
     // bounds are compile-time constants, avoiding potential UDIV instructions.
-    fn ntt(&self) -> Self::Output {
-        let mut w: [Elem; 256] = self.0.clone().into();
+    fn ntt_into(&self, out: &mut Self::Output) {
+        let w = &mut out.0;
+        w.copy_from_slice(&self.0);
         let mut m = 0;
 
-        ntt_layer::<128, 1>(&mut w, &mut m);
-        ntt_layer::<64, 2>(&mut w, &mut m);
-        ntt_layer::<32, 4>(&mut w, &mut m);
-        ntt_layer::<16, 8>(&mut w, &mut m);
-        ntt_layer::<8, 16>(&mut w, &mut m);
-        ntt_layer::<4, 32>(&mut w, &mut m);
-        ntt_layer::<2, 64>(&mut w, &mut m);
-        ntt_layer::<1, 128>(&mut w, &mut m);
-
-        NttPolynomial::new(w.into())
+        ntt_layer::<128, 1>(w, &mut m);
+        ntt_layer::<64, 2>(w, &mut m);
+        ntt_layer::<32, 4>(w, &mut m);
+        ntt_layer::<16, 8>(w, &mut m);
+        ntt_layer::<8, 16>(w, &mut m);
+        ntt_layer::<4, 32>(w, &mut m);
+        ntt_layer::<2, 64>(w, &mut m);
+        ntt_layer::<1, 128>(w, &mut m);
     }
 }
 
 impl<K: ArraySize> Ntt for Vector<K> {
     type Output = NttVector<K>;
 
-    fn ntt(&self) -> Self::Output {
-        NttVector::new(self.0.iter().map(Polynomial::ntt).collect())
+    fn ntt_into(&self, out: &mut Self::Output) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_into(target);
+        }
     }
 }
 
 #[allow(clippy::module_name_repetitions)]
 pub(crate) trait NttInverse {
-    type Output;
-    fn ntt_inverse(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt_inverse(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_inverse_into(&mut out);
+        out
+    }
+    // DE: Ziel vor privater Befüllung sperren. EN: Prelock destination before population.
+    fn ntt_inverse_into(&self, out: &mut Self::Output);
 }
 
 /// Constant-time inverse NTT butterfly layer.
@@ -111,7 +125,7 @@ pub(crate) trait NttInverse {
 #[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
 #[inline(always)]
 fn ntt_inverse_layer<const LEN: usize, const ITERATIONS: usize>(
-    w: &mut [Elem; 256],
+    w: &mut Array<Elem, U256>,
     m: &mut usize,
 ) {
     for i in 0..ITERATIONS {
@@ -133,42 +147,51 @@ impl NttInverse for NttPolynomial {
     //
     // This implementation uses const-generic helper functions to ensure all loop
     // bounds are compile-time constants, avoiding potential UDIV instructions.
-    fn ntt_inverse(&self) -> Self::Output {
+    fn ntt_inverse_into(&self, out: &mut Self::Output) {
         const INVERSE_256: Elem = Elem::new(8_347_681);
 
-        let mut w: [Elem; 256] = self.0.clone().into();
+        let w = &mut out.0;
+        w.copy_from_slice(&self.0);
         let mut m = 256;
 
-        ntt_inverse_layer::<1, 128>(&mut w, &mut m);
-        ntt_inverse_layer::<2, 64>(&mut w, &mut m);
-        ntt_inverse_layer::<4, 32>(&mut w, &mut m);
-        ntt_inverse_layer::<8, 16>(&mut w, &mut m);
-        ntt_inverse_layer::<16, 8>(&mut w, &mut m);
-        ntt_inverse_layer::<32, 4>(&mut w, &mut m);
-        ntt_inverse_layer::<64, 2>(&mut w, &mut m);
-        ntt_inverse_layer::<128, 1>(&mut w, &mut m);
+        ntt_inverse_layer::<1, 128>(w, &mut m);
+        ntt_inverse_layer::<2, 64>(w, &mut m);
+        ntt_inverse_layer::<4, 32>(w, &mut m);
+        ntt_inverse_layer::<8, 16>(w, &mut m);
+        ntt_inverse_layer::<16, 8>(w, &mut m);
+        ntt_inverse_layer::<32, 4>(w, &mut m);
+        ntt_inverse_layer::<64, 2>(w, &mut m);
+        ntt_inverse_layer::<128, 1>(w, &mut m);
 
-        INVERSE_256 * &Polynomial::new(w.into())
+        for value in w {
+            *value = INVERSE_256 * *value;
+        }
     }
 }
 
 impl<K: ArraySize> NttInverse for NttVector<K> {
     type Output = Vector<K>;
 
-    fn ntt_inverse(&self) -> Self::Output {
-        Vector::new(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
+    fn ntt_inverse_into(&self, out: &mut Self::Output) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_inverse_into(target);
+        }
     }
 }
 
 impl MultiplyNtt for BaseField {
     // Algorithm 45 MultiplyNTT
     fn multiply_ntt(lhs: &NttPolynomial, rhs: &NttPolynomial) -> NttPolynomial {
-        NttPolynomial::new(
-            lhs.0
-                .iter()
-                .zip(rhs.0.iter())
-                .map(|(&x, &y)| x * y)
-                .collect(),
-        )
+        let mut out = NttPolynomial::default();
+        multiply_ntt_into(lhs, rhs, &mut out);
+        out
+    }
+}
+
+// DE: Ursprüngliche punktweise Multiplikation in geliehenes Ziel.
+// EN: Original pointwise multiplication into borrowed output.
+pub(crate) fn multiply_ntt_into(lhs: &NttPolynomial, rhs: &NttPolynomial, out: &mut NttPolynomial) {
+    for ((target, x), y) in out.0.iter_mut().zip(lhs.0.iter()).zip(rhs.0.iter()) {
+        *target = *x * *y;
     }
 }

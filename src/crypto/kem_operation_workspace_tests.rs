@@ -132,6 +132,16 @@ fn fail_after_private_operation(
 
 #[test]
 fn populated_private_operation_workspace_is_wiped_under_lock_on_error_and_unwind() {
+    crate::locked_owner_test_support::isolated_test(
+        "crypto::kem::operation_workspace_tests::operation_cleanup_child",
+        "PQKEEP_KEM_CLEANUP_CHILD",
+    );
+}
+
+#[test]
+#[ignore = "DE/EN: Exakte Zähler nur im eigenen Kind / exact counters only in own child."]
+fn operation_cleanup_child() {
+    assert_eq!(std::env::var("PQKEEP_KEM_CLEANUP_CHILD").unwrap(), "1");
     let seed = rng::secret(64).unwrap();
     let key = key_state::KeyState::<ml_kem::DecapsulationKey<MlKem512>>::new(
         seed_state::view(&seed).unwrap(),

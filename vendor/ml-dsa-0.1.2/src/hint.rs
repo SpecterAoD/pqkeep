@@ -11,7 +11,7 @@ use module_lattice::{Field, MaybeBox, Truncate};
 
 /// Algorithm 39 `MakeHint`: computes hint bit indicating whether adding `z` to `r` alters the high
 /// bits of `r`.
-fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
+pub(crate) fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
     let r1 = r.high_bits::<TwoGamma2>();
     let v1 = (r + z).high_bits::<TwoGamma2>();
     r1 != v1

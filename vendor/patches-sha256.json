@@ -211,40 +211,72 @@
   ],
   "ml-dsa-0.1.2": [
     {
-      "path": "Cargo.toml",
-      "sha256": "01a59cca4514a95a4984b1bc6958e4219e8059c59840df2f74c2a899bc870f3c"
+      "sha256": "01a59cca4514a95a4984b1bc6958e4219e8059c59840df2f74c2a899bc870f3c",
+      "path": "Cargo.toml"
     },
     {
-      "path": "src/algebra.rs",
-      "sha256": "3168d6b467261c0cb20fcec46892206de0969cc36066e0cc4cfb351efaee32ea"
+      "sha256": "4f36fbfb2200aeef22323ffd5c4a346238e829d8bf51bf8d5442bcd9e9fc59fe",
+      "path": "src/algebra.rs"
     },
     {
-      "path": "src/crypto.rs",
-      "sha256": "b291eea6aa495cdbf01d2bb3a9dd99fda6528136e63ecbc4cc75c7440abca4ba"
+      "sha256": "b291eea6aa495cdbf01d2bb3a9dd99fda6528136e63ecbc4cc75c7440abca4ba",
+      "path": "src/crypto.rs"
     },
     {
-      "path": "src/encode.rs",
-      "sha256": "508366002b18c3b5296f5540c1d6704bed292519cc2ae407c1f9de1ffa87f17e"
+      "sha256": "476c605a0d648c55bf66a789fd4b5b6802376fca31f77eeb84a0483aef1a14b2",
+      "path": "src/encode.rs"
     },
     {
-      "path": "src/hint.rs",
-      "sha256": "8c9fb244542a0ad0c9f87bcd157899ca8f0746164d9a3c9739cf6760dac28203"
+      "sha256": "67b9702b0968aaa396f56d8628fd41639e064a3f6552a69c2cb2a72ce262dceb",
+      "path": "src/hash_workspace.rs"
     },
     {
-      "path": "src/lib.rs",
-      "sha256": "25a412324744a6e2b2033aaf52a1b96ad6d78c38d9fc3580b4d4de61e3d6927f"
+      "sha256": "b2f459860cad9aee90fce36dcca3d55298c7fe925dc15ebbfbc5c3955b0c7ec2",
+      "path": "src/hint.rs"
     },
     {
-      "path": "src/ntt.rs",
-      "sha256": "b77f9155573844c246563ad6940373fe3beea7f60f301dabd48fffca1577c6df"
+      "sha256": "82c8f39a0f4a2b82cf8f8c06ad3c78d9d119aaf556cc331ed119c6e048059fc9",
+      "path": "src/lib.rs"
     },
     {
-      "path": "src/sampling.rs",
-      "sha256": "75224e96ba9e598e13855187fc17ca0e1b0c9a6726ce16c0b82ebcb7d282c6f7"
+      "sha256": "bd2c070ffb63d28094c406b695f4562a459fbc5098c08c62a2570e59e64f151d",
+      "path": "src/ntt.rs"
     },
     {
-      "path": "src/signing.rs",
-      "sha256": "7647e980ec65f34fbbf6178df62e4ba40e9801cb4dd47ff4c933fa9d11a96111"
+      "sha256": "059eeb62220875479ca35d809fabf33e47e746a941dab6a2f40438f95710b262",
+      "path": "src/param.rs"
+    },
+    {
+      "sha256": "d374e7ba9c964a22d7030b81f6829c1c2217760e6a744cfb6f963b2477f6e761",
+      "path": "src/sampling/in_place.rs"
+    },
+    {
+      "sha256": "27ea974a59effc0c42e499a45dfe12aee74abc1413f6fd5b62e727619987f7bb",
+      "path": "src/sampling.rs"
+    },
+    {
+      "sha256": "3561aebac973136d3dddfb6db2f80432f07d94afb989ddde5aa381dff5bd0ac0",
+      "path": "src/signing/borrowed.rs"
+    },
+    {
+      "sha256": "b34d6382ac006608a593a8f66a18d9af384fbde07b1b72a0d93980739e5eda7b",
+      "path": "src/signing/in_place.rs"
+    },
+    {
+      "sha256": "08f545ff149700781f2d5a0f1285eb08623027ab936b151392f3f2f5a4c87b03",
+      "path": "src/signing/workspace.rs"
+    },
+    {
+      "sha256": "15eacd4f4ee299bd85d100116ff84232f151565ca4df2ef28a14a346acaee5b3",
+      "path": "src/signing.rs"
+    },
+    {
+      "sha256": "6722f4ed69c0e0dfb6dd80c500a1b60fa62e9d0cbb56329c37d60587e665e18b",
+      "path": "src/verifying/in_place.rs"
+    },
+    {
+      "sha256": "fc8a4b48267279487787d09464fb9c3a9e0cd3636574bec412902b5a844f2349",
+      "path": "src/verifying.rs"
     }
   ],
   "shake-0.1.0": [
