@@ -126,9 +126,17 @@ mod windows {
     fn inspect(pid: u32) -> io::Result<()> {
         for rights in [0x10, 0x20, 0x08, 0x40, 0x02, WRITE_DAC, 0x80000] {
             match open(pid, rights) {
-                Ok(_) => return Err(io::Error::other("sensitive process access allowed")),
+                Ok(_) => {
+                    return Err(io::Error::other(format!(
+                        "sensitive process access allowed: {rights:#x}"
+                    )));
+                }
                 Err(error) if error.raw_os_error() == Some(5) => (),
-                Err(_) => return Err(io::Error::other("unexpected process query failure")),
+                Err(error) => {
+                    return Err(io::Error::other(format!(
+                        "unexpected process query failure: {rights:#x}: {error}"
+                    )));
+                }
             }
         }
         let _query = open(pid, 0x1000 | 0x0010_0000)?;

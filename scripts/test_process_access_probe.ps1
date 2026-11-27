@@ -38,6 +38,8 @@ try {
     if (-not $inspector.WaitForExit(10000)) { throw 'Own inspector timeout' }
     $result = $inspector.StandardOutput.ReadToEnd()
     if ($inspector.ExitCode -ne 0 -or -not $result.StartsWith('PASS:')) {
+        # DE/EN: Nur feste öffentliche Probenfehler, keine Geheimwerte / public probe errors only.
+        Write-Output ($inspector.StandardError.ReadToEnd())
         throw 'Own inspector rejected process access policy'
     }
     $target.StandardInput.Close()
