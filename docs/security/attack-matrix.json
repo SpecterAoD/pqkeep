@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.4.0",
+  "matrix_version": "1.5.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -5541,6 +5541,108 @@
       "evidence_refs": [],
       "gap": null,
       "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-013",
+      "category": "Container",
+      "component_paths": [
+        "src/files/anon_v4.rs",
+        "src/files/slot_v2.rs",
+        "src/files/format_v4.rs",
+        "src/cli/recipients.rs"
+      ],
+      "scenario": {
+        "de": "Anonyme Empfänger (Format v4, ANON, experimentell): Empfänger-IDs im Header suchen, fremden Schlüssel probieren, ANON-Bit löschen, Typ 5 ohne ANON bzw. ANON ohne Typ 5, sichtbare und anonyme Zugänge mischen, nicht kanonische Reihenfolge, andere ML-KEM-Stufe",
+        "en": "Anonymous recipients (format v4, ANON, experimental): look for recipient IDs in the header, try a foreign key, clear the ANON bit, type 5 without ANON or ANON without type 5, mix visible and anonymous slots, non-canonical order, another ML-KEM level."
+      },
+      "expected_behavior": {
+        "de": "keine Empfänger-ID im Header; fremder Schlüssel erst nach allen Versuchen abgewiesen; Regelverstöße ohne Ausgabe abgewiesen",
+        "en": "no recipient ID in the header; a foreign key is rejected only after all attempts; rule violations rejected without output"
+      },
+      "boundary": {
+        "de": "EXPERIMENTELL: Die Anonymität stützt sich auf ANO-CCA von ML-KEM – für Kyber (Runde 3) bewiesen, für FIPS 203 noch nicht belegt (#340). Anzahl der Zugänge bleibt sichtbar.",
+        "en": "EXPERIMENTAL: anonymity relies on ML-KEM's ANO-CCA – proven for Kyber (round 3), not yet established for FIPS 203 (#340). The number of slots stays visible."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_anonymous.rs",
+          "symbol": "every_recipient_opens_and_header_has_no_ids",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_anonymous.rs",
+          "symbol": "only_ml_kem_1024_and_downgrade_fails",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_anonymous.rs",
+          "symbol": "combines_with_passphrase_signature_and_padding",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/format_v4_tests.rs",
+          "symbol": "anonymous_slot_rules",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_anonymous.rs",
+          "symbol": "anonymous_recipients_on_the_command_line",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        316,
+        340
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": {
+        "de": "Formaler ANO-CCA-Nachweis für FIPS 203 ML-KEM fehlt; Tests zeigen nur Format- und Ablaufregeln.",
+        "en": "A formal ANO-CCA proof for FIPS 203 ML-KEM is missing; tests only cover format and flow rules."
+      },
+      "next_evidence": {
+        "de": "Recherche/Fachanalyse in #340; danach experimentelle Kennzeichnung aufheben oder Funktion zurückbauen.",
+        "en": "Research/expert analysis in #340; then lift the experimental label or remove the feature."
+      },
       "retired": false,
       "replacement": null
     }

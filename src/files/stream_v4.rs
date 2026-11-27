@@ -52,7 +52,7 @@ pub fn encrypt_stream<W: Write>(
         prefix,
         protection,
         &file_key,
-        (public, options.pad),
+        (public, options),
     )?;
     let mut out = BufWriter::new(target);
     out.write_all(&header)?;

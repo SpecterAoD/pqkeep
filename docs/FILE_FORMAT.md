@@ -118,6 +118,13 @@ große Dateien. Geschrieben wird dafür Format v4 (lesbar ab beta.5), auch für 
 Füllung ist authentisiert und wird beim Entschlüsseln geprüft (nur Nullbytes, exakte Länge) und nie
 ausgegeben. Sichtbar bleiben Größenordnung, Anzahl und Zeitpunkt der Dateien.
 
+## Anonyme Empfänger (experimentell, #316/#340)
+
+`encrypt --anonymous-recipients --to …` schreibt Zugänge **ohne Empfänger-ID** (nur ML-KEM-1024, Format v4,
+lesbar ab beta.5); Außenstehende sehen nicht, für wen die Datei ist, wohl aber die Anzahl der Empfänger.
+Zum Öffnen probiert PQKeep alle Zugänge. **Experimentell**: Die Anonymität ist für die Norm FIPS 203 noch nicht
+formal belegt (Details [CRYPTO.md](CRYPTO.md), #340); PQKeep warnt bei jeder Nutzung.
+
 ## Grenzen
 
 - Die ungefähre Gesamtgröße ist sichtbar (Größe der `.pqkf`-Datei).
@@ -195,6 +202,11 @@ bytes follow the data up to the next PADMÉ step (at most ~12 %, usually < 3 % m
 give equally large files. This writes format v4 (readable from beta.5), also for files and directories; the
 padding is authenticated, checked when decrypting (zero bytes only, exact length) and never output. The
 order of magnitude, number and timing of files stay visible.
+
+**Anonymous recipients (experimental, #316/#340):** `encrypt --anonymous-recipients --to …` writes slots
+**without recipient ID** (ML-KEM-1024 only, format v4, readable from beta.5); outsiders cannot see for whom the
+file is, only how many recipients there are; PQKeep tries all slots to open it. **Experimental**: anonymity is
+not yet formally established for FIPS 203 (see [CRYPTO.md](CRYPTO.md), #340); PQKeep warns on every use.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a

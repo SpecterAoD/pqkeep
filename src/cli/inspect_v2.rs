@@ -49,6 +49,11 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
                 let hex = envelope::hex_encode(&recipient_id);
                 println!("{}: {}", t.lbl_recipient, fingerprint(&hex));
             }
+            Slot::Anonymous { .. } => {
+                println!("{}: {}", t.lbl_mode, t.mode_recipient);
+                let text = "anonym, ML-KEM-1024, experimentell (#340) / anonymous, ML-KEM-1024, experimental (#340)";
+                println!("{}: {}", t.lbl_recipient, super::io::localize(text, lang));
+            }
         }
     }
     super::signing::print_unverified(lang, header.signer.as_ref());

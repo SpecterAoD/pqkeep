@@ -156,9 +156,9 @@ fn downgrade_truncation_and_appending_are_rejected() {
     assert_eq!(
         rejected(
             &enc,
-            &edit(22, 0x02),
+            &edit(22, 0x08),
             &unlock,
-            "ANON (reserviert / reserved)"
+            "HIDDEN_SENDER (reserviert / reserved)"
         ),
         Error::Unsupported
     );

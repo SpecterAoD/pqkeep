@@ -31,7 +31,7 @@ use std::io::Read;
 use sha3::{Digest, Sha3_256};
 
 use super::format::{Content, MAGIC, Reader, bad};
-use super::format_v4::{DOMAIN_V4, OPT_SIGNED, V4, VERSION_V4, check_v4};
+use super::format_v4::{DOMAIN_V4, OPT_SIGNED, V4, VERSION_V4, check_anon, check_v4};
 use super::signer_v3::{COMMIT_LEN, SIGNER_BLOCK_LEN, Signer};
 pub use super::slot_v2::{MAX_RECIPIENTS, MAX_SLOTS, Slot, check_slots};
 use crate::crypto::aead::NONCE_LEN;
@@ -113,6 +113,7 @@ impl HeaderV2 {
     /// DE/EN: [`Error::InvalidInput`] (Feld `header`), [`Error::KdfParams`], [`Error::Unsupported`].
     pub fn metadata(&self) -> Result<Vec<u8>> {
         check_slots(&self.slots)?;
+        check_anon(&self.slots, self.v4.as_ref())?;
         match &self.v4 {
             Some(v4) => check_v4(self.content, v4, self.signer.as_ref())?,
             None if self.content == Content::Stream => return Err(bad()),
@@ -231,6 +232,7 @@ impl HeaderV2 {
         let v4 = options
             .map(|options| read_v4(&mut r, content, options, signer.as_ref()))
             .transpose()?;
+        check_anon(&slots, v4.as_ref())?;
         let mut wraps = Vec::with_capacity(count);
         for _ in 0..count {
             wraps.push(r.array::<WRAPPED_LEN>()?);

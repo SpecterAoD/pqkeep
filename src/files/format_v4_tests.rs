@@ -33,7 +33,7 @@ fn option_rules() {
         commit: [7; 32],
     };
     assert!(check_v4(Content::Stream, &v4(0), None).is_ok());
-    for reserved in [OPT_ANON, OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
+    for reserved in [OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
         assert_eq!(
             check_v4(Content::Stream, &v4(reserved), None),
             Err(Error::Unsupported)
@@ -84,3 +84,46 @@ const PADME_VECTORS: &[(u64, u64)] = &[
     (1_099_511_627_777, 1_116_691_496_960),
     (4_611_686_018_427_400_249, 4_683_743_612_465_315_840),
 ];
+
+#[test]
+fn anonymous_slot_rules() {
+    use super::super::slot_v2::check_slots;
+    let anon = |b: u8| Slot::Anonymous {
+        kem_ciphertext: vec![b; 1568],
+        nonce: [0; 12],
+    };
+    let visible = Slot::Recipient {
+        algorithm: crate::crypto::KemAlgorithm::MlKem1024,
+        recipient_id: [9; 32],
+        kem_ciphertext: vec![1; 1568],
+        nonce: [0; 12],
+    };
+    let v4 = |options| V4 {
+        options,
+        commit: [0; 32],
+    };
+    assert!(check_slots(&[anon(1), anon(2)]).is_ok());
+    assert!(
+        check_slots(&[anon(2), anon(1)]).is_err(),
+        "Reihenfolge / order"
+    );
+    assert!(
+        check_slots(&[anon(1), anon(1)]).is_err(),
+        "Doppel / duplicate"
+    );
+    assert!(
+        check_slots(&[anon(1), visible.clone()]).is_err(),
+        "gemischt / mixed"
+    );
+    assert!(check_anon(&[anon(1)], Some(&v4(OPT_ANON))).is_ok());
+    assert!(
+        check_anon(&[anon(1)], Some(&v4(0))).is_err(),
+        "Typ 5 ohne ANON"
+    );
+    assert!(check_anon(&[anon(1)], None).is_err(), "Typ 5 ohne v4");
+    assert!(
+        check_anon(&[visible], Some(&v4(OPT_ANON))).is_err(),
+        "ANON ohne Typ 5"
+    );
+    assert!(check_v4(Content::File, &v4(OPT_ANON), None).is_ok());
+}

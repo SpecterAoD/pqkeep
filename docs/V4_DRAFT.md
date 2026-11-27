@@ -189,6 +189,14 @@ Temporärdatei nach allen Prüfungen auf die Nutzlänge gekürzt. API: `files::E
 `encrypt_with_options`, `encrypt_many_with_options` (vorläufig bis #98). Tests: `tests/files_padding.rs`,
 `tests/cli_padding.rs`, Unit-Tests; PADMÉ-Referenz `scripts/v4_padme_reference.py` (P06); QA1-FMT-012.
 
+**Schritt 4 (anonyme Empfänger, `ANON`) EXPERIMENTELL umgesetzt** (Entscheidung Thomas 27.11.2026, Recherche
+#340): `encrypt --anonymous-recipients` (nur mit `--to`, nur ML-KEM-1024, Warnung bei jeder Nutzung, nicht
+Teil von „Privatsphäre hoch“, nicht in Menü/Kontextmenü). Zugangstyp 5 wie im Entwurf; Packschlüssel
+HKDF(salt = Chiffrat, IKM = Geheimnis, info = `PQKeep/file/v4\0wrap/anonymous\0`); Regeln: ANON ⇔ Typ 5,
+kein Mischen mit Typ 2, aufsteigend nach Chiffrat. Mit ANON wird v4 für jeden Inhalt geschrieben (immer mit
+Trailer). Öffnen probiert alle anonymen Zugänge; erst danach „kein Zugang für diesen Schlüssel“. Tests
+`tests/files_anonymous.rs`, `tests/cli_anonymous.rs`, Regel-Unit-Test; QA1-FMT-013 (teilweise, Lücke #340).
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -304,7 +312,13 @@ zero bytes ‖ trailer, padding = PADMÉ(length + 24) − (length + 24). The rea
 adding up, exactly canonical padding and an archive ending exactly before the padding; for streams the
 temporary file is truncated to the payload length after all checks. API: `files::EncryptOptions { pad }`,
 `encrypt_with_options`, `encrypt_many_with_options` (provisional until #98). Tests, PADMÉ reference
-`scripts/v4_padme_reference.py` (P06), QA1-FMT-012.
+`scripts/v4_padme_reference.py` (P06), QA1-FMT-012. **Step 4 (anonymous recipients, `ANON`) implemented
+as EXPERIMENTAL** (maintainer decision 2026-11-27, research #340): `encrypt --anonymous-recipients` (with
+`--to` only, ML-KEM-1024 only, warning on every use, not part of "privacy high", not in menu/context menu);
+slot type 5 as drafted, wrapping key HKDF(salt = ciphertext, IKM = secret, info =
+`PQKeep/file/v4\0wrap/anonymous\0`); rules ANON ⇔ type 5, no mixing with type 2, ascending by ciphertext; v4
+for every content type (always with a trailer); opening tries all anonymous slots and reports "no slot for
+this key" only afterwards. Tests and QA1-FMT-013 (partial, gap #340).
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.

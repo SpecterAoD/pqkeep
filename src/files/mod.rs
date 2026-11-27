@@ -12,6 +12,7 @@
 //! A factor file or several access slots produce format v2 (`docs/V2_DRAFT.md`), anything
 //! else still v1; both are read.
 
+mod anon_v4;
 mod archive;
 mod check;
 mod confidential_entries;
@@ -79,6 +80,9 @@ pub const EXTENSION: &str = "pqkf";
 pub struct EncryptOptions {
     /// DE: Füllung nach PADMÉ (verbirgt die genaue Größe, #316). EN: PADMÉ padding (hides the exact size).
     pub pad: bool,
+    /// DE: Anonyme Empfänger ohne ID, nur ML-KEM-1024 – **experimentell** (#316, #340).
+    /// EN: Anonymous recipients without ID, ML-KEM-1024 only – **experimental** (#316, #340).
+    pub anonymous: bool,
 }
 
 /// DE: Schutz beim Verschlüsseln. EN: Protection when encrypting.

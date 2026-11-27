@@ -269,7 +269,9 @@ fn c08_two_and_64_recipients_of_mixed_levels() {
             .iter()
             .map(|slot| match slot {
                 Slot::Recipient { recipient_id, .. } => &recipient_id[..],
-                Slot::Passphrase { .. } => unreachable!("nur Empfänger / recipients only"),
+                Slot::Passphrase { .. } | Slot::Anonymous { .. } => {
+                    unreachable!("nur sichtbare Empfänger / visible recipients only")
+                }
             })
             .collect();
         assert!(ids.windows(2).all(|pair| pair[0] < pair[1]));

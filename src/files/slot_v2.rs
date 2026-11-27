@@ -23,6 +23,12 @@ pub const MAX_SLOTS: usize = MAX_RECIPIENTS + 1;
 
 const SLOT_PASSPHRASE: u8 = 1;
 const SLOT_RECIPIENT: u8 = 2;
+/// DE: Anonymer Empfänger (nur Format v4 mit Bit ANON, experimentell, #316/#340).
+/// EN: Anonymous recipient (format v4 with bit ANON only, experimental, #316/#340).
+const SLOT_ANONYMOUS: u8 = 5;
+/// DE: Anonyme Zugänge nur mit ML-KEM-1024 (gleiche Länge, die Stufe verrät nichts).
+/// EN: Anonymous slots only with ML-KEM-1024 (equal length, the level reveals nothing).
+pub const ANONYMOUS_KEM: KemAlgorithm = KemAlgorithm::MlKem1024;
 
 /// DE: Ein Zugang mit seinen öffentlichen Daten (keine Geheimnisse).
 /// EN: One access slot with its public data (no secrets).
@@ -46,6 +52,14 @@ pub enum Slot {
         /// DE: Schlüssel-ID des Empfängers (sichtbar, D1). EN: Recipient key ID (visible, D1).
         recipient_id: [u8; RECIPIENT_ID_LEN],
         /// DE: KEM-Chiffrat. EN: KEM ciphertext.
+        kem_ciphertext: Vec<u8>,
+        /// DE: Nonce der Hülle. EN: Nonce of the wrap.
+        nonce: [u8; NONCE_LEN],
+    },
+    /// DE: Anonymer ML-KEM-1024-Empfänger ohne ID (experimentell, #340).
+    /// EN: Anonymous ML-KEM-1024 recipient without ID (experimental, #340).
+    Anonymous {
+        /// DE: KEM-Chiffrat (1568 Byte). EN: KEM ciphertext (1568 bytes).
         kem_ciphertext: Vec<u8>,
         /// DE: Nonce der Hülle. EN: Nonce of the wrap.
         nonce: [u8; NONCE_LEN],
@@ -94,6 +108,18 @@ impl Slot {
                 out.extend_from_slice(kem_ciphertext);
                 out.extend_from_slice(nonce);
             }
+            Self::Anonymous {
+                kem_ciphertext,
+                nonce,
+            } => {
+                let code = kem_code(ANONYMOUS_KEM);
+                if kem_ciphertext.len() != kem_from_code(code)?.1 {
+                    return Err(bad());
+                }
+                out.extend_from_slice(&[SLOT_ANONYMOUS, code]);
+                out.extend_from_slice(kem_ciphertext);
+                out.extend_from_slice(nonce);
+            }
         }
         Ok(out)
     }
@@ -108,6 +134,16 @@ impl Slot {
                 Ok(Self::Recipient {
                     algorithm,
                     recipient_id: r.array()?,
+                    kem_ciphertext: r.bytes(ct_len)?,
+                    nonce: r.array()?,
+                })
+            }
+            SLOT_ANONYMOUS => {
+                let (algorithm, ct_len) = kem_from_code(r.byte()?)?;
+                if algorithm != ANONYMOUS_KEM {
+                    return Err(Error::Unsupported);
+                }
+                Ok(Self::Anonymous {
                     kem_ciphertext: r.bytes(ct_len)?,
                     nonce: r.array()?,
                 })
@@ -153,22 +189,29 @@ pub fn check_slots(slots: &[Slot]) -> Result<()> {
     if slots.is_empty() || slots.len() > MAX_SLOTS {
         return Err(bad());
     }
-    let mut previous: Option<&[u8; RECIPIENT_ID_LEN]> = None;
-    let mut recipients = 0;
+    // DE: Sortierschlüssel: Empfänger-ID bzw. (anonym) Chiffrat; beide Arten nie gemischt.
+    // EN: Sort key: recipient ID or (anonymous) ciphertext; the two kinds are never mixed.
+    let mut previous: Option<&[u8]> = None;
+    let (mut visible, mut anonymous) = (0, 0);
     for (index, slot) in slots.iter().enumerate() {
-        match slot {
-            Slot::Passphrase { .. } if index == 0 => {}
+        let key: &[u8] = match slot {
+            Slot::Passphrase { .. } if index == 0 => continue,
             Slot::Passphrase { .. } => return Err(bad()),
             Slot::Recipient { recipient_id, .. } => {
-                if previous.is_some_and(|p| recipient_id <= p) {
-                    return Err(bad());
-                }
-                previous = Some(recipient_id);
-                recipients += 1;
+                visible += 1;
+                recipient_id
             }
+            Slot::Anonymous { kem_ciphertext, .. } => {
+                anonymous += 1;
+                kem_ciphertext
+            }
+        };
+        if previous.is_some_and(|p| key <= p) {
+            return Err(bad());
         }
+        previous = Some(key);
     }
-    if recipients > MAX_RECIPIENTS {
+    if visible + anonymous > MAX_RECIPIENTS || (visible > 0 && anonymous > 0) {
         return Err(bad());
     }
     Ok(())

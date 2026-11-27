@@ -53,6 +53,9 @@ fn encrypted(path: &Path) -> pqkeep::Result<Map<String, Value>> {
                     recipient_id,
                     ..
                 } => recipient(*algorithm, recipient_id),
+                // DE/EN: ohne ID, experimentell (#340) / without ID, experimental (#340)
+                Slot::Anonymous { .. } => json!({ "kind": "anonymous_recipient",
+                    "algorithm": "ML-KEM-1024", "experimental": true }),
             });
             // DE: Absender nur aus dem Header – ungeprüft (#44). EN: Sender from the header only – unverified.
             let signer = header.signer.as_ref().map_or(

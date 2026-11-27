@@ -104,6 +104,17 @@ pub fn passphrase_kek(
     expand_passphrase(domain, b.expose(), salt, factor.is_some())
 }
 
+/// DE: Packschlüssel eines anonymen Zugangs (Format v4, experimentell, #340): wie `Wrec`, aber
+/// ohne Empfänger-ID und mit Domäne `PQKeep/file/v4`.
+/// EN: Wrapping key of an anonymous slot (format v4, experimental, #340): like `Wrec`, but without
+/// recipient ID and with domain `PQKeep/file/v4`.
+///
+/// # Errors
+/// DE/EN: [`Error::Crypto`].
+pub fn anonymous_kek(shared: &[u8], kem_ciphertext: &[u8]) -> Result<SecretBytes> {
+    hkdf(kem_ciphertext, shared, b"PQKeep/file/v4\0wrap/anonymous\0")
+}
+
 /// DE: Packschlüssel `Wrec` eines Empfänger-Zugangs aus dem ML-KEM-Geheimnis. Salt ist das
 /// KEM-Chiffrat, die Empfänger-ID geht in die Info ein. Nur für Dateien (Domäne `file`).
 /// EN: Wrapping key `Wrec` of a recipient slot from the ML-KEM secret. The salt is the KEM

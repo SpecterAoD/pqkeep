@@ -22,6 +22,7 @@ Approved #152 A–E finalizes 1.1.0: 59 cases; twelve new bounded cases have nat
 follows with the next baseline run.
 1.3.0 adds QA1-FMT-011 (#316/#83, format v4 stream core): 61 cases; CI evidence follows likewise.
 1.4.0 adds QA1-FMT-012 (#316, PADMÉ padding): 62 cases; CI evidence follows likewise.
+1.5.0 adds QA1-FMT-013 (#316/#340, anonymous recipients, experimental, partial): 63 cases.
 [Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
@@ -185,6 +186,7 @@ Freigegebenes #152-A–E finalisiert 1.1.0: 59 Fälle; zwölf neue begrenzte Fä
 CI-Nachweis folgt mit dem nächsten Baseline-Lauf.
 1.3.0 ergänzt QA1-FMT-011 (#316/#83, Kern Format v4/Strom): 61 Fälle; CI-Nachweis folgt ebenso.
 1.4.0 ergänzt QA1-FMT-012 (#316, Füllung nach PADMÉ): 62 Fälle; CI-Nachweis folgt ebenso.
+1.5.0 ergänzt QA1-FMT-013 (#316/#340, anonyme Empfänger, experimentell, teilweise): 63 Fälle.
 [Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung

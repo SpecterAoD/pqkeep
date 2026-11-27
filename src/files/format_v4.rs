@@ -9,22 +9,24 @@
 //! commit = SHA3-256("PQKeep/file/v4\0" ‖ "commit\0" ‖ dateischlüssel)
 //! ```
 //!
-//! Umgesetzt sind `SIGNED` und `PAD` (Füllung nach PADMÉ, nur Nullbytes, kanonische Länge);
-//! `ANON` und `HIDDEN_SENDER` sind reserviert und „nicht unterstützt“, ebenso unbekannte Bits. v4
-//! wird nur geschrieben, wenn eine Option es verlangt (Inhalt 3 oder `PAD`); sonst ist v4 ungültig
-//! (D3 bleibt kanonisch).
+//! Umgesetzt sind `SIGNED`, `PAD` (Füllung nach PADMÉ, nur Nullbytes, kanonische Länge) und
+//! `ANON` (anonyme ML-KEM-1024-Empfänger, **experimentell**, #340); `HIDDEN_SENDER` ist reserviert
+//! und „nicht unterstützt“, ebenso unbekannte Bits. v4 wird nur geschrieben, wenn eine Option es
+//! verlangt (Inhalt 3, `PAD` oder `ANON`); sonst ist v4 ungültig (D3 bleibt kanonisch).
 //!
 //! EN: Format v4 (`docs/V4_DRAFT.md`, #316/#83): v2 header with version 4, U16 option bits after
 //! the nonce prefix and a key commitment `commit` in every v4 file; new content type 3 "stream". A
-//! stream's plaintext ends with a trailer (layout above). `SIGNED` and `PAD` (PADMÉ padding, zero
-//! bytes only, canonical length) are implemented; `ANON` and `HIDDEN_SENDER` are reserved and
-//! "unsupported", like unknown bits. v4 is only written when an option requires it (content 3 or
-//! `PAD`); otherwise v4 is invalid (D3 stays canonical).
+//! stream's plaintext ends with a trailer (layout above). `SIGNED`, `PAD` (PADMÉ padding, zero bytes
+//! only, canonical length) and `ANON` (anonymous ML-KEM-1024 recipients, **experimental**, #340) are
+//! implemented; `HIDDEN_SENDER` is reserved and "unsupported", like unknown bits. v4 is only written
+//! when an option requires it (content 3, `PAD` or `ANON`); otherwise v4 is invalid (D3 stays
+//! canonical).
 
 use sha3::Sha3_256;
 
 use super::format::{Content, bad};
 use super::signer_v3::{COMMIT_LEN, Signer};
+use super::slot_v2::Slot;
 use crate::crypto::locked_hash::LockedHash;
 use crate::{Error, Result};
 
@@ -98,18 +100,33 @@ pub fn check_commit_v4(v4: &V4, file_key: &[u8]) -> Result<()> {
 /// DE/EN: [`Error::Unsupported`] (reservierte/unbekannte Bits / reserved/unknown bits),
 /// [`Error::InvalidInput`] (Feld `header`).
 pub fn check_v4(content: Content, v4: &V4, signer: Option<&Signer>) -> Result<()> {
-    if v4.options & !(OPT_SIGNED | OPT_PAD) != 0 {
+    if v4.options & !(OPT_SIGNED | OPT_PAD | OPT_ANON) != 0 {
         return Err(Error::Unsupported);
     }
     let has_signed_bit = v4.options & OPT_SIGNED != 0;
     if has_signed_bit != signer.is_some() || signer.is_some_and(|s| s.commit != v4.commit) {
         return Err(bad());
     }
-    // DE: v4 braucht einen Grund: Strom oder PAD. EN: v4 needs a reason: stream or PAD.
-    if content != Content::Stream && v4.options & OPT_PAD == 0 {
+    // DE: v4 braucht einen Grund: Strom, PAD oder ANON. EN: v4 needs a reason: stream, PAD or ANON.
+    if content != Content::Stream && v4.options & (OPT_PAD | OPT_ANON) == 0 {
         return Err(bad());
     }
     Ok(())
+}
+
+/// DE: ANON gesetzt ⇔ es gibt anonyme Zugänge (Typ 5); ohne v4 nie Typ 5.
+/// EN: ANON set ⇔ there are anonymous slots (type 5); never type 5 without v4.
+///
+/// # Errors
+/// DE/EN: [`Error::InvalidInput`] (Feld `header`).
+pub fn check_anon(slots: &[Slot], v4: Option<&V4>) -> Result<()> {
+    let anon = v4.is_some_and(|v| v.options & OPT_ANON != 0);
+    let has_anonymous = slots.iter().any(|s| matches!(s, Slot::Anonymous { .. }));
+    if anon == has_anonymous {
+        Ok(())
+    } else {
+        Err(bad())
+    }
 }
 
 /// DE: v4-Felder beim Verschlüsseln: nur für Ströme (sonst `None`), `commit` mit v4-Domäne.
@@ -119,18 +136,22 @@ pub fn check_v4(content: Content, v4: &V4, signer: Option<&Signer>) -> Result<()
 /// DE/EN: [`Error::MemoryLock`], [`Error::Crypto`].
 pub fn for_encrypt(
     content: Content,
-    (signed, padded): (bool, bool),
+    signed: bool,
+    opts: super::EncryptOptions,
     file_key: &[u8],
 ) -> Result<Option<V4>> {
-    if content != Content::Stream && !padded {
+    if content != Content::Stream && !opts.pad && !opts.anonymous {
         return Ok(None);
     }
     let mut options = 0;
-    if signed {
-        options |= OPT_SIGNED;
-    }
-    if padded {
-        options |= OPT_PAD;
+    for (on, bit) in [
+        (signed, OPT_SIGNED),
+        (opts.pad, OPT_PAD),
+        (opts.anonymous, OPT_ANON),
+    ] {
+        if on {
+            options |= bit;
+        }
     }
     Ok(Some(V4 {
         options,
