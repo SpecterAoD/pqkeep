@@ -21,6 +21,7 @@ use crate::security::{StrongPassphrase, generator};
 use crate::{Error, Result};
 
 const FOREIGN: &[u8] = b"fremd / foreign";
+#[cfg(unix)]
 const SECRET: &[u8] = b"geheim, nie verschluesseln / secret, never encrypt";
 
 fn pass() -> StrongPassphrase {
@@ -47,6 +48,7 @@ fn create_foreign_file(temp: &Path) {
 }
 
 /// DE: Konkurrierender Prozess: legt `out` als leeren Ordner an. EN: Creates `out` as empty dir.
+#[cfg(unix)]
 fn create_foreign_dir(temp: &Path) {
     std::fs::create_dir(temp.parent().unwrap().join("out")).unwrap();
 }
