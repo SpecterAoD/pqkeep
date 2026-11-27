@@ -101,6 +101,8 @@ where
             0,
             &mut workspace.sampled,
             &mut workspace.prf,
+            &mut workspace.xof,
+            &mut workspace.reader,
         );
         workspace.sampled.ntt_into(&mut self.s_hat);
         crate::algebra::sample_poly_vec_cbd_into::<P::Eta1, P::K>(
@@ -108,6 +110,8 @@ where
             P::K::U8,
             &mut workspace.sampled,
             &mut workspace.prf,
+            &mut workspace.xof,
+            &mut workspace.reader,
         );
         workspace.sampled.ntt_into(&mut workspace.error);
         let rho = rho.clone();

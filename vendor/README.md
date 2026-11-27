@@ -18,6 +18,22 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed encapsulation/decapsulation, prelockable key payloads, direct NTT output and shared CBD decoding; preserve legacy APIs and algorithms. |
 | module-lattice 0.2.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed codec destinations; shared original packing loops with scalar little-endian accesses instead of private conversion arrays. |
 | ml-dsa 0.1.2 | RustCrypto/signatures, Apache-2.0 OR MIT | Versioned dependency-path bridge to the same lattice provider; production algorithms unchanged. |
+| sha3 0.12.0 / shake 0.1.0 | RustCrypto/hashes / sponges, MIT OR Apache-2.0 | Opt-in inline permutation scratch; borrowed XOF reader finalization and explicit wipe. |
+| keccak 0.2.2 | RustCrypto/sponges, MIT OR Apache-2.0 | Existing portable permutation with borrowed five-lane scratch. Ordinary backend dispatch preserved. |
+| sponge-cursor 0.1.0 | RustCrypto/sponges, MIT OR Apache-2.0 | Captured permutation closure; direct scalar byte accesses replace private arrays and three inherited pointer casts. |
+
+DE: Root aktiviert protected-workspace für private SHA3-/SHAKE-Verarbeitung. Hash und
+Reader enthalten ihre fünf Scratch-Lanes inline und werden vor privater Befüllung
+gesperrt. Der vorhandene portable Backend wird geteilt; die zusätzliche private
+ARM-Intrinsics-Arbeitsfläche wird dadurch vermieden. Dies kann ARM-Beschleunigung
+kosten; kein neuer Algorithmus oder neue Assembly. Ohne das opt-in bleibt die
+Upstream-Backend-Auswahl erhalten. Alle Produktionsmodule/Lizenzen bleiben erhalten;
+nur Dev-/Test-/Bench-Targets fehlen in diesen vier Subsets.
+EN: Borrowed finalization never returns a private reader in the protected Root path.
+Explicit Zeroize and Drop cover state, cursor and scratch. Preserve all rates,
+padding and output bytes; independent hashlib/OpenSSL vectors cover block boundaries
+and split calls. Package versions remain identical in Root/Fuzz/external consumers.
+
 
 DE: Die beiden neuen Subsets enthalten sämtliche Produktionsmodule und vollständige
 Original-Lizenzen. Nur Dev-/Test-/Bench-Targets sowie acht reine Inline-Testmodul-
@@ -58,8 +74,8 @@ DE: `EncapsulateWithHash` leiht zusätzlich den vorab gesperrten SHA3-512-Zustan
 Callers. `FixedOutputReset` vermeidet dessen konsumierende private Wertübertragung;
 Reset vor und nach Absorb verhindert Altzustand. Die alte API bleibt verfügbar.
 EN: The additional encapsulation entry borrows caller-prelocked SHA3-512 state and
-uses FixedOutputReset, preserving the old API. Keccak/PKE internal scratch remains
-open; a protected top-level hash state is not proof of protected permutation scratch.
+uses FixedOutputReset, preserving the old API. The protected hash feature below
+also borrows permutation scratch; remaining private PKE storage stays open.
 
 DE: `SeedKeyInPlace` erzeugt nur öffentlichen Anfangszustand, besucht genau drei feste
 private Speicherbereiche und befüllt deren bestehende Payloads aus geliehenem Seed.
@@ -69,7 +85,8 @@ EN: Public initial state plus fixed private-storage visitation enables host prel
 before seed population. Explicit Zeroize and Drop share the original wiping body;
 private boxes are never replaced during initialization. Root PKE keygen writes
 expanded state through borrowed NTT output, sharing the original transform loops.
-Sampling/hash/PKE intermediates remain OPEN; this is not copy-free private construction.
+Remaining encryption/decryption PKE and candidate storage stays OPEN; native acceptance
+of the complete key-generation workspace is still required.
 
 DE: KeyGenerationWorkspace ergänzt feste Inline-Flächen für Samplingvektor,
 Fehler-NTT, Produktpolynom, noch private öffentliche-Schlüssel-Zwischensummen,
@@ -79,7 +96,8 @@ Schleifen; nur vollständig fertiggestellte öffentliche Werte werden zurückgeg
 EN: Key generation borrows prelocked fixed storage, with no nested workspace heaps.
 Root refuses failed workspace locks before private initialization. ML-KEM/zeroize
 now forwards SHA3/SHAKE zeroization explicitly, including standalone consumers.
-Internal PRF XOF/Keccak storage and encryption/decryption scratch remain OPEN.
+Keygen also borrows prelocked SHAKE hash/reader state and inline Keccak scratch in
+the protected mode below. Encryption/decryption scratch remains OPEN.
 
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.

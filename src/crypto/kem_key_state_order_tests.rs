@@ -128,6 +128,15 @@ impl SeedKeyInPlace for Probe {
         crate::locked_owner_test_support::locked(&workspace.0);
         assert!(memlock::is_locked(self.bytes.as_ptr().addr() + 32768));
         self.witness.entered.store(true, Ordering::SeqCst);
+        // DE: Tatsächliche private Hash-/XOF-/Samplingflächen vor Fehler/Unwind befüllen.
+        // EN: Populate actual private hash/XOF/sampling storage before error/unwind.
+        let mut real =
+            KeyState::<<ml_kem::MlKem512 as ml_kem::kem::Kem>::DecapsulationKey>::prepare()
+                .unwrap();
+        real.key
+            .get_mut()
+            .initialize_seed_with_workspace(seed, &mut workspace.0)
+            .unwrap();
         self.bytes[32768..32832].copy_from_slice(seed);
         self.bytes[32768] |= 1;
         if self.witness.mode == 1 {

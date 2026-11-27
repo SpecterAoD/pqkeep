@@ -179,7 +179,7 @@ where
     }
 }
 
-#[cfg(feature = "zeroize")]
+#[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
 impl<P> crate::SeedKeyInPlace for DecapsulationKey<P>
 where
     P: KemParams,
@@ -214,8 +214,8 @@ where
             return Err(InvalidKey);
         };
         let (seed_d, seed_z) = seed.split_ref::<U32>();
-        // DE: Erweiterten Schlüssel direkt befüllen; interne Sampling-/Hashflächen bleiben offen.
-        // EN: Populate expanded key directly; internal sampling/hash storage remains open.
+        // DE: Erweiterten Schlüssel und private Zwischenwerte in geliehene Flächen schreiben.
+        // EN: Write expanded key and private intermediates into borrowed storage.
         let ek_pke = self.dk_pke.generate_with_workspace(seed_d, workspace);
         self.ek = EncapsulationKey::from_encryption_key(ek_pke);
         d.copy_from_slice(seed_d);

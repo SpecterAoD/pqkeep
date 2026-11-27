@@ -83,10 +83,25 @@ where
     Eta: CbdSamplingSize,
 {
     let mut h = Shake256::default();
+    let mut r = shake::Shake256Reader::default();
+    PRF_into_with_xof::<Eta>(s, b, out, &mut h, &mut r);
+}
+
+// DE: Auch private Absorb-/Reader-Zustände vom vorab gesperrten Caller leihen.
+// EN: Also borrow private absorption/reader states from the prelocked caller.
+pub(crate) fn PRF_into_with_xof<Eta>(
+    s: &B32,
+    b: u8,
+    out: &mut PrfOutput<Eta>,
+    h: &mut Shake256,
+    r: &mut shake::Shake256Reader,
+) where
+    Eta: CbdSamplingSize,
+{
+    sha3::digest::Reset::reset(h);
     h.update(s.as_ref());
     h.update(&[b]);
-    let mut r = h.finalize_xof();
-
+    h.finalize_reader_into(r);
     r.read(out);
 }
 

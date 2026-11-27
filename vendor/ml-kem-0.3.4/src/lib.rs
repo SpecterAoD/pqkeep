@@ -66,7 +66,7 @@ mod encapsulation_key;
 mod encapsulation_into;
 
 mod key_generation;
-#[cfg(feature = "zeroize")]
+#[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
 mod key_in_place;
 
 /// Section 5. The K-PKE Component Scheme
@@ -90,7 +90,7 @@ pub use kem::{
     KeyExport, KeyInit, KeySizeUser, TryKeyInit,
 };
 pub use key_generation::KeyGenerationWorkspace;
-#[cfg(feature = "zeroize")]
+#[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
 pub use key_in_place::SeedKeyInPlace;
 pub use ml_kem_512::MlKem512;
 pub use ml_kem_768::MlKem768;

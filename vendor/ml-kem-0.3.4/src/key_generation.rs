@@ -20,6 +20,8 @@ pub struct KeyGenerationWorkspace<P: ParameterSet> {
     pub(crate) g: EncapsulationWorkspace,
     pub(crate) hash: Sha3_512,
     pub(crate) prf: PrfOutput<P::Eta1>,
+    pub(crate) xof: shake::Shake256,
+    pub(crate) reader: shake::Shake256Reader,
 }
 
 impl<P: ParameterSet> core::fmt::Debug for KeyGenerationWorkspace<P> {
@@ -39,6 +41,8 @@ impl<P: ParameterSet> Default for KeyGenerationWorkspace<P> {
             g: EncapsulationWorkspace::default(),
             hash: Sha3_512::new(),
             prf: PrfOutput::<P::Eta1>::default(),
+            xof: shake::Shake256::default(),
+            reader: shake::Shake256Reader::default(),
         }
     }
 }
@@ -52,7 +56,9 @@ impl<P: ParameterSet> zeroize::Zeroize for KeyGenerationWorkspace<P> {
         self.public.zeroize();
         self.g.zeroize();
         self.prf.zeroize();
-        sha3::digest::Reset::reset(&mut self.hash);
+        self.hash.zeroize();
+        self.xof.zeroize();
+        self.reader.zeroize();
     }
 }
 

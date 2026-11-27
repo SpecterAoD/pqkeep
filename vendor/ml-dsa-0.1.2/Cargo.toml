@@ -48,6 +48,7 @@ resolver = "2"
 all-features = true
 
 [features]
+protected-workspace = ["zeroize", "shake/protected-workspace"]
 alloc = [
     "hybrid-array/alloc",
     "module-lattice/alloc",
@@ -111,6 +112,7 @@ optional = true
 default-features = false
 
 [dependencies.shake]
+path = "../shake-0.1.0"
 version = "0.1"
 default-features = false
 

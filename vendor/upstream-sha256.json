@@ -1294,5 +1294,145 @@
       "path": "src/verifying.rs",
       "sha256": "9a8b2ea9ddb81c68c40d05a7bf4006e616f68ba330af71903170eadd27c19dbc"
     }
+  ],
+  "shake-0.1.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "b639b7245b417b4fd3c137944e10552425352dbaec80b597eead2c9ba32f607c"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "03e89da78211b5932549bebf0abc0cb8490febd926bfe49d3c0c0441d605b0ce"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "083cb05a34eb9c78faf69aa49674ec30d1eadbdc2042473644992786e6c8249b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c52ad2fade7c21881ca1b11165ed4d9f6683d44301747541c1ccb3b0cc7af096"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "92239f3574d1a02bc7b64050662533cb6bdbb90173969ee7cb5cdd329f73ef90"
+    }
+  ],
+  "sha3-0.12.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "69a5a38684afb429397aa6a42f8633c8b4de6eb1cd4e365628f66b54d870adbe"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "f0e63607543bd700b5e0eae927fcef83fa8305f7e192358c0539f77481d19546"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "6462612d92b861384dcd378168a7a0ef3ef28876d3d380d382cb5a3091e360b8"
+    },
+    {
+      "path": "README.md",
+      "sha256": "47c4b785bb9c380b078ac99652729ba21bef2b6680c42c7b077f0268593734f1"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "b5197ef5711ba506ba8f320a4ea9e20a9e266fa1a30efc213072157a21ee2583"
+    },
+    {
+      "path": "src/oids.rs",
+      "sha256": "ec0e9f9965656932c14104fb40aed017991308beba8f315c9aa5a8de2082e691"
+    },
+    {
+      "path": "src/utils.rs",
+      "sha256": "3eabf975c550c470fb104d23b4715bdcf19ff70438c3e5c309055ba7d0cb5438"
+    }
+  ],
+  "keccak-0.2.2": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "a059fa772f385e2e5929da96fea33916f1f4984e457beaf5919acf42019f076a"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "6616d7a1136c31eeed522f14b0e3f98f4b5f61402703de20430a2755a995bd04"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "8c7516d4b27b1e495be5e38b612298b63de48d05f49cdac94f70f3cd70f8864b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "aaf5d12dc2a61b53c8a19ea8ea146d6c29fbe4a96200d446641e62ef64a93138"
+    },
+    {
+      "path": "src/backends/aarch64_sha3.rs",
+      "sha256": "d0e99f0cb04094b143202bb41efe5d7ee41a09a5d093dc2dcd52507df1bc234f"
+    },
+    {
+      "path": "src/backends/simd.rs",
+      "sha256": "4a2405806dd3a128ae873c743ac5959b6defd502fa743e19d0893b6f10d32e8c"
+    },
+    {
+      "path": "src/backends/soft.rs",
+      "sha256": "9fb7d4bf8ad83454622c934be937b6a1a5278f3948d5c7f1b5c7a9cff0a12432"
+    },
+    {
+      "path": "src/backends.rs",
+      "sha256": "9c8cd457dc85894fdeb47e7d726ee25768e2f5bca8a69b56e9e157c508cf6dfe"
+    },
+    {
+      "path": "src/consts.rs",
+      "sha256": "75a1cb1cd6e777eac0c9bd57a4e60e8705f1f0f50d002e094d46858cee5ba73b"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "ce94cd46d22744b05154e3a14c79e9c9ff9d9c0f067d911e64e8b9a918ed2583"
+    },
+    {
+      "path": "src/types.rs",
+      "sha256": "f535a4b39bbfeb3a077a883bab7ddbcd39d78f7a0a5955413259fce66e7ff1e8"
+    }
+  ],
+  "sponge-cursor-0.1.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "ad08b71a941a200c83237dd071cf32c0c2a411c2606c29f3d522680a411b4f23"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "18aba296617d2834fb734224dc01aebda288abc880153b406edf7fb5f9b78207"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "083cb05a34eb9c78faf69aa49674ec30d1eadbdc2042473644992786e6c8249b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "bb2c55224077863823b598dfc3257970ea5288376809b59145e603a89e2c00fd"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "4f630991ac2e66a583840b8ef7dc18d921124e6b84f570e27175d2d6035adeb6"
+    },
+    {
+      "path": "src/u64_le_utils.rs",
+      "sha256": "9d297e92670803c9acd1a82bffc29a60b608b8ac590b957027300834533e8318"
+    }
   ]
 }

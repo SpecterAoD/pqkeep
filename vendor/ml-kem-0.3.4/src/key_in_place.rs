@@ -4,8 +4,8 @@
 use crate::{Seed, kem::InvalidKey};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-/// DE: Retention ohne neue private Heaps; interne Konstruktionsflächen bleiben separat.
-/// EN: Retention without new private heaps; internal construction scratch remains separate.
+/// DE: Retention und geliehene feste Keygen-Flächen vor privater Befüllung sperren.
+/// EN: Prelock retained storage and borrowed fixed key-generation workspaces.
 pub trait SeedKeyInPlace: Zeroize + ZeroizeOnDrop + Sized {
     /// DE: Feste, vor Befüllung zu sperrende Arbeitsfläche. EN: Prelock before population.
     type Workspace: Default + ZeroizeOnDrop;
@@ -22,15 +22,6 @@ pub trait SeedKeyInPlace: Zeroize + ZeroizeOnDrop + Sized {
 
     /// DE: Private Payloads ohne Reallokation befüllen; Aufrufer muss vorher voll sperren.
     /// EN: Populate private payloads without reallocating; caller must prelock completely.
-    ///
-    /// # Errors
-    /// DE/EN: `InvalidKey` ohne vorbereiteten Seedspeicher / without prepared seed storage.
-    /// DE: Kein Schutzversprechen für interne Hash-/PKE-/Konstruktor-Arbeitsflächen.
-    /// EN: Does not promise protected internal hash/PKE/construction scratch.
-    fn initialize_seed_in_place(&mut self, seed: &Seed) -> Result<(), InvalidKey> {
-        self.initialize_seed_with_workspace(seed, &mut Self::Workspace::default())
-    }
-
     /// DE: Caller sperrt auch workspace vor Seed-Verarbeitung vollständig.
     /// EN: Caller must also completely prelock workspace before processing the seed.
     ///

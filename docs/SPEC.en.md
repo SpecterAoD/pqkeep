@@ -535,6 +535,10 @@ GUI/process protection, other owners or scalar/compiler/stack transit. Native
 tests must demonstrate locks before allocation/binding, moves, wiping/unwind and
 actual lock refusal. See [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
 
-EN: R6 work in progress: shared pinned lattice codec with borrowed destinations, no private 16-byte conversion arrays, and no extra CBD decoding polynomial. Sampling/XOF/hash/DSA/AES/Argon2 workspaces remain open; this is not full remediation.
-
-EN: KEM key generation uses fixed prelocked sampling/NTT/product and PRF/hash-output storage, refusing unavailable locks before private entry. Internal XOF/Keccak scratch and other R6 groups remain open.
+R6 work in progress: borrowed lattice codecs without an extra CBD decoding
+polynomial. KEM key generation prelocks state, three private payloads and complete
+sampling/NTT/product/hash/XOF workspace before seed processing. Root selects the
+opt-in SHA3/SHAKE provider with borrowed portable Keccak scratch and reader finalization
+without private return values. No private sponge conversion arrays or new unsafe
+casts. This protected mode may lose ARM SHA3 acceleration. Native acceptance and
+remaining KEM PKE/DSA/AES/Argon2 proofs stay open; no full R6 closure.

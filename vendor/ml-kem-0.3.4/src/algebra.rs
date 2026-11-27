@@ -153,13 +153,15 @@ pub(crate) fn sample_poly_vec_cbd_into<Eta, K>(
     start_n: u8,
     out: &mut Vector<K>,
     prf: &mut PrfOutput<Eta>,
+    hash: &mut shake::Shake256,
+    reader: &mut shake::Shake256Reader,
 ) where
     Eta: CbdSamplingSize,
     K: ArraySize,
 {
     for (i, target) in out.0.iter_mut().enumerate() {
         let i: u8 = Truncate::truncate(i);
-        crate::crypto::PRF_into::<Eta>(sigma, start_n + i, prf);
+        crate::crypto::PRF_into_with_xof::<Eta>(sigma, start_n + i, prf, hash, reader);
         sample_poly_cbd_into::<Eta>(prf, target);
     }
 }

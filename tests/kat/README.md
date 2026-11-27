@@ -45,3 +45,13 @@ first); the AES-256-GCM wrap in `tests/crypto_v2_kat.rs` comes from Python `cryp
 from `v2_argon2id.json`, AES-256-GCM from `cryptography` 41.0.7). `v2_keyfile.json` is a whole key file
 `*.key.json` v2 (AES-256, passphrase + factor file) generated the same way with
 `scripts/v2_keyfile_vector.py` (header and AAD from `scripts/v2_reference.py`). Public test bytes only.
+
+## SHA3/SHAKE workspace vectors / Arbeitsflächenvektoren
+
+DE: hash_workspaces.json enthält ausschließlich öffentliche synthetische Bytes:
+byte[i]=(i*29+7)&255, Längen 0/1/7/8/71/72/73/135/136/137/167/168/169/511.
+Referenzen unabhängig von Rust mit Python hashlib und der im JSON dokumentierten
+OpenSSL-Version erzeugt: sha3_256/sha3_512 sowie jeweils512 Byte shake_128/shake_256.
+EN: These are independently generated public fixtures, not NIST ACVP extracts.
+Hash/XOF tests exercise prelocked stable owners, all rate boundaries, split calls,
+empty reads, output sentinels and repeated borrowed reader initialization.

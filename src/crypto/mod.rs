@@ -134,6 +134,9 @@ impl KeyAlgorithm {
 }
 
 #[cfg(test)]
+#[path = "hash_workspace_tests.rs"]
+mod hash_workspace_tests;
+#[cfg(test)]
 #[path = "hkdf_locked_tests.rs"]
 mod hkdf_locked_tests;
 #[cfg(test)]

@@ -279,77 +279,58 @@ remain OPEN. [Plan](security/PARSER_STATE_OWNER_PLAN.md).
 
 ## ML-KEM encapsulation output / Kapselungsausgabe (#147 R6)
 
-DE: R6-Arbeitsbranch: Entkapselung schreibt über `DecapsulateInto` direkt in vorab
-gesperrte SecretBytes; der Root-Adapter erhält kein privates SharedKey-Array mehr.
-Kapselung leiht zusätzlich einen vor privatem Absorb gesperrten SHA3-512-Zustand;
-Finalisierung setzt ihn über eine mutable Leihsicht zurück statt ihn zu konsumieren.
-Dies schützt nicht rückwirkend die weiterhin offenen internen Kandidaten,
-Konstruktoren, MaybeBox-Payloads oder PKE-/Hash-Arbeitsflächen. Keine R6-Gesamtabnahme.
-EN: The R6 work branch uses borrowed decapsulation output in prelocked SecretBytes.
-There is no private SharedKey return array in the root adapter. Encapsulation also
-borrows prelocked SHA3-512 state and finalizes/resets without consuming it. Internal candidates,
-construction, nested heaps and PKE/hash scratch remain open; R6 is not closed.
+DE: Entkapselung schreibt über DecapsulateInto direkt in vorab gesperrte SecretBytes;
+Root erhält kein privates SharedKey-Array zurück. Kapselung sperrt Ergebnis32,
+G-Ausgabe64, SHA3-512-Zustand und frische OS-Entropie32 vor Verarbeitung. Finalisieren
+über mutable Leihsicht vermeidet konsumierende private Hashzustandsübertragung.
+EN: Borrowed output and prelocked hash owners remove private caller return arrays.
+Keep constant-time implicit rejection and all three parameter sets unchanged.
+Remaining encapsulation/decryption PKE scratch and decapsulation candidates are OPEN.
+See the [encapsulation plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
 
-DE: Kapselung bereitet 32 Byte Ergebnis und 64 Byte G-Arbeitsfläche als gesperrte
-SecretBytes vor; erst danach erzeugt der vorhandene OS-RNG die ebenfalls vorab
-gesperrte 32-Byte-Entropie. Der neue gepinnte Provider-Einstieg finalisiert SHA3-512
-direkt in die geliehene Arbeitsfläche und leiht r daraus für die bestehende
-PKE-Verschlüsselung aus. Nur das öffentliche Chiffrat wird zurückgegeben.
-EN: Copy K only between locked caller buffers; existing owners retain locking
-through normal error/unwind and wipe before release. The old SharedKey return
-tuple and provider-owned encapsulation entropy/G-output arrays are absent from
-this caller path. Same ML-KEM version, algorithms, bytes and OS-CSPRNG quality.
-Actual native/security/fuzz acceptance remains required.
-
-DE: Das ist kein Abschluss aller Providerkopien: Entkapselungs-Rückgaben,
-Schlüsselaufbau/MaybeBox, Hash-/PKE-/Kompressions- und Compiler-/Stack-Zwischenwerte,
-Registry und Plattformgrenzen bleiben offen. Keine neue Berechtigung oder Installation.
-EN: A locked hash output does not prove protected internal compression state.
-The provider's ordinary upstream API retains its original ownership contract.
-[Plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
 ## KEM private payload retention / Private KEM-Payloads (#147 R6 work)
 
-DE: Der R6-Arbeitsbranch erzeugt den äußeren ML-KEM-Zustand ausschließlich aus
-öffentlichen Anfangswerten, sperrt dessen stabile Allokation und anschließend
-alle drei festen privaten Payloads (expandierter PKE-Schlüssel, d und z). Erst
-danach liest der In-place-Einstieg den privaten Seed. Payload-Boxen werden dabei
-nicht ersetzt oder reallokiert. Ihre Sperrrecords liegen in gesperrtem Workspace.
-Bei Erfolg/Fehler/Unwind: Payload-Wipe bei voller Sperre, Guards freigeben, erst
-danach Boxen zerstören. Gemeinsame Seiten verwenden die vorhandene Registry.
-EN: Create only public initial KEM state, prelock its stable outer allocation and
-all three private payloads, then populate from the seed without replacing boxes.
-Wipe payloads while locked, release guards, then free boxes; keep lock records
-in locked workspace and preserve shared-page reference counts.
-
-DE: Dies schließt keine privaten internen Konstruktor-/Hash-/PKE-Arbeitsflächen:
-der tatsächliche Root-Pfad befüllt den erweiterten PKE-Schlüssel nun über
-`generate_in_place` und geliehene NTT-Ausgabe direkt im gesperrten Ziel. Die
-bisherigen NTT-Schleifen bleiben gemeinsam verwendet. Private Sampling-Vektoren,
-G-/PRF-/PKE-Zwischenwerte sind weiterhin bekannte offene Puffer, keine pauschale
-Compilergrenze. ML-DSA-/AES-/Argon2-Pfade bleiben separat; kein R6-Gesamtabschluss.
-EN: Internal private construction/hash/PKE scratch remains open, including the
-actual root keygen now writes expanded state through generate_in_place and borrowed
-NTT output, sharing the existing transform loops. Private sampling vectors and
-G/PRF/PKE intermediates remain known open buffers, not unavoidable compiler limits.
-No complete R6 acceptance claim.
+DE: Root erzeugt nur öffentlichen Anfangszustand und sperrt äußeren Owner sowie
+alle drei festen privaten Payloads (expandierter PKE-Schlüssel, d, z). Vor dem
+Seed-Einstieg wird zusätzlich die vollständige feste KeyGenerationWorkspace
+stabil gesperrt. Keine Box-Ersetzung/Reallokation während privater Initialisierung.
+Die geliehenen Sampling-/NTT-/Produktflächen und noch privaten Zwischensummen,
+PRF-/G-Ausgaben sowie SHA3-/SHAKE-/Readerzustände liegen vollständig darin.
+EN: Root prelocks retained key payloads and the inline key-generation workspace
+before private input. Borrowed NTT and multiplication outputs share original loops;
+only completed public key values leave the workspace by value. Key and workspace
+are wiped while locked, then guards released and allocations freed. Partial lock
+failure refuses private entry; error and unwind inside initialization are tested.
 
 ## R6: borrowed lattice codec / geliehener Gitter-Codec
 
-DE: Der gemeinsame gepinnte Gitterprovider schreibt ByteEncode/ByteDecode direkt
-in geliehene Ziele; die alten APIs verwenden dieselben Schleifen. Private 16-Byte-
-Konvertierungsarrays entfallen. KEM-CBD wertet die dekodierten Koeffizienten direkt
-im Ziel aus. Vorab gesperrte stabile Tests prüfen alle verwendeten KEM-/DSA-Bitbreiten,
-unabhängige Bitreihenfolge, Randmarkierungen, 12-Bit-Reduktion und Löschen unter Sperre.
-EN: Borrowed codec destinations share the original packing/reduction logic. The
-CBD sampler no longer requires an extra decoded polynomial. Legacy return values,
-sampling/hash/XOF construction and other R6 matrix boundaries remain OPEN.
+DE: ByteEncode/ByteDecode schreiben in geliehene Ziele; alte APIs verwenden dieselben
+Schleifen. Keine privaten 16-Byte-Konvertierungsarrays oder zusätzliches CBD-
+Dekodierpolynom. Tests prüfen alle verwendeten KEM-/DSA-Bitbreiten gegen unabhängige
+Einzelbits, Randmarkierungen, 12-Bit-Reduktion und stabile gesperrte Ziele.
+EN: Preserve packing/reduction and complete codec compatibility without private
+conversion arrays. Existing upstream ownership APIs remain available for callers
+outside the protected Root path; they are not a protected fallback.
 
-DE: Keygen verwendet zusätzlich eine feste, vollständig vorab gesperrte Arbeitsfläche
-für Sampling-/Fehlervektoren, NTT-Produkt und geheime Zwischensummen, PRF-/G-Ausgabe
-und äußeren Hashzustand. Nur fertige öffentliche Schlüsselwerte verlassen diese
-Fläche als Wert. Sperrverweigerung erfolgt vor dem Seed-Einstieg; Fehler sowie
-Unwind innerhalb/nach Initialisierung erhalten Wipe vor Unlock/Free.
-EN: Fixed key-generation workspace is locked before private initialization and
-wiped before unlocking. This does not protect the remaining internal PRF XOF and
-Keccak scratch or encryption/decryption operations. R6 remains incomplete.
+## R6: hash permutation and XOF / Hash-Permutation und XOF
 
+DE: Root aktiviert protected-workspace für die gepinnten SHA3-/SHAKE-Provider.
+Fünf Keccak-Scratch-Lanes liegen inline im vorab gesperrten Hash/Reader; die
+bestehende portable Permutationsschleife erhält sie geliehen. Sponge-Bytezugriffe
+benötigen keine privaten Bytearrays oder unsicheren Pointer-Casts. SHAKE leiht das
+Reader-Ziel statt einen privaten State1600/Reader zurückzugeben. Explizite Löschung
+und Drop löschen auch den Scratch. KEM-Keygen verwendet diese vollständige Fläche.
+EN: Protected mode preserves the existing portable permutation, padding, byte order
+and rate boundaries. It deliberately avoids the ARM intrinsic backend's additional
+private arrays and may lose ARM SHA3 acceleration. Ordinary builds without this
+opt-in retain backend selection. Report measured performance separately from
+correctness; no custom algorithm, assembly or weakened gate is introduced.
+
+DE: Unabhängige Python/hashlib/OpenSSL-Vektoren prüfen SHA3-256/512 und SHAKE128/256
+an Rate-Grenzen, geteilte Eingabe/Ausgabe, leere Leseaufrufe und Reader-Neustart.
+Native Abnahme dieses Arbeitsstands bleibt erforderlich. Interne KEM-Entkapselungs-
+Kandidaten/PKE-Arbeitsflächen, DSA-, AES/GCM- und Argon2-Providerpfade bleiben offen.
+EN: Full R6 remains OPEN. Known remaining provider buffers are not compiler limits.
+Compiler/register/scalar copies, shared registry metadata and full R7 process/helper
+boundaries remain separately classified. See [hash plan](security/HASH_WORKSPACE_PLAN.md)
+and the [full R6 matrix](security/PROVIDER_IN_PLACE_PLAN.md).
