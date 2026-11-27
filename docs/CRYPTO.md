@@ -102,6 +102,12 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
   Recherche/Fachanalyse in #340; bis dahin Warnung bei jeder Nutzung, nicht Teil von „Privatsphäre
   hoch“. Robustheit: ein falscher Schlüssel ergibt durch implizite Ablehnung nur Zufall, die Hülle
   scheitert an AES-GCM; die Anzahl der Zugänge bleibt sichtbar.
+- **Verborgener Absender** (`--hide-sender`, Format v4, #316): Die ML-DSA-87-Signatur steht im
+  verschlüsselten Trailer und deckt Header, SHA3-512 des Klartexts (samt Füllung) und beide Längen ab.
+  Wer die Datei entschlüsseln kann, sieht den Absender. Ein Empfänger kennt den Dateischlüssel und kann
+  den Strom neu verschlüsseln; die Signatur bleibt aber nur gültig, wenn Header (samt Zugängen und
+  Schlüsselbindung), Klartext und Längen unverändert bleiben – ein Umverpacken für andere scheitert.
+  Dass ein Absender verborgen ist, verrät das sichtbare Bit (und rund 7 KB Größe).
 
 ---
 
@@ -149,7 +155,12 @@ key (ANO-CCA) is proven for **Kyber round 3** (Maram/Xagawa, ePrint 2022/1696; G
 2022; Xagawa, ePrint 2021/1323) but **not established in published work for final FIPS 203**, which changes
 key-derivation steps the proof models. Research/expert analysis in #340; until then a warning on every use and
 not part of "privacy high". Robustness: a wrong key yields only randomness via implicit rejection and the wrap
-fails AES-GCM authentication; the number of slots stays visible.
+fails AES-GCM authentication; the number of slots stays visible. **Hidden sender** (`--hide-sender`, format v4, #316): the
+ML-DSA-87 signature lives in the encrypted trailer and covers the header, SHA3-512 of the plaintext (incl.
+padding) and both lengths. Whoever can decrypt sees the sender. A recipient knows the file key and can
+re-encrypt the stream, but the signature stays valid only if the header (incl. slots and key commitment),
+plaintext and lengths are unchanged – re-wrapping for others fails. The visible bit
+(and about 7 KB of size) reveals that a sender is hidden.
 
 **File encryption building blocks:** STREAM construction with AES-256-GCM (64 KiB chunks, nonce = 7-byte prefix ‖ counter ‖ last flag) and file-key wrapping via Argon2id (passphrase) or ML-KEM → HKDF-SHA3-256 (recipient); the HKDF wiring is checked against an independently computed reference value.
 

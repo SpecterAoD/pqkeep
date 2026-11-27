@@ -22,6 +22,7 @@ use pqkeep::security::StrongPassphrase;
 const ANON: EncryptOptions = EncryptOptions {
     pad: false,
     anonymous: true,
+    hide_sender: false,
 };
 const KEM1024: KeyAlgorithm = KeyAlgorithm::Kem(KemAlgorithm::MlKem1024);
 
@@ -131,6 +132,7 @@ fn combines_with_passphrase_signature_and_padding() {
     let options = EncryptOptions {
         pad: true,
         anonymous: true,
+        hide_sender: false,
     };
     let enc = dir.path().join("s.pqkf");
     files::encrypt_stream_to(&mut &plain[..], &enc, &p, Some(&signer), options).unwrap();

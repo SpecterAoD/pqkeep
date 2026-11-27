@@ -25,7 +25,10 @@ pub(super) fn build(
     file_key: &SecretBytes,
     (signer, options): (Option<&[u8]>, EncryptOptions),
 ) -> Result<(Vec<u8>, Vec<u8>)> {
-    let needs_v4 = options.pad || options.anonymous || content == Content::Stream;
+    // DE: Verborgener Absender: kein Absenderblock im Header (#316). EN: Hidden sender: no header block.
+    let signer = if options.hide_sender { None } else { signer };
+    let needs_v4 =
+        options.pad || options.anonymous || options.hide_sender || content == Content::Stream;
     if signer.is_some() || needs_v4 {
         // DE: Mit Absender immer v3, Ströme immer v4 (auch bei einem einzelnen Zugang).
         // EN: With a sender always v3, streams always v4 (even for a single slot).

@@ -10,7 +10,13 @@
 use std::io::{Read, Write};
 
 use super::SecretBytes;
+use super::locked_hash::LockedHash;
+use sha3::Sha3_512;
 use zeroize::Zeroize;
+
+/// DE: SHA3-512 über Klartext im gesperrten Speicher (verborgener Absender, #316).
+/// EN: SHA3-512 over plaintext in locked memory (hidden sender, #316).
+pub(crate) type PlainHash = LockedHash<Sha3_512>;
 
 use crate::crypto::aead::TAG_LEN;
 use crate::crypto::stream::{CHUNK_SIZE, ENCRYPTED_CHUNK_SIZE, PREFIX_LEN, Stream, read_full};
@@ -27,6 +33,7 @@ pub struct EncryptWriter<W: Write> {
     buf: SecretBytes,
     used: usize,
     total: u64,
+    hash: Option<PlainHash>,
 }
 
 impl<W: Write> EncryptWriter<W> {
@@ -41,6 +48,7 @@ impl<W: Write> EncryptWriter<W> {
             buf: SecretBytes::zeroed(CHUNK_SIZE)?,
             used: 0,
             total: 0,
+            hash: None,
         })
     }
 
@@ -57,12 +65,30 @@ impl<W: Write> EncryptWriter<W> {
                 self.used = 0;
             }
             let take = (CHUNK_SIZE - self.used).min(data.len());
+            if let Some(hash) = &mut self.hash {
+                hash.update(&data[..take]);
+            }
             self.buf.expose_mut()[self.used..self.used + take].copy_from_slice(&data[..take]);
             self.used += take;
             self.total += take as u64;
             data = &data[take..];
         }
         Ok(())
+    }
+
+    /// DE: Ab jetzt aufgenommenen Klartext hashen. EN: Hash accepted plaintext from now on.
+    ///
+    /// # Errors
+    /// DE/EN: [`Error::MemoryLock`].
+    pub(crate) fn start_hash(&mut self) -> Result<()> {
+        self.hash = Some(PlainHash::new()?);
+        Ok(())
+    }
+
+    /// DE: Hash bis hierher entnehmen (danach wird nicht mehr gehasht).
+    /// EN: Take the hash so far (no further hashing afterwards).
+    pub(crate) fn take_hash(&mut self) -> Option<PlainHash> {
+        self.hash.take()
     }
 
     /// DE: Bisher aufgenommene Klartextbytes. EN: Plaintext bytes accepted so far.
@@ -97,6 +123,7 @@ pub struct DecryptReader<R: Read> {
     pending_len: usize,
     done: bool,
     released: u64,
+    hash: Option<PlainHash>,
 }
 
 impl<R: Read> DecryptReader<R> {
@@ -116,6 +143,7 @@ impl<R: Read> DecryptReader<R> {
             pending_len,
             done: false,
             released: 0,
+            hash: None,
         })
     }
 
@@ -152,9 +180,26 @@ impl<R: Read> DecryptReader<R> {
         }
         let n = buf.len().min(self.plain.len() - self.pos);
         buf[..n].copy_from_slice(&self.plain.expose()[self.pos..self.pos + n]);
+        if let Some(hash) = &mut self.hash {
+            hash.update(&buf[..n]);
+        }
         self.pos += n;
         self.released += n as u64;
         Ok(n)
+    }
+
+    /// DE: Ab jetzt herausgegebenen Klartext hashen. EN: Hash released plaintext from now on.
+    ///
+    /// # Errors
+    /// DE/EN: [`Error::MemoryLock`].
+    pub(crate) fn start_hash(&mut self) -> Result<()> {
+        self.hash = Some(PlainHash::new()?);
+        Ok(())
+    }
+
+    /// DE: Hash bis hierher entnehmen. EN: Take the hash so far.
+    pub(crate) fn take_hash(&mut self) -> Option<PlainHash> {
+        self.hash.take()
     }
 
     /// DE: Bisher herausgegebene Klartextbytes. EN: Plaintext bytes released so far.

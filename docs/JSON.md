@@ -60,7 +60,8 @@ nur mit neuer Schema-Kennung.
   (`file`/`directory`/`stream`), `padded` (Füllung, nur v4), `slots` (anonym: `{"kind":"anonymous_recipient",
   "algorithm":"ML-KEM-1024","experimental":true}`): je Zugang `{"kind":"passphrase","kdf":{…},"factor_required":…}`
   oder `{"kind":"recipient","algorithm":"ML-KEM-768","recipient_id":"…"}`; `signer`: bei v3
-  `{"key_id":"…","verified":false}` (nur aus dem Header, **ungeprüft**), sonst `null`.
+  `{"key_id":"…","verified":false}` (nur aus dem Header, **ungeprüft**), bei verborgenem Absender (v4)
+  `{"hidden":true,"verified":false}` (ohne Schlüssel-ID), sonst `null`.
 - Immer zusätzlich `file` (der angegebene Pfad).
 
 ## `verify --json`
@@ -118,8 +119,8 @@ and `summary` (`total`, `ok`, `failed`); `exit_code` is the first error of the l
 `metadata` with `null` for missing values); key file (`type: "key_file"`, same fields plus `kdf`,
 `factor_required`, `warnings`); encrypted file (`type: "encrypted_file"`, `format_version` 1–4, `content` (`file`/`directory`/`stream`), `padded` (v4 padding), anonymous slots as `{"kind":"anonymous_recipient","algorithm":"ML-KEM-1024","experimental":true}`,
 `slots` with `kind` `passphrase` – `kdf`, `factor_required` – or `recipient` – `algorithm`,
-`recipient_id`; `signer` for v3 `{"key_id":…,"verified":false}` – header only, **unverified** – else
-`null`). Always `file` as well.
+`recipient_id`; `signer` for v3 `{"key_id":…,"verified":false}` – header only, **unverified** – for a
+hidden sender (v4) `{"hidden":true,"verified":false}` without key ID, else `null`). Always `file` as well.
 
 **`verify --json`:** valid → `"valid": true`, `signer` (`key_id`, `name`), `created_utc` (claimed by
 the signer, not trusted), exit 0; invalid → `"valid": false`, `signer_matches`, exit 7. Always `file`.

@@ -156,9 +156,9 @@ fn downgrade_truncation_and_appending_are_rejected() {
     assert_eq!(
         rejected(
             &enc,
-            &edit(22, 0x08),
+            &edit(22, 0x10),
             &unlock,
-            "HIDDEN_SENDER (reserviert / reserved)"
+            "Bit 0x10 (reserviert / reserved)"
         ),
         Error::Unsupported
     );

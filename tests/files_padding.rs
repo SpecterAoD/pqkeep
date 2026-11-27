@@ -17,6 +17,7 @@ const CHUNK: u64 = 64 * 1024;
 const PAD: EncryptOptions = EncryptOptions {
     pad: true,
     anonymous: false,
+    hide_sender: false,
 };
 
 /// DE: Länge des STREAM-Chiffrats für `plain` Klartextbytes. EN: STREAM ciphertext length.
