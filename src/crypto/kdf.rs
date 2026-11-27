@@ -8,7 +8,11 @@
 //! hardware. Bounds protect against weak parameters and against DoS via
 //! tampered headers.
 
-use argon2::{Algorithm, Argon2, AssociatedData, Block, ParamsBuilder, Version};
+use super::secret_state::SecretState;
+use argon2::{
+    Algorithm, Argon2, Block, OperationWorkspace, ParamsBuilder, Version, WorkerWorkspace,
+    WorkspaceInputs,
+};
 
 use super::secret_buffer::SecretBuffer;
 use super::secret_workspace::SecretWorkspace;
@@ -16,6 +20,7 @@ use super::secret_workspace::SecretWorkspace;
 // DE: Konkrete Blockwerte und volle frühere Kapazität werden vor Unlock gelöscht.
 // EN: Concrete Block values and the full former capacity are wiped before unlock.
 impl zeroize::ZeroizeOnDrop for SecretBuffer<Block> {}
+impl zeroize::ZeroizeOnDrop for SecretBuffer<WorkerWorkspace> {}
 
 use crate::crypto::SecretBytes;
 use crate::{Error, Result};
@@ -23,6 +28,14 @@ use crate::{Error, Result};
 #[cfg(test)]
 #[path = "kdf_tests.rs"]
 mod kdf_tests;
+
+#[cfg(test)]
+#[path = "argon_hash_workspace_tests.rs"]
+mod hash_workspace_tests;
+
+#[cfg(test)]
+#[path = "argon_operation_workspace_tests.rs"]
+mod operation_workspace_tests;
 
 /// DE: Länge des abgeleiteten Schlüssels (AES-256). EN: Derived key length (AES-256).
 pub const OUTPUT_LEN: usize = 32;
@@ -150,8 +163,8 @@ pub(crate) fn argon2id(
         .t_cost(params.iterations)
         .p_cost(params.parallelism)
         .output_len(out.len());
-    if !ad.is_empty() {
-        builder.data(AssociatedData::new(ad).map_err(|_| Error::KdfParams)?);
+    if ad.len() > argon2::Params::MAX_DATA_LEN {
+        return Err(Error::KdfParams);
     }
     let argon_params = builder.build().map_err(|_| Error::KdfParams)?;
     let argon = if secret.is_empty() {
@@ -160,9 +173,31 @@ pub(crate) fn argon2id(
         Argon2::new_with_secret(secret, Algorithm::Argon2id, Version::V0x13, argon_params)
             .map_err(|_| Error::KdfParams)?
     };
-    let count = argon.params().block_count();
-    let mut blocks = SecretWorkspace::<Block>::zeroed(count)?;
+    protected_derive(&argon, passphrase, salt, ad, out)
+}
+
+fn protected_derive(
+    argon: &Argon2<'_>,
+    passphrase: &[u8],
+    salt: &[u8],
+    ad: &[u8],
+    out: &mut [u8],
+) -> Result<()> {
+    let mut blocks = SecretWorkspace::<Block>::zeroed(argon.params().block_count())?;
+    let mut work = SecretState::new(OperationWorkspace::default())?;
+    let lanes = usize::try_from(argon.params().p_cost()).map_err(|_| Error::KdfParams)?;
+    let mut workers = SecretWorkspace::<WorkerWorkspace>::zeroed(lanes)?;
     argon
-        .hash_password_into_with_memory(passphrase, salt, out, blocks.expose_mut())
+        .hash_password_into_with_workspace(
+            WorkspaceInputs {
+                password: passphrase,
+                salt,
+                associated_data: ad,
+            },
+            out,
+            blocks.expose_mut(),
+            work.get_mut(),
+            workers.expose_mut(),
+        )
         .map_err(|_| Error::Crypto)
 }

@@ -32,6 +32,7 @@ publish = false
 members = ["platform/pqkeep-platform"]
 default-members = ["."]
 exclude = [
+    "vendor/argon2-0.6.0", "vendor/blake2-0.11.0",
     "vendor/axum-0.8.9", "vendor/hyper-1.12.0", "vendor/hyper-util-0.1.21",
     "vendor/serde_json-1.0.154", "vendor/hkdf-0.13.0", "vendor/hmac-0.13.0",
     "vendor/region-4.0.1", "vendor/ml-kem-0.3.4", "vendor/ml-dsa-0.1.2",
@@ -57,12 +58,12 @@ path = "src/bin/pqkeepw.rs"
 
 [dependencies]
 aes-gcm = { version = "0.11.1", path = "vendor/aes-gcm-0.11.1", default-features = false, features = ["aes", "alloc", "zeroize", "protected-workspace"] }
-argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
+argon2 = { version = "0.6.0", path = "vendor/argon2-0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel", "protected-workspace"] }
 axum = { version = "0.8.9", path = "vendor/axum-0.8.9", default-features = false, features = ["http1", "json", "tokio"], optional = true }
 base64ct = { version = "1.8.3", features = ["alloc"] }
-# DE: Produktionsfeature für Argon2s Blake2-Core; Argon2/zeroize leitet es nicht weiter.
-# EN: Production feature for Argon2's Blake2 core; Argon2/zeroize does not forward it.
-blake2 = { version = "0.11.0", default-features = false, features = ["zeroize"] }
+# DE: Derselbe versionierte geschützte Blake2-Pfad auch für externe Consumer.
+# EN: The same versioned protected Blake2 path also applies to external consumers.
+blake2 = { version = "0.11.0", path = "vendor/blake2-0.11.0", default-features = false, features = ["zeroize", "protected-workspace"] }
 clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "color"] }
 clap_complete = "4.6.11"
 clap_mangen = "0.3.3"

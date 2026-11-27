@@ -24,6 +24,8 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | aes 0.9.2 | RustCrypto/block-ciphers, MIT OR Apache-2.0 | Borrowed AES-256 fixsliced key schedule, rounds and native-width batch scratch; ordinary hardware dispatch preserved. |
 | aes-gcm 0.11.1 | RustCrypto/AEADs, MIT OR Apache-2.0 | Fixed protected AES-256/GCM workspace, original CTR32BE counters and authenticate-before-decrypt contract. |
 | ghash 0.6.0 / polyval 0.7.3 | RustCrypto/universal-hashes, MIT OR Apache-2.0 | Borrowed portable multiplication/reduction, GHASH reverse/mulX and fixed private intermediate storage. |
+| argon2 0.6.0 | RustCrypto/password-hashes, MIT OR Apache-2.0 | Borrowed complete operation storage and one prelocked worker per lane; original parallel scheduler and AVX2 dispatch retained. |
+| blake2 0.11.0 | RustCrypto/hashes, MIT OR Apache-2.0 | Inline compression/message scratch, borrowed vector operations and lazy buffered output; ordinary APIs preserved. |
 
 DE: Root aktiviert protected-workspace für private SHA3-/SHAKE-Verarbeitung. Hash und
 Reader enthalten ihre fünf Scratch-Lanes inline und werden vor privater Befüllung
@@ -238,3 +240,27 @@ Standalone consumers exercise both documented cpubits width overrides; this does
 not replace native ABI tests. Public-data x86 measurements show roughly 3.0–3.4x
 the hardware-accelerated registry provider's compute time, excluding owner locking.
 Native acceptance and the remaining Argon2/R6 matrix are still required.
+
+## Private Argon2 storage / Private Argon2-Flächen
+
+DE: Beide Subsets enthalten alle Produktionsmodule und Original-Lizenzen; nur
+Dev-/Test-/Bench-Targets und zwei reine Argon2-Inline-Test-Suffixe fehlen. Root
+sperrt Blockspeicher, vollständigen Operationszustand und sämtliche Lane-Worker
+vor privater Verarbeitung. AD wird direkt geliehen, nicht mehr privat in Params
+kopiert. BLAKE2b Initial-/Final-/long-Hash, Erst-/Schlussblöcke und R/Ergebnis sind
+feste Inline-Flächen. Private Byte-/Vektorkonvertierungen geben keine Arrays zurück.
+EN: Shared original arithmetic uses borrowed scalar/vector destinations. Compression
+message words, four working vectors and the gathered message vector are inline.
+Little-endian word framing writes directly into the prelocked lazy buffer. Default
+state/constructors contain public IV/zero values; ordinary APIs remain compatible.
+
+DE: Der originale Segment-Scheduler und seine Bounds-/Alias-Prüfungen bleiben
+byteidentisch. Exklusive Worker-Slice-Leihe und eigener Inline-Mutex je Lane
+bewahren die bisherige Parallelität; keine globale Serialisierung oder kleinere
+Parameter. Belegung/Gift werden verweigert, Giftzustand nur gelöscht. Fortschritt
+und tatsächliche AVX2-Auswahl können ohne private Inhalte validiert werden.
+EN: Two existing AVX2 unsafe sites accept borrowed R/output instead of returning
+a private Block. The same feature detection and target-feature boundary remain;
+no additional unsafe boundary. New protected modules and Root add no unsafe code.
+Inherited allocator/segment unsafe remains for existing APIs. This is not a formal
+soundness proof or an unsafe-free dependency claim. Native acceptance is required.

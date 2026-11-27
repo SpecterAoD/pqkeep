@@ -69,3 +69,12 @@ full native CI of the signed implementation remains pending. Offline cargo-deny
 passes with cached advisories and the existing syn2/3 warning. Initial Python
 module invocation failed on its import path; direct script invocation passes2tests.
 No source or gate was relaxed to correct that command.
+
+DE: Native Abnahme am signierten Head2b44f3e: alle23 Checks erfolgreich. Vier
+vollständige native Protokolle geprüft/gehasht: Ubuntu22/ARM je888Tests/113Gruppen,
+Ubuntu-latest1702/224 und Windows1540/226 über die jeweiligen Konfigurationen;
+null Fehler. Neue AES-Eltern einschließlich Initial-/Wipe-Verweigerung und beide
+Stream-AAD-/Autotrait-Tests tatsächlich enthalten. MSRV, Online-Audit/CodeQL,
+vollständiger Historien-Secret-Scan und acht Fuzz-Ziele erfolgreich.
+EN: Evidence: aes2b44-checks.json and aes2b44-native-summary.json/logs. This accepts
+the AES checkpoint, not subsequent Argon2/Base64 code or the complete R6 matrix.

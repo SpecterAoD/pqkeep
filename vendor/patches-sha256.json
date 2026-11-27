@@ -426,5 +426,77 @@
       "path": "src/lib.rs",
       "sha256": "2a7d63de229d89fd316212515db81fe43675a2012fa321048715405ee0e63784"
     }
+  ],
+  "argon2-0.6.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "60ad0781cfd0dd3e50bc9ec0a8e1fb6c7b0b3b0bbbf5d552e50578753f1aac3c"
+    },
+    {
+      "path": "src/algorithm.rs",
+      "sha256": "e66a81f54183c81cf4dcaa1ca35ac445c4595215bc90a4b8c5e451da36c07abb"
+    },
+    {
+      "path": "src/block.rs",
+      "sha256": "b2165aefa0a2d1c03d1083d678a9455a86d75886d1ef4e121a54f75b00cdd390"
+    },
+    {
+      "path": "src/indexing.rs",
+      "sha256": "b7a6357afc756b5333c36ca01d7b6178ef97fa2ecdc5242eb21e8ae4177daa3d"
+    },
+    {
+      "path": "src/initial_hash.rs",
+      "sha256": "19205cb0072b0cf4091d9dcf2dbf8b5cca128eec045b2265712a895086fa04e0"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "0abad1cefbc2dd02210a157ef85af46a14047e147432e766afcca57a84df5b35"
+    },
+    {
+      "path": "src/params.rs",
+      "sha256": "8dce19c00da9b268648791dd2bd86a45a91a112e4a786e40f56ea76183808c3d"
+    },
+    {
+      "path": "src/protected/fill.rs",
+      "sha256": "233e7ae5cb4193c4f0608a81faed6e930bce5f225247a194c08bbbf4769bee80"
+    },
+    {
+      "path": "src/protected/hashing.rs",
+      "sha256": "274fbda115e4bd858435bdf7032cb339f288111b3265b717ceb706469768596d"
+    },
+    {
+      "path": "src/protected/worker.rs",
+      "sha256": "59c6f0857c3cbe50c70c4604b588fee63a93942660b8aad2d51a382d57848c65"
+    },
+    {
+      "path": "src/protected.rs",
+      "sha256": "5facc17e4c7bf96479cdfacc13608fff906a845640fe0f959c2281cf5b7fe548"
+    },
+    {
+      "path": "src/version.rs",
+      "sha256": "3c67a16326469241af42cf9a2b2e97772c23b3ad76f395b54e905884d70a81c9"
+    }
+  ],
+  "blake2-0.11.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "4b46d38a35c1a0e0e02b6dce126aaaa664a09ce904fa4df1f833fa5a55700db6"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "f361ba27e3a2dfc6a1c371b1bfc3f0058d2094b6d9bff2c6457d411aa8dbcfbd"
+    },
+    {
+      "path": "src/macros.rs",
+      "sha256": "3ffb8c0fae09cbfcb3029adbad7e92b01ff4928b992874064ce185aeafdd141f"
+    },
+    {
+      "path": "src/protected.rs",
+      "sha256": "a57ec916939573f7ed75a320c4ef1ab44f66068e523d9a82e0be1bf56c98e8bf"
+    },
+    {
+      "path": "src/simd.rs",
+      "sha256": "88b3cb3fe92609f471a3d302453e5195c3c5884b29217a9a1f3010d47fc0bcfc"
+    }
   ]
 }

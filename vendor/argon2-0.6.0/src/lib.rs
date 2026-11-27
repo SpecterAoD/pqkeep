@@ -1,0 +1,692 @@
+#![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../README.md")]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
+)]
+#![warn(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::checked_conversions,
+    clippy::implicit_saturating_sub,
+    clippy::missing_safety_doc,
+    clippy::panic,
+    clippy::panic_in_result_fn,
+    clippy::undocumented_unsafe_blocks,
+    clippy::unwrap_used,
+    missing_docs,
+    rust_2018_idioms,
+    unused_lifetimes,
+    unused_qualifications
+)]
+
+//! ## Usage
+//!
+//! ### Password Hashing
+//!
+//! This API hashes a password to a "PHC string" suitable for the purposes of
+//! password-based authentication. Do not use this API to derive cryptographic
+//! keys: see the "key derivation" usage example below.
+//!
+#![cfg_attr(all(feature = "alloc", feature = "getrandom"), doc = "```")]
+#![cfg_attr(not(all(feature = "alloc", feature = "getrandom")), doc = "```ignore")]
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! // NOTE: example requires `getrandom` feature is enabled
+//!
+//! use argon2::{
+//!     password_hash::{PasswordHasher, PasswordVerifier, phc::PasswordHash},
+//!     Argon2
+//! };
+//!
+//! let password = b"hunter42"; // Bad password; don't actually use!
+//!
+//! // Argon2 with default params (Argon2id v19), generating a random salt
+//! let argon2 = Argon2::default();
+//!
+//! // Hash password to PHC string ($argon2id$v=19$...)
+//! let password_hash = argon2.hash_password(password)?.to_string();
+//!
+//! // Verify password against PHC string.
+//! //
+//! // NOTE: hash params from `parsed_hash` are used instead of what is configured in the
+//! // `Argon2` instance.
+//! let parsed_hash = PasswordHash::new(&password_hash)?;
+//! assert!(Argon2::default().verify_password(password, &parsed_hash).is_ok());
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! To [pepper] as well as salt your passwords:
+//!
+//! [pepper]: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#peppering
+//!
+#![cfg_attr(all(feature = "alloc", feature = "getrandom"), doc = "```")]
+#![cfg_attr(not(all(feature = "alloc", feature = "getrandom")), doc = "```ignore")]
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! // NOTE: example requires `getrandom` feature is enabled
+//!
+//! use argon2::{
+//!     password_hash::{PasswordHasher, PasswordVerifier, phc::PasswordHash},
+//!     Algorithm, Argon2, Params, Version
+//! };
+//!
+//! let password = b"hunter42"; // Bad password; don't actually use!
+//!
+//! // Argon2 with default params (Argon2id v19) and pepper
+//! let argon2 = Argon2::new_with_secret(
+//!     b"secret pepper",
+//!     Algorithm::default(),
+//!     Version::default(),
+//!     Params::default()
+//! )?;
+//!
+//! // Hash password to PHC string ($argon2id$v=19$...), generating a random salt
+//! let password_hash = argon2.hash_password(password)?.to_string();
+//!
+//! // Verify password against PHC string.
+//! //
+//! // NOTE: hash params from `parsed_hash` are used instead of what is configured in the
+//! // `Argon2` instance.
+//! let parsed_hash = PasswordHash::new(&password_hash)?;
+//! let argon2 = Argon2::new_with_secret(
+//!     b"secret pepper",
+//!     Algorithm::default(),
+//!     Version::default(),
+//!     Params::default(),
+//! )
+//! .unwrap();
+//! let res = argon2.verify_password(password, &parsed_hash);
+//! assert!(res.is_ok());
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### Key Derivation
+//!
+//! This API is useful for transforming a password into cryptographic keys for
+//! e.g. password-based encryption.
+//!
+#![cfg_attr(feature = "alloc", doc = "```")]
+#![cfg_attr(not(feature = "alloc"), doc = "```ignore")]
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! use argon2::Argon2;
+//!
+//! let password = b"hunter42"; // Bad password; don't actually use!
+//! let salt = b"example salt"; // Salt should be unique per password
+//!
+//! let mut output_key_material = [0u8; 32]; // Can be any desired size
+//! Argon2::default().hash_password_into(password, salt, &mut output_key_material)?;
+//! # Ok(())
+//! # }
+//! ```
+
+// Call sites which cast `u32` to `usize` and are annotated with
+// allow(clippy::cast_possible_truncation) need this check to avoid truncation.
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+compile_error!("this crate builds on 32-bit and 64-bit platforms only");
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "protected-workspace")]
+extern crate std;
+
+mod algorithm;
+mod blake2b_long;
+mod block;
+mod error;
+mod memory;
+mod params;
+mod version;
+
+pub use crate::{
+    algorithm::Algorithm,
+    block::Block,
+    error::{Error, Result},
+    params::{AssociatedData, KeyId, Params, ParamsBuilder},
+    version::Version,
+};
+
+#[cfg(feature = "kdf")]
+pub use kdf::{self, Kdf, Pbkdf};
+#[cfg(feature = "password-hash")]
+pub use {
+    crate::algorithm::{ARGON2D_IDENT, ARGON2I_IDENT, ARGON2ID_IDENT},
+    password_hash::{
+        self, CustomizedPasswordHasher, PasswordHasher, PasswordVerifier, phc::PasswordHash,
+    },
+};
+
+use crate::blake2b_long::blake2b_long;
+use blake2::{Blake2b512, Digest, digest};
+use core::fmt;
+use memory::Memory;
+
+#[cfg(all(feature = "alloc", feature = "password-hash"))]
+use password_hash::phc::{Output, ParamsString, Salt};
+
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
+/// Maximum password length in bytes.
+pub const MAX_PWD_LEN: usize = 0xFFFFFFFF;
+
+/// Minimum salt length in bytes.
+pub const MIN_SALT_LEN: usize = 8;
+
+/// Maximum salt length in bytes.
+pub const MAX_SALT_LEN: usize = 0xFFFFFFFF;
+
+/// Recommended salt length for password hashing in bytes.
+pub const RECOMMENDED_SALT_LEN: usize = 16;
+
+/// Maximum secret key length in bytes.
+pub const MAX_SECRET_LEN: usize = 0xFFFFFFFF;
+
+/// Number of synchronization points between lanes per pass
+pub(crate) const SYNC_POINTS: usize = 4;
+
+/// To generate reference block positions
+const ADDRESSES_IN_BLOCK: usize = 128;
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+cpufeatures::new!(avx2_cpuid, "avx2");
+
+/// Argon2 context.
+///
+/// This is the primary type of this crate's API, and contains the following:
+///
+/// - Argon2 [`Algorithm`] variant to be used
+/// - Argon2 [`Version`] to be used
+/// - Default set of [`Params`] to be used
+/// - (Optional) Secret key a.k.a. "pepper" to be used
+#[derive(Clone)]
+pub struct Argon2<'key> {
+    /// Algorithm to use
+    algorithm: Algorithm,
+
+    /// Version number
+    version: Version,
+
+    /// Algorithm parameters
+    params: Params,
+
+    /// Key array
+    secret: Option<&'key [u8]>,
+
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    cpu_feat_avx2: avx2_cpuid::InitToken,
+}
+
+impl Default for Argon2<'_> {
+    fn default() -> Self {
+        Self::new(Algorithm::default(), Version::default(), Params::default())
+    }
+}
+
+impl fmt::Debug for Argon2<'_> {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.debug_struct("Argon2")
+            .field("algorithm", &self.algorithm)
+            .field("version", &self.version)
+            .field("params", &self.params)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<'key> Argon2<'key> {
+    /// Create a new Argon2 context.
+    #[must_use]
+    pub fn new(algorithm: Algorithm, version: Version, params: Params) -> Self {
+        Self {
+            algorithm,
+            version,
+            params,
+            secret: None,
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+            cpu_feat_avx2: avx2_cpuid::init(),
+        }
+    }
+
+    /// Create a new Argon2 context.
+    ///
+    /// # Errors
+    /// Returns [`Error::SecretTooLong`] in the event `secret` is too long.
+    pub fn new_with_secret(
+        secret: &'key [u8],
+        algorithm: Algorithm,
+        version: Version,
+        params: Params,
+    ) -> Result<Self> {
+        if MAX_SECRET_LEN < secret.len() {
+            return Err(Error::SecretTooLong);
+        }
+
+        Ok(Self {
+            algorithm,
+            version,
+            params,
+            secret: Some(secret),
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+            cpu_feat_avx2: avx2_cpuid::init(),
+        })
+    }
+
+    /// Hash a password and associated parameters into the provided output buffer.
+    ///
+    /// # Errors
+    /// - Returns [`Error::PwdTooLong`] if `pwd` is longer than `MAX_PWD_LEN`.
+    /// - Returns [`Error::SaltTooShort`] if `salt` is shorter than `MIN_SALT_LEN`.
+    /// - Returns [`Error::SaltTooLong`] if `salt` is longer than `MAX_SALT_LEN`.
+    /// - Returns [`Error::OutputTooShort`] if `out` is too short.
+    /// - Returns [`Error::OutputTooLong`] if `out` is too long.
+    #[cfg(feature = "alloc")]
+    pub fn hash_password_into(&self, pwd: &[u8], salt: &[u8], out: &mut [u8]) -> Result<()> {
+        let blocks_len = self.params.block_count();
+        let mut blocks = block::Blocks::new(blocks_len).ok_or(Error::OutOfMemory)?;
+        self.hash_password_into_with_memory(pwd, salt, out, blocks.as_slice())
+    }
+
+    /// Hash a password and associated parameters into the provided output buffer.
+    ///
+    /// This method takes an explicit `memory_blocks` parameter which allows
+    /// the caller to provide the backing storage for the algorithm's state:
+    ///
+    /// - Users with the `alloc` feature enabled can use [`Argon2::hash_password_into`]
+    ///   to have it allocated for them.
+    /// - `no_std` users on "heapless" targets can use an array of the [`Block`] type
+    ///   to stack allocate this buffer.
+    ///
+    /// # Errors
+    /// - Returns [`Error::PwdTooLong`] if `pwd` is longer than `MAX_PWD_LEN`.
+    /// - Returns [`Error::SaltTooShort`] if `salt` is shorter than `MIN_SALT_LEN`.
+    /// - Returns [`Error::SaltTooLong`] if `salt` is longer than `MAX_SALT_LEN`.
+    /// - Returns [`Error::OutputTooShort`] if `out` is too short.
+    /// - Returns [`Error::OutputTooLong`] if `out` is too long.
+    pub fn hash_password_into_with_memory(
+        &self,
+        pwd: &[u8],
+        salt: &[u8],
+        out: &mut [u8],
+        mut memory_blocks: impl AsMut<[Block]>,
+    ) -> Result<()> {
+        // Validate output length
+        if out.len() < self.params.output_len().unwrap_or(Params::MIN_OUTPUT_LEN) {
+            return Err(Error::OutputTooShort);
+        }
+
+        if out.len() > self.params.output_len().unwrap_or(Params::MAX_OUTPUT_LEN) {
+            return Err(Error::OutputTooLong);
+        }
+
+        Self::verify_inputs(pwd, salt)?;
+
+        // Hashing all inputs
+        let initial_hash = self.initial_hash(pwd, salt, out)?;
+        self.fill_blocks(memory_blocks.as_mut(), initial_hash)?;
+        self.finalize(memory_blocks.as_mut(), out)
+    }
+
+    /// Use a password and associated parameters only to fill the given memory blocks.
+    ///
+    /// This method omits the calculation of a hash and can be used when only the
+    /// filled memory is required. It is not necessary to call this method
+    /// before calling any of the hashing functions.
+    ///
+    /// # Errors
+    /// - Returns [`Error::PwdTooLong`] if `pwd` is longer than `MAX_PWD_LEN`.
+    /// - Returns [`Error::SaltTooShort`] if `salt` is shorter than `MIN_SALT_LEN`.
+    /// - Returns [`Error::SaltTooLong`] if `salt` is longer than `MAX_SALT_LEN`.
+    pub fn fill_memory(
+        &self,
+        pwd: &[u8],
+        salt: &[u8],
+        mut memory_blocks: impl AsMut<[Block]>,
+    ) -> Result<()> {
+        Self::verify_inputs(pwd, salt)?;
+
+        let initial_hash = self.initial_hash(pwd, salt, &[])?;
+        self.fill_blocks(memory_blocks.as_mut(), initial_hash)
+    }
+
+    #[allow(clippy::cast_possible_truncation, unused_mut)]
+    fn fill_blocks(
+        &self,
+        memory_blocks: &mut [Block],
+        mut initial_hash: digest::Output<Blake2b512>,
+    ) -> Result<()> {
+        let block_count = self.params.block_count();
+        let mut memory_blocks = memory_blocks
+            .get_mut(..block_count)
+            .ok_or(Error::MemoryTooLittle)?;
+
+        let segment_length = self.params.segment_length();
+        let iterations = self.params.t_cost() as usize;
+        let lane_length = self.params.lane_length();
+        let lanes = self.params.lanes();
+
+        // Initialize the first two blocks in each lane
+        for (l, lane) in memory_blocks.chunks_exact_mut(lane_length).enumerate() {
+            for (i, block) in lane[..2].iter_mut().enumerate() {
+                let i = i as u32;
+                let l = l as u32;
+
+                // Make the first and second block in each lane as G(H0||0||i) or
+                // G(H0||1||i)
+                let inputs = &[
+                    initial_hash.as_ref(),
+                    &i.to_le_bytes()[..],
+                    &l.to_le_bytes()[..],
+                ];
+
+                let mut hash = [0u8; Block::SIZE];
+                blake2b_long(inputs, &mut hash)?;
+                block.load(&hash);
+            }
+        }
+
+        #[cfg(feature = "zeroize")]
+        initial_hash.zeroize();
+
+        // Run passes on blocks
+        for pass in 0..iterations {
+            memory_blocks.for_each_segment(lanes, |mut memory_view, slice, lane| {
+                let data_independent_addressing = self.algorithm == Algorithm::Argon2i
+                    || (self.algorithm == Algorithm::Argon2id
+                        && pass == 0
+                        && slice < SYNC_POINTS / 2);
+
+                let mut address_block = Block::default();
+                let mut input_block = Block::default();
+                let zero_block = Block::default();
+
+                if data_independent_addressing {
+                    input_block.as_mut()[..6].copy_from_slice(&[
+                        pass as u64,
+                        lane as u64,
+                        slice as u64,
+                        block_count as u64,
+                        iterations as u64,
+                        self.algorithm as u64,
+                    ]);
+                }
+
+                let first_block = if pass == 0 && slice == 0 {
+                    if data_independent_addressing {
+                        // Generate first set of addresses
+                        self.update_address_block(
+                            &mut address_block,
+                            &mut input_block,
+                            &zero_block,
+                        );
+                    }
+
+                    // The first two blocks of each lane are already initialized
+                    2
+                } else {
+                    0
+                };
+
+                let cur_index = lane * lane_length + slice * segment_length + first_block;
+                let mut prev_index = if slice == 0 && first_block == 0 {
+                    // Last block in current lane
+                    cur_index + lane_length - 1
+                } else {
+                    // Previous block
+                    cur_index - 1
+                };
+
+                // Fill blocks in the segment
+                for (cur_index, block) in (cur_index..).zip(first_block..segment_length) {
+                    // Extract entropy
+                    let rand = if data_independent_addressing {
+                        let address_index = block % ADDRESSES_IN_BLOCK;
+
+                        if address_index == 0 {
+                            self.update_address_block(
+                                &mut address_block,
+                                &mut input_block,
+                                &zero_block,
+                            );
+                        }
+
+                        address_block.as_ref()[address_index]
+                    } else {
+                        memory_view.get_block(prev_index).as_ref()[0]
+                    };
+
+                    let ref_index = self.reference_index(rand, pass, slice, lane, block);
+
+                    // Calculate new block
+                    let result = self.compress(
+                        memory_view.get_block(prev_index),
+                        memory_view.get_block(ref_index),
+                    );
+
+                    if self.version == Version::V0x10 || pass == 0 {
+                        *memory_view.get_block_mut(cur_index) = result;
+                    } else {
+                        *memory_view.get_block_mut(cur_index) ^= &result;
+                    };
+
+                    prev_index = cur_index;
+                }
+            });
+        }
+
+        Ok(())
+    }
+
+    fn compress(&self, rhs: &Block, lhs: &Block) -> Block {
+        let mut r = Block::new();
+        let mut out = Block::new();
+        self.compress_into(rhs, lhs, &mut r, &mut out);
+        out
+    }
+
+    // DE: Gleiche CPU-Grenze mit geliehenem R/Ergebnis statt privater Block-Rückgabe.
+    // EN: Same CPU boundary with borrowed R/output instead of a returned private block.
+    fn compress_into(&self, rhs: &Block, lhs: &Block, r: &mut Block, out: &mut Block) {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            /// Enable AVX2 optimizations.
+            #[target_feature(enable = "avx2")]
+            unsafe fn compress_avx2(rhs: &Block, lhs: &Block, r: &mut Block, out: &mut Block) {
+                Block::compress_into(rhs, lhs, r, out);
+            }
+
+            if self.cpu_feat_avx2.get() {
+                // DE: AVX2 erkannt; disjunkte exklusive Leihen erhalten Bounds und Eigentum.
+                // SAFETY: checked that AVX2 was detected. Disjoint mutable workspace
+                // borrows preserve the original block bounds and exclusive ownership.
+                unsafe { compress_avx2(rhs, lhs, r, out) };
+                return;
+            }
+        }
+
+        Block::compress_into(rhs, lhs, r, out);
+    }
+
+    /// Get default configured [`Params`].
+    #[must_use]
+    pub const fn params(&self) -> &Params {
+        &self.params
+    }
+
+    fn finalize(&self, memory_blocks: &[Block], out: &mut [u8]) -> Result<()> {
+        let lane_length = self.params.lane_length();
+
+        let mut blockhash = memory_blocks[lane_length - 1];
+
+        // XOR the last blocks
+        for l in 1..self.params.lanes() {
+            let last_block_in_lane = l * lane_length + (lane_length - 1);
+            blockhash ^= &memory_blocks[last_block_in_lane];
+        }
+
+        // Hash the result
+        let mut blockhash_bytes = [0u8; Block::SIZE];
+
+        for (chunk, v) in blockhash_bytes.chunks_mut(8).zip(blockhash.iter()) {
+            chunk.copy_from_slice(&v.to_le_bytes());
+        }
+
+        blake2b_long(&[&blockhash_bytes], out)?;
+
+        #[cfg(feature = "zeroize")]
+        {
+            blockhash.zeroize();
+            blockhash_bytes.zeroize();
+        }
+
+        Ok(())
+    }
+
+    fn update_address_block(
+        &self,
+        address_block: &mut Block,
+        input_block: &mut Block,
+        zero_block: &Block,
+    ) {
+        input_block.as_mut()[6] += 1;
+        *address_block = self.compress(zero_block, input_block);
+        *address_block = self.compress(zero_block, address_block);
+    }
+
+    /// Hashes all the inputs into `blockhash[PREHASH_DIGEST_LEN]`.
+    fn initial_hash(
+        &self,
+        pwd: &[u8],
+        salt: &[u8],
+        out: &[u8],
+    ) -> Result<digest::Output<Blake2b512>> {
+        let mut digest = Blake2b512::new();
+        self.absorb_initial_hash(pwd, salt, self.params.data(), out.len(), &mut digest)?;
+        Ok(digest.finalize())
+    }
+
+    const fn verify_inputs(pwd: &[u8], salt: &[u8]) -> Result<()> {
+        if pwd.len() > MAX_PWD_LEN {
+            return Err(Error::PwdTooLong);
+        }
+
+        // Validate salt (required param)
+        if salt.len() < MIN_SALT_LEN {
+            return Err(Error::SaltTooShort);
+        }
+
+        if salt.len() > MAX_SALT_LEN {
+            return Err(Error::SaltTooLong);
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(feature = "kdf")]
+impl Kdf for Argon2<'_> {
+    fn derive_key(&self, password: &[u8], salt: &[u8], out: &mut [u8]) -> kdf::Result<()> {
+        self.hash_password_into(password, salt, out)?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "kdf")]
+impl Pbkdf for Argon2<'_> {}
+
+#[cfg(all(feature = "alloc", feature = "password-hash"))]
+impl CustomizedPasswordHasher<PasswordHash> for Argon2<'_> {
+    type Params = Params;
+
+    fn hash_password_customized(
+        &self,
+        password: &[u8],
+        salt: &[u8],
+        alg_id: Option<&str>,
+        version: Option<u32>,
+        params: Params,
+    ) -> password_hash::Result<PasswordHash> {
+        let algorithm = alg_id
+            .map(Algorithm::try_from)
+            .transpose()?
+            .unwrap_or_default();
+
+        let version = version
+            .map(Version::try_from)
+            .transpose()?
+            .unwrap_or_default();
+
+        Self {
+            secret: self.secret,
+            algorithm,
+            version,
+            params,
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+            cpu_feat_avx2: self.cpu_feat_avx2,
+        }
+        .hash_password_with_salt(password, salt)
+    }
+}
+
+#[cfg(all(feature = "alloc", feature = "password-hash"))]
+impl PasswordHasher<PasswordHash> for Argon2<'_> {
+    fn hash_password_with_salt(
+        &self,
+        password: &[u8],
+        salt: &[u8],
+    ) -> password_hash::Result<PasswordHash> {
+        let salt = Salt::new(salt)?;
+
+        let output_len = self
+            .params
+            .output_len()
+            .unwrap_or(Params::DEFAULT_OUTPUT_LEN);
+
+        let mut buffer = [0u8; Output::MAX_LENGTH];
+        let out = buffer
+            .get_mut(..output_len)
+            .ok_or(password_hash::Error::OutputSize)?;
+
+        self.hash_password_into(password, &salt, out)?;
+        let output = Output::new(out)?;
+
+        Ok(PasswordHash {
+            algorithm: self.algorithm.ident(),
+            version: Some(self.version.into()),
+            params: ParamsString::try_from(&self.params)?,
+            salt: Some(salt),
+            hash: Some(output),
+        })
+    }
+}
+
+#[cfg(all(feature = "alloc", feature = "password-hash"))]
+impl PasswordVerifier<str> for Argon2<'_> {
+    fn verify_password(&self, password: &[u8], hash: &str) -> password_hash::Result<()> {
+        self.verify_password(password, &PasswordHash::new(hash)?)
+    }
+}
+
+impl From<Params> for Argon2<'_> {
+    fn from(params: Params) -> Self {
+        Self::new(Algorithm::default(), Version::default(), params)
+    }
+}
+
+impl From<&Params> for Argon2<'_> {
+    fn from(params: &Params) -> Self {
+        Self::from(params.clone())
+    }
+}
+
+#[cfg(feature = "protected-workspace")]
+mod protected;
+#[cfg(feature = "protected-workspace")]
+pub use protected::{OperationWorkspace, WorkerWorkspace, WorkspaceError, WorkspaceInputs};
+
+mod indexing;
+mod initial_hash;

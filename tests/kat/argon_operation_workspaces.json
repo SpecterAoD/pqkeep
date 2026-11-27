@@ -1,0 +1,623 @@
+{
+  "source": "Existing system Argon2 reference C library; synthetic public input only",
+  "header": "https://github.com/P-H-C/phc-winner-argon2/blob/20190702/include/argon2.h",
+  "package": "libargon2-1 0~20190702+dfsg-4build1",
+  "library_sha256": "3c593c01d1c3497b1276537a1002c90ce3beb729a3520087608838cf8bbd847d",
+  "rfc9106_abi_control": true,
+  "input_formula": {
+    "password": "(i*13+7)&255",
+    "salt": "(i*17+11)&255",
+    "secret": "(i*19+3)&255",
+    "ad": "(i*23+5)&255"
+  },
+  "cases": [
+    {
+      "memory_kib": 8,
+      "passes": 1,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "f224b6a9894f395c064484a5d745062961fb1b819d68f788c848f3333b3fa8e0"
+    },
+    {
+      "memory_kib": 8,
+      "passes": 1,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "e08f702405156e4b92578ddb57ae7b712850531088001911020d27c226f171de"
+    },
+    {
+      "memory_kib": 8,
+      "passes": 2,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "374b2c9e75200bd9cb509bb5717e1e609495d338ef8eeeb33d32b99519469b24"
+    },
+    {
+      "memory_kib": 8,
+      "passes": 2,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "1495c53fda5e57c27d133a251dfd22994230ca3ee3cc2ffdafc4f86daf5d7b44"
+    },
+    {
+      "memory_kib": 8,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "c44879c07e5352b302c9f5aa6b3a753b3eeafab391b18b03f09a9ff3ee1510db"
+    },
+    {
+      "memory_kib": 8,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "f4bf649be2593f5040041f5ec4035bb84e7ca97666246898f665d15385347c46"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 1,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "030c84136c8747a74821398b77b8f14b59fee56219d78db8e3f986107ffa8937"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 1,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "85f7ba3ffffa989afdcb57552284d1d10890777e520e69aff1c9118e5ef18c43"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 2,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "7dbf8328412d6e16582c0216fceaca17c26b3942828a3ef1e0e78e8d2b5d3c25"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 2,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "9c38e43e20f34509e6e0d0d00dfcfa218468313b09372c3fff2abdd7ff9f10ed"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 3,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "1c9d498c0e51c6c06d9c3846b5dcdff2a74a450d1cba53f9f467c21e8f415460"
+    },
+    {
+      "memory_kib": 16,
+      "passes": 3,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "79e121e3a0d819c9d73abc8ff6ae0cc88e3d0031399bc5d9db1d371c16712f17"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 1,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "c303c566b0e7a1d7b6d2af8af840f64a3943b83bd3c2943ce838ad1e7cce764c"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 1,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "65d44b4549fb7f59fe0559befc931413dac6f05165441cace35410f6f5ababdc"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "1285499b2d2869d8f705c251dadea8166aa23398aff25d6057d1a8d7de8a1de1"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "3b6c34dbfdc7dc50de46efead9fbf4f4a62c580d921c8a52d630b9795c726b0e"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "1ee505f73dbb1c70db1930d3715698491fd0fad13a108f1e102016b2b5357e66"
+    },
+    {
+      "memory_kib": 32,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "5a0c6e460de0428b7d9c292b53ba8ffaef6865ba8de63a7ed88d3ca14397601a"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 1,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "ba40370f4264125dac84bd34acfa92db0f3ef5635411b2617c516f502190d01d"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 1,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "32f82c67961dd862f3569bb1fcc180c7f2fc12405df6d78a1985606085334dbd"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 2,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "a667c6ffdeeb9eb02d8d86328d0c351a7416ffecbfd95875c746f96f826b5621"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 2,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "8c7e77ada952be8d916153b228225b4839f389268ee5ab0f879fb8ebcf9ecb29"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 3,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "75a6e25424916030bf114a46091f7df06e1cdfc7d422f96a9c6f35521a11a7e9"
+    },
+    {
+      "memory_kib": 64,
+      "passes": 3,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "e281aab8e0a2f321ee548ae3f949f15a4709821de28e56b8e914f7edbac8cec2"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 1,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "eed2886145e8300d76e40515c1a28ae6da6cfe8f607df003720097a4d5535d39"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 1,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "3ebf9c3dab091deb8e15dcfd316c237b39baa98d908b021ba22d42edea219b14"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 2,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "54a60725adc8cd7a7079a8617f78123af8e2814ede828e71003f155e3353016c"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 2,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "600943e84234d02ddb2dba39ffe3b15ee6f5f00f91cbf55db26dca2cecf2c962"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 3,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "9b041b39fd6395471c92fc124f60e40503ebadc9704c7b688c1931bb96ebdf16"
+    },
+    {
+      "memory_kib": 128,
+      "passes": 3,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "de564c7179ea914c56f3167355f300150638b7af3914f8813f28b43c79fab5e0"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 1,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "76d8b54123cd84b950414cda28c875e086c7301e408e0a8af0ae279f9f46af5d"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 1,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "db0554bdb1a4dcb574a3f943a9fcd31192a4137d87e57828e14fbb47419e0ad4"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 2,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "bc40cd20890c36faee93fa2e091329408bb5f569c0fd4b876efe3b1dc27c2981"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 2,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "3d400eb4a951fca29523868ed04884bcd342aeb62d368de923550bb79a88ddc3"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "ccc91e670fbe0322b1c6cc8e043765cc7cbfd7a5ba06506b50c2961bcee96334"
+    },
+    {
+      "memory_kib": 19,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "6e97a135b5218881822243f9305a19bdc206885dfe093f23060324673ea5a633"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 1,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "6f25f5c7499aadab4a8952641e5b33d4c30cb058c47c0e944bb4ff0c0804f3fe"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 1,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "5942f4ae82a53a1af3e458a50a7373f831d55e92c1a75dc1bf3c239ffd16a910"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 2,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "1636992b7e9b958147adcbcaa87f67cf0111fb04c633ccddd5f8edd19187cb06"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 2,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "03c2084f45cc8b290cd68a2385ab7102eb9f44fb58049f22d666f7eb228d3dae"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 3,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "7260b9f3ff17951ce973783811163ef913559bbca3faf97f8adf3fb3275c8c98"
+    },
+    {
+      "memory_kib": 35,
+      "passes": 3,
+      "lanes": 2,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "5222cdf2bcbccfac28df67bc5dae95444615b8de0026d21f19915b9e02f39f1d"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 1,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "db07d89385835452d0e6621b4c110f7a7d631ea2d304de72b09b11938f838d86"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 1,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "a59223e6b9dfaee131945300a61e5df198936e8f944592c03001fe7f2badca2e"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "b75c545522abe8ac18ea1640d8cece6ec25d16c197748148651c97b6caa9f7aa"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "671c8bcfdea10a476155bf544f07457bc80f1236e6cab25de2154914708de8ca"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "55e30cdfd464849e0004916f4df577a33f7266d444578ce514f37afa177d817c"
+    },
+    {
+      "memory_kib": 67,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "40adc6e857edc568684b1023ab34e167416239a8d3b0e6041af45a0f7d38ea08"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 1,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "ff0c41162d21294181102214fcf82f89b3968cd79da7655d1271fbb648615317"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 1,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "11daa047f6bade846f92a6269a5bddf0436b3d3ec2d1c58ca545961190da3c29"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 2,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "c741e175df85427df3f620c46a257a5932c65e5ae54765803fb46f8a55e7b8b0"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 2,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "4f000e424b4b1de72459fcba897e694604e959f272da34bba03a3a0387e17948"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 3,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "783b9618707f8b333d9b0c8facd09ce36a421fc2444a0d0f60e2ca3482f36f4d"
+    },
+    {
+      "memory_kib": 131,
+      "passes": 3,
+      "lanes": 8,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "5fbb106d610840919b9acf0f2ce6fbaf38b921b27f36e57f373fa2822e23bcbe"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 1,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "02031e973ac49b22fd0cb90115fc36cfd58f3b14ea26a93032927bb1991cf82b"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 1,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "e61c3b64f8faa4a218ad20b6c875bb07413fef0d53f039a699eea2e0d92fbf00"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 2,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "011b38312dda9a09d2f3dd1373cfbfc84e139c076dd9b70643c44b93fa2a3bdf"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 2,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "9d90257b37c45ba8457a856109f6e96b899dde6acc139c6f57ac6903262eb651"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 3,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "426e319fc260098e11d127a6209796ad32a2833dd11e96637b703eff72c62a13"
+    },
+    {
+      "memory_kib": 259,
+      "passes": 3,
+      "lanes": 16,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "fec11e6ca29b1e80b0d92d4c0d27fcfeb46171769bdcfa7ad8c93b37897b91bc"
+    },
+    {
+      "memory_kib": 4097,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "b650a0527bf70df297152762da81bf0712c864df02829e1ee4eb030c3304f5b2"
+    },
+    {
+      "memory_kib": 4097,
+      "passes": 3,
+      "lanes": 1,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "44db748e0da45c3dddc558303b3488669c9973fdd48a197a58e35ca82ee0c674"
+    },
+    {
+      "memory_kib": 4097,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": false,
+      "tag": "38051fed50da80fef423de6f3e301b7e63017be44acc53771a0785e849df479f"
+    },
+    {
+      "memory_kib": 4097,
+      "passes": 3,
+      "lanes": 4,
+      "output_length": 32,
+      "extra_inputs": true,
+      "tag": "7e8a542d3d7e03178dfd8ad35d17b444ae023b9b75ea81beb49b92c32a86185f"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 4,
+      "extra_inputs": false,
+      "tag": "89a4027a"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 4,
+      "extra_inputs": true,
+      "tag": "6cd7a1cf"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 16,
+      "extra_inputs": false,
+      "tag": "297ac7012b137d3a1f81fac9c59869b7"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 16,
+      "extra_inputs": true,
+      "tag": "5d62eb1931e6e3fc2661487040b6047a"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 64,
+      "extra_inputs": false,
+      "tag": "06940f397887215d83736af136478545a483fbf3bb44c6d0430cb470acacfb46c53f0fb04b7ba79cff46ce45bb7cd21a49384192f1cf9ef98ce425cd1a4c1678"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 64,
+      "extra_inputs": true,
+      "tag": "214fefc4f852bdb02df3b6d1576be6ba379d6f97b3ee53d160e553481c3d271ed79b1d4e7a554798b1a549f05091d564a5539d0b3b99bfe5f4598a424042298c"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 65,
+      "extra_inputs": false,
+      "tag": "3087bb6c498f0e03d80de88b2a3f562180e53abf8dae9d209a7f8fef45a92f14bdee1dde2ac09dcf7ad42ca8051cae68ccfbd654b213990475640a5e51fd4b3270"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 65,
+      "extra_inputs": true,
+      "tag": "bf48c5ce2303836f87ef1c7dd42a491e12ed5e841470063a9792b37f83416e3cc179e413077cc07e19af34f3ec1a17375c0e8b3ab330a3a8bde24c2daf691819cb"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 128,
+      "extra_inputs": false,
+      "tag": "6711444ce1127885f87cb56931ebf0b9d67eb0d1bb4f148f9081f6c20f85bf397b408fbfb01a8988598db8114e344fb66598e9577d7f2dfee386be22c9f48af529debd5c22b41050bedf6fcdee49c3ea55e1993e1cc4915e5189eb28f0a8ece4f229e1ab28d521f89512aed54671bfa00f14bb95d15e3d92c903bff7c2ed985d"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 128,
+      "extra_inputs": true,
+      "tag": "1d41d9e65f2b7c632ad4687ce20637be5f594bc75188c367f099dde09ec300205e15cea2cb026475aae9a503f2746747d5045984dfe68b4c4dab2d2ec02792549dad53f1120f949e91a6058de17e63257114ef47e0cbaf59c59d52822610545f160d643d881375571ed6198aabced1fdf40d55d1e2c423852d7b41e14492cbb0"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 1024,
+      "extra_inputs": false,
+      "tag": "163ac3b2ef9dc898eafc901d24d63c4d8a623b55518e3cdb126fc1a8f267a6fb581599e06a983a2516b138a124bb07fdc468f73479b03cf8d92cf10a2a365b47e154d3b8676c6f5e89d5af09dbf8ea6bba6bb9ac08f0dc94bcafdf493cbfc1ac0f459a652f293561267a8b572b2d3f1cd0b7c345ad92009f911e96a05afb07286a8ff406209766e1e5f377a3792b5d790cc8288ba9423c18cac012b88eb3d0576c0d9e31b18cea368e562168d1d35acb0c2cd12356e9cc269f5e580b2b4eca2325d0aed111e990c20f1dd98237c1e02fd3d155161808a78d1e0f1558db432abb0a5c8ee15878cbca1b447e5e99deeff699598b057b92dae29e59e1645f3d37e426a773ec7fdc6f21c48db25b89fd4e80e663d0e8798c6f6b8572da5de4233f33fb1d336e8fc8779b123208c9c2896d855302e68d59db9c89c3baa8773f8bcbdb75471b9863bc84c1b8fecd7d2cd0a92c3c03b90a15e5c764306eb65aafa45b0838b80b4ac991bace0b321dfb1fc253169cc3e0e60ce50f079e0ff9bd18a9649c121190a46a61af579480a0430e8003c5b90d02f4a5c45b26774ef34cb7eb073afbc0121a61e55114122b6a0ea5cf013aaf40dc1f9a1b8b8334af822b10ac4c70d13f507015e0b81e616db9720e06915312bf758a1f27b937b2dfb8ff761c0fa48ac96d7c1e2a9ac51ad89038efc62831e3c79df9a0e5748c095c6c916131ba55ea36325225d7809c3c359aa765aea298eb3ee9bf5a44177447ac94d11c1ec911449447e5626a3d848a39b4a68fa4f0e48cdd2affc1114758bbebefb4a0882fcea4baea8b7224a370260d6f082086da0cf6a1b3b34a983054203f26d5370791b9f38a600bc879bf66aa9b84fc5943dc86b42932e7e1ddd0fc5386d8768786d81a2e9ceea16ef231f53bc56c3273af4c757d6f4642dd83aff953beafbc228ae68ae33c2d4a0946e6bc4e5a2f096af91d940c64a44e500f946d4cbe3956635b44f201ac6d53f5384aa8f5fbf7e02dcc2d7587d18ea7a1df38abd68809f17cd8af7da3d71d5a9ea9a1e06bd8a5eab882b174a6795e121e971074fbc096e3e5d6a5b2af71b316b9b45cc4059f3136be1accf78b19f24d2cfc00f66b4fb57f6202680ace264e2a367758dcfda377bf5746413cc85227267144d86c971d3a2321ca97199eb4b093ddf67aaec364d410f16e3927853058cf733f45544c28bf1b6425b78848de063a99fc1449de2ebc75a34602eadd97309ddd41675fffc9930ae48a1f45aa89f9dadf092cea3c2fe68560db650ced9bf90035f31ccb42fe543ff002bfad9c566e46796752998bf992f1c02cc21b68a7629d49f0ea3a77513c11428fdcb060570da8c77b0b4c6286f23f2974124fea3a09741e992b8aebc913a89b881f7d379f30ef297e19b0ee4497003217f09e9eae99d779a3ecb2799334f2f12f9ed1"
+    },
+    {
+      "memory_kib": 257,
+      "passes": 2,
+      "lanes": 4,
+      "output_length": 1024,
+      "extra_inputs": true,
+      "tag": "22449d5331926cd5deaff22c6e2eadf9ba828afcf3520fe350724a2eeef74f70e4eb1d5534a3bfd27c2d7c469724137109c7be883c7366002337b13ff3f13e45a0ba658d158196f5a4e345d342e2d974dcac7b85d0f3496c6b6dac0d84defe11b41f3cfc58e01979a635c2c4ddc634802549c6a5b57eb46d99a081c8d6263bf087f7d099e8f13a786effd4cb3541688cd2879a3eeaf574141d1b571f18d5b556027c08a045098a8baf45b764b498c6cd127d69e1b9d392baf5a287dbe671d2b3543fdaad181db04292dd0d995df73a81c70028cdbe2ae957088a77bb57ba4338cd09c62dcda514781b526568b81d34c5f2ed5258c52d706f68d948fabafb979d2baede54726950edcd5d438374803537c1f97e7bff881a0bbd77bba8215a2c0ea40082e7fddff95397903eff8bf13d80b5ed12e8f37349234863f074e184371a61abd579a42dcbb0942b212605507bdacfd74d986327917b5a9c00ef09e4a51093415ed9a41fbeaf11eaa4ae2ad1f8960ffbde694b3f02e271174882a3c77c2dfc7b928e95258726d5cc0453affda60d874783e189e69c8c8ec358c9d944ddee2ec7c60e40c761f3e98b774ba27d359dba8174f6f6b57959b1e81b99b7f8335d4a83cfc6398e217adcbac1ced88d890248d15d291fe00dd8253638b0ba3b8cb058d76c7e1595874083b48c8b71981f89b353a58de846de290b63e468ab490916eb7d24ee3b8f664f4f57a91b9a331ee8dde6158425a788b7e13dd38119e15d928dd4a5a15dff7f45960c55fbdb4ab1ef98bc1383bc24ade59dc5fdca1b68dd7b490bd39f83eccd0a9d95b154b70887c06c21bf3c585d4b27c38e9d334c78b1575b3de2f4ad84f5510f660ff224bcf06dc310f6a6932ed9ca9bdfb22ef719218e21e6fb9845bfbf426a4cc198f9b12ffa3cb74d16923482b52ef1abd9e3e6e7edab554d4a39194deffaaca546710bd8c067235ea1e526fb3dfb078f2bc4b6aa3ba1116ba12ac1b6c7053e4c54e65562e8932c1dcceec7b3ca72b425c6ce5a2898cd7702933907b79c614327a42129bf2473401e38ce85e128e64767ed8e1ed3ecc40efaf93c18531b3fd272b78078403183e1b9ccd5d37d5c56e1605e2355514489ccac176375a9685835e8157659b05f590eb631efa2093fdeec788207bfece47851ffa8ae655a903dead6c34e2881818e83967119fde729604960ab0898781806ae778eb1991708f54257ea54e49c7429f0261c41d0e7bc18deb04ef245a2fe5b31ec5c7de1dd9028d340dee1213bab1f1f6f700b45a1da8a15d700d7052b7d09c937e2f5fa41e0e708ed19ab760689b621187baa9c5a2afdbc1ba229ff5db1e46a7c8528a3242e91cbd0c2bd76a1178b657870388dc0e30816a38191327f79a3fb6c46b3a12fe3c58d73305387e4ce71666815026f68de4c712da3686f40ec"
+    }
+  ]
+}

@@ -66,3 +66,22 @@ EN: Cross product of message lengths 0/1/15/16/17/31/32/33/63/64/65/1024 and
 AAD lengths 0/1/15/16/17/65. Expected ciphertext includes the trailing 16-byte tag.
 Tests additionally compare fresh random keys and disjoint buffers with the ordinary
 provider, reject invalid tags before output writes, and check locked stable owners.
+
+## Argon2/BLAKE2 workspaces / Arbeitsflächen
+
+DE: argon_hash_workspaces.json enthält512 unabhängige Python-hashlib.blake2b-Fälle:
+Digestgrößen1..64, Nachrichtenlängen0/1/127/128/129/255/256/1024, Byte[i]=(i*29+7)&255.
+Sieben zusätzliche32Byte-Digests prüfen Little-Endian-u32-Framing, einschließlich
+65536 und u32::MAX. Keine Schlüssel; Rust erzeugt Eingaben in gesperrten Ownern.
+EN: Split updates/empty calls, lazy block boundaries, all digest sizes, sentinel
+outputs and finalized/wiped-state refusal are tested against independent values.
+
+DE: argon_operation_workspaces.json enthält76 unabhängige Argon2id1.3-Vektoren der
+vorhandenen System-C-Referenz libargon2-1 0~20190702+dfsg-4build1. Binär-SHA-256,
+öffentliche Eingabeformeln und Quellen stehen im JSON. Die C-ABI wurde am
+[Originalheader20190702](https://github.com/P-H-C/phc-winner-argon2/blob/20190702/include/argon2.h)
+und zusätzlich durch erfolgreiche Reproduktion von RFC9106/5.3 geprüft.
+EN: Cover lanes1/2/4/8/16, passes1/2/3, minimum/rounded memory, repeated address
+blocks and outputs4/16/32/64/65/128/1024, both with and without secret/AD. Synthetic
+public fixtures only; no new C runtime dependency or installation. Native Root
+tests check every lane's completed segments and real locked stable owners.
