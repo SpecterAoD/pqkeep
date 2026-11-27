@@ -122,9 +122,12 @@ pub fn line(lang: Lang, index: usize, total: usize, key: &PublicKeyFile) -> Stri
     format!("{label} {}/{total}: {name} ({fp})", index + 1)
 }
 
-/// DE: Lädt und prüft alle Empfänger; listet sie bei mehreren auf (stderr, vor der Passphrase).
-/// EN: Loads and checks all recipients; lists them if several (stderr, before the passphrase).
+/// DE: Prüft `--factor-file`, lädt und prüft alle Empfänger; listet sie bei mehreren auf (stderr, vor
+/// der Passphrase). Anonyme Empfänger entscheidet `anonymous.rs`.
+/// EN: Checks `--factor-file`, loads and checks all recipients; lists them if several (stderr, before
+/// the passphrase). `anonymous.rs` decides on anonymous recipients.
 pub fn load(m: &ArgMatches, lang: Lang) -> CliResult<Vec<PublicKeyFile>> {
+    check_factor(m, lang)?;
     let all = paths(m);
     if all.len() > MAX_RECIPIENTS {
         return Err(usage("recipient_count", lang));
@@ -134,21 +137,6 @@ pub fn load(m: &ArgMatches, lang: Lang) -> CliResult<Vec<PublicKeyFile>> {
         keys.push(envelope::load_public(path).map_err(|e| Failure::from_error(&e, lang))?);
     }
     check(&keys).map_err(|field| usage(field, lang))?;
-    if anonymous(m) {
-        let wrong = keys
-            .iter()
-            .any(|k| k.algorithm() != KeyAlgorithm::Kem(pqkeep::crypto::KemAlgorithm::MlKem1024));
-        if wrong {
-            return Err(usage("anonymous_kem", lang));
-        }
-        eprintln!(
-            "{}",
-            localize(
-                "Warnung: anonyme Empfänger sind EXPERIMENTELL – die Anonymität von ML-KEM (FIPS 203) ist noch nicht formal belegt (#340). / Warning: anonymous recipients are EXPERIMENTAL – the anonymity of ML-KEM (FIPS 203) is not yet formally established (#340).",
-                lang
-            )
-        );
-    }
     if keys.len() > 1 || m.get_flag(WITH_PASSPHRASE) {
         for (i, key) in keys.iter().enumerate() {
             eprintln!("{}", line(lang, i, keys.len(), key));

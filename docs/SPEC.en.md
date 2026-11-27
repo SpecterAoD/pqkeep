@@ -1,4 +1,4 @@
-# MASTER PROJECT SPECIFICATION v2.22: PQKeep (Core, CLI & API) – English translation
+# MASTER PROJECT SPECIFICATION v2.23: PQKeep (Core, CLI & API) – English translation
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.22. Both versions are maintained together; every change to one is made to the other in the
@@ -13,6 +13,8 @@
 > Change v2.20 (2026-11-24, approved by SpecterAoD): new planned update **U5 privacy and metadata** (section 9) – random outer file names, padding, anonymous recipients (optional exception to D1), hidden sender, encrypted timestamps and extended attributes; all optional and configurable, off by default; section 4a amended accordingly (#315, #316, #123).
 
 > Change v2.21 (2026-11-25, instructed by SpecterAoD: #315/#316 through merge): **format draft v4** ([V4_DRAFT.md](V4_DRAFT.md)) for padding, anonymous recipients (**D1 exception only on request, D1 stays the default**), hidden sender and stream mode (#83) – one version scheme with option bits, content type "stream", trailer inside the encrypted stream, key commitment in every v4 file; draft only, implementation in separate PRs before #98 (#316, #83).
+
+> Change v2.23 (2026-11-27, decision SpecterAoD): the level **"privacy high"** covers all U5 options from #316 – random name, padding, hidden sender when signing and, for ML-KEM-1024 recipients, also the **experimental anonymous recipients** (#340); every use warns, deselectable with `--no-anonymous-recipients` or via a question in menu and context menu (default: keep); other key kinds: notice, recipient IDs stay visible.
 
 > Change v2.22 (2026-11-26, approved by SpecterAoD): locking stays mandatory; because the usual `ulimit -l` (8 MiB) is too small for the Argon2id workspace (256 MiB–1 GiB), the **Debian package grants only `/usr/bin/pqkeep` `CAP_IPC_LOCK`** (permitted only, made effective at startup; postinst, `libcap2-bin`); the program itself still raises neither limits nor privileges and reports a too small budget clearly with a remedy (#325, `docs/INSTALL.md`).
 
@@ -325,9 +327,9 @@ Each update is its own step with plan, approval, tests and Definition of Done. O
 ### U5: Privacy and metadata (optional, configurable)
 All features are **optional and off by default**; without an option formats and output stay unchanged (principle D3: a new format only when an option needs it; older versions report "unsupported", never silently). Configuration: per-call options, the `--privacy high` level sets the privacy options together, menu and context menu offer this level only, persistent defaults via profile/setup (#136, #48–#50) – no separate configuration file.
 - **Random outer file names** (`--random-name`, #315): the `.pqkf` name reveals nothing about the content; the original name is stored encrypted in the archive and restored when decrypting. No format change. **Implemented** (CLI `--random-name`/`--privacy high`, `decrypt --original-name` or automatic, menu; context menu decrypts; details [FILE_FORMAT.md](FILE_FORMAT.md)).
-- **Format draft v4** for padding, anonymous recipients, hidden sender and stream mode (#83): [V4_DRAFT.md](V4_DRAFT.md) (decisions P1–P9). Steps 1 (core: option bits, key commitment, trailer, content "stream"), 2 (`encrypt --stdin`, #83) and 3 (padding `--pad`) implemented; step 4 (anonymous recipients, **D1 exception**) implemented as **experimental** (#340); step 5 (hidden sender) implemented.
+- **Format draft v4** for padding, anonymous recipients, hidden sender and stream mode (#83): [V4_DRAFT.md](V4_DRAFT.md) (decisions P1–P9). Steps 1 (core: option bits, key commitment, trailer, content "stream"), 2 (`encrypt --stdin`, #83) and 3 (padding `--pad`) implemented; step 4 (anonymous recipients, **D1 exception**) implemented as **experimental** (#340); step 5 (hidden sender) and step 6 (complete `--privacy high`) implemented.
 - **Padding** (`--pad`, #316): hides the exact file size with authenticated fill bytes (proposal PADMÉ, at most ~12 % overhead).
-- **Anonymous recipients** (`--anonymous-recipients`, #316): slots without recipient ID, opened by trial decapsulation; **optional exception to D1** (visible IDs stay the default).
+- **Anonymous recipients** (`--anonymous-recipients`, #316): slots without recipient ID, opened by trial decapsulation; **optional exception to D1** (visible IDs stay the default); **experimental** (#340), part of "privacy high" (ML-KEM-1024 only, warning, deselectable).
 - **Hidden sender** (`--hide-sender`, #316, implemented): sender key and signature (U1) in the encrypted part (format v4, bit `HIDDEN_SENDER`); verifiable by recipients only, key commitment kept; "privacy high" hides the sender when signing.
 - **Encrypted timestamps** (`--keep-times`, #123): modification time encrypted in the archive entry and set when decrypting (deviation from section 4a only with this option).
 - **Encrypted extended attributes** (`--keep-xattr`, #123): `user.*` only by default; never automatically restore `security.*` (e.g. capabilities), `trusted.*`, `system.*`/ACLs or SELinux labels; never owners or setuid/setgid; size and count limits; Windows as a separate step.

@@ -127,8 +127,8 @@ impl OwnedProtection {
 /// EN: Load the recipients and/or read and check a new passphrase (twice). Recipients and factor
 /// file are checked before the passphrase prompt.
 pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResult<OwnedProtection> {
-    super::recipients::check_factor(m, lang)?;
     let recipients = super::recipients::load(m, lang)?;
+    let options = super::anonymous::options(m, &recipients, lang)?;
     let file_passphrase = recipients.is_empty() || m.get_flag(super::recipients::WITH_PASSPHRASE);
     super::signing::check_sources(lang, m, file_passphrase)?;
     let pending = super::signing::prepare(t, lang, m)?;
@@ -138,7 +138,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
             passphrase: None,
             recipients,
             signer,
-            options: super::privacy::options(m),
+            options,
         });
     }
     let profile = if m.get_one::<String>("profile").map(String::as_str) == Some("hardened") {
@@ -161,7 +161,7 @@ pub(super) fn read_protection(t: &Texts, lang: Lang, m: &ArgMatches) -> CliResul
         passphrase: Some((strong, profile.params(), factor)),
         recipients,
         signer,
-        options: super::privacy::options(m),
+        options,
     })
 }
 
