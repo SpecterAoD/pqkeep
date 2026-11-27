@@ -150,9 +150,20 @@ EN: Prelock parser/source/index/depth/scratch descriptor; native/security/fuzz
 acceptance required. Other R6/R7/R8 boundaries remain OPEN. See
 [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
 
-DE: #147 R6 In Bearbeitung: vollständige Provider-Lebensdauer in Draft334 umgesetzt;
-alle neun Zeilen der [Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md) abgleichen.
-Finaler signierter Head, native Linux-/Windows-/ARM64-CI, Security/Fuzz und exakter
-Rückweg vor Merge erforderlich; kein Teilmerge. R7/R8 separat offen.
-EN: Complete R6 implementation; final source-bound acceptance remains required.
-Issue147 and roadmap stay In progress; no whole-issue closure.
+DE: #147 R6 abgeschlossen: PR334 auf Mainb813bc6 mit allen neun Zeilen der
+[Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md), nativer Linux-/Windows-/
+ARM64-Abnahme, Security/Fuzz und geprüftem Rückweg übernommen. R7/R8 separat offen.
+EN: R6 completed on Main; current shared-provider changes retain its regression
+checks. Issue147 and roadmap stay In progress; no whole-issue closure.
+
+DE: #147 R7/R8 gemeinsam in Bearbeitung in [Draft355](https://github.com/SpecterAoD/pqkeep/pull/355):
+[vollständig freigegebener Plan](security/PROCESS_METADATA_COMPLETION_PLAN.md).
+Geschützte Pfadindex-Knoten und Absenderidentität veröffentlicht; geschützter
+verborgener Signierschlüssel-/Kodier-/Verifikationspfad im selben Draft umgesetzt,
+Gesamtabnahme noch offen. Windows-DACL nativ zurückgelesen, privilegierter
+SeDebugPrivilege-Bypass tatsächlich nachgewiesen; neuer eigener reduzierter
+CI-Threadversuch benötigt separate konkrete Freigabe. Kein Teilmerge.
+EN: One joint PR; platform/helper, remaining metadata, native/security/fuzz and
+full rollback acceptance remain open. See
+[hidden signature scope](security/HIDDEN_SIGNATURE_VALIDATION.md) and
+[restricted inspector proposal](security/WINDOWS_RESTRICTED_INSPECTOR_PROPOSAL.md).

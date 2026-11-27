@@ -59,9 +59,13 @@ mod signing;
 mod verifying;
 
 #[cfg(all(feature = "protected-workspace", feature = "alloc"))]
+pub use signing::confidential_key::ConfidentialKeyGenerationWorkspace;
+#[cfg(all(feature = "protected-workspace", feature = "alloc"))]
 pub use signing::in_place::{KeyGenerationWorkspace, SeedKeyInPlace};
 #[cfg(all(feature = "protected-workspace", feature = "rand_core"))]
 pub use signing::workspace::SigningWorkspace;
+#[cfg(feature = "protected-workspace")]
+pub use verifying::confidential::ConfidentialVerificationWorkspace;
 #[cfg(feature = "protected-workspace")]
 pub use verifying::in_place::VerificationWorkspace;
 

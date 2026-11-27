@@ -19,6 +19,15 @@ use crate::{Error, Result};
 #[path = "dsa_key_state.rs"]
 mod key_state;
 
+#[path = "dsa_confidential_key.rs"]
+mod confidential_key;
+#[path = "dsa_confidential_sign.rs"]
+mod confidential_sign;
+pub(crate) use confidential_sign::sign as sign_confidential;
+#[path = "dsa_confidential_verify.rs"]
+mod confidential_verify;
+pub(crate) use confidential_verify::verify as verify_confidential;
+
 /// DE: Länge des Seeds ξ in Bytes. EN: Length of the seed ξ in bytes.
 pub const SEED_LEN: usize = 32;
 

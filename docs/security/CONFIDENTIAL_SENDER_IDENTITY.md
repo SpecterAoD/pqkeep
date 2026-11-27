@@ -6,6 +6,12 @@ haben weiterhin gesondert zu bearbeitende Provider-/Scratchpfade. M5-Ausgaben
 und Reportzähler sind ebenfalls noch nicht vollständig geschützt.
 EN: Local implementation in progress, not a complete R8 or issue147 closure.
 
+DE: Aktueller Folgebaustein: Signaturkodierung, Schlüsselaufbau und vollständige
+Verifikations-Scratchpfade sind jetzt zusätzlich lokal implementiert; ihre native
+Gesamtabnahme ist noch offen. Siehe [HIDDEN_SIGNATURE_VALIDATION.md](HIDDEN_SIGNATURE_VALIDATION.md).
+EN: Fixed-length identity equality reuses subtle2.6.1 in both feature configurations;
+noncanonical identity lengths are refused before allocation. No version change.
+
 ## Data flow / Datenfluss
 
 DE: Vorher kopierte hidden_sender den verborgenen öffentlichen Schlüssel aus

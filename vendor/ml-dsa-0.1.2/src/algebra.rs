@@ -22,6 +22,22 @@ pub(crate) type NttVector<K> = module_lattice::NttVector<BaseField, K>;
 pub(crate) struct NttMatrix<K: ArraySize, L: ArraySize>(Array<MaybeBox<NttVector<L>>, K>);
 
 impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
+    #[cfg(feature = "protected-workspace")]
+    pub(crate) fn row_count(&self) -> usize {
+        self.0.len()
+    }
+    #[cfg(feature = "protected-workspace")]
+    pub(crate) fn rows_mut(&mut self) -> impl Iterator<Item = &mut NttVector<L>> {
+        self.0.iter_mut().map(|row| &mut **row)
+    }
+
+    #[cfg(feature = "protected-workspace")]
+    pub(crate) fn visit_rows(&self, mut visitor: impl FnMut(usize, usize) -> bool) -> bool {
+        self.0
+            .iter()
+            .all(|row| visitor(core::ptr::from_ref(&**row).addr(), size_of_val(&**row)))
+    }
+
     pub(crate) fn from_fn(mut f: impl FnMut(usize) -> NttVector<L>) -> Self {
         Self(Array::from_fn(|i| MaybeBox::new(f(i))))
     }
@@ -41,6 +57,22 @@ impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
                     *sum = *sum + *value;
                 }
             }
+        }
+    }
+}
+
+#[cfg(feature = "protected-workspace")]
+impl<K: ArraySize, L: ArraySize> Default for NttMatrix<K, L> {
+    fn default() -> Self {
+        Self::from_fn(|_| NttVector::default())
+    }
+}
+
+#[cfg(feature = "protected-workspace")]
+impl<K: ArraySize, L: ArraySize> zeroize::Zeroize for NttMatrix<K, L> {
+    fn zeroize(&mut self) {
+        for row in &mut self.0 {
+            zeroize::Zeroize::zeroize(&mut **row);
         }
     }
 }

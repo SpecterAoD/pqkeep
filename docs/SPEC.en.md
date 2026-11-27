@@ -7,6 +7,12 @@
 > scratch, process/helper and other metadata paths remain open. See
 > [confidential sender identity](security/CONFIDENTIAL_SENDER_IDENTITY.md).
 
+> R8 follow-up in PR355: hidden signing-key construction, encoding and verification
+> use prelocked workspaces including identity-derived matrices and SHAKE128 scratch,
+> without ordinary Signature/cache copies in these paths. Implemented in the joint draft;
+> final joint native acceptance remains pending. See
+> [validation scope and limits](security/HIDDEN_SIGNATURE_VALIDATION.md).
+
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.22. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the

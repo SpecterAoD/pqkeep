@@ -1,10 +1,11 @@
 //! DE: Geprüfte Identität ohne ungesperrte Hash-/Descriptor-Kopie.
 //! EN: Verified identity without an unlocked hash or descriptor copy.
 
-use crate::Result;
 use crate::crypto::{SecretBytes, locked_hash::LockedHash, secret_state::SecretState};
+use crate::{Error, Result};
 use sha3::Sha3_256;
 use std::fmt;
+use subtle::ConstantTimeEq;
 
 /// DE: Geprüfter Absender; Identität nur ausdrücklich ausleihen.
 /// EN: Verified sender; borrow identity only by explicit disclosure.
@@ -20,6 +21,9 @@ impl SignedBy {
     }
 
     pub(super) fn from_key_id(id: &[u8]) -> Result<Self> {
+        if id.len() != 32 {
+            return Err(Error::InvalidInput { field: "key_id" });
+        }
         let mut out = Self::prepare()?;
         *out.0.get_mut() = SecretBytes::from_slice(id)?;
         Ok(out)
@@ -47,7 +51,7 @@ impl SignedBy {
 
 impl PartialEq for SignedBy {
     fn eq(&self, other: &Self) -> bool {
-        self.key_id() == other.key_id()
+        bool::from(self.key_id().ct_eq(other.key_id()))
     }
 }
 impl Eq for SignedBy {}

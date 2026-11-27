@@ -56,25 +56,25 @@ pub(crate) fn push_tail<W: Write>(enc: &mut EncryptWriter<W>, tail: &TailWrite<'
     if let Some((key, header)) = tail.hidden {
         let hash = enc.take_hash().ok_or(Error::Crypto)?.finalize()?;
         let msg = hidden_message(header, hash.expose(), payload, pad)?;
-        let sig = dsa::sign(
+        let sig = dsa::sign_confidential(
             SIGNER_DSA,
             key.secret().expose(),
             msg.expose(),
             FILE_SIG_CONTEXT,
         )?;
         // DE: Gegenprobe wie bei v3. EN: Cross-check as in v3.
-        if !dsa::verify(
+        if !dsa::verify_confidential(
             SIGNER_DSA,
             &key.public_key,
             msg.expose(),
             FILE_SIG_CONTEXT,
-            &sig,
-        ) {
+            sig.expose(),
+        )? {
             return Err(Error::Crypto);
         }
         enc.push(&[SIGNER_ML_DSA_87])?;
         enc.push(&key.public_key)?;
-        enc.push(&sig)?;
+        enc.push(sig.expose())?;
     }
     enc.push(&trailer(payload, pad))
 }
@@ -166,7 +166,7 @@ fn hidden_sender(
     }
     let (key, sig) = block[1..].split_at(SIGNER_KEY_LEN);
     let msg = hidden_message(header, hash, payload, pad)?;
-    if !dsa::verify(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig) {
+    if !dsa::verify_confidential(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig)? {
         return Err(Error::InvalidSignature);
     }
     SignedBy::from_public_key(key)

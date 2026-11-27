@@ -14,7 +14,7 @@ fn shared_slot_stays_locked_before_and_after_identity_population() {
     assert!(result.take().is_none());
     result.store(SignedBy::from_public_key(b"public first identity").unwrap());
     locked(other.0.get());
-    assert_eq!(std::ptr::from_ref(other.0.get()), address);
+    assert!(std::ptr::eq(std::ptr::from_ref(other.0.get()), address));
     other.store(SignedBy::from_public_key(b"public replacement identity").unwrap());
     drop(result);
     let signed = other.take().unwrap();

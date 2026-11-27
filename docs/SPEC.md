@@ -7,6 +7,12 @@
 > Signatur-Scratch, Prozess-/Helper- und übrige Metadatenpfade weiter offen.
 > Details: [vertrauliche Absenderidentität](security/CONFIDENTIAL_SENDER_IDENTITY.md).
 
+> R8-Folgebaustein in PR355: Verborgener Signierschlüssel-Aufbau, Kodierung und
+> Verifikation verwenden vorab gesperrte Arbeitsflächen einschließlich Identitäts-
+> matrix und SHAKE128-Scratch; keine gewöhnlichen Signature-/Cache-Kopien in
+> diesen Pfaden. Umsetzung im gemeinsamen Draft, finale native Abnahme noch offen.
+> [Prüfumfang und Grenzen](security/HIDDEN_SIGNATURE_VALIDATION.md).
+
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
