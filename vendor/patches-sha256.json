@@ -330,5 +330,101 @@
       "path": "src/u64_le_utils.rs",
       "sha256": "d5fac64cf8d8317eea8c4d191397396d3fcf8fdd3f3979d7d2495829c910024b"
     }
+  ],
+  "aes-0.9.2": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "d8ef0c8008fd1a21ff567d7d11be0b5481fd97a0575084cea26ddb904a2b5308"
+    },
+    {
+      "path": "src/backends/fixslice/aes256.rs",
+      "sha256": "3878eabce5a5a2c1f455680fdac187d0114b97c6f9324a08fd06e10557bb25ce"
+    },
+    {
+      "path": "src/backends/fixslice/mod.rs",
+      "sha256": "e81213c7cd8a9f3c7a8fcdf58e657fa4b64bfd5752a7dd985bbc995e70a685b3"
+    },
+    {
+      "path": "src/backends/fixslice/protected.rs",
+      "sha256": "5c0c6a39bb64d5cfac2545ba28df66b6ddaf23b0706d32f7f32bc06bbd991579"
+    },
+    {
+      "path": "src/backends/fixslice/word.rs",
+      "sha256": "e10e062d5a7aee595127b9b786c3bb74edb804a7159cc22bcf04299e696bd8b7"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "8be4fa2c896bb3b19c987c99cf5b73f8a4198b4785ee88b7bce4b40ce9aac758"
+    }
+  ],
+  "aes-gcm-0.11.1": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "0cb0313dcd434d9b62465e8147d8dc05ba1e28282c180029638410485b03659b"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "8f2d4aff387a4af424b034d6038b80569f79a8e428af83dc5a2ab2ef529d96ca"
+    },
+    {
+      "path": "src/protected/operations.rs",
+      "sha256": "4de8bbfcc77f81ecfc9be142434b64aecbaa4a50df6758d7abeda8ef67adc69b"
+    },
+    {
+      "path": "src/protected.rs",
+      "sha256": "f5eb91ec7e6365d140ada026ecadd62135a5dd91e953fa5cad5df4c73c3203b9"
+    }
+  ],
+  "ghash-0.6.0": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "d6c0f64328052e9a032e7bb42aff997ecc4c2c12c86dc7bea73b63b20bc45183"
+    },
+    {
+      "path": "README.md",
+      "sha256": "9a39891de18cb0017f489347fd7b0ab751cbf9f80e990194f63c3b9f3bada9af"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "52f8f8a1ce84d3ce416fb6cf00d19033bafc70e84103650bec63f2b5d5f4e8b2"
+    },
+    {
+      "path": "src/protected.rs",
+      "sha256": "1f3f4d8050870c6e0450507a1920432fabdb93f4779a879d95509b34f73e50fe"
+    }
+  ],
+  "polyval-0.7.3": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "99eb51ee621858183ac96e0ee3d1c6dd96bb1ee8c610be46879571c3b2c2eb9c"
+    },
+    {
+      "path": "README.md",
+      "sha256": "805081b5f94fee6f9635a7e5dd32e53cd3f3f3470b161a3a3edaf8d77cf0c3cf"
+    },
+    {
+      "path": "src/field_element/mul32.rs",
+      "sha256": "ffc0db68d6139f4ffdaada27ecf7e802f354774b2b9b65590fa4102d83ffaa92"
+    },
+    {
+      "path": "src/field_element/mul64.rs",
+      "sha256": "82948847ac97f8ae463b3add4692269d1cc7be8b1005f663ee65356eaae72f4d"
+    },
+    {
+      "path": "src/field_element/mulx.rs",
+      "sha256": "eb56d7ffccc9d73c30274f019e17ad14e75c017028fd08e51f1a72e374d72302"
+    },
+    {
+      "path": "src/field_element/protected.rs",
+      "sha256": "f179d42aeeb4f98360fd635ab27121773460baf40436828343951832ad3b8d5d"
+    },
+    {
+      "path": "src/field_element.rs",
+      "sha256": "645b32a68fd4030a16922658b1062e0f9bc0497806750b3ed2c48bee5b7c7026"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "2a7d63de229d89fd316212515db81fe43675a2012fa321048715405ee0e63784"
+    }
   ]
 }

@@ -55,3 +55,14 @@ OpenSSL-Version erzeugt: sha3_256/sha3_512 sowie jeweils512 Byte shake_128/shake
 EN: These are independently generated public fixtures, not NIST ACVP extracts.
 Hash/XOF tests exercise prelocked stable owners, all rate boundaries, split calls,
 empty reads, output sentinels and repeated borrowed reader initialization.
+
+## AES/GCM workspace vectors / Arbeitsflächenvektoren
+
+DE: aead_workspaces.json enthält 72 unabhängig mit Python cryptography41.0.7
+AESGCM erzeugte öffentliche synthetische Fälle. Kein ACVP-Auszug. Schlüsselbyte
+ist (i*13+7)&255, Noncebyte (i*19+11)&255, Nachrichtenbyte (i*29+3)&255 und
+AAD-Byte (i*17+5)&255. Rust erzeugt diese Eingaben zur Laufzeit in gesperrten Ownern.
+EN: Cross product of message lengths 0/1/15/16/17/31/32/33/63/64/65/1024 and
+AAD lengths 0/1/15/16/17/65. Expected ciphertext includes the trailing 16-byte tag.
+Tests additionally compare fresh random keys and disjoint buffers with the ordinary
+provider, reject invalid tags before output writes, and check locked stable owners.

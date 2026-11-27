@@ -3,7 +3,7 @@
 DE: Umsetzung nach signiertem Plan90ccc2a im R6-Draft334, noch keine vollständige
 R6-Abnahme. Die Parametersätze44/65/87, Version0.1.2, Domain-/Kontextframing und
 randomisierte hedged Signaturen mit frischem OS-Zufall bleiben erhalten.
-EN: This is an implementation checkpoint, not native acceptance or full R6 closure.
+EN: This is a scoped implementation checkpoint, not full R6 closure.
 
 | Private surface / Fläche | Protected path / Geschützter Pfad |
 |---|---|
@@ -40,6 +40,14 @@ Unsafe-Stelle, kein Root-forbid-/Versions-/Lockfile-/CI-Gate-Wechsel. Skalare
 Registerwerte, vom Compiler erzeugte Spills und OS-/Crash-Grenzen sind weiterhin
 ausdrückliche Grenzen; bekannte Array-/Vektorflächen sind keine solchen Ausnahmen.
 EN: Local evidence is stored in local-v9.json/logs and source-validation-v9.json
-under analysis/issue-147-provider-in-place-20261126T171500Z. Native Linux/Windows/
-ARM64, MSRV, audit/security/fuzz acceptance of the resulting head remains required.
-AES/GCM, Argon2 and remaining matrix proofs stay open; no partial R6 merge.
+under analysis/issue-147-provider-in-place-20261126T171500Z.
+
+DE: Native Abnahme am Head26117f6, dessen DSA-Code unverändert aus7b947c7 stammt:
+alle23 Checks erfolgreich einschließlich Linux/Windows/ARM64, MSRV, Audit/CodeQL,
+vollständigem Historien-Secret-Scan und acht Fuzz-Zielen. Vollständige native Logs
+gesichert/gehasht: Ubuntu22/ARM je880Tests/113Gruppen, Ubuntu-latest1686/224 und
+Windows1526/226 über jeweilige Feature-/Plattformkonfigurationen; null Fehler.
+EN: Actual DSA parent tests are present in all four native job logs. Evidence:
+dsa26117-checks.json and dsa26117-native-summary.json/logs. This acceptance applies
+to the DSA checkpoint, not the later AES/GCM implementation. Argon2 and complete
+matrix/rollback acceptance remain open; no partial R6 merge.

@@ -1434,5 +1434,245 @@
       "path": "src/u64_le_utils.rs",
       "sha256": "9d297e92670803c9acd1a82bffc29a60b608b8ac590b957027300834533e8318"
     }
+  ],
+  "aes-0.9.2": [
+    {
+      "sha256": "3aa5c3bf73157ef552394ff0a651548371b904d9346c134243e94d21ddddce21",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "dca3419275c7214643f8d5d11fc746281097c53db85b19bb85e1d900e1db006e",
+      "path": "Cargo.toml.orig"
+    },
+    {
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "25f77efa393854f7c15eaf6a2589a2071db2d7337642742763adb12bdecf0445",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "cfda3cb9487b5242819838f189accb89a69f384b45c901d2bfb7d674432e3c05",
+      "path": "README.md"
+    },
+    {
+      "sha256": "74dc2fc746c91a07f7cf90b7ebdcd626dd345580da19151bb8ae82405e4f5352",
+      "path": "src/backends.rs"
+    },
+    {
+      "sha256": "64478146df06491ec5337de8088f42f4dacac55e67ec07d182eaba9aa7b3cfca",
+      "path": "src/backends/aarch64_aes.rs"
+    },
+    {
+      "sha256": "54988f24c908bc08b6d0cc78f928656511262c651f72e8480c29477c06decfd7",
+      "path": "src/backends/aarch64_aes/encdec.rs"
+    },
+    {
+      "sha256": "58ff7ad13703a1540986282ea8c1505b2a36cbda0de9a8c08aebf1214fbc9d7b",
+      "path": "src/backends/aarch64_aes/expand.rs"
+    },
+    {
+      "sha256": "853e4b2d21c3b42e1273d1395f350e7150c736c4e5b96149b9596095791bbded",
+      "path": "src/backends/aarch64_aes/hazmat.rs"
+    },
+    {
+      "sha256": "e33dd01071622fbbc179b27349db5cb63f1dd674a3ab39896890ac89d13b73d5",
+      "path": "src/backends/fixslice/aes128.rs"
+    },
+    {
+      "sha256": "e5cda3d9a394ec25148997cc45bfc9291fef60d28648be171dd4a96ba751bb3e",
+      "path": "src/backends/fixslice/aes192.rs"
+    },
+    {
+      "sha256": "9d0b52fa3d152a2cc2b69b8d40bf7b2aed5302047f4cdb6e16e8f54b8e3df7ce",
+      "path": "src/backends/fixslice/aes256.rs"
+    },
+    {
+      "sha256": "d1bf3681ad8fd858f82c55af40c09558d84215305627ba40e4bf3f46a96fd496",
+      "path": "src/backends/fixslice/hazmat.rs"
+    },
+    {
+      "sha256": "fe78113def7e11a6a8449b16a8b4e54bdaf6b9aad9bfef74687bee1150a7d948",
+      "path": "src/backends/fixslice/mix_columns.rs"
+    },
+    {
+      "sha256": "703101eb67276b982a89b944b2a7c59996dc729de6cf18035335c40ee40673b8",
+      "path": "src/backends/fixslice/mod.rs"
+    },
+    {
+      "sha256": "5750d37d2a59cbdfa9ac5dbf488301501d1e8f6209407d6942c642a7b162bb85",
+      "path": "src/backends/fixslice/sbox.rs"
+    },
+    {
+      "sha256": "48366859088eebc862e9690cfad83005df7aee4b72f90724d959d806c1172c10",
+      "path": "src/backends/fixslice/utils.rs"
+    },
+    {
+      "sha256": "d3aa2a529d07135fc1e3f3dfb45a6ddbd325c3a41e7166f7058747421422199b",
+      "path": "src/backends/fixslice/word.rs"
+    },
+    {
+      "sha256": "105c126d69df5e739a678f448ced2e74c794965249354a1df030dfa2c4d0d6e4",
+      "path": "src/backends/soft.rs"
+    },
+    {
+      "sha256": "1fa379c3fc7dee2b23ad5467db50d30bd4fcf3d77f8fc24d631c2636f133a87c",
+      "path": "src/backends/x86_aes.rs"
+    },
+    {
+      "sha256": "3c14c6f79a5c0f759058a63b8223de21edc63c68cb0491a2e64d058e8dd4dcd5",
+      "path": "src/backends/x86_aes/encdec.rs"
+    },
+    {
+      "sha256": "698f6b17daf7da50492a160f5a51a07c34d612269c46fa3aeff0bf668692fada",
+      "path": "src/backends/x86_aes/expand.rs"
+    },
+    {
+      "sha256": "da65e99238a6600df2ed793754b0df0bbe7720283457e726539b550e58019995",
+      "path": "src/backends/x86_aes/hazmat.rs"
+    },
+    {
+      "sha256": "e1610ac0af69548942bf85dac75ff3175c4a7d63f9132dddd4da4355132f8c3e",
+      "path": "src/backends/x86_vaes256.rs"
+    },
+    {
+      "sha256": "82064e9f21ae694e67e276ccbbd6b91bacca667792c9165cd198ebdc76ef80db",
+      "path": "src/backends/x86_vaes256/encdec.rs"
+    },
+    {
+      "sha256": "0416e307e217e598a5450dc2ecc831c020438edca60298b53c147f3ee95cf1d4",
+      "path": "src/backends/x86_vaes512.rs"
+    },
+    {
+      "sha256": "35e421078ab5aef45168c0868bbc2286e8579cb36e643ba469d555e6f4ca314f",
+      "path": "src/backends/x86_vaes512/encdec.rs"
+    },
+    {
+      "sha256": "a43ab7af479f43f6e325b2a2dec2268b0cfd22ccb92289f1fcdc9628480db17e",
+      "path": "src/hazmat.rs"
+    },
+    {
+      "sha256": "dbda175de104b2754206b80bc654bd9cef4937a5b550a5b975d0071b6bec652b",
+      "path": "src/lib.rs"
+    }
+  ],
+  "aes-gcm-0.11.1": [
+    {
+      "sha256": "cd890dd38daf60de22ecc095b470af6a93dfa2962499aa1fefe0c030c7dcdccb",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "f6eff4e38c31459a0379822cae7a4eb340afe4a7a14a01d36848a49b4d960d3e",
+      "path": "Cargo.toml.orig"
+    },
+    {
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "b454390e8aca93093ca68dae72c3c2b7154f6bc9c8ee1106055e916654573497",
+      "path": "README.md"
+    },
+    {
+      "sha256": "51ed299a17f4a140482cd98cc2b6a69066bef90fbdb1ae001763141eb5ddabcc",
+      "path": "src/lib.rs"
+    }
+  ],
+  "ghash-0.6.0": [
+    {
+      "sha256": "075d4228787cf0d1b38ba0d4d9794714623d660bb8947da4e19ebc955e07f51f",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "86041f40cff50829c45940854c6c03564bbb7fd89dbc5a15903f057b674921e9",
+      "path": "Cargo.toml.orig"
+    },
+    {
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "b50aea0eefa895dac30159959abd0892ffc2521fe92e250a99721f4656dbf967",
+      "path": "README.md"
+    },
+    {
+      "sha256": "91e9ee34ab0d6efde7d274d705216564ad4b225c840adc8c9c72ee7281ea8699",
+      "path": "src/lib.rs"
+    }
+  ],
+  "polyval-0.7.3": [
+    {
+      "sha256": "e8dc04416390a2788d2a3846c0c4d33a579d2c651f07ecd982a90940c78de858",
+      "path": "Cargo.toml"
+    },
+    {
+      "sha256": "c3b9f6f76f816fea26486e9c09e70dd9a699073c424b9cfbf3e73111588a3e03",
+      "path": "Cargo.toml.orig"
+    },
+    {
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+      "path": "LICENSE-APACHE"
+    },
+    {
+      "sha256": "b8c6939380a400f53e11923d50fcc4dd2fa1ba8339fd9d04cda38a0251b6c9b0",
+      "path": "LICENSE-MIT"
+    },
+    {
+      "sha256": "2fe52c8d5b0d4cc0d648484f970a0ef4ec33934f81b712003221d3c3bda98bfa",
+      "path": "README.md"
+    },
+    {
+      "sha256": "235347bee78806af989f16fa364e9f1c920babf568cfea43ce162ef47a87afde",
+      "path": "src/backend.rs"
+    },
+    {
+      "sha256": "784ef441255baa1282152359aa12c6aeaf72aca79da424c21e2e9f4b5b660bcb",
+      "path": "src/backend/intrinsics.rs"
+    },
+    {
+      "sha256": "ffc583dcd4f1ed2bdd6017be32a2744b4a2315f73ee246b520d6f1f5207c7d9c",
+      "path": "src/backend/intrinsics/armv8.rs"
+    },
+    {
+      "sha256": "6b7c210c1744bc01d14b0177f1c89cd97221df2929ffbe96835417b3d62e2222",
+      "path": "src/backend/intrinsics/x86.rs"
+    },
+    {
+      "sha256": "397e03c9e0db6d13998c0870dee196fe81e23f1721eb1cdec446983ac0e5756f",
+      "path": "src/backend/soft.rs"
+    },
+    {
+      "sha256": "1b23584a719ef054a8ab1594c2f2414af3a37c60f3679efab1ef01ebd979f91a",
+      "path": "src/field_element.rs"
+    },
+    {
+      "sha256": "9dc3b39b87bcd986920e8a6b653015c3deaa58b1efff05216de4cede65d74755",
+      "path": "src/field_element/mul32.rs"
+    },
+    {
+      "sha256": "681010575041bb6f7ad1b4f0281e4e6317b16ee4de7d0103d87163c41f914cab",
+      "path": "src/field_element/mul64.rs"
+    },
+    {
+      "sha256": "8d62b5b00d1fcbc52cad912f70b7fdb05cccbfe9af4da03f998b91aa359c1725",
+      "path": "src/field_element/mulx.rs"
+    },
+    {
+      "sha256": "2389302e21da092a44cdf386d94ca18bb9d3d8f9f9f42c29483bdde38d7f7350",
+      "path": "src/hazmat.rs"
+    },
+    {
+      "sha256": "7b1e122e06172c12774865a99badb733910bddc8f658d123c5270063effeabeb",
+      "path": "src/lib.rs"
+    }
   ]
 }

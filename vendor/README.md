@@ -21,6 +21,9 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | sha3 0.12.0 / shake 0.1.0 | RustCrypto/hashes / sponges, MIT OR Apache-2.0 | Opt-in inline permutation scratch; borrowed XOF reader finalization and explicit wipe. |
 | keccak 0.2.2 | RustCrypto/sponges, MIT OR Apache-2.0 | Existing portable permutation with borrowed five-lane scratch. Ordinary backend dispatch preserved. |
 | sponge-cursor 0.1.0 | RustCrypto/sponges, MIT OR Apache-2.0 | Captured permutation closure; direct scalar byte accesses replace private arrays and three inherited pointer casts. |
+| aes 0.9.2 | RustCrypto/block-ciphers, MIT OR Apache-2.0 | Borrowed AES-256 fixsliced key schedule, rounds and native-width batch scratch; ordinary hardware dispatch preserved. |
+| aes-gcm 0.11.1 | RustCrypto/AEADs, MIT OR Apache-2.0 | Fixed protected AES-256/GCM workspace, original CTR32BE counters and authenticate-before-decrypt contract. |
+| ghash 0.6.0 / polyval 0.7.3 | RustCrypto/universal-hashes, MIT OR Apache-2.0 | Borrowed portable multiplication/reduction, GHASH reverse/mulX and fixed private intermediate storage. |
 
 DE: Root aktiviert protected-workspace für private SHA3-/SHAKE-Verarbeitung. Hash und
 Reader enthalten ihre fünf Scratch-Lanes inline und werden vor privater Befüllung
@@ -211,3 +214,27 @@ Verification also protects confidential message/context hashes, mu and recompute
 challenges, using constant-time comparison. Explicit key wiping precedes payload
 unlock/free. Ordinary provider APIs remain compatibility/reference paths and are
 not used by the protected Root DSA operations. Native acceptance remains required.
+
+## Private AES/GCM storage / Private AES/GCM-Flächen
+
+DE: Die vier AES/GCM-Subsets enthalten alle Produktionsmodule und Original-Lizenzen.
+Nur Dev-/Test-/Bench-Targets sowie drei reine POLYVAL-Inline-Test-Suffixe fehlen.
+Neue geschützte Typen sind additiv: Root sperrt den vollständigen öffentlichen
+Anfangszustand vor Key-Schedule, GHASH-Schlüssel und Operationen. Private Produkte,
+Bit-Slicing-Scratch, Tagmaske, Keystream und AAD-Padding bleiben inline. Stream-AAD
+liegt in SecretBytes. Öffentliche Zähler und fertige Tags dürfen das Objekt verlassen.
+EN: The protected path uses the existing portable constant-time arithmetic, preserving
+native batch widths and CTR32BE. Ordinary APIs retain hardware dispatch. Existing
+upstream native unsafe code remains in the production subsets; the new protected
+path introduces no unsafe code. This is not an unsafe-free dependency claim.
+
+DE: protected-workspace von aes-gcm benötigt std für den Inline-Mutex. Das neue
+Objekt erhält Send/Sync und Unwind-Eigenschaften; belegter/vergifteter Zustand wird
+verweigert. Vergiftete Daten werden ausschließlich zum Löschen zugänglich. Die
+gewöhnliche API bleibt ohne dieses Feature no_std-fähig. Byteweises Zeroize benötigt
+keine implizite hybrid-array-Feature-Vereinheitlichung durch Root.
+EN: Explicit wipe and Drop cover all private fields before host unlock/free.
+Standalone consumers exercise both documented cpubits width overrides; this does
+not replace native ABI tests. Public-data x86 measurements show roughly 3.0–3.4x
+the hardware-accelerated registry provider's compute time, excluding owner locking.
+Native acceptance and the remaining Argon2/R6 matrix are still required.

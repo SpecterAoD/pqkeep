@@ -15,12 +15,16 @@
 use std::io::{Read, Write};
 
 use super::{SecretBytes, secret_state::SecretState};
-use aes_gcm::Aes256Gcm;
+use aes_gcm::ProtectedAes256Gcm as Aes256Gcm;
 use aes_gcm::aead::{AeadInOut, Nonce};
 
 use crate::crypto::aead::TAG_LEN;
 pub use crate::crypto::stream_io::{DecryptReader, EncryptWriter};
 use crate::{Error, Result};
+
+#[cfg(test)]
+#[path = "stream_aad_owner_tests.rs"]
+mod aad_owner_tests;
 
 /// DE: Klartext-Blockgröße. EN: Plaintext chunk size.
 pub const CHUNK_SIZE: usize = 64 * 1024;
@@ -34,7 +38,7 @@ pub(crate) struct Stream {
     cipher: SecretState<Aes256Gcm>,
     prefix: [u8; PREFIX_LEN],
     counter: u32,
-    aad: Vec<u8>,
+    aad: SecretBytes,
 }
 
 impl Stream {
@@ -44,7 +48,7 @@ impl Stream {
             cipher,
             prefix,
             counter: 0,
-            aad: aad.to_vec(),
+            aad: SecretBytes::from_slice(aad)?,
         })
     }
 
@@ -63,8 +67,12 @@ impl Stream {
     }
 
     pub(crate) fn seal(&mut self, chunk: &[u8], last: bool) -> Result<Vec<u8>> {
-        let out =
-            super::aead::seal_locked(self.cipher.get(), self.nonce(last).into(), chunk, &self.aad)?;
+        let out = super::aead::seal_locked(
+            self.cipher.get(),
+            self.nonce(last).into(),
+            chunk,
+            self.aad.expose(),
+        )?;
         self.advance()?;
         Ok(out)
     }
@@ -77,7 +85,7 @@ impl Stream {
             .get()
             .decrypt_inout_detached(
                 &self.nonce(last),
-                &self.aad,
+                self.aad.expose(),
                 out.expose_mut().into(),
                 &tag.into(),
             )

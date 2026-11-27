@@ -9,7 +9,7 @@
 use aes_gcm::aead::{AeadInOut, Nonce, consts};
 
 use super::secret_state::SecretState;
-use aes_gcm::{Aes256Gcm, KeyInit};
+use aes_gcm::ProtectedAes256Gcm as Aes256Gcm;
 
 use crate::crypto::{SecretBytes, rng};
 use crate::{Error, Result};
@@ -40,16 +40,14 @@ pub fn generate_key() -> Result<SecretBytes> {
     rng::secret(KEY_LEN)
 }
 
-// DE: Ausschließlich öffentlicher Initialzustand vor dem Sperren.
-// EN: Public initial state only, before locking.
-fn public_cipher() -> Aes256Gcm {
-    Aes256Gcm::new(&aes_gcm::Key::<Aes256Gcm>::default())
-}
-
 pub(crate) fn cipher(key: &[u8]) -> Result<SecretState<Aes256Gcm>> {
-    let mut state = SecretState::new(public_cipher())?;
-    *state.get_mut() =
-        Aes256Gcm::new_from_slice(key).map_err(|_| Error::InvalidInput { field: "key" })?;
+    let key: &[u8; KEY_LEN] = key
+        .try_into()
+        .map_err(|_| Error::InvalidInput { field: "key" })?;
+    // DE: Vollständigen öffentlichen Anfangszustand vor privatem Key-Schedule sperren.
+    // EN: Prelock complete public initial state before private key scheduling.
+    let mut state = SecretState::new(Aes256Gcm::default())?;
+    state.get_mut().initialize(key).map_err(|_| Error::Crypto)?;
     Ok(state)
 }
 
@@ -137,3 +135,6 @@ pub fn open(key: &[u8], nonce: &[u8], ciphertext: &[u8], aad: &[u8]) -> Result<S
 #[cfg(test)]
 #[path = "aead_locked_tests.rs"]
 mod tests;
+#[cfg(test)]
+#[path = "aead_workspace_tests.rs"]
+mod workspace_tests;

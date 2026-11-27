@@ -4,14 +4,19 @@
 
 use crate::hardening::memlock;
 
-pub(crate) fn locked<T>(value: &T) {
+pub(crate) fn locked<T: ?Sized>(value: &T) {
+    let len = size_of_val(value);
+    // DE/EN: Leere Bereiche enthalten keine privaten Bytes / empty ranges contain no private bytes.
+    if len == 0 {
+        return;
+    }
     let base = std::ptr::from_ref(value).addr();
     assert!(memlock::is_locked(base));
-    assert!(memlock::is_locked(base + size_of::<T>() - 1));
+    assert!(memlock::is_locked(base + len - 1));
     #[cfg(target_os = "linux")]
     {
         assert!(own_mapping_locked(base));
-        assert!(own_mapping_locked(base + size_of::<T>() - 1));
+        assert!(own_mapping_locked(base + len - 1));
     }
 }
 
