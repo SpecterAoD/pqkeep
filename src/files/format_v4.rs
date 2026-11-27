@@ -25,7 +25,7 @@
 use sha3::Sha3_256;
 
 use super::format::{Content, bad};
-use super::signer_v3::{COMMIT_LEN, Signer};
+use super::signer_v3::{COMMIT_LEN, FILE_SIGNATURE_LEN, SIGNER_KEY_LEN, Signer};
 use super::slot_v2::Slot;
 use crate::crypto::locked_hash::LockedHash;
 use crate::{Error, Result};
@@ -48,6 +48,33 @@ pub const OPT_HIDDEN_SENDER: u16 = 0x0008;
 pub const TRAILER_MAGIC: &[u8; 8] = b"PQKFEND\0";
 /// DE: Länge des Trailers ohne verborgenen Absender. EN: Trailer length without hidden sender.
 pub const TRAILER_LEN: usize = 8 + 8 + TRAILER_MAGIC.len();
+/// DE: Verborgener Absender im Trailer: Algorithmus ‖ Schlüssel ‖ Signatur.
+/// EN: Hidden sender in the trailer: algorithm ‖ key ‖ signature.
+pub const HIDDEN_BLOCK_LEN: usize = 1 + SIGNER_KEY_LEN + FILE_SIGNATURE_LEN;
+
+/// DE: Trailerlänge je nach verborgenem Absender. EN: Trailer length depending on hidden sender.
+#[must_use]
+pub const fn trailer_len(hidden: bool) -> usize {
+    if hidden {
+        HIDDEN_BLOCK_LEN + TRAILER_LEN
+    } else {
+        TRAILER_LEN
+    }
+}
+
+/// DE: Signierte Nachricht des verborgenen Absenders: Domäne ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ beide
+/// Längen (Grenze Nutzdaten/Füllung, Codex-Fund #324).
+/// EN: Signed message of the hidden sender: domain ‖ SHA3-512(H) ‖ SHA3-512(N) ‖ both lengths
+/// (payload/padding boundary, Codex finding #324).
+#[must_use]
+pub fn hidden_message(header: &[u8], plain_hash: &[u8], payload: u64, pad: u64) -> Vec<u8> {
+    let mut out = [DOMAIN_V4, b"sig/hidden\0"].concat();
+    out.extend_from_slice(&<sha3::Sha3_512 as sha3::Digest>::digest(header));
+    out.extend_from_slice(plain_hash);
+    out.extend_from_slice(&payload.to_le_bytes());
+    out.extend_from_slice(&pad.to_le_bytes());
+    out
+}
 
 /// DE: v4-Zusatzfelder des Headers. EN: v4 extra fields of the header.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -100,15 +127,20 @@ pub fn check_commit_v4(v4: &V4, file_key: &[u8]) -> Result<()> {
 /// DE/EN: [`Error::Unsupported`] (reservierte/unbekannte Bits / reserved/unknown bits),
 /// [`Error::InvalidInput`] (Feld `header`).
 pub fn check_v4(content: Content, v4: &V4, signer: Option<&Signer>) -> Result<()> {
-    if v4.options & !(OPT_SIGNED | OPT_PAD | OPT_ANON) != 0 {
+    if v4.options & !(OPT_SIGNED | OPT_PAD | OPT_ANON | OPT_HIDDEN_SENDER) != 0 {
         return Err(Error::Unsupported);
     }
     let has_signed_bit = v4.options & OPT_SIGNED != 0;
-    if has_signed_bit != signer.is_some() || signer.is_some_and(|s| s.commit != v4.commit) {
+    let hidden = v4.options & OPT_HIDDEN_SENDER != 0;
+    if has_signed_bit != signer.is_some()
+        || (hidden && has_signed_bit)
+        || signer.is_some_and(|s| s.commit != v4.commit)
+    {
         return Err(bad());
     }
-    // DE: v4 braucht einen Grund: Strom, PAD oder ANON. EN: v4 needs a reason: stream, PAD or ANON.
-    if content != Content::Stream && v4.options & (OPT_PAD | OPT_ANON) == 0 {
+    // DE: v4 braucht einen Grund: Strom, PAD, ANON oder verborgener Absender.
+    // EN: v4 needs a reason: stream, PAD, ANON or hidden sender.
+    if content != Content::Stream && v4.options & (OPT_PAD | OPT_ANON | OPT_HIDDEN_SENDER) == 0 {
         return Err(bad());
     }
     Ok(())
@@ -140,7 +172,7 @@ pub fn for_encrypt(
     opts: super::EncryptOptions,
     file_key: &[u8],
 ) -> Result<Option<V4>> {
-    if content != Content::Stream && !opts.pad && !opts.anonymous {
+    if content != Content::Stream && !opts.pad && !opts.anonymous && !opts.hide_sender {
         return Ok(None);
     }
     let mut options = 0;
@@ -148,6 +180,7 @@ pub fn for_encrypt(
         (signed, OPT_SIGNED),
         (opts.pad, OPT_PAD),
         (opts.anonymous, OPT_ANON),
+        (opts.hide_sender, OPT_HIDDEN_SENDER),
     ] {
         if on {
             options |= bit;

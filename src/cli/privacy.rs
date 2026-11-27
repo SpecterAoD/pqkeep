@@ -88,6 +88,7 @@ pub fn options(m: &ArgMatches) -> files::EncryptOptions {
     files::EncryptOptions {
         pad: m.get_flag("pad") || high(m),
         anonymous: super::recipients::anonymous(m),
+        hide_sender: super::hidden_sender::wanted(m),
     }
 }
 

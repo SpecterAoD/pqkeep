@@ -33,7 +33,7 @@ fn option_rules() {
         commit: [7; 32],
     };
     assert!(check_v4(Content::Stream, &v4(0), None).is_ok());
-    for reserved in [OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
+    for reserved in [0x0010, 0x0100, 0x8000] {
         assert_eq!(
             check_v4(Content::Stream, &v4(reserved), None),
             Err(Error::Unsupported)
@@ -44,6 +44,13 @@ fn option_rules() {
     assert!(check_v4(Content::Directory, &v4(OPT_PAD), None).is_ok());
     assert!(check_v4(Content::Directory, &v4(0), None).is_err());
     assert!(check_v4(Content::Stream, &v4(OPT_SIGNED), None).is_err());
+    // DE: Verborgener Absender reicht als Grund, nie zusammen mit SIGNED.
+    // EN: Hidden sender suffices as a reason, never together with SIGNED.
+    assert!(check_v4(Content::File, &v4(OPT_HIDDEN_SENDER), None).is_ok());
+    assert!(check_v4(Content::Stream, &v4(OPT_HIDDEN_SENDER | OPT_PAD), None).is_ok());
+    assert!(check_v4(Content::Stream, &v4(OPT_HIDDEN_SENDER | OPT_SIGNED), None).is_err());
+    assert_eq!(trailer_len(true), HIDDEN_BLOCK_LEN + TRAILER_LEN);
+    assert_eq!(HIDDEN_BLOCK_LEN, 7220);
 }
 
 #[test]

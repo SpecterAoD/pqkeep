@@ -2,7 +2,9 @@
 
 use super::*;
 use crate::crypto::stream::EncryptWriter;
+use crate::crypto::stream::PREFIX_LEN;
 use crate::files::format_v4::TRAILER_MAGIC;
+use crate::files::format_v4::{padding_for, trailer};
 
 /// DE: Korrekt verschlüsselter Strom mit frei gewähltem Klartext (wie ein Empfänger ihn bauen kann).
 /// EN: Correctly encrypted stream with chosen plaintext (as a recipient could build it).
@@ -16,10 +18,17 @@ fn reader(sealed: &[u8]) -> DecryptReader<&[u8]> {
     DecryptReader::new(&[7u8; 32], [1u8; PREFIX_LEN], b"aad", sealed).unwrap()
 }
 
+fn tail(padded: bool) -> TailRead {
+    TailRead {
+        padded,
+        hidden: None,
+    }
+}
+
 fn payload_of(plain: &[u8], padded: bool) -> (Result<(u64, u64)>, Vec<u8>) {
     let bytes = sealed(plain);
     let mut out = Vec::new();
-    let r = copy_payload(reader(&bytes), &mut out, padded);
+    let r = copy_payload(reader(&bytes), &mut out, &tail(padded));
     (r, out)
 }
 
@@ -98,7 +107,10 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
         let mut dec = reader(&sealed_plain);
         let mut head = vec![0u8; 500];
         dec.read_exact(&mut head).unwrap();
-        assert!(finish_tail(dec, 500, padded).is_ok(), "padded={padded}");
+        assert!(
+            finish_tail(dec, 500, &tail(padded)).is_ok(),
+            "padded={padded}"
+        );
     }
     // DE: Füllung mit Nicht-Null-Byte oder falscher Archivlänge. EN: non-zero padding or wrong length.
     let pad = padding_for(500, true).unwrap();
@@ -108,9 +120,70 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
     let mut dec = reader(&bad);
     let mut head = vec![0u8; 500];
     dec.read_exact(&mut head).unwrap();
-    assert!(finish_tail(dec, 500, true).is_err());
+    assert!(finish_tail(dec, 500, &tail(true)).is_err());
     let short = sealed(&[&archive[..], &trailer(499, 0)].concat());
     let mut dec = reader(&short);
     dec.read_exact(&mut head).unwrap();
-    assert!(finish_tail(dec, 500, false).is_err());
+    assert!(finish_tail(dec, 500, &tail(false)).is_err());
+}
+
+/// DE: Klartext mit verborgenem Absender; `signed` = (Nutzlänge, Füllung) in der Signatur.
+/// EN: Plaintext with hidden sender; `signed` = (payload, padding) inside the signature.
+fn hidden_plain(kp: &dsa::DsaKeyPair, data: &[u8], header: &[u8], signed: (u64, u64)) -> Vec<u8> {
+    use sha3::{Digest, Sha3_512};
+    let pad = padding_for(data.len() as u64, true).unwrap();
+    let zeros = vec![0u8; usize::try_from(pad).unwrap()];
+    let hash = Sha3_512::digest([data, &zeros].concat());
+    let msg = hidden_message(header, &hash, signed.0, signed.1);
+    let sig = dsa::sign(SIGNER_DSA, kp.seed().expose(), &msg, FILE_SIG_CONTEXT).unwrap();
+    let block = [&[SIGNER_ML_DSA_87][..], &kp.public_key, &sig].concat();
+    [data, &zeros, &block, &trailer(data.len() as u64, pad)].concat()
+}
+
+fn hidden_check(plain: &[u8], header: &[u8]) -> (Result<(u64, u64)>, Option<SignedBy>) {
+    let bytes = sealed(plain);
+    let mut dec = reader(&bytes);
+    dec.start_hash().unwrap();
+    let result = HiddenResult::default();
+    let t = TailRead {
+        padded: true,
+        hidden: Some((header.to_vec(), result.clone())),
+    };
+    let r = copy_payload(dec, &mut Vec::new(), &t);
+    let signed = result.borrow_mut().take();
+    (r, signed)
+}
+
+#[test]
+fn hidden_sender_block_is_verified_and_tampering_rejected() {
+    let kp = dsa::generate(SIGNER_DSA).unwrap();
+    let data = vec![3u8; 1500];
+    let pad = padding_for(1500, true).unwrap();
+    let good = hidden_plain(&kp, &data, b"H", (1500, pad));
+    let (r, signed) = hidden_check(&good, b"H");
+    assert_eq!(r.unwrap().0, 1500);
+    let id = Signer {
+        public_key: kp.public_key.clone(),
+        commit: [0; 32],
+    }
+    .key_id();
+    assert_eq!(signed.unwrap().key_id, id);
+    // DE: Anderer Header, verschobene Grenze in der Signatur, gekippte Signatur, geänderte Daten.
+    // EN: Other header, shifted boundary in the signature, flipped signature, altered data.
+    assert_eq!(hidden_check(&good, b"X").0, Err(Error::InvalidSignature));
+    let shifted = hidden_plain(&kp, &data, b"H", (1499, pad + 1));
+    assert_eq!(hidden_check(&shifted, b"H").0, Err(Error::InvalidSignature));
+    let mut flipped = good.clone();
+    let at = good.len() - TRAILER_LEN - 10;
+    flipped[at] ^= 1;
+    assert_eq!(hidden_check(&flipped, b"H").0, Err(Error::InvalidSignature));
+    let mut altered = good.clone();
+    altered[7] ^= 1;
+    assert_eq!(hidden_check(&altered, b"H").0, Err(Error::InvalidSignature));
+    let mut kind = good.clone();
+    kind[1500 + usize::try_from(pad).unwrap()] = 0x7f;
+    assert_eq!(hidden_check(&kind, b"H").0, Err(Error::Unsupported));
+    // DE: Ohne Absenderblock (nur Trailer) zu kurz. EN: Without the sender block too short.
+    let (r, signed) = hidden_check(&framed(&data, true), b"H");
+    assert!(r.is_err() && signed.is_none());
 }

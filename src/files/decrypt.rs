@@ -110,16 +110,21 @@ pub(super) fn open(
         }
     };
     let (body, check) = match check {
-        Some((c, len)) => (Body::Signed(SignedBody::new(reader, len, &c)), Some(c)),
+        Some((c, Some(len))) => (Body::Signed(SignedBody::new(reader, len, &c)), Some(c)),
+        Some((c, None)) => (Body::Plain(reader), Some(c)),
         None => (Body::Plain(reader), None),
     };
-    let dec = DecryptReader::new(
+    let mut dec = DecryptReader::new(
         opened.file_key.expose(),
         opened.prefix,
         &opened.stream_aad,
         body,
     )?;
     drop(opened.file_key);
+    // DE: Verborgener Absender: Klartext ab Beginn hashen. EN: Hidden sender: hash plaintext from start.
+    if opened.tail.as_ref().is_some_and(|t| t.hidden.is_some()) {
+        dec.start_hash()?;
+    }
     Ok((
         ArchiveReader::with_tail(dec, opened.tail)?,
         opened.content,

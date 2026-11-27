@@ -58,8 +58,13 @@ fn encrypted(path: &Path) -> pqkeep::Result<Map<String, Value>> {
                     "algorithm": "ML-KEM-1024", "experimental": true }),
             });
             // DE: Absender nur aus dem Header – ungeprüft (#44). EN: Sender from the header only – unverified.
+            let hidden = super::inspect_v2::option(&header, files::format_v4::OPT_HIDDEN_SENDER);
             let signer = header.signer.as_ref().map_or(
-                Value::Null,
+                if hidden {
+                    json!({ "hidden": true, "verified": false })
+                } else {
+                    Value::Null
+                },
                 |s| json!({ "key_id": envelope::hex_encode(&s.key_id()), "verified": false }),
             );
             let slots = slots.collect::<Vec<_>>();

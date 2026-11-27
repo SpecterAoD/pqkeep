@@ -197,6 +197,17 @@ kein Mischen mit Typ 2, aufsteigend nach Chiffrat. Mit ANON wird v4 für jeden I
 Trailer). Öffnen probiert alle anonymen Zugänge; erst danach „kein Zugang für diesen Schlüssel“. Tests
 `tests/files_anonymous.rs`, `tests/cli_anonymous.rs`, Regel-Unit-Test; QA1-FMT-013 (teilweise, Lücke #340).
 
+**Schritt 5 (verborgener Absender, `HIDDEN_SENDER`) umgesetzt:** `encrypt --sign-with … --hide-sender`
+(ohne `--sign-with` Bedienfehler, Exit 2); die Stufe `--privacy high` verbirgt den Absender, wenn signiert
+wird. Mit `HIDDEN_SENDER` wird v4 für jeden Inhalt geschrieben; der Header hat keinen Absenderblock, der
+Trailer trägt `U8(1) ‖ Schlüssel ‖ Σh` (7220 Byte) vor den Längen. Schreiber und Leser hashen den Klartext
+(Nutzdaten ‖ Füllung) beim Streamen in gesperrtem Speicher; der Leser hält 7244 Byte zurück, prüft Σh über
+Header, Hash und beide Längen **vor** dem Veröffentlichen und vergleicht erst danach mit `--signer` (die
+Identität ist vorher nicht sichtbar). `inspect` zeigt „signiert, Absender verborgen“ (JSON
+`signer: {hidden: true, verified: false}`). API: `EncryptOptions { hide_sender }` (vorläufig bis #98).
+Tests `tests/files_hidden_sender.rs`, `tests/cli_hidden_sender.rs`, Unit-Test mit neu verschlüsseltem
+Trailer (verschobene Grenze, gekippte Signatur, unbekannter Typ); QA1-FMT-014.
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -318,7 +329,16 @@ as EXPERIMENTAL** (maintainer decision 2026-11-27, research #340): `encrypt --an
 slot type 5 as drafted, wrapping key HKDF(salt = ciphertext, IKM = secret, info =
 `PQKeep/file/v4\0wrap/anonymous\0`); rules ANON ⇔ type 5, no mixing with type 2, ascending by ciphertext; v4
 for every content type (always with a trailer); opening tries all anonymous slots and reports "no slot for
-this key" only afterwards. Tests and QA1-FMT-013 (partial, gap #340).
+this key" only afterwards. Tests and QA1-FMT-013 (partial, gap #340). **Step 5 (hidden sender,
+`HIDDEN_SENDER`) implemented:** `encrypt --sign-with … --hide-sender` (usage error, exit 2, without
+`--sign-with`); level `--privacy high` hides the sender when signing. With `HIDDEN_SENDER`, v4 is written
+for every content type; the header has no sender block, the trailer carries `U8(1) ‖ key ‖ Σh` (7220 bytes)
+before the lengths. Writer and reader hash the plaintext (payload ‖ padding) while streaming in locked
+memory; the reader holds back 7244 bytes, verifies Σh over header, hash and both lengths **before**
+publishing and only then compares with `--signer` (the identity is not visible earlier). `inspect` shows
+"signed, sender hidden" (JSON `signer: {hidden: true, verified: false}`). API: `EncryptOptions {
+hide_sender }` (provisional until #98). Tests incl. a unit test with a re-encrypted trailer (shifted
+boundary, flipped signature, unknown type); QA1-FMT-014.
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.
