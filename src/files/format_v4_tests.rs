@@ -5,25 +5,28 @@ use super::*;
 #[test]
 fn trailer_roundtrip_and_rejections() {
     let t = trailer(1234, 0);
-    assert_eq!(check_trailer(&t, 1234, false), Ok(1234));
-    assert!(check_trailer(&t, 1233, false).is_err());
+    assert_eq!(check_trailer(&t, 1234, false, TRAILER_LEN), Ok(1234));
+    assert!(check_trailer(&t, 1233, false, TRAILER_LEN).is_err());
     assert!(
-        check_trailer(&t, 1234, true).is_err(),
+        check_trailer(&t, 1234, true, TRAILER_LEN).is_err(),
         "PAD verlangt Füllung / PAD needs padding"
     );
     let mut padded = t;
     padded[8] = 1;
-    assert!(check_trailer(&padded, 1235, false).is_err());
+    assert!(check_trailer(&padded, 1235, false, TRAILER_LEN).is_err());
     let mut magic = t;
     magic[TRAILER_LEN - 1] = 1;
-    assert!(check_trailer(&magic, 1234, false).is_err());
-    assert!(check_trailer(&t[..TRAILER_LEN - 1], 1234, false).is_err());
+    assert!(check_trailer(&magic, 1234, false, TRAILER_LEN).is_err());
+    assert!(check_trailer(&t[..TRAILER_LEN - 1], 1234, false, TRAILER_LEN).is_err());
     // DE: Kanonische PADMÉ-Füllung. EN: Canonical PADMÉ padding.
-    let pad = padding_for(1234, true).unwrap();
+    let pad = padding_for(1234, true, TRAILER_LEN).unwrap();
     let good = trailer(1234, pad);
-    assert_eq!(check_trailer(&good, 1234 + pad, true), Ok(1234));
+    assert_eq!(
+        check_trailer(&good, 1234 + pad, true, TRAILER_LEN),
+        Ok(1234)
+    );
     let other = trailer(1234, pad + 1);
-    assert!(check_trailer(&other, 1235 + pad, true).is_err());
+    assert!(check_trailer(&other, 1235 + pad, true, TRAILER_LEN).is_err());
 }
 
 #[test]
@@ -33,7 +36,7 @@ fn option_rules() {
         commit: [7; 32],
     };
     assert!(check_v4(Content::Stream, &v4(0), None).is_ok());
-    for reserved in [OPT_HIDDEN_SENDER, 0x0010, 0x8000] {
+    for reserved in [0x0010, 0x0100, 0x8000] {
         assert_eq!(
             check_v4(Content::Stream, &v4(reserved), None),
             Err(Error::Unsupported)
@@ -44,6 +47,13 @@ fn option_rules() {
     assert!(check_v4(Content::Directory, &v4(OPT_PAD), None).is_ok());
     assert!(check_v4(Content::Directory, &v4(0), None).is_err());
     assert!(check_v4(Content::Stream, &v4(OPT_SIGNED), None).is_err());
+    // DE: Verborgener Absender reicht als Grund, nie zusammen mit SIGNED.
+    // EN: Hidden sender suffices as a reason, never together with SIGNED.
+    assert!(check_v4(Content::File, &v4(OPT_HIDDEN_SENDER), None).is_ok());
+    assert!(check_v4(Content::Stream, &v4(OPT_HIDDEN_SENDER | OPT_PAD), None).is_ok());
+    assert!(check_v4(Content::Stream, &v4(OPT_HIDDEN_SENDER | OPT_SIGNED), None).is_err());
+    assert_eq!(trailer_len(true), HIDDEN_BLOCK_LEN + TRAILER_LEN);
+    assert_eq!(HIDDEN_BLOCK_LEN, 7220);
 }
 
 #[test]

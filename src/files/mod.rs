@@ -37,6 +37,7 @@ mod signed_io;
 mod signer_v3;
 mod slot_v2;
 mod stream_v4;
+mod tail_v4;
 mod walk;
 
 use std::fs::File;
@@ -83,6 +84,9 @@ pub struct EncryptOptions {
     /// DE: Anonyme Empfänger ohne ID, nur ML-KEM-1024 – **experimentell** (#316, #340).
     /// EN: Anonymous recipients without ID, ML-KEM-1024 only – **experimental** (#316, #340).
     pub anonymous: bool,
+    /// DE: Absender nur im verschlüsselten Teil (braucht einen Signaturschlüssel, #316).
+    /// EN: Sender only inside the encrypted part (needs a signing key, #316).
+    pub hide_sender: bool,
 }
 
 /// DE: Schutz beim Verschlüsseln. EN: Protection when encrypting.

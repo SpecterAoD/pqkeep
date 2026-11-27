@@ -19,6 +19,7 @@ use aes_gcm::ProtectedAes256Gcm as Aes256Gcm;
 use aes_gcm::aead::{AeadInOut, Nonce};
 
 use crate::crypto::aead::TAG_LEN;
+pub(crate) use crate::crypto::stream_io::PlainHash;
 pub use crate::crypto::stream_io::{DecryptReader, EncryptWriter};
 use crate::{Error, Result};
 

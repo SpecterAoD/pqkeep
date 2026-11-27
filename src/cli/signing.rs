@@ -167,6 +167,7 @@ fn fail(lang: Lang) -> impl Fn(Error) -> Failure {
 /// DE: Bedienregel ohne Terminal (vor jeder Abfrage). `file_passphrase` = die Datei bekommt
 /// einen Passphrase-Zugang. EN: Rule without a terminal (before any prompt).
 pub fn check_sources(lang: Lang, m: &ArgMatches, file_passphrase: bool) -> CliResult {
+    super::hidden_sender::check(m, lang)?;
     let non_interactive = m.get_flag("passphrase-stdin")
         || super::unattended::pass_file().is_some()
         || super::unattended::batch();

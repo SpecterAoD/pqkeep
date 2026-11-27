@@ -15,9 +15,10 @@ use sha3::{Digest, Sha3_256};
 use super::Unlock;
 use super::format::Content;
 use super::format_v2::{HeaderV2, Slot};
-use super::format_v4::{OPT_PAD, check_commit_v4};
+use super::format_v4::{OPT_HIDDEN_SENDER, OPT_PAD, check_commit_v4};
 use super::signed_io::{self, SignatureCheck};
 use super::signer_v3::{FILE_SIGNATURE_LEN, check_commit};
+use super::tail_v4::TailRead;
 use crate::crypto::factor::Factor;
 use crate::crypto::stream::PREFIX_LEN;
 use crate::crypto::v2::{self, Domain};
@@ -120,14 +121,19 @@ fn with_key(header: &HeaderV2, key: &UnlockedKey) -> Result<SecretBytes> {
     Err(Error::InvalidInput { field })
 }
 
+/// DE: Signaturprüfung samt Länge des Chiffrats (nur sichtbarer Absender).
+/// EN: Signature check including the ciphertext length (visible sender only).
+pub(super) type Check = Option<(SignatureCheck, Option<u64>)>;
+
 /// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
 pub(super) struct Opened {
     pub file_key: SecretBytes,
     pub stream_aad: Vec<u8>,
     pub prefix: [u8; PREFIX_LEN],
     pub content: Content,
-    /// DE: Format v4: Füllung/Trailer folgen (`true` = PAD). EN: Format v4: padding/trailer follow.
-    pub tail: Option<bool>,
+    /// DE: Format v4: Füllung, ggf. verborgener Absender und Trailer folgen.
+    /// EN: Format v4: padding, optional hidden sender and trailer follow.
+    pub tail: Option<TailRead>,
 }
 
 /// DE: v2/v3/v4 öffnen: verlangter Absender, Dateischlüssel, Schlüsselbindung (v4 immer), bei
@@ -139,20 +145,39 @@ pub(super) fn open_header(
     unlock: &Unlock<'_>,
     signer: Option<&PublicKeyFile>,
     file_len: u64,
-) -> Result<(Opened, Option<(SignatureCheck, u64)>)> {
-    signed_io::require(signer, header.signer.as_ref())?;
+) -> Result<(Opened, Check)> {
+    let options = header.v4.as_ref().map_or(0, |v4| v4.options);
+    let hidden = options & OPT_HIDDEN_SENDER != 0;
+    // DE: Verborgener Absender: Identität erst nach dem Entschlüsseln prüfbar.
+    // EN: Hidden sender: identity can only be checked after decrypting.
+    if hidden {
+        signed_io::require_kind(signer)?;
+    } else {
+        signed_io::require(signer, header.signer.as_ref())?;
+    }
     let file_key = unwrap_key(header, unlock)?;
     match (&header.v4, &header.signer) {
         (Some(v4), _) => check_commit_v4(v4, file_key.expose())?,
         (None, Some(s)) => check_commit(s, file_key.expose())?,
         (None, None) => {}
     }
+    let mut tail = header.v4.as_ref().map(|_| TailRead {
+        padded: options & OPT_PAD != 0,
+        hidden: None,
+    });
     let check = match &header.signer {
         Some(s) => {
             let bytes = header.encode()?;
             let fixed = (bytes.len() + FILE_SIGNATURE_LEN) as u64;
             let body_len = file_len.checked_sub(fixed).ok_or(Error::Decrypt)?;
-            Some((SignatureCheck::new(bytes, s.clone()), body_len))
+            Some((SignatureCheck::new(bytes, s.clone()), Some(body_len)))
+        }
+        None if hidden => {
+            let (check, result) = SignatureCheck::hidden(signer);
+            if let Some(t) = tail.as_mut() {
+                t.hidden = Some((header.encode()?, result));
+            }
+            Some((check, None))
         }
         None => None,
     };
@@ -161,7 +186,7 @@ pub(super) fn open_header(
         stream_aad: header.stream_aad()?,
         prefix: header.prefix,
         content: header.content,
-        tail: header.v4.as_ref().map(|v4| v4.options & OPT_PAD != 0),
+        tail,
     };
     Ok((opened, check))
 }

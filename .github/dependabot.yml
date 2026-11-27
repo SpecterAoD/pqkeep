@@ -18,3 +18,9 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
+    # DE: Alle Schritte von codeql-action müssen dieselbe Version haben (sonst bricht analyze ab).
+    # EN: All codeql-action steps must share one version (otherwise analyze fails).
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"

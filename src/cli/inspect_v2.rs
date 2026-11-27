@@ -29,6 +29,7 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
         let text = "Größe verborgen (Füllung, Format v4) / size hidden (padding, format v4)";
         println!("{}", super::io::localize(text, lang));
     }
+    let hidden = option(&header, files::format_v4::OPT_HIDDEN_SENDER);
     for slot in header.slots {
         match slot {
             Slot::Passphrase { factor, params, .. } => {
@@ -57,13 +58,18 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
         }
     }
     super::signing::print_unverified(lang, header.signer.as_ref());
+    if hidden {
+        println!("{}", super::hidden_sender::inspect_line(lang));
+    }
     Ok(())
 }
 
 /// DE: Füllung (Format v4, Bit PAD)? EN: Padding (format v4, bit PAD)?
 pub(super) fn padded(header: &files::HeaderV2) -> bool {
-    header
-        .v4
-        .as_ref()
-        .is_some_and(|v4| v4.options & files::format_v4::OPT_PAD != 0)
+    option(header, files::format_v4::OPT_PAD)
+}
+
+/// DE: Optionsbit gesetzt (nur v4)? EN: Option bit set (v4 only)?
+pub(super) fn option(header: &files::HeaderV2, bit: u16) -> bool {
+    header.v4.as_ref().is_some_and(|v4| v4.options & bit != 0)
 }

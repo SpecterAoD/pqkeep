@@ -24,8 +24,8 @@ pub(super) fn read(
         Content::Stream => Report {
             files: 1,
             bytes: {
-                let (dec, padded) = archive.into_stream();
-                super::stream_v4::copy_payload(dec, &mut sink(), padded)?.0
+                let (dec, tail) = archive.into_stream();
+                super::tail_v4::copy_payload(dec, &mut sink(), &tail)?.0
             },
             ..Report::default()
         },

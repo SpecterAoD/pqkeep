@@ -12,6 +12,7 @@ use super::encrypt_header;
 use super::format::Content;
 use super::output::TempOutput;
 use super::signed_io::{HashingWriter, check_signing_key};
+use super::tail_v4::TailWrite;
 use super::walk::{self, SourceEntry, SourceKind};
 use super::{EncryptOptions, Protection, Report};
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
@@ -208,10 +209,11 @@ fn write_archive(
     content: Content,
     job: &Job<'_>,
 ) -> Result<Report> {
+    let hidden = super::stream_v4::hidden_signer(job.signer, job.options)?;
     let file_key = aead::generate_key()?;
     let prefix = rng::array::<PREFIX_LEN>()?;
     let public = job.signer.map(|key| key.public_key.as_slice());
-    let pad = job.options.pad;
+    let opts = job.options;
     let (header, stream_aad) = encrypt_header::build(
         content,
         prefix,
@@ -223,13 +225,16 @@ fn write_archive(
     let (temp, file) = TempOutput::file(job.target)?;
     let mut out = BufWriter::new(file);
     out.write_all(&header)?;
-    let enc = EncryptWriter::new(
+    let mut enc = EncryptWriter::new(
         file_key.expose(),
         prefix,
         &stream_aad,
         HashingWriter::new(out),
     )?;
     drop(file_key);
+    if hidden.is_some() {
+        enc.start_hash()?;
+    }
     let mut archive = ArchiveWriter::new(enc)?;
     let mut report = Report {
         skipped,
@@ -238,15 +243,19 @@ fn write_archive(
     for entry in entries {
         write_entry(&mut archive, entry, &mut report)?;
     }
-    // DE: Jede v4-Datei (Füllung oder anonym) hat einen Trailer; Füllung nur mit PAD.
-    // EN: Every v4 file (padding or anonymous) has a trailer; padding only with PAD.
-    let v4 = pad || job.options.anonymous;
-    let body = archive.finish_with(v4.then_some(pad))?;
-    // DE: Ohne Absender bleibt die Datei Byte für Byte wie bisher (`H ‖ C`).
-    // EN: Without a sender the file stays byte for byte as before (`H ‖ C`).
+    // DE: Jede v4-Datei (Füllung, anonym, verborgener Absender) hat einen Trailer.
+    // EN: Every v4 file (padding, anonymous, hidden sender) has a trailer.
+    let tail = TailWrite {
+        padded: opts.pad,
+        hidden: hidden.map(|key| (key, header.as_slice())),
+    };
+    let v4 = opts.pad || opts.anonymous || opts.hide_sender;
+    let body = archive.finish_with(v4.then_some(&tail))?;
+    // DE: Ohne Absender bleibt die Datei Byte für Byte wie bisher (`H ‖ C`); verborgen: kein Σ.
+    // EN: Without a sender the file stays byte for byte as before (`H ‖ C`); hidden: no Σ.
     let out = match job.signer {
-        Some(key) => body.append_signature(key, &header)?,
-        None => body.into_inner(),
+        Some(key) if hidden.is_none() => body.append_signature(key, &header)?,
+        _ => body.into_inner(),
     };
     let file = out.into_inner().map_err(|e| Error::from(e.into_error()))?;
     file.sync_all()?;
