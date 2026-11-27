@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "baseline_version": "1.7.0",
-  "matrix_version": "1.7.0",
+  "baseline_version": "1.8.0",
+  "matrix_version": "1.8.0",
   "evidence": [
     {
       "id": "B1-linux-x86_64",
