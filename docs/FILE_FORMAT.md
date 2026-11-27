@@ -125,6 +125,13 @@ lesbar ab beta.5); Außenstehende sehen nicht, für wen die Datei ist, wohl aber
 Zum Öffnen probiert PQKeep alle Zugänge. **Experimentell**: Die Anonymität ist für die Norm FIPS 203 noch nicht
 formal belegt (Details [CRYPTO.md](CRYPTO.md), #340); PQKeep warnt bei jeder Nutzung.
 
+## Verborgener Absender (#316)
+
+`encrypt --sign-with KEY --hide-sender` (auch Teil von `--privacy high`, wenn signiert wird) legt
+Absenderschlüssel und Signatur in den verschlüsselten Teil (Format v4, lesbar ab beta.5). Außenstehende
+sehen nur „signiert, Absender verborgen“; wer entschlüsseln kann, prüft den Absender (auch gegen
+`--signer`) – erst nach dem Entschlüsseln, aber vor jeder Ausgabe. Die Datei wird etwa 7 KB größer.
+
 ## Grenzen
 
 - Die ungefähre Gesamtgröße ist sichtbar (Größe der `.pqkf`-Datei).
@@ -207,6 +214,11 @@ order of magnitude, number and timing of files stay visible.
 **without recipient ID** (ML-KEM-1024 only, format v4, readable from beta.5); outsiders cannot see for whom the
 file is, only how many recipients there are; PQKeep tries all slots to open it. **Experimental**: anonymity is
 not yet formally established for FIPS 203 (see [CRYPTO.md](CRYPTO.md), #340); PQKeep warns on every use.
+
+**Hidden sender (#316):** `encrypt --sign-with KEY --hide-sender` (also part of `--privacy high` when signing)
+puts sender key and signature into the encrypted part (format v4, readable from beta.5). Outsiders only see
+"signed, sender hidden"; whoever can decrypt verifies the sender (also against `--signer`) – only after
+decrypting, but before any output. The file grows by about 7 KB.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a

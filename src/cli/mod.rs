@@ -24,6 +24,7 @@ mod files_json;
 mod files_many;
 mod guide;
 mod help;
+mod hidden_sender;
 mod inspect_json;
 mod inspect_v2;
 mod integrate;

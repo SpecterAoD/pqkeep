@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.5.0",
+  "matrix_version": "1.6.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -5410,7 +5410,7 @@
           "stage": "existing"
         },
         {
-          "path": "src/files/stream_v4_tests.rs",
+          "path": "src/files/tail_v4_tests.rs",
           "symbol": "tampered_trailers_and_padding_are_rejected",
           "kind": "rust-unit",
           "stage": "existing"
@@ -5500,13 +5500,13 @@
           "stage": "existing"
         },
         {
-          "path": "src/files/stream_v4_tests.rs",
+          "path": "src/files/tail_v4_tests.rs",
           "symbol": "tampered_trailers_and_padding_are_rejected",
           "kind": "rust-unit",
           "stage": "existing"
         },
         {
-          "path": "src/files/stream_v4_tests.rs",
+          "path": "src/files/tail_v4_tests.rs",
           "symbol": "archive_tail_accepts_only_zero_padding_after_the_archive",
           "kind": "rust-unit",
           "stage": "existing"
@@ -5643,6 +5643,126 @@
         "de": "Recherche/Fachanalyse in #340; danach experimentelle Kennzeichnung aufheben oder Funktion zurückbauen.",
         "en": "Research/expert analysis in #340; then lift the experimental label or remove the feature."
       },
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-014",
+      "category": "Container",
+      "component_paths": [
+        "src/files/tail_v4.rs",
+        "src/files/format_v4.rs",
+        "src/files/signed_io.rs",
+        "src/files/decrypt_v2.rs",
+        "src/cli/hidden_sender.rs"
+      ],
+      "scenario": {
+        "de": "Verborgener Absender (Format v4, HIDDEN_SENDER): Absenderschlüssel im Header/Chiffrat suchen, Signatur im Absenderblock kippen, Grenze Nutzdaten/Füllung in der Signatur verschieben (Trailer mit bekanntem Dateischlüssel neu verschlüsselt), Klartext ändern, unbekannten Signaturtyp setzen, Absenderblock weglassen, HIDDEN_SENDER löschen oder mit SIGNED kombinieren, fremden Absender verlangen",
+        "en": "Hidden sender (format v4, HIDDEN_SENDER): look for the sender key in header/ciphertext, flip the signature in the sender block, shift the payload/padding boundary inside the signature (trailer re-encrypted with a known file key), alter plaintext, set an unknown signature type, omit the sender block, clear HIDDEN_SENDER or combine it with SIGNED, require a foreign sender."
+      },
+      "expected_behavior": {
+        "de": "kein Absenderschlüssel außerhalb des verschlüsselten Teils; jede Manipulation und ein fremder Absender werden vor dem Veröffentlichen abgewiesen (keine Ausgabe); ohne Signaturschlüssel kein Verbergen",
+        "en": "no sender key outside the encrypted part; every manipulation and a foreign sender are rejected before publishing (no output); no hiding without a signing key"
+      },
+      "boundary": {
+        "de": "Wer die Datei entschlüsseln kann, sieht den Absender. Ein Empfänger kennt den Dateischlüssel und kann den Strom neu verschlüsseln; die Signatur deckt Header (samt Zugängen und Schlüsselbindung), Klartext-Hash und Längen, Umverpacken für andere scheitert. Das sichtbare Bit und rund 7 KB Größe verraten, dass ein Absender verborgen ist.",
+        "en": "Anyone who can decrypt the file sees the sender. A recipient knows the file key and can re-encrypt the stream; the signature covers the header (incl. slots and key commitment), plaintext hash and lengths, so re-wrapping for others fails. The visible bit and about 7 KB of size reveal that a sender is hidden."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/files_hidden_sender.rs",
+          "symbol": "file_directory_and_stream_roundtrip_with_hidden_sender",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_hidden_sender.rs",
+          "symbol": "anonymous_recipient_with_hidden_sender",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_hidden_sender.rs",
+          "symbol": "required_sender_is_checked_after_decrypting",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_hidden_sender.rs",
+          "symbol": "hide_sender_needs_a_signing_key",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/files_hidden_sender.rs",
+          "symbol": "toggling_hidden_or_signed_bits_is_rejected",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/tail_v4_tests.rs",
+          "symbol": "hidden_sender_block_is_verified_and_tampering_rejected",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/format_v4_tests.rs",
+          "symbol": "option_rules",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_hidden_sender.rs",
+          "symbol": "hidden_sender_roundtrip_inspect_and_wrong_sender",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/cli_hidden_sender.rs",
+          "symbol": "privacy_high_hides_the_sender_when_signing",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        316
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
       "retired": false,
       "replacement": null
     }

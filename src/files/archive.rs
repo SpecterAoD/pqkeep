@@ -15,6 +15,7 @@ use sha3::Sha3_256;
 
 use super::ConfidentialText;
 use super::paths::{MAX_ENTRIES, MAX_PATH_BYTES};
+use super::tail_v4::{TailRead, TailWrite};
 use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
 use crate::{Error, Result};
 
@@ -97,13 +98,13 @@ impl<W: Write> ArchiveWriter<W> {
         self.finish_with(None)
     }
 
-    /// DE: Wie [`Self::finish`]; `tail` = Format v4 mit Füllung/Trailer (`true` = PAD).
-    /// EN: Like [`Self::finish`]; `tail` = format v4 with padding/trailer (`true` = PAD).
-    pub fn finish_with(mut self, tail: Option<bool>) -> Result<W> {
+    /// DE: Wie [`Self::finish`]; `tail` = Format v4 mit Füllung, ggf. Absender und Trailer.
+    /// EN: Like [`Self::finish`]; `tail` = format v4 with padding, optional sender and trailer.
+    pub fn finish_with(mut self, tail: Option<&TailWrite<'_>>) -> Result<W> {
         self.framing.write(&mut self.enc, u64::from(TAG_END), 1)?;
         self.framing.write(&mut self.enc, self.framing.count(), 8)?;
-        if let Some(padded) = tail {
-            super::stream_v4::push_tail(&mut self.enc, padded)?;
+        if let Some(tail) = tail {
+            super::tail_v4::push_tail(&mut self.enc, tail)?;
         }
         Ok(self.enc.finish()?.0)
     }
@@ -113,9 +114,9 @@ impl<W: Write> ArchiveWriter<W> {
 pub(crate) struct ArchiveReader<R: Read> {
     dec: DecryptReader<R>,
     framing: Framing,
-    /// DE: Format v4: nach dem Archiv folgen Füllung (`true` = PAD) und Trailer.
-    /// EN: Format v4: padding (`true` = PAD) and trailer follow the archive.
-    tail: Option<bool>,
+    /// DE: Format v4: nach dem Archiv folgen Füllung, ggf. Absender und Trailer.
+    /// EN: Format v4: padding, optional sender and trailer follow the archive.
+    tail: Option<TailRead>,
 }
 
 impl<R: Read> ArchiveReader<R> {
@@ -125,7 +126,7 @@ impl<R: Read> ArchiveReader<R> {
     }
 
     /// DE: Wie [`Self::new`]; `tail` für Format v4. EN: Like [`Self::new`]; `tail` for format v4.
-    pub fn with_tail(dec: DecryptReader<R>, tail: Option<bool>) -> Result<Self> {
+    pub fn with_tail(dec: DecryptReader<R>, tail: Option<TailRead>) -> Result<Self> {
         Ok(Self {
             dec,
             framing: Framing::new()?,
@@ -187,8 +188,8 @@ impl<R: Read> ArchiveReader<R> {
 
     /// DE: Roher entschlüsselter Strom (Inhalt „Strom“, kein Archiv; #83).
     /// EN: Raw decrypted stream (content "stream", no archive; #83).
-    pub fn into_stream(self) -> (DecryptReader<R>, bool) {
-        (self.dec, self.tail.unwrap_or(false))
+    pub fn into_stream(self) -> (DecryptReader<R>, TailRead) {
+        (self.dec, self.tail.unwrap_or_default())
     }
 
     /// DE: Bestätigt das Stromende (nichts mehr nach dem Ende-Eintrag).
@@ -196,9 +197,9 @@ impl<R: Read> ArchiveReader<R> {
     pub fn finish(self) -> Result<()> {
         match self.tail {
             None => self.dec.finish(),
-            Some(padded) => {
+            Some(tail) => {
                 let len = self.dec.position();
-                super::stream_v4::finish_tail(self.dec, len, padded)
+                super::tail_v4::finish_tail(self.dec, len, &tail)
             }
         }
     }

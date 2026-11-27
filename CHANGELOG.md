@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Verborgener Absender** (#316): `encrypt --sign-with KEY --hide-sender` legt Absenderschlüssel und
+  Signatur in den verschlüsselten Teil – Außenstehende sehen nur „signiert, Absender verborgen“, Empfänger
+  prüfen den Absender beim Entschlüsseln (auch mit `--signer`). Die Stufe „Privatsphäre hoch“ verbirgt den
+  Absender, wenn signiert wird. Format v4, lesbar ab beta.5.
+  EN: **Hidden sender** (#316): `encrypt --sign-with KEY --hide-sender` puts sender key and signature into
+  the encrypted part – outsiders only see "signed, sender hidden", recipients verify the sender when
+  decrypting (also with `--signer`). The level "privacy high" hides the sender when signing. Format v4,
+  readable from beta.5.
+
 - DE: **Anonyme Empfänger – EXPERIMENTELL** (#316, Recherche #340): `encrypt --anonymous-recipients --to …`
   schreibt Zugänge ohne Empfänger-ID (nur ML-KEM-1024, Format v4, lesbar ab beta.5); Öffnen probiert alle
   Zugänge. Die Anonymität ist für FIPS 203 noch nicht formal belegt – Warnung bei jeder Nutzung, nicht Teil

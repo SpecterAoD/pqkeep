@@ -50,6 +50,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
             .arg(super::factor_cmd::arg(lang))
             // DE: Absender-Signatur (#44). EN: Sender signature (#44).
             .args(super::signing::encrypt_args(lang))
+            .arg(super::hidden_sender::arg(lang))
             // DE: Intern fürs Kontextmenü: zwei Zeilen lesen und vergleichen.
             // EN: Internal for the context menu: read and compare two lines.
             .arg(
