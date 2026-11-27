@@ -485,6 +485,13 @@ Provider, Betriebssystemqueues, GUI/echte IME, private Skalare/Compiler/Stack/Re
 und vollständiger Prozess-/Dump-/Isolationsschutz bleiben offen. Keine neue
 ungeschützte Ersatzroute. Siehe [Terminalplan](security/TERMINAL_INPUT_PLAN.md).
 
+Record-Ausrichtung ausschließlich über geprüfte Bytebereiche bestimmen. Erst ein
+erfolgreicher nativer Read mit genau einem Record erzeugt eine initialisierte
+Leihsicht; deren exklusiver Guard-Borrow verhindert erneutes Überschreiben.
+Vor der geliehenen Key-Union-Sicht EventType prüfen, normale Felder sicher lesen.
+Native Aufrufe, geprüfte Union-Zugriffe und vollständiger Padding-Wipe bleiben
+begründete Grenzen. Siehe [Sichtenplan](security/SAFE_RECORD_BORROW_PLAN.md).
+
 Terminalmodus über Bestätigung und Wiederholung durchgehend halten. Linux prüft
 Flags/Read-Timing vor erstem Prompt erneut; auf Fehler/Abbruch/Unwind wartende Reste
 mit TCSAFLUSH verwerfen, bevor Echo zurückkehrt. Erfolgreicher Abschluss bewahrt

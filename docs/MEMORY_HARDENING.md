@@ -36,7 +36,7 @@ metadata. See the [scoped plan](security/PATH_COMPONENT_PLAN.md).
 DE: Terminalpasswörter auf Linux direkt mit rustix in gesperrte SecretBytes lesen;
 kein gepufferter Stdin-Reader oder console-Key-/Escape-Vec im privaten Leseweg.
 Windows-Records, UTF16-Zustand und UTF8-Scratch vor erstem Read sperren. Die FFI
-wählt eine ausgerichtete MaybeUninit-Sicht innerhalb des Callerpuffers; vollständiger
+wählt einen ausgerichteten, größenprüften Bytebereich ohne Referenz-Transmute; vollständiger
 volatiler Record-Wipe einschließlich Padding vor sicherem Bytezugriff/Rückgabe,
 auch bei Fehler/Unwind. Keine private Record-Rückgabe per Wert.
 EN: Preserve full-character backspace, bounded UTF8/UTF16 input and checked mode
@@ -54,6 +54,14 @@ GUI helpers/real IME and scalar/compiler/register/stack copies remain separate O
 boundaries; release panic=abort does not promise unwind cleanup. See the
 [terminal plan](security/TERMINAL_INPUT_PLAN.md). Root library/binary still forbid
 unsafe; Windows fixture FFI is confined to a platform dev feature and its sole own-console child.
+
+DE: Erst erfolgreicher nativer Read mit genau einem Record erzeugt eine geliehene
+initialisierte Sicht. Ihr exklusiver Guard-Borrow verhindert erneutes Überschreiben;
+EventType vor Key-Union prüfen und normale Felder sicher lesen. Kein Record als
+Wertkopie. Native Aufrufe, Union-Zugriffe und volatiler Padding-Wipe bleiben begründet.
+EN: Checked byte geometry replaces unsafe alignment; exclusive initialized record
+borrows replace extra raw field dereferences. Preserve locked ownership and full
+padding cleanup. See the [borrow plan](security/SAFE_RECORD_BORROW_PLAN.md).
 
 **Secret-Speichersperren sind zwingend**: Scheitert die Sperre eines verwalteten Secret-Typs,
 wird seine Konstruktion verweigert. Das ist noch kein Nachweis für alle vorgelagerten Kopien:
