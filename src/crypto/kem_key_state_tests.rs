@@ -40,11 +40,17 @@ macro_rules! check_variant {
             KeyState::<<$parameter as ml_kem::kem::Kem>::DecapsulationKey>::prepare().unwrap();
         locked(state.get());
         let before = ranges(state.get());
+        let mut workspace =
+            SecretState::new(ml_kem::KeyGenerationWorkspace::<$parameter>::default()).unwrap();
+        locked(workspace.get());
         state
             .key
             .get_mut()
-            .initialize_seed_in_place(seed_state::view(&seed).unwrap())
+            .initialize_seed_with_workspace(seed_state::view(&seed).unwrap(), workspace.get_mut())
             .unwrap();
+        locked(workspace.get());
+        let debug_is_redacted = format!("{:?}", workspace.get()) == "KeyGenerationWorkspace { .. }";
+        assert!(debug_is_redacted);
         assert!(ranges(state.get()) == before);
         assert!(state.get().encapsulation_key().to_bytes() == legacy.to_bytes());
         let mut exported = state.get().to_bytes();

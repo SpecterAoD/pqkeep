@@ -184,6 +184,7 @@ impl<P> crate::SeedKeyInPlace for DecapsulationKey<P>
 where
     P: KemParams,
 {
+    type Workspace = crate::KeyGenerationWorkspace<P>;
     fn public_state() -> Self {
         Self {
             dk_pke: MaybeBox::new(DecryptionKey::default()),
@@ -204,14 +205,18 @@ where
             && visit(core::ptr::from_ref(&*self.z).addr(), size_of_val(&*self.z))
     }
 
-    fn initialize_seed_in_place(&mut self, seed: &Seed) -> Result<(), InvalidKey> {
+    fn initialize_seed_with_workspace(
+        &mut self,
+        seed: &Seed,
+        workspace: &mut Self::Workspace,
+    ) -> Result<(), InvalidKey> {
         let Some(d) = self.d.as_mut() else {
             return Err(InvalidKey);
         };
         let (seed_d, seed_z) = seed.split_ref::<U32>();
         // DE: Erweiterten Schlüssel direkt befüllen; interne Sampling-/Hashflächen bleiben offen.
         // EN: Populate expanded key directly; internal sampling/hash storage remains open.
-        let ek_pke = self.dk_pke.generate_in_place(seed_d);
+        let ek_pke = self.dk_pke.generate_with_workspace(seed_d, workspace);
         self.ek = EncapsulationKey::from_encryption_key(ek_pke);
         d.copy_from_slice(seed_d);
         self.z.copy_from_slice(seed_z);

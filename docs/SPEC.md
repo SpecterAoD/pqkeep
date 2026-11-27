@@ -541,3 +541,5 @@ müssen Sperre vor Allokation/Bindung, Moves, Wipe/Unwind und echte Verweigerung
 belegen. Siehe [Parserzustandsplan](security/PARSER_STATE_OWNER_PLAN.md).
 
 DE: R6-Arbeitsstand: Gemeinsamer gepinnter Gitter-Codec mit geliehenen Ausgabezielen und ohne private 16-Byte-Konvertierungsarrays; CBD ohne zusätzliches Dekodierpolynom. Das schließt Sampling-/XOF-/Hash-/DSA-/AES-/Argon2-Arbeitsflächen nicht. Gesamtnachweis weiter offen.
+
+DE: KEM-Keygen erhält eine vor Seed-Verarbeitung vollständig gesperrte feste Arbeitsfläche für Sampling-/NTT-/Produkt-Zwischenwerte und PRF-/Hashausgaben. Verweigerung vor privatem Einstieg; interne XOF-/Keccak-Flächen und übrige R6-Gruppen bleiben offen.

@@ -20,9 +20,10 @@ pub(super) struct KeyState<T: SeedKeyInPlace> {
 impl<T: SeedKeyInPlace> KeyState<T> {
     pub(super) fn new(seed: &Seed) -> Result<Self> {
         let mut out = Self::prepare()?;
+        let mut workspace = SecretState::new(T::Workspace::default())?;
         out.key
             .get_mut()
-            .initialize_seed_in_place(seed)
+            .initialize_seed_with_workspace(seed, workspace.get_mut())
             .map_err(|_| Error::Crypto)?;
         Ok(out)
     }

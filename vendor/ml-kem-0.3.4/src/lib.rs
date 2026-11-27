@@ -65,6 +65,7 @@ mod encapsulation_key;
 // DE: Additiver Ausgabeweg. EN: Additive caller-owned output path.
 mod encapsulation_into;
 
+mod key_generation;
 #[cfg(feature = "zeroize")]
 mod key_in_place;
 
@@ -88,6 +89,7 @@ pub use kem::{
     self, Ciphertext, Decapsulate, Encapsulate, FromSeed, Generate, InvalidKey, Kem, Key,
     KeyExport, KeyInit, KeySizeUser, TryKeyInit,
 };
+pub use key_generation::KeyGenerationWorkspace;
 #[cfg(feature = "zeroize")]
 pub use key_in_place::SeedKeyInPlace;
 pub use ml_kem_512::MlKem512;

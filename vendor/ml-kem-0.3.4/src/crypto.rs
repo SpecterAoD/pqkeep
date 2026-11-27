@@ -71,14 +71,23 @@ pub(crate) fn PRF<Eta>(s: &B32, b: u8) -> PrfOutput<Eta>
 where
     Eta: CbdSamplingSize,
 {
+    let mut out = PrfOutput::<Eta>::default();
+    PRF_into::<Eta>(s, b, &mut out);
+    out
+}
+
+// DE: Ausgabe direkt ins vorab gesperrte Ziel; interner XOF-Zustand bleibt separat.
+// EN: Write directly into prelocked output; internal XOF state is a separate boundary.
+pub(crate) fn PRF_into<Eta>(s: &B32, b: u8, out: &mut PrfOutput<Eta>)
+where
+    Eta: CbdSamplingSize,
+{
     let mut h = Shake256::default();
     h.update(s.as_ref());
     h.update(&[b]);
     let mut r = h.finalize_xof();
 
-    let mut out = PrfOutput::<Eta>::default();
-    r.read(&mut out);
-    out
+    r.read(out);
 }
 
 pub(crate) fn XOF(rho: &B32, i: u8, j: u8) -> impl XofReader {

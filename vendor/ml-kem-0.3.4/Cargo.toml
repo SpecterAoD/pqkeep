@@ -65,6 +65,8 @@ pkcs8 = [
 zeroize = [
     "module-lattice/zeroize",
     "dep:zeroize",
+    "sha3/zeroize",
+    "shake/zeroize",
 ]
 
 [lib]

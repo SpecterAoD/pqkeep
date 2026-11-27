@@ -15,6 +15,7 @@ struct Witness {
     entered: AtomicBool,
     wipes: AtomicUsize,
     released_before_free: AtomicBool,
+    workspace_dropped_locked: AtomicBool,
 }
 
 thread_local! {
@@ -24,6 +25,46 @@ thread_local! {
 struct Probe {
     bytes: Box<[u8]>,
     witness: Arc<Witness>,
+}
+
+struct ProbeWorkspace(ml_kem::KeyGenerationWorkspace<ml_kem::MlKem512>);
+
+impl Default for ProbeWorkspace {
+    fn default() -> Self {
+        #[cfg(target_os = "linux")]
+        if CURRENT.with(|current| current.borrow().as_ref().unwrap().mode == 5) {
+            // DE: Nur im ausdrücklich gestarteten eigenen Denial-Testkind.
+            // EN: Only in the explicitly launched own denial-test child.
+            assert_eq!(std::env::var("PQKEEP_NESTED_KEM_DENIAL").unwrap(), "5");
+            rustix::process::setrlimit(
+                rustix::process::Resource::Memlock,
+                rustix::process::Rlimit {
+                    current: Some(0),
+                    maximum: Some(0),
+                },
+            )
+            .unwrap();
+        }
+        Self(ml_kem::KeyGenerationWorkspace::default())
+    }
+}
+
+impl ZeroizeOnDrop for ProbeWorkspace {}
+
+impl Drop for ProbeWorkspace {
+    fn drop(&mut self) {
+        CURRENT.with(|current| {
+            let current = current.borrow();
+            let witness = current.as_ref().unwrap();
+            if witness.entered.load(Ordering::SeqCst) {
+                crate::locked_owner_test_support::locked(self);
+                crate::locked_owner_test_support::locked(&self.0);
+                witness
+                    .workspace_dropped_locked
+                    .store(true, Ordering::SeqCst);
+            }
+        });
+    }
 }
 
 impl Zeroize for Probe {
@@ -50,6 +91,7 @@ impl Drop for Probe {
 }
 
 impl SeedKeyInPlace for Probe {
+    type Workspace = ProbeWorkspace;
     fn public_state() -> Self {
         Self {
             bytes: vec![0; 65536].into_boxed_slice(),
@@ -77,16 +119,22 @@ impl SeedKeyInPlace for Probe {
         first && visit(base + 16384, 32768) && visit(base + 49152, 16384)
     }
 
-    fn initialize_seed_in_place(
+    fn initialize_seed_with_workspace(
         &mut self,
         seed: &Seed,
+        workspace: &mut Self::Workspace,
     ) -> std::result::Result<(), ml_kem::kem::InvalidKey> {
+        crate::locked_owner_test_support::locked(workspace);
+        crate::locked_owner_test_support::locked(&workspace.0);
         assert!(memlock::is_locked(self.bytes.as_ptr().addr() + 32768));
         self.witness.entered.store(true, Ordering::SeqCst);
         self.bytes[32768..32832].copy_from_slice(seed);
         self.bytes[32768] |= 1;
         if self.witness.mode == 1 {
             return Err(ml_kem::kem::InvalidKey);
+        }
+        if self.witness.mode == 3 {
+            std::panic::resume_unwind(Box::new(()));
         }
         Ok(())
     }
@@ -98,7 +146,7 @@ mod denial;
 
 #[test]
 fn nested_payload_is_wiped_then_unlocked_before_free_on_success_error_and_unwind() {
-    for mode in 0..3 {
+    for mode in 0..4 {
         let witness = Arc::new(Witness {
             mode,
             ..Witness::default()
@@ -116,10 +164,11 @@ fn nested_payload_is_wiped_then_unlocked_before_free_on_success_error_and_unwind
                 }
             }
         }));
-        assert_eq!(result.is_err(), mode == 2);
+        assert_eq!(result.is_err(), mode == 2 || mode == 3);
         assert!(witness.entered.load(Ordering::SeqCst));
         assert_eq!(witness.wipes.load(Ordering::SeqCst), 1);
         assert!(witness.released_before_free.load(Ordering::SeqCst));
+        assert!(witness.workspace_dropped_locked.load(Ordering::SeqCst));
         CURRENT.with(|current| *current.borrow_mut() = None);
     }
 }

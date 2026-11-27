@@ -146,6 +146,24 @@ where
     }))
 }
 
+// DE: Feste Zielpolynome und PRF-Ausgabe wiederverwenden, keine privaten Rückgaben.
+// EN: Reuse fixed destination polynomials and PRF output without private returns.
+pub(crate) fn sample_poly_vec_cbd_into<Eta, K>(
+    sigma: &B32,
+    start_n: u8,
+    out: &mut Vector<K>,
+    prf: &mut PrfOutput<Eta>,
+) where
+    Eta: CbdSamplingSize,
+    K: ArraySize,
+{
+    for (i, target) in out.0.iter_mut().enumerate() {
+        let i: u8 = Truncate::truncate(i);
+        crate::crypto::PRF_into::<Eta>(sigma, start_n + i, prf);
+        sample_poly_cbd_into::<Eta>(prf, target);
+    }
+}
+
 /// The Number Theoretic Transform (NTT) is a variant of the Discrete Fourier Transform (DFT)
 /// defined over a finite field that turns costly polynomial multiplications into simple
 /// coefficient-wise multiplications modulo a fixed prime.
@@ -273,21 +291,25 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
 impl MultiplyNtt for BaseField {
     fn multiply_ntt(lhs: &NttPolynomial, rhs: &NttPolynomial) -> NttPolynomial {
         let mut out = NttPolynomial::new(Array::default());
-
-        for i in 0..128 {
-            let (c0, c1) = base_case_multiply(
-                lhs.0[2 * i],
-                lhs.0[2 * i + 1],
-                rhs.0[2 * i],
-                rhs.0[2 * i + 1],
-                i,
-            );
-
-            out.0[2 * i] = c0;
-            out.0[2 * i + 1] = c1;
-        }
-
+        multiply_ntt_into(lhs, rhs, &mut out);
         out
+    }
+}
+
+// DE: Ursprüngliche Basismultiplikation in geliehene Fläche schreiben.
+// EN: Write the original base multiplication into borrowed storage.
+pub(crate) fn multiply_ntt_into(lhs: &NttPolynomial, rhs: &NttPolynomial, out: &mut NttPolynomial) {
+    for i in 0..128 {
+        let (c0, c1) = base_case_multiply(
+            lhs.0[2 * i],
+            lhs.0[2 * i + 1],
+            rhs.0[2 * i],
+            rhs.0[2 * i + 1],
+            i,
+        );
+
+        out.0[2 * i] = c0;
+        out.0[2 * i + 1] = c1;
     }
 }
 

@@ -6,6 +6,15 @@ use super::*;
 
 #[test]
 fn nested_key_lock_denial_releases_prior_payloads_before_private_entry() {
+    run_denial("4");
+}
+
+#[test]
+fn key_generation_workspace_denial_precedes_private_entry() {
+    run_denial("5");
+}
+
+fn run_denial(mode: &str) {
     use std::time::{Duration, Instant};
     let mut child = std::process::Command::new(std::env::current_exe().unwrap())
         .args([
@@ -14,7 +23,7 @@ fn nested_key_lock_denial_releases_prior_payloads_before_private_entry() {
             "--ignored",
             "--test-threads=1",
         ])
-        .env("PQKEEP_NESTED_KEM_DENIAL", "1")
+        .env("PQKEEP_NESTED_KEM_DENIAL", mode)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
@@ -42,10 +51,11 @@ fn nested_key_lock_denial_releases_prior_payloads_before_private_entry() {
 #[test]
 #[ignore = "DE: Nur im begrenzten Kindprozess. EN: Only in the bounded child process."]
 fn nested_key_denial_child() {
-    assert_eq!(std::env::var("PQKEEP_NESTED_KEM_DENIAL").unwrap(), "1");
+    let mode = std::env::var("PQKEEP_NESTED_KEM_DENIAL").unwrap();
+    assert!(mode == "4" || mode == "5");
     let seed = rng::secret(64).unwrap();
     let witness = Arc::new(Witness {
-        mode: 4,
+        mode: mode.parse().unwrap(),
         ..Witness::default()
     });
     CURRENT.with(|current| *current.borrow_mut() = Some(witness.clone()));

@@ -71,6 +71,16 @@ private boxes are never replaced during initialization. Root PKE keygen writes
 expanded state through borrowed NTT output, sharing the original transform loops.
 Sampling/hash/PKE intermediates remain OPEN; this is not copy-free private construction.
 
+DE: KeyGenerationWorkspace ergänzt feste Inline-Flächen für Samplingvektor,
+Fehler-NTT, Produktpolynom, noch private öffentliche-Schlüssel-Zwischensummen,
+PRF-/G-Ausgabe und SHA3-512-Zustand. Root sperrt die gesamte stabile Arbeitsfläche
+vor dem Seed-Einstieg. Die alten APIs teilen dieselben Sampling-/NTT-/Produkt-
+Schleifen; nur vollständig fertiggestellte öffentliche Werte werden zurückgegeben.
+EN: Key generation borrows prelocked fixed storage, with no nested workspace heaps.
+Root refuses failed workspace locks before private initialization. ML-KEM/zeroize
+now forwards SHA3/SHAKE zeroization explicitly, including standalone consumers.
+Internal PRF XOF/Keccak storage and encryption/decryption scratch remain OPEN.
+
 DE: Das aktuelle Format braucht genau 32 HKDF-Bytes = einen SHA3-256-Block. Der neue
 HKDF-Einstieg ist ausdrücklich darauf begrenzt, kein neuer allgemeiner KDF-Baukasten.
 HMAC-Zustand und Scratch/PRK/Ausgabe liegen in typisierten gesperrten SecretBuffer-Instanzen.

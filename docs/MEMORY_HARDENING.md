@@ -344,3 +344,12 @@ EN: Borrowed codec destinations share the original packing/reduction logic. The
 CBD sampler no longer requires an extra decoded polynomial. Legacy return values,
 sampling/hash/XOF construction and other R6 matrix boundaries remain OPEN.
 
+DE: Keygen verwendet zusätzlich eine feste, vollständig vorab gesperrte Arbeitsfläche
+für Sampling-/Fehlervektoren, NTT-Produkt und geheime Zwischensummen, PRF-/G-Ausgabe
+und äußeren Hashzustand. Nur fertige öffentliche Schlüsselwerte verlassen diese
+Fläche als Wert. Sperrverweigerung erfolgt vor dem Seed-Einstieg; Fehler sowie
+Unwind innerhalb/nach Initialisierung erhalten Wipe vor Unlock/Free.
+EN: Fixed key-generation workspace is locked before private initialization and
+wiped before unlocking. This does not protect the remaining internal PRF XOF and
+Keccak scratch or encryption/decryption operations. R6 remains incomplete.
+

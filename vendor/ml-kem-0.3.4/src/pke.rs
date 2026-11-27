@@ -4,7 +4,7 @@ use crate::algebra::{
     sample_poly_vec_cbd,
 };
 use crate::compress::Compress;
-use crate::crypto::{G, PRF};
+use crate::crypto::PRF;
 use crate::param::{EncodedDecryptionKey, EncodedEncryptionKey, PkeParams};
 use array::typenum::{U1, Unsigned};
 use core::fmt;
@@ -82,24 +82,42 @@ where
     // DE: Erweiterten Schlüssel direkt im bestehenden Ziel befüllen; kein privates Self zurück.
     // EN: Populate the expanded key in existing storage; never return private Self here.
     pub(crate) fn generate_in_place(&mut self, d: &B32) -> EncryptionKey<P> {
-        // Generate random seeds
+        self.generate_with_workspace(d, &mut crate::KeyGenerationWorkspace::default())
+    }
+
+    // DE: Alle festen privaten Vektoren direkt in vorab gesperrtem Caller-Speicher.
+    // EN: Keep all fixed private vectors directly in caller-prelocked storage.
+    pub(crate) fn generate_with_workspace(
+        &mut self,
+        d: &B32,
+        workspace: &mut crate::KeyGenerationWorkspace<P>,
+    ) -> EncryptionKey<P> {
         let k = P::K::U8;
-        let (rho, sigma) = G(&[&d[..], &[k]]);
-
-        // Sample pseudo-random matrix and vectors
-        let A_hat: NttMatrix<P::K> = matrix_sample_ntt(&rho, false);
-        let s: Vector<P::K> = sample_poly_vec_cbd::<P::Eta1, P::K>(&sigma, 0);
-        let e: Vector<P::K> = sample_poly_vec_cbd::<P::Eta1, P::K>(&sigma, P::K::U8);
-
-        // NTT the vectors
-        s.ntt_into(&mut self.s_hat);
-        let e_hat = e.ntt();
-
-        // Compute the public value
-        let t_hat = &(&A_hat * &self.s_hat) + &e_hat;
-
-        // Assemble the keys
-        EncryptionKey { t_hat, rho }
+        crate::crypto::G_into_with_hash(&[&d[..], &[k]], &mut workspace.g, &mut workspace.hash);
+        let (rho, sigma) = workspace.g.split_ref::<array::typenum::U32>();
+        let A_hat: NttMatrix<P::K> = matrix_sample_ntt(rho, false);
+        crate::algebra::sample_poly_vec_cbd_into::<P::Eta1, P::K>(
+            sigma,
+            0,
+            &mut workspace.sampled,
+            &mut workspace.prf,
+        );
+        workspace.sampled.ntt_into(&mut self.s_hat);
+        crate::algebra::sample_poly_vec_cbd_into::<P::Eta1, P::K>(
+            sigma,
+            P::K::U8,
+            &mut workspace.sampled,
+            &mut workspace.prf,
+        );
+        workspace.sampled.ntt_into(&mut workspace.error);
+        let rho = rho.clone();
+        workspace.compute_public(&A_hat, &self.s_hat);
+        // DE: Erst nach vollständiger Fehleraddition sind t_hat/rho öffentliche Ausgabe.
+        // EN: Only after complete error addition are t_hat/rho public output.
+        EncryptionKey {
+            t_hat: workspace.public.clone(),
+            rho,
+        }
     }
 
     /// Decrypt ciphertext to obtain the encrypted value, according to the K-PKE.Decrypt procedure.
