@@ -123,7 +123,9 @@ ausgegeben. Sichtbar bleiben Größenordnung, Anzahl und Zeitpunkt der Dateien.
 `encrypt --anonymous-recipients --to …` schreibt Zugänge **ohne Empfänger-ID** (nur ML-KEM-1024, Format v4,
 lesbar ab beta.5); Außenstehende sehen nicht, für wen die Datei ist, wohl aber die Anzahl der Empfänger.
 Zum Öffnen probiert PQKeep alle Zugänge. **Experimentell**: Die Anonymität ist für die Norm FIPS 203 noch nicht
-formal belegt (Details [CRYPTO.md](CRYPTO.md), #340); PQKeep warnt bei jeder Nutzung.
+formal belegt (Details [CRYPTO.md](CRYPTO.md), #340); PQKeep warnt bei jeder Nutzung. Die Stufe `--privacy high`
+nimmt sie mit, wenn alle Empfänger ML-KEM-1024 haben; abwählbar mit `--no-anonymous-recipients` bzw. per
+Rückfrage in Menü und Kontextmenü.
 
 ## Verborgener Absender (#316)
 
@@ -213,7 +215,9 @@ order of magnitude, number and timing of files stay visible.
 **Anonymous recipients (experimental, #316/#340):** `encrypt --anonymous-recipients --to …` writes slots
 **without recipient ID** (ML-KEM-1024 only, format v4, readable from beta.5); outsiders cannot see for whom the
 file is, only how many recipients there are; PQKeep tries all slots to open it. **Experimental**: anonymity is
-not yet formally established for FIPS 203 (see [CRYPTO.md](CRYPTO.md), #340); PQKeep warns on every use.
+not yet formally established for FIPS 203 (see [CRYPTO.md](CRYPTO.md), #340); PQKeep warns on every use. The level
+`--privacy high` includes them when all recipients use ML-KEM-1024; deselect with `--no-anonymous-recipients`
+or via the question in menu and context menu.
 
 **Hidden sender (#316):** `encrypt --sign-with KEY --hide-sender` (also part of `--privacy high` when signing)
 puts sender key and signature into the encrypted part (format v4, readable from beta.5). Outsiders only see

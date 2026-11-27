@@ -6,6 +6,7 @@
 //! Without arguments in a terminal: interactive menu.
 
 mod access;
+mod anonymous;
 mod args;
 mod args_files;
 mod check_cmd;

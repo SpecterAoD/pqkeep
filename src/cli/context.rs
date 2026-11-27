@@ -157,7 +157,8 @@ fn encrypt(s: &IntegrateTexts, lang: Lang, path: &str) -> CliResult {
         args.extend(["--out", &out, "--", path]);
         return child(lang, &args);
     }
-    let to = super::recipients_ui::to_args(&super::context_many::recipients(s, lang)?);
+    let all = super::context_many::recipients(s, lang)?;
+    let to = super::anonymous::to_args(&all, private, || super::anonymous::keep_terminal(lang))?;
     let sign = sign_args(lang)?;
     let mut args = vec!["encrypt"];
     args.extend(to.iter().map(String::as_str));

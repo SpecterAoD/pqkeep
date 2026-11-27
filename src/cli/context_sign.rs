@@ -63,7 +63,8 @@ pub(super) fn for_recipients(
     targets: &[PathBuf],
 ) -> CliResult {
     let all = super::context_dialog_many::recipients(ui, Path::new(path))?;
-    let to = super::recipients_ui::to_args(&all);
+    let keep = || Ok(ui.dlg.question(super::anonymous::keep_question(ui.lang)));
+    let to = super::anonymous::to_args(&all, !level.is_empty(), keep)?;
     let sign = ask(ui, Path::new(path))?;
     let sign_args = sign.as_ref().map(SignChoice::args).unwrap_or_default();
     let mut cmd = vec!["encrypt"];

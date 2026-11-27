@@ -208,6 +208,13 @@ Identität ist vorher nicht sichtbar). `inspect` zeigt „signiert, Absender ver
 Tests `tests/files_hidden_sender.rs`, `tests/cli_hidden_sender.rs`, Unit-Test mit neu verschlüsseltem
 Trailer (verschobene Grenze, gekippte Signatur, unbekannter Typ); QA1-FMT-014.
 
+**Schritt 6 (Stufe `--privacy high` vollständig) umgesetzt** (Entscheidung Thomas 27.11.2026): Die Stufe setzt
+zufälligen Namen, Füllung, beim Signieren den verborgenen Absender und – abweichend von Schritt 4 – auch die
+**experimentellen anonymen Empfänger**, wenn alle Empfänger ML-KEM-1024 haben (sonst Hinweis, IDs sichtbar).
+Jede Nutzung warnt; Abwahl mit `--no-anonymous-recipients`, in Menü und Kontextmenü (Terminal und Fenster,
+einzeln und mehrfach) per Rückfrage mit Hinweis „experimentell“, Vorauswahl behalten. CLI `src/cli/anonymous.rs`;
+Tests `tests/cli_privacy_high.rs`.
+
 ## Umsetzung
 
 Je eigener Plan und PR, Reihenfolge **vor #98** (versionierte Core-API; dort Optionen als
@@ -338,7 +345,12 @@ memory; the reader holds back 7244 bytes, verifies Σh over header, hash and bot
 publishing and only then compares with `--signer` (the identity is not visible earlier). `inspect` shows
 "signed, sender hidden" (JSON `signer: {hidden: true, verified: false}`). API: `EncryptOptions {
 hide_sender }` (provisional until #98). Tests incl. a unit test with a re-encrypted trailer (shifted
-boundary, flipped signature, unknown type); QA1-FMT-014.
+boundary, flipped signature, unknown type); QA1-FMT-014. **Step 6 (complete `--privacy high`) implemented** (maintainer decision
+2026-11-27): the level sets random name, padding, the hidden sender when signing and – unlike step 4 – also the
+**experimental anonymous recipients** when all recipients use ML-KEM-1024 (else a notice, IDs visible). Every
+use warns; deselect with `--no-anonymous-recipients`, in menu and context menu (terminal and windows, single and
+several) via a question marked "experimental", default keep. CLI `src/cli/anonymous.rs`; tests
+`tests/cli_privacy_high.rs`.
 
 **Implementation** (one plan and PR each, **before #98**, then #99 → #71): 1. core v4 (option bits,
 `commit`, plain trailer, content type 3, reader, fuzz target); 2. CLI stream (#83); 3. padding; 4.

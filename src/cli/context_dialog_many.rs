@@ -100,6 +100,20 @@ fn repeat(ui: &Ui<'_>, m: &ManyTexts, mut step: impl FnMut() -> CliResult<Outcom
     Err(Failure::new(code::ERROR, ""))
 }
 
+/// DE: Zugangsargumente: 1 = Empfänger (bei Stufe hoch mit Rückfrage zu anonymen Empfängern),
+/// 2 = Passphrase und Faktordatei (Format v2). EN: Access arguments: 1 = recipients (with level high
+/// asking about anonymous recipients), 2 = passphrase and factor file (format v2).
+fn access_args(ui: &Ui<'_>, mode: usize, near: &Path, private: bool) -> CliResult<Vec<String>> {
+    match mode {
+        1 => {
+            let keep = || Ok(ui.dlg.question(super::anonymous::keep_question(ui.lang)));
+            super::anonymous::to_args(&recipients(ui, near)?, private, keep)
+        }
+        2 => Ok(vec![FLAG.to_owned(), ui.ask_for(near, Ask::Factor)?]),
+        _ => Ok(Vec::new()),
+    }
+}
+
 fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> CliResult {
     let ways: Vec<&str> = m.ctx_ways.split('|').collect();
     let way = ui.dlg.choose(m.ctx_how, &ways).ok_or_else(cancelled)?;
@@ -125,19 +139,14 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     let mode = ui.dlg.choose(ui.s.ctx_mode, &modes).ok_or_else(cancelled)?;
     // DE: Stufe „Privatsphäre hoch“ (#315): Reste über den Platzhalter aufräumen.
     // EN: Level "privacy high" (#315): clean leftovers via the placeholder.
-    let targets = if ui.dlg.question(super::privacy::context_question(ui.lang)) {
+    let private = ui.dlg.question(super::privacy::context_question(ui.lang));
+    let targets = if private {
         cmd.extend(super::privacy::LEVEL_HIGH.map(String::from));
         super::privacy::any_random_targets(targets.iter().map(|t| super::privacy::dir_of(t)))
     } else {
         targets
     };
-    if mode == 1 {
-        cmd.extend(recipients_ui::to_args(&recipients(ui, &sources[0])?));
-    }
-    // DE: Auswahl 2 = Passphrase und Faktordatei (Format v2). EN: Choice 2 = with factor file.
-    if mode == 2 {
-        cmd.extend([FLAG.to_owned(), ui.ask_for(&sources[0], Ask::Factor)?]);
-    }
+    cmd.extend(access_args(ui, mode, &sources[0], private)?);
     // DE: Optional als Absender signieren (#287). EN: Optionally sign as sender (#287).
     let sign = super::context_sign::ask(ui, &sources[0])?;
     cmd.extend(
