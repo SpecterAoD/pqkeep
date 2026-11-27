@@ -21,6 +21,10 @@ impl OutputFile {
         }
     }
 
+    pub(crate) fn set_len(&self, len: u64) -> io::Result<()> {
+        self.file.set_len(len)
+    }
+
     pub(crate) fn sync_all(&self) -> io::Result<()> {
         if let Some(state) = &self.state {
             fault::check_state(state, Point::BeforeFileSync)?;

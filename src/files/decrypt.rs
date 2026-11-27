@@ -15,15 +15,14 @@ use std::path::Path;
 use sha3::{Digest, Sha3_256};
 
 use super::archive::{ArchiveReader, Entry};
-use super::decrypt_v2;
+use super::decrypt_v2::{self, Opened};
 use super::format::{Content, FileHeader, HeaderMode, MAGIC};
 use super::format_v2::{self, HeaderV2};
 use super::output::{self, TempOutput};
 use super::paths::{self, PathSet};
 use super::signed_io::{self, Body, SignatureCheck, SignedBody};
-use super::signer_v3::{FILE_SIGNATURE_LEN, check_commit};
 use super::{Report, Unlock};
-use crate::crypto::stream::{DecryptReader, PREFIX_LEN, read_full};
+use crate::crypto::stream::{DecryptReader, read_full};
 use crate::crypto::wrap;
 use crate::crypto::{KeyAlgorithm, SecretBytes};
 use crate::envelope::PublicKeyFile;
@@ -96,26 +95,9 @@ pub(super) fn open(
     let mut check = None;
     let opened = if is_v2 {
         let header = HeaderV2::read(&mut reader)?;
-        signed_io::require(signer, header.signer.as_ref())?;
-        let file_key = decrypt_v2::unwrap_key(&header, unlock)?;
-        // DE: v4: `commit` immer prüfen (auch ohne Absender). EN: v4: always check `commit`.
-        match (&header.v4, &header.signer) {
-            (Some(v4), _) => super::format_v4::check_commit_v4(v4, file_key.expose())?,
-            (None, Some(s)) => check_commit(s, file_key.expose())?,
-            (None, None) => {}
-        }
-        if let Some(s) = &header.signer {
-            let bytes = header.encode()?;
-            let fixed = (bytes.len() + FILE_SIGNATURE_LEN) as u64;
-            let body_len = file_len.checked_sub(fixed).ok_or(Error::Decrypt)?;
-            check = Some((SignatureCheck::new(bytes, s.clone()), body_len));
-        }
-        Opened {
-            file_key,
-            stream_aad: header.stream_aad()?,
-            prefix: header.prefix,
-            content: header.content,
-        }
+        let (v2, signature) = decrypt_v2::open_header(&header, unlock, signer, file_len)?;
+        check = signature;
+        v2
     } else {
         signed_io::require(signer, None)?;
         let header = FileHeader::read(&mut reader)?;
@@ -124,6 +106,7 @@ pub(super) fn open(
             stream_aad: header.stream_aad(),
             prefix: header.prefix,
             content: header.content,
+            tail: None,
         }
     };
     let (body, check) = match check {
@@ -137,15 +120,11 @@ pub(super) fn open(
         body,
     )?;
     drop(opened.file_key);
-    Ok((ArchiveReader::new(dec)?, opened.content, check))
-}
-
-/// DE: Was nach dem Header für den Strom nötig ist. EN: What the stream needs after the header.
-struct Opened {
-    file_key: SecretBytes,
-    stream_aad: Vec<u8>,
-    prefix: [u8; PREFIX_LEN],
-    content: Content,
+    Ok((
+        ArchiveReader::with_tail(dec, opened.tail)?,
+        opened.content,
+        check,
+    ))
 }
 
 /// DE: Nur Magic + Version 2, 3 oder 4 führt zum v2-Parser; alles andere prüft der v1-Parser wie

@@ -5,7 +5,7 @@
 
 use super::encrypt_v2;
 use super::format::{Content, FileHeader, HeaderMode};
-use super::{PassphraseAccess, Protection};
+use super::{EncryptOptions, PassphraseAccess, Protection};
 use crate::crypto::kdf::{KdfParams, SALT_LEN};
 use crate::crypto::stream::PREFIX_LEN;
 use crate::crypto::wrap::{self, Wrapped};
@@ -23,12 +23,13 @@ pub(super) fn build(
     prefix: [u8; PREFIX_LEN],
     protection: &Protection<'_>,
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    (signer, options): (Option<&[u8]>, EncryptOptions),
 ) -> Result<(Vec<u8>, Vec<u8>)> {
-    if signer.is_some() || content == Content::Stream {
+    let needs_v4 = options.pad || options.anonymous || content == Content::Stream;
+    if signer.is_some() || needs_v4 {
         // DE: Mit Absender immer v3, Ströme immer v4 (auch bei einem einzelnen Zugang).
         // EN: With a sender always v3, streams always v4 (even for a single slot).
-        let header = v3_header(content, prefix, protection, file_key, signer)?;
+        let header = v3_header(content, prefix, protection, file_key, (signer, options))?;
         return Ok((header.encode()?, header.stream_aad()?));
     }
     let v1 = match protection {
@@ -57,7 +58,7 @@ pub(super) fn build(
                 passphrase.as_ref(),
                 recipients,
                 file_key,
-                signer,
+                (signer, EncryptOptions::default()),
             )?;
             return Ok((header.encode()?, header.stream_aad()?));
         }
@@ -71,7 +72,7 @@ fn v3_header(
     prefix: [u8; PREFIX_LEN],
     protection: &Protection<'_>,
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    signer: (Option<&[u8]>, EncryptOptions),
 ) -> Result<super::HeaderV2> {
     match protection {
         Protection::Passphrase { passphrase, params } => {

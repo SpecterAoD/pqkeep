@@ -14,6 +14,7 @@ use super::format::Content;
 use super::format_v2::{HeaderV2, MAX_RECIPIENTS, Slot};
 use super::format_v4;
 use super::signer_v3::{self, Signer};
+use super::{EncryptOptions, anon_v4};
 use crate::crypto::aead::{self, NONCE_LEN};
 use crate::crypto::kdf::SALT_LEN;
 use crate::crypto::stream::PREFIX_LEN;
@@ -88,7 +89,42 @@ fn recipient_slot(target: &Target<'_>) -> Result<(Slot, SecretBytes)> {
 
 fn nonce_of(slot: &Slot) -> [u8; NONCE_LEN] {
     match slot {
-        Slot::Passphrase { nonce, .. } | Slot::Recipient { nonce, .. } => *nonce,
+        Slot::Passphrase { nonce, .. }
+        | Slot::Recipient { nonce, .. }
+        | Slot::Anonymous { nonce, .. } => *nonce,
+    }
+}
+
+/// DE: Zugänge samt Packschlüsseln; anonyme Zugänge kanonisch nach Chiffrat sortiert (#316).
+/// EN: Slots with wrapping keys; anonymous slots canonically sorted by ciphertext (#316).
+fn build_slots(
+    passphrase: Option<&PassphraseAccess<'_>>,
+    targets: &[Target<'_>],
+    anonymous: bool,
+) -> Result<(Vec<Slot>, Vec<SecretBytes>)> {
+    let mut pairs = Vec::with_capacity(targets.len() + 1);
+    for target in targets {
+        pairs.push(if anonymous {
+            anon_v4::slot(target.algorithm, target.public_key)?
+        } else {
+            recipient_slot(target)?
+        });
+    }
+    if anonymous {
+        pairs.sort_by(|(a, _), (b, _)| ciphertext(a).cmp(ciphertext(b)));
+    }
+    if let Some(access) = passphrase {
+        pairs.insert(0, passphrase_slot(access)?);
+    }
+    Ok(pairs.into_iter().unzip())
+}
+
+fn ciphertext(slot: &Slot) -> &[u8] {
+    match slot {
+        Slot::Anonymous { kem_ciphertext, .. } | Slot::Recipient { kem_ciphertext, .. } => {
+            kem_ciphertext
+        }
+        Slot::Passphrase { .. } => &[],
     }
 }
 
@@ -106,7 +142,7 @@ pub(super) fn build(
     passphrase: Option<&PassphraseAccess<'_>>,
     recipients: &[&PublicKeyFile],
     file_key: &SecretBytes,
-    signer: Option<&[u8]>,
+    (signer, options): (Option<&[u8]>, EncryptOptions),
 ) -> Result<HeaderV2> {
     if file_key.expose().len() != FILE_KEY_LEN {
         return Err(Error::InvalidInput { field: "file_key" });
@@ -115,18 +151,10 @@ pub(super) fn build(
     if passphrase.is_none() && targets.is_empty() {
         return Err(RECIPIENT);
     }
-    let mut slots = Vec::with_capacity(targets.len() + 1);
-    let mut keks = Vec::with_capacity(targets.len() + 1);
-    let passphrase = passphrase.map(passphrase_slot).transpose()?;
-    let recipients = targets.iter().map(recipient_slot);
-    for pair in passphrase.map(Ok).into_iter().chain(recipients) {
-        let (slot, kek) = pair?;
-        slots.push(slot);
-        keks.push(kek);
-    }
-    // DE: Ströme nur als v4 (#83); `commit` dann mit v4-Domäne, auch im Absenderblock.
-    // EN: Streams only as v4 (#83); `commit` then with the v4 domain, also in the sender block.
-    let v4 = format_v4::for_encrypt(content, signer.is_some(), file_key.expose())?;
+    let (slots, keks) = build_slots(passphrase, &targets, options.anonymous)?;
+    // DE: v4 nur wenn nötig (Strom, Füllung, anonym); `commit` dann mit v4-Domäne.
+    // EN: v4 only if needed (stream, padding, anonymous); `commit` then with the v4 domain.
+    let v4 = format_v4::for_encrypt(content, signer.is_some(), options, file_key.expose())?;
     let commit = |key: &[u8]| match &v4 {
         Some(v4) => Ok(v4.commit),
         None => signer_v3::commit(key),

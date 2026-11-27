@@ -38,6 +38,7 @@ pub(super) fn file_commands(lang: Lang) -> [Command; 3] {
                     .action(ArgAction::Append),
             )
             .arg(flag(recipients::WITH_PASSPHRASE, recipients::help(lang)).requires("to"))
+            .arg(flag(recipients::ANONYMOUS, recipients::anonymous_help(lang)).requires("to"))
             .arg(profile(lang))
             .arg(out_optional(lang))
             .arg(super::args::min_bits(lang))

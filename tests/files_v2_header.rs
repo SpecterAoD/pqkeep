@@ -187,7 +187,13 @@ fn v03_reserved_and_unknown_slot_types() {
     let base = header(Content::File, [0; 7], vec![pslot(true)])
         .encode()
         .unwrap();
-    for kind in [0, 3, 4, 5, 9, 255] {
+    // DE: Typ 5 (anonym, #316) gibt es nur in v4 mit ANON; in v2 wird er unten gesondert abgewiesen.
+    // EN: Type 5 (anonymous, #316) exists only in v4 with ANON; in v2 it is rejected separately below.
+    let mut anonymous = base.clone();
+    anonymous[23] = 5;
+    assert!(parse(&anonymous).is_err());
+    assert!(parse(&anonymous[..24]).is_err());
+    for kind in [0, 3, 4, 9, 255] {
         let mut changed = base.clone();
         changed[23] = kind;
         assert_eq!(parse(&changed).err(), Some(Error::Unsupported), "{kind}");

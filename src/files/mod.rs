@@ -12,6 +12,7 @@
 //! A factor file or several access slots produce format v2 (`docs/V2_DRAFT.md`), anything
 //! else still v1; both are read.
 
+mod anon_v4;
 mod archive;
 mod check;
 mod confidential_entries;
@@ -47,7 +48,10 @@ pub use check::{check, check_with};
 pub use confidential_entries::ConfidentialEntries;
 pub use confidential_text::ConfidentialText;
 pub use decrypt::{decrypt, decrypt_with};
-pub use encrypt::{encrypt, encrypt_many, encrypt_many_signed, encrypt_many_under, encrypt_signed};
+pub use encrypt::{
+    encrypt, encrypt_many, encrypt_many_signed, encrypt_many_under, encrypt_many_with_options,
+    encrypt_signed, encrypt_with_options,
+};
 pub use format::{Content, FileHeader, HeaderMode};
 pub use format_v2::{HeaderV2, Slot};
 pub use list::{EntryKind, ListEntry, Listing, MAX_LIST_ENTRIES, MAX_LIST_PATH_BYTES, list};
@@ -67,6 +71,19 @@ use crate::security::{Passphrase, StrongPassphrase};
 
 /// DE: Empfohlene Dateiendung. EN: Recommended file extension.
 pub const EXTENSION: &str = "pqkf";
+
+/// DE: Zusätzliche Optionen beim Verschlüsseln (Format v4, `docs/V4_DRAFT.md`); Standard = keine,
+/// dann bleiben v1–v3 Byte für Byte gleich. Vorläufig bis #98.
+/// EN: Additional options when encrypting (format v4, `docs/V4_DRAFT.md`); default = none, then
+/// v1–v3 stay byte for byte. Provisional until #98.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct EncryptOptions {
+    /// DE: Füllung nach PADMÉ (verbirgt die genaue Größe, #316). EN: PADMÉ padding (hides the exact size).
+    pub pad: bool,
+    /// DE: Anonyme Empfänger ohne ID, nur ML-KEM-1024 – **experimentell** (#316, #340).
+    /// EN: Anonymous recipients without ID, ML-KEM-1024 only – **experimental** (#316, #340).
+    pub anonymous: bool,
+}
 
 /// DE: Schutz beim Verschlüsseln. EN: Protection when encrypting.
 pub enum Protection<'a> {

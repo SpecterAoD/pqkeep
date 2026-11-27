@@ -94,6 +94,14 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
   keinen Zufall, bricht der Prozess ab statt einen Fehler zurückzugeben. Das ist auf unterstützten
   Systemen praktisch ausgeschlossen.
 - **Timing:** Die Crates zielen auf konstante Laufzeit, garantiert ist das für die Zielhardware nicht.
+- **Anonyme Empfänger sind EXPERIMENTELL** (`--anonymous-recipients`, Format v4, #316): Die Zugänge
+  tragen keine Empfänger-ID; dass ein ML-KEM-1024-Chiffrat nichts über den öffentlichen Schlüssel
+  verrät (ANO-CCA), ist für **Kyber Runde 3** bewiesen (Maram/Xagawa, ePrint 2022/1696; Grubbs/Maram/
+  Paterson, Eurocrypt 2022; Xagawa, ePrint 2021/1323), für die **endgültige Norm FIPS 203 aber nicht
+  veröffentlicht belegt** – FIPS 203 ändert Schritte der Schlüsselableitung, die der Beweis modelliert.
+  Recherche/Fachanalyse in #340; bis dahin Warnung bei jeder Nutzung, nicht Teil von „Privatsphäre
+  hoch“. Robustheit: ein falscher Schlüssel ergibt durch implizite Ablehnung nur Zufall, die Hülle
+  scheitert an AES-GCM; die Anzahl der Zugänge bleibt sichtbar.
 
 ---
 
@@ -135,7 +143,13 @@ and DoS protection).
 **Limitations:** not FIPS 140 validated, not externally audited; zeroization is best effort (compiler
 copies, swap, core dumps; see MEMORY_HARDENING.md for page locking and core dump suppression); internal intermediate values of the crates are
 outside our control (we rely on their zeroize support); ML-KEM encapsulation aborts if the OS RNG fails; constant time is a goal of the crates, not a
-guarantee for the target hardware.
+guarantee for the target hardware. **Anonymous recipients are EXPERIMENTAL** (`--anonymous-recipients`,
+format v4, #316): slots carry no recipient ID; that an ML-KEM-1024 ciphertext reveals nothing about the public
+key (ANO-CCA) is proven for **Kyber round 3** (Maram/Xagawa, ePrint 2022/1696; Grubbs/Maram/Paterson, Eurocrypt
+2022; Xagawa, ePrint 2021/1323) but **not established in published work for final FIPS 203**, which changes
+key-derivation steps the proof models. Research/expert analysis in #340; until then a warning on every use and
+not part of "privacy high". Robustness: a wrong key yields only randomness via implicit rejection and the wrap
+fails AES-GCM authentication; the number of slots stays visible.
 
 **File encryption building blocks:** STREAM construction with AES-256-GCM (64 KiB chunks, nonce = 7-byte prefix ‖ counter ‖ last flag) and file-key wrapping via Argon2id (passphrase) or ML-KEM → HKDF-SHA3-256 (recipient); the HKDF wiring is checked against an independently computed reference value.
 

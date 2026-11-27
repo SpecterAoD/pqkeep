@@ -25,6 +25,10 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
         Content::Stream => t.content_stream,
     };
     println!("{}: {content}", t.lbl_content);
+    if padded(&header) {
+        let text = "Größe verborgen (Füllung, Format v4) / size hidden (padding, format v4)";
+        println!("{}", super::io::localize(text, lang));
+    }
     for slot in header.slots {
         match slot {
             Slot::Passphrase { factor, params, .. } => {
@@ -45,8 +49,21 @@ pub fn print(t: &Texts, lang: Lang, path: &Path) -> CliResult {
                 let hex = envelope::hex_encode(&recipient_id);
                 println!("{}: {}", t.lbl_recipient, fingerprint(&hex));
             }
+            Slot::Anonymous { .. } => {
+                println!("{}: {}", t.lbl_mode, t.mode_recipient);
+                let text = "anonym, ML-KEM-1024, experimentell (#340) / anonymous, ML-KEM-1024, experimental (#340)";
+                println!("{}: {}", t.lbl_recipient, super::io::localize(text, lang));
+            }
         }
     }
     super::signing::print_unverified(lang, header.signer.as_ref());
     Ok(())
+}
+
+/// DE: Füllung (Format v4, Bit PAD)? EN: Padding (format v4, bit PAD)?
+pub(super) fn padded(header: &files::HeaderV2) -> bool {
+    header
+        .v4
+        .as_ref()
+        .is_some_and(|v4| v4.options & files::format_v4::OPT_PAD != 0)
 }

@@ -35,7 +35,14 @@ fn pass_protection(pass: &StrongPassphrase) -> Protection<'_> {
 fn sealed(dir: &Path, plain: &[u8], p: &Protection<'_>, signer: Option<&UnlockedKey>) -> PathBuf {
     let enc = dir.join("strom.pqkf");
     let _ = std::fs::remove_file(&enc);
-    let report = files::encrypt_stream_to(&mut &plain[..], &enc, p, signer).unwrap();
+    let report = files::encrypt_stream_to(
+        &mut &plain[..],
+        &enc,
+        p,
+        signer,
+        files::EncryptOptions::default(),
+    )
+    .unwrap();
     assert_eq!(report.bytes, plain.len() as u64);
     enc
 }
@@ -147,7 +154,12 @@ fn downgrade_truncation_and_appending_are_rejected() {
         rejected(&enc, &edit(22, bit), &unlock, "Optionen / options");
     }
     assert_eq!(
-        rejected(&enc, &edit(22, 0x01), &unlock, "PAD"),
+        rejected(
+            &enc,
+            &edit(22, 0x08),
+            &unlock,
+            "HIDDEN_SENDER (reserviert / reserved)"
+        ),
         Error::Unsupported
     );
     // DE: Chiffrat = 2 volle Blöcke + letzter Block (3 B + Trailer 24 B + Tag 16 B).

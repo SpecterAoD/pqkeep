@@ -65,6 +65,12 @@ impl<W: Write> EncryptWriter<W> {
         Ok(())
     }
 
+    /// DE: Bisher aufgenommene Klartextbytes. EN: Plaintext bytes accepted so far.
+    #[must_use]
+    pub fn written(&self) -> u64 {
+        self.total
+    }
+
     /// DE: Schließt ab; liefert den inneren Schreiber und die Klartextlänge.
     /// EN: Finishes; returns the inner writer and the plaintext length.
     ///
@@ -90,6 +96,7 @@ pub struct DecryptReader<R: Read> {
     pending: Vec<u8>,
     pending_len: usize,
     done: bool,
+    released: u64,
 }
 
 impl<R: Read> DecryptReader<R> {
@@ -108,6 +115,7 @@ impl<R: Read> DecryptReader<R> {
             pending,
             pending_len,
             done: false,
+            released: 0,
         })
     }
 
@@ -145,7 +153,14 @@ impl<R: Read> DecryptReader<R> {
         let n = buf.len().min(self.plain.len() - self.pos);
         buf[..n].copy_from_slice(&self.plain.expose()[self.pos..self.pos + n]);
         self.pos += n;
+        self.released += n as u64;
         Ok(n)
+    }
+
+    /// DE: Bisher herausgegebene Klartextbytes. EN: Plaintext bytes released so far.
+    #[must_use]
+    pub fn position(&self) -> u64 {
+        self.released
     }
 
     /// DE: Liest genau `buf.len()` Bytes. EN: Reads exactly `buf.len()` bytes.
