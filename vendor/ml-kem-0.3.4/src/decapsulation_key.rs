@@ -1,5 +1,5 @@
 use crate::{
-    B32, EncapsulationKey, Seed, SharedKey,
+    B32, DecapsulateInto, EncapsulationKey, Seed, SharedKey,
     crypto::{G, J},
     param::{DecapsulationKeySize, ExpandedDecapsulationKey, KemParams},
     pke::{DecryptionKey, EncryptionKey},
@@ -15,7 +15,7 @@ use kem::{
 };
 use module_lattice::{
     MaybeBox,
-    ctutils::{Choice, CtEq, CtSelect},
+    ctutils::{Choice, CtAssign, CtEq, CtSelect},
 };
 use rand_core::{TryCryptoRng, TryRng};
 
@@ -156,16 +156,71 @@ where
 }
 
 #[cfg(feature = "zeroize")]
-impl<P> Drop for DecapsulationKey<P>
+impl<P> Zeroize for DecapsulationKey<P>
 where
     P: KemParams,
 {
-    fn drop(&mut self) {
+    fn zeroize(&mut self) {
         self.dk_pke.zeroize();
         if let Some(d) = self.d.as_mut() {
             d.zeroize();
         }
         self.z.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P> Drop for DecapsulationKey<P>
+where
+    P: KemParams,
+{
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+#[cfg(all(feature = "zeroize", feature = "protected-workspace"))]
+impl<P> crate::SeedKeyInPlace for DecapsulationKey<P>
+where
+    P: KemParams,
+{
+    type Workspace = crate::KeyGenerationWorkspace<P>;
+    fn public_state() -> Self {
+        Self {
+            dk_pke: MaybeBox::new(DecryptionKey::default()),
+            ek: EncapsulationKey::from_encryption_key(EncryptionKey::default()),
+            d: Some(MaybeBox::new(B32::default())),
+            z: MaybeBox::new(B32::default()),
+        }
+    }
+
+    fn visit_private_storage(&self, mut visit: impl FnMut(usize, usize) -> bool) -> bool {
+        let Some(d) = self.d.as_ref() else {
+            return false;
+        };
+        visit(
+            core::ptr::from_ref(&*self.dk_pke).addr(),
+            size_of_val(&*self.dk_pke),
+        ) && visit(core::ptr::from_ref(&**d).addr(), size_of_val(&**d))
+            && visit(core::ptr::from_ref(&*self.z).addr(), size_of_val(&*self.z))
+    }
+
+    fn initialize_seed_with_workspace(
+        &mut self,
+        seed: &Seed,
+        workspace: &mut Self::Workspace,
+    ) -> Result<(), InvalidKey> {
+        let Some(d) = self.d.as_mut() else {
+            return Err(InvalidKey);
+        };
+        let (seed_d, seed_z) = seed.split_ref::<U32>();
+        // DE: Erweiterten Schlüssel und private Zwischenwerte in geliehene Flächen schreiben.
+        // EN: Write expanded key and private intermediates into borrowed storage.
+        let ek_pke = self.dk_pke.generate_with_workspace(seed_d, workspace);
+        self.ek = EncapsulationKey::from_encryption_key(ek_pke);
+        d.copy_from_slice(seed_d);
+        self.z.copy_from_slice(seed_z);
+        Ok(())
     }
 }
 
@@ -186,11 +241,40 @@ where
     P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
 {
     fn decapsulate(&self, encapsulated_key: &Ciphertext<P>) -> SharedKey {
+        self.with_decapsulation_candidates(encapsulated_key, |Kbar, Kp, valid| {
+            Kbar.ct_select(Kp, valid)
+        })
+    }
+}
+
+impl<P> DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    // DE: Dieselbe Providerberechnung für beide Ausgaben; interne Flächen noch ungeschützt.
+    // EN: One provider computation for both output paths; internal storage remains unprotected.
+    fn with_decapsulation_candidates<R>(
+        &self,
+        encapsulated_key: &Ciphertext<P>,
+        write: impl FnOnce(&B32, &B32, Choice) -> R,
+    ) -> R {
         let mp = self.dk_pke.decrypt(encapsulated_key);
         let (Kp, rp) = G(&[&mp, &self.ek.h()]);
         let Kbar = J(&[self.z.as_slice(), encapsulated_key.as_ref()]);
         let cp = self.ek.ek_pke().encrypt(&mp, &rp);
-        Kbar.ct_select(&Kp, cp.ct_eq(encapsulated_key))
+        write(&Kbar, &Kp, cp.ct_eq(encapsulated_key))
+    }
+}
+
+impl<P> DecapsulateInto for DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    fn decapsulate_into(&self, encapsulated_key: &Ciphertext<P>, out: &mut B32) {
+        self.with_decapsulation_candidates(encapsulated_key, |Kbar, Kp, valid| {
+            out.copy_from_slice(Kbar);
+            out.as_mut_slice().ct_assign(Kp.as_slice(), valid);
+        });
     }
 }
 
@@ -202,6 +286,46 @@ where
 
     fn encapsulation_key(&self) -> &EncapsulationKey<P> {
         &self.ek
+    }
+}
+
+#[cfg(feature = "protected-workspace")]
+impl<P> crate::DecapsulateWithWorkspace for DecapsulationKey<P>
+where
+    P: Kem<EncapsulationKey = EncapsulationKey<P>, SharedKeySize = U32> + KemParams,
+{
+    type Workspace = crate::DecapsulationWorkspace<P>;
+
+    fn decapsulate_with_workspace(
+        &self,
+        ciphertext: &Ciphertext<P>,
+        workspace: &mut Self::Workspace,
+        out: &mut B32,
+    ) -> Result<(), InvalidKey> {
+        self.dk_pke.decrypt_into(
+            ciphertext,
+            &mut workspace.decryption,
+            &mut workspace.message,
+        );
+        crate::crypto::G_into_with_hash(
+            &[&workspace.message, &self.ek.h()],
+            &mut workspace.g,
+            &mut workspace.hash,
+        );
+        crate::crypto::J_into_with_xof(
+            &[self.z.as_slice(), ciphertext.as_ref()],
+            &mut workspace.rejection,
+            &mut workspace.xof,
+            &mut workspace.reader,
+        );
+        let (candidate, randomness) = workspace.g.split_ref::<U32>();
+        self.ek
+            .ek_pke()
+            .encrypt_into(&workspace.message, randomness, &mut workspace.encryption)?;
+        let valid = workspace.encryption.ciphertext.ct_eq(ciphertext);
+        out.copy_from_slice(&workspace.rejection);
+        out.as_mut_slice().ct_assign(candidate.as_slice(), valid);
+        Ok(())
     }
 }
 

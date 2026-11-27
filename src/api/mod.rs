@@ -22,6 +22,7 @@ mod protected_buffer;
 mod secret_input;
 mod server;
 pub mod token;
+mod token_encoding;
 
 use std::sync::Arc;
 use std::time::Duration;

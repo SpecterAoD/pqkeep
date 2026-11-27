@@ -28,8 +28,10 @@ Details zu jedem Schritt: [`SPEC.md`](SPEC.md), Abschnitt 7. Jeder Schritt brauc
   / Secret lifetime inventory, copy probes, process/dump boundaries and remediation plan.
   [Plan](security/SECRET_LIFETIME_AUDIT_PLAN.md), [Audit](security/SECRET_LIFETIME_AUDIT.md).
   [Argon2-Descriptor / Argon2 descriptor](security/ARGON_WORKSPACE_OWNER_PLAN.md):
-  isoliert in Bearbeitung auf Main, unabhängig von PR314; Provider-Scratch bleibt offen.
-  / Independent scoped work in progress; does not close provider scratch findings.
+  ursprünglicher Ownerschritt auf Main; vollständige R6-Providerflächen jetzt in
+  [Draft334/Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md) umgesetzt,
+  finale native/Sicherheits-/Fuzz-/Rückwegabnahme erforderlich.
+  / Original owner step on Main; complete R6 implementation awaits final exact-head acceptance.
   Auditphase PR298, geschützte Laufzeitpuffer [PR300](https://github.com/SpecterAoD/pqkeep/pull/300)
   und begrenzte WER-Fähigkeit [PR301](https://github.com/SpecterAoD/pqkeep/pull/301) nach Main gemergt.
   / Audit, protected runtime buffers and partial WER capability merged; authorized remediation continues.
@@ -148,9 +150,9 @@ EN: Prelock parser/source/index/depth/scratch descriptor; native/security/fuzz
 acceptance required. Other R6/R7/R8 boundaries remain OPEN. See
 [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
 
-DE: #147 R6 In Bearbeitung: ML-KEM-Kapselungsentropie und vollständige
-G-Ausgabe K || r vor privater Befüllung in SecretBytes sperren; nur Chiffrat
-aus dem Provider zurückgeben. Native/Sicherheits-/Fuzz-Abnahme erforderlich.
-EN: Prelocked caller encapsulation inputs/output for all three parameter sets;
-decapsulation, key construction, internal math/hash scratch and R7/R8 remain OPEN.
-See [plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md).
+DE: #147 R6 In Bearbeitung: vollständige Provider-Lebensdauer in Draft334 umgesetzt;
+alle neun Zeilen der [Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md) abgleichen.
+Finaler signierter Head, native Linux-/Windows-/ARM64-CI, Security/Fuzz und exakter
+Rückweg vor Merge erforderlich; kein Teilmerge. R7/R8 separat offen.
+EN: Complete R6 implementation; final source-bound acceptance remains required.
+Issue147 and roadmap stay In progress; no whole-issue closure.

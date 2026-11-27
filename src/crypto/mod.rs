@@ -134,8 +134,14 @@ impl KeyAlgorithm {
 }
 
 #[cfg(test)]
+#[path = "hash_workspace_tests.rs"]
+mod hash_workspace_tests;
+#[cfg(test)]
 #[path = "hkdf_locked_tests.rs"]
 mod hkdf_locked_tests;
+#[cfg(test)]
+#[path = "lattice_codec_tests.rs"]
+mod lattice_codec_tests;
 #[cfg(test)]
 #[path = "secret_buffer_tests.rs"]
 mod secret_buffer_tests;

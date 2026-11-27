@@ -26,10 +26,20 @@ fn limit_applies() -> bool {
 
 #[test]
 fn low_memlock_limit_fails_with_clear_hint() {
-    if !limit_applies() {
-        eprintln!("übersprungen: Limit wirkt hier nicht / skipped: limit does not apply here");
-        return;
+    // DE: Eine übersprungene Verweigerungsprüfung ist kein Sicherheitsnachweis.
+    // EN: Skipping denial is not security evidence; require an effective child limit.
+    assert!(
+        limit_applies(),
+        "test requires effective memlock limit/prlimit"
+    );
+    for profile in ["standard", "hardened"] {
+        check_profile(profile);
     }
+}
+
+// DE: Beide unveränderten Profile müssen bei 8MiB vollständig verweigern.
+// EN: Both unchanged profiles must refuse completely at 8MiB.
+fn check_profile(profile: &str) {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("a.txt"), b"x").unwrap();
     let pass = common::random_passphrase();
@@ -39,6 +49,8 @@ fn low_memlock_limit_fails_with_clear_hint() {
             "--lang",
             "en",
             "encrypt",
+            "--profile",
+            profile,
             "--passphrase-stdin",
             "--",
             "a.txt",
@@ -51,7 +63,7 @@ fn low_memlock_limit_fails_with_clear_hint() {
         .unwrap();
     let line = format!("{}\n", pass.as_ref().expose_str());
     let _ = child.stdin.take().unwrap().write_all(line.as_bytes());
-    let out = child.wait_with_output().unwrap();
+    let out = finish(child);
     let err = String::from_utf8_lossy(&out.stderr);
     assert_eq!(out.status.code(), Some(1), "{err}");
     assert!(err.contains("allowed: 8 MiB"), "{err}");
@@ -60,4 +72,19 @@ fn low_memlock_limit_fails_with_clear_hint() {
         "{err}"
     );
     assert_eq!(common::dir_names(dir.path()), vec!["a.txt"]);
+}
+
+// DE/EN: Nur das eigene Testkind bei Zeitüberschreitung beenden / bound own test child.
+fn finish(mut child: std::process::Child) -> std::process::Output {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+    while child.try_wait().unwrap().is_none() {
+        let timed_out = std::time::Instant::now() >= deadline;
+        if timed_out {
+            child.kill().unwrap();
+            child.wait().unwrap();
+        }
+        assert!(!timed_out);
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    child.wait_with_output().unwrap()
 }

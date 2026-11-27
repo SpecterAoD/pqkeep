@@ -7,14 +7,17 @@
 //! OS randomness), as recommended by FIPS 204.
 
 use getrandom::SysRng;
+use ml_dsa::VerifyingKey;
 use ml_dsa::signature::Keypair;
 use ml_dsa::{EncodedVerifyingKey, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signature};
-use ml_dsa::{SigningKey, VerifyingKey};
 use zeroize::Zeroize;
 
 use super::seed_state;
 use crate::crypto::{DsaAlgorithm, SecretBytes, rng};
 use crate::{Error, Result};
+
+#[path = "dsa_key_state.rs"]
+mod key_state;
 
 /// DE: Länge des Seeds ξ in Bytes. EN: Length of the seed ξ in bytes.
 pub const SEED_LEN: usize = 32;
@@ -110,23 +113,25 @@ pub fn verify(
     }
 }
 
-fn signing_key<P: MlDsaParams>(seed: &[u8]) -> Result<SigningKey<P>> {
+fn signing_key<P: MlDsaParams>(seed: &[u8]) -> Result<key_state::KeyState<P>> {
     let mut xi = seed_state::parse(seed, SEED_LEN)?;
-    let sk = SigningKey::<P>::from_seed(seed_state::view(&xi)?);
+    let sk = key_state::KeyState::<P>::new(seed_state::view(&xi)?)?;
     xi.zeroize();
     Ok(sk)
 }
 
 fn public_from_seed<P: MlDsaParams>(seed: &[u8]) -> Result<Vec<u8>> {
     let sk = signing_key::<P>(seed)?;
-    Ok(sk.verifying_key().encode().to_vec())
+    Ok(sk.get().verifying_key().encode().to_vec())
 }
 
 fn sign_with<P: MlDsaParams>(seed: &[u8], message: &[u8], context: &[u8]) -> Result<Vec<u8>> {
+    let mut work = super::secret_state::SecretState::new(ml_dsa::SigningWorkspace::<P>::default())?;
     let sk = signing_key::<P>(seed)?;
     let sig = sk
+        .get()
         .expanded_key()
-        .sign_randomized(message, context, &mut SysRng)
+        .sign_randomized_with_workspace(message, context, &mut SysRng, work.get_mut())
         .map_err(|_| Error::Crypto)?;
     Ok(sig.encode().to_vec())
 }
@@ -139,5 +144,10 @@ fn verify_with<P: MlDsaParams>(pk: &[u8], message: &[u8], context: &[u8], sig: &
     let Ok(sig) = Signature::<P>::try_from(sig) else {
         return false;
     };
-    vk.verify_with_context(message, context, &sig)
+    let Ok(mut work) =
+        super::secret_state::SecretState::new(ml_dsa::VerificationWorkspace::<P>::default())
+    else {
+        return false;
+    };
+    vk.verify_with_workspace(message, context, &sig, work.get_mut())
 }

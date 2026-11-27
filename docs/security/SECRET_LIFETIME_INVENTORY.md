@@ -133,3 +133,8 @@ unabhängiger Provider-Audit. Diese offenen Punkte bleiben bei #128/#149/#150 be
 der eingegrenzten Provider-/Ingress-Nacharbeit, nicht als erledigte Haken in #147.
 EN: No extraction/whole-compiler/Windows external-policy/provider-completeness claim.
 Unproved platform and provider coverage remains explicitly assigned follow-up work.
+
+DE: Aktueller R6-Gesamtstand: [Provider-Abnahmematrix](PROVIDER_LIFETIME_VALIDATION.md).
+Frühere OPEN-/Teilnachweise hier sind historische Zwischenstände.
+EN: The current complete matrix supersedes earlier scoped provider status,
+without asserting complete R7/R8 or whole-issue147 remediation.

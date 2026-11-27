@@ -87,11 +87,15 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 
 ### 3.2 Cryptography
 
-EN: #147 R6 encapsulation step: lock OS entropy, the full ML-KEM G output K || r
-and the result in SecretBytes before private population; the provider returns only
-public ciphertext. Derivation/format bytes stay identical; decapsulation, key
-construction and internal provider/compiler copies remain open audit work.
-See [plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md); native acceptance required.
+EN: R6 (#147): prelock fixed provider state/workspaces and nested private payloads
+before private population, borrow inputs/outputs and wipe completely before
+unlock/free. All existing ML-KEM/DSA parameter sets, SHA3/SHAKE/HMAC/HKDF, AES/GCM,
+Argon2 including every parallel lane and actual private Unicode/Base64 paths are
+mapped in the [acceptance matrix](security/PROVIDER_LIFETIME_VALIDATION.md).
+Preserve algorithms, parameters, worker counts and wire bytes; ordinary private
+provider APIs are never a resource fallback. Final exact signed-head native CI and
+verified rollback are required. Register/compiler/OS limits are explicit; R7/R8 stay separate.
+
 - **Key exchange:** ML-KEM (FIPS 203), default **ML-KEM-768**, selectable ML-KEM-512/1024.
 - **Signatures:** ML-DSA (FIPS 204), default **ML-DSA-65**, selectable ML-DSA-44/87.
 - **Private keys** preferably stored as a compact **seed** and re-derived on loading (if the crate supports it), otherwise as an expanded key.
@@ -524,3 +528,12 @@ No guarantee for arbitrary visitor outputs, error category, provider internals,
 GUI/process protection, other owners or scalar/compiler/stack transit. Native
 tests must demonstrate locks before allocation/binding, moves, wiping/unwind and
 actual lock refusal. See [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
+
+R6 work in progress: borrowed lattice codecs without an extra CBD decoding
+polynomial. KEM key generation prelocks state, three private payloads and complete
+sampling/NTT/product/hash/XOF workspace before seed processing. Root selects the
+opt-in SHA3/SHAKE provider with borrowed portable Keccak scratch and reader finalization
+without private return values. No private sponge conversion arrays or new unsafe
+casts. This protected mode may lose ARM SHA3 acceleration. KEM PKE also uses complete
+borrowed prelocked operation storage, including confidential recomputed candidate
+ciphertext. Native acceptance and DSA/AES/Argon2 proofs stay open; no full R6 closure.

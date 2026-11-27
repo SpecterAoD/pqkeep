@@ -32,9 +32,14 @@ publish = false
 members = ["platform/pqkeep-platform"]
 default-members = ["."]
 exclude = [
+    "vendor/base64ct-1.8.3",
+    "vendor/argon2-0.6.0", "vendor/blake2-0.11.0",
     "vendor/axum-0.8.9", "vendor/hyper-1.12.0", "vendor/hyper-util-0.1.21",
     "vendor/serde_json-1.0.154", "vendor/hkdf-0.13.0", "vendor/hmac-0.13.0",
-    "vendor/region-4.0.1", "vendor/ml-kem-0.3.4", "fuzz",
+    "vendor/region-4.0.1", "vendor/ml-kem-0.3.4", "vendor/ml-dsa-0.1.2",
+    "vendor/module-lattice-0.2.4", "vendor/shake-0.1.0", "vendor/sha3-0.12.0",
+    "vendor/aes-0.9.2", "vendor/aes-gcm-0.11.1", "vendor/ghash-0.6.0", "vendor/polyval-0.7.3",
+    "vendor/keccak-0.2.2", "vendor/sponge-cursor-0.1.0", "fuzz",
 ]
 resolver = "3"
 
@@ -53,13 +58,13 @@ name = "pqkeepw"
 path = "src/bin/pqkeepw.rs"
 
 [dependencies]
-aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
-argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel"] }
+aes-gcm = { version = "0.11.1", path = "vendor/aes-gcm-0.11.1", default-features = false, features = ["aes", "alloc", "zeroize", "protected-workspace"] }
+argon2 = { version = "0.6.0", path = "vendor/argon2-0.6.0", default-features = false, features = ["alloc", "zeroize", "parallel", "protected-workspace"] }
 axum = { version = "0.8.9", path = "vendor/axum-0.8.9", default-features = false, features = ["http1", "json", "tokio"], optional = true }
-base64ct = { version = "1.8.3", features = ["alloc"] }
-# DE: Produktionsfeature für Argon2s Blake2-Core; Argon2/zeroize leitet es nicht weiter.
-# EN: Production feature for Argon2's Blake2 core; Argon2/zeroize does not forward it.
-blake2 = { version = "0.11.0", default-features = false, features = ["zeroize"] }
+base64ct = { version = "1.8.3", path = "vendor/base64ct-1.8.3", features = ["alloc"] }
+# DE: Derselbe versionierte geschützte Blake2-Pfad auch für externe Consumer.
+# EN: The same versioned protected Blake2 path also applies to external consumers.
+blake2 = { version = "0.11.0", path = "vendor/blake2-0.11.0", default-features = false, features = ["zeroize", "protected-workspace"] }
 clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "color"] }
 clap_complete = "4.6.11"
 clap_mangen = "0.3.3"
@@ -70,12 +75,12 @@ hmac = { version = "0.13.0", path = "vendor/hmac-0.13.0", features = ["zeroize"]
 hyper = { version = "1.12.0", path = "vendor/hyper-1.12.0", default-features = false, features = ["http1", "server"], optional = true }
 hyper-util = { version = "0.1.21", path = "vendor/hyper-util-0.1.21", default-features = false, features = ["tokio"], optional = true }
 mime = { version = "0.3.18", optional = true }
-ml-dsa = { version = "0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc"] }
-ml-kem = { version = "0.3.4", path = "vendor/ml-kem-0.3.4", default-features = false, features = ["zeroize", "getrandom"] }
+ml-dsa = { version = "0.1.2", path = "vendor/ml-dsa-0.1.2", default-features = false, features = ["zeroize", "rand_core", "alloc", "protected-workspace"] }
+ml-kem = { version = "0.3.4", path = "vendor/ml-kem-0.3.4", default-features = false, features = ["zeroize", "getrandom", "protected-workspace"] }
 region = { version = "4.0.1", path = "vendor/region-4.0.1" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.154", path = "vendor/serde_json-1.0.154" }
-sha3 = { version = "0.12.0", features = ["zeroize"] }
+sha3 = { version = "0.12.0", path = "vendor/sha3-0.12.0", features = ["zeroize", "protected-workspace"] }
 subtle = { version = "2.6.1", optional = true }
 sys-locale = "0.3.2"
 thiserror = "2.0.21"
@@ -114,6 +119,9 @@ strip = true
 panic = "abort"
 
 [dev-dependencies]
+sponge-cursor = { version = "0.1.0", path = "vendor/sponge-cursor-0.1.0" }
+shake = { version = "0.1.0", path = "vendor/shake-0.1.0", features = ["protected-workspace"] }
+module-lattice = { version = "0.2.4", path = "vendor/module-lattice-0.2.4", features = ["zeroize"] }
 hex = "0.4"
 proptest = "1.12.0"
 tempfile = "3.27.0"

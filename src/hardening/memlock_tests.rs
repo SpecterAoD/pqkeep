@@ -4,6 +4,26 @@
 #![allow(clippy::unwrap_used)]
 
 use super::{is_locked, lock_capacity, lock_range, page_span, registry};
+use zeroize::Zeroize;
+
+#[test]
+fn repeated_record_zeroization_preserves_another_live_owner() {
+    let size = region::page::size();
+    let buffer = vec![0u8; 4 * size];
+    let first = interior_page(&buffer);
+    let mut record = super::LockedRange::default();
+    assert!(record.acquire(first, size));
+    let other = lock_range(first, size);
+    assert!(other.complete(first, size));
+    record.zeroize();
+    assert_eq!(record.pages, 0..0);
+    assert!(is_locked(first));
+    record.zeroize();
+    drop(record);
+    assert!(is_locked(first));
+    drop(other);
+    assert!(!is_locked(first));
+}
 
 #[test]
 fn shared_page_stays_locked_until_last_release() {

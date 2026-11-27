@@ -5,7 +5,7 @@
 use super::*;
 use crate::locked_owner_test_support::locked;
 use ml_kem::{
-    EncapsulateInto,
+    EncapsulateWithWorkspace,
     kem::{Decapsulate, FromSeed, KeyExport},
 };
 use sha3::{Digest, Sha3_256, Sha3_512};
@@ -30,24 +30,41 @@ macro_rules! compare_variant {
         let seed = rng::secret(64).unwrap();
         let (dk, ek) = <$parameter>::from_seed(seed_state::view(&seed).unwrap());
         let visited = std::cell::Cell::new(0);
-        let result = run(|entropy, workspace| {
+        let mut pke =
+            SecretState::new(ml_kem::EncryptionWorkspace::<$parameter>::default()).unwrap();
+        let result = run(|entropy, workspace, hash| {
             locked(entropy);
             locked(workspace);
+            locked(hash);
             let base = workspace.as_ptr();
             let (expected_ct, mut expected_key) = ek.encapsulate_deterministic(entropy);
-            let ciphertext = ek.encapsulate_into(entropy, workspace);
+            // DE: Öffentliche Altlast muss vor privatem Absorb verworfen werden.
+            // EN: Public stale state must be reset before private absorption.
+            hash.update(b"public stale hash state");
+            locked(pke.get());
+            let ciphertext = ek
+                .encapsulate_with_workspace(entropy, workspace, hash, pke.get_mut())
+                .map_err(|_| Error::Crypto)?;
+            locked(pke.get());
             visited.set(visited.get() + 1);
             assert!(base == workspace.as_ptr());
             assert!(ciphertext == expected_ct);
             assert!(workspace[..32] == expected_key[..]);
             check_full_g(entropy, workspace, &ek.to_bytes());
+            let mut reset_output = SecretBytes::zeroed(64).unwrap();
+            sha3::digest::FixedOutputReset::finalize_into_reset(
+                hash,
+                reset_output.expose_mut().try_into().unwrap(),
+            );
+            assert!(reset_output.expose() == Sha3_512::digest([]).as_slice());
             let mut opened = dk.decapsulate(&ciphertext);
             assert!(opened == expected_key);
             opened.zeroize();
             expected_key.zeroize();
             locked(entropy);
             locked(workspace);
-            ciphertext.to_vec()
+            locked(hash);
+            Ok(ciphertext.to_vec())
         })
         .unwrap();
         assert_eq!(visited.get(), 1);
@@ -76,6 +93,7 @@ fn protected_kem1024_matches_legacy_hash_and_roundtrip_in_actual_locked_storage(
 struct UnwindProbe<'a> {
     entropy: &'a B32,
     workspace: &'a EncapsulationWorkspace,
+    hash: &'a Sha3_512,
     observed: &'a std::cell::Cell<bool>,
 }
 
@@ -83,6 +101,7 @@ impl Drop for UnwindProbe<'_> {
     fn drop(&mut self) {
         locked(self.entropy);
         locked(self.workspace);
+        locked(self.hash);
         self.observed.set(true);
     }
 }
@@ -91,10 +110,12 @@ impl Drop for UnwindProbe<'_> {
 fn private_encapsulation_inputs_remain_locked_during_actual_unwind() {
     let observed = std::cell::Cell::new(false);
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let _ = run(|entropy, workspace| {
+        let _ = run(|entropy, workspace, hash| {
+            hash.update(entropy);
             let _probe = UnwindProbe {
                 entropy,
                 workspace,
+                hash,
                 observed: &observed,
             };
             std::panic::resume_unwind(Box::new(()));

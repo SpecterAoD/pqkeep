@@ -101,12 +101,51 @@ where
     }
 }
 
+impl<P> crate::EncapsulateWithHash for EncapsulationKey<P>
+where
+    P: Kem + KemParams,
+{
+    fn encapsulate_with_hash(
+        &self,
+        m: &B32,
+        workspace: &mut crate::EncapsulationWorkspace,
+        hash: &mut sha3::Sha3_512,
+    ) -> Ciphertext<P> {
+        crate::crypto::G_into_with_hash(&[m, &self.h], workspace, hash);
+        let (_, r) = workspace.split_ref::<U32>();
+        self.ek_pke.encrypt(m, r)
+    }
+}
+
 impl<P> KeyExport for EncapsulationKey<P>
 where
     P: KemParams,
 {
     fn to_bytes(&self) -> Key<Self> {
         self.ek_pke.to_bytes()
+    }
+}
+
+#[cfg(feature = "protected-workspace")]
+impl<P> crate::EncapsulateWithWorkspace for EncapsulationKey<P>
+where
+    P: Kem + KemParams,
+{
+    type Workspace = crate::EncryptionWorkspace<P>;
+
+    fn encapsulate_with_workspace(
+        &self,
+        m: &B32,
+        derived: &mut crate::EncapsulationWorkspace,
+        hash: &mut sha3::Sha3_512,
+        workspace: &mut Self::Workspace,
+    ) -> Result<Ciphertext<P>, InvalidKey> {
+        crate::crypto::G_into_with_hash(&[m, &self.h], derived, hash);
+        let (_, r) = derived.split_ref::<U32>();
+        self.ek_pke.encrypt_into(m, r, workspace)?;
+        // DE: Ausschließlich diese tatsächliche Kapselungsausgabe ist öffentlich.
+        // EN: Only this actual encapsulation output is public.
+        Ok(workspace.ciphertext.clone())
     }
 }
 

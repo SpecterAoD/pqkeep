@@ -101,3 +101,8 @@ Ports/Remote-Exposition oder vollständiger externer Provider-Audit. Breite Fuzz
 bleibt #153; neue Kern-/Stream-Verträge bleiben #98/#99/#83.
 EN: Unproved boundaries remain open with explicit ownership. Audit success is an inventory
 and test/remediation deliverable, not permission to run secrets through known unsafe copies.
+
+DE: Aktueller R6-Gesamtstand: [Provider-Abnahmematrix](PROVIDER_LIFETIME_VALIDATION.md).
+Frühere OPEN-/Teilnachweise hier sind historische Zwischenstände.
+EN: The current complete matrix supersedes earlier scoped provider status,
+without asserting complete R7/R8 or whole-issue147 remediation.

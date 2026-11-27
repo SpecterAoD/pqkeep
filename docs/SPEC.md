@@ -81,11 +81,16 @@ Hochsichere, speichersichere, plattformübergreifende Anwendung (Windows & Linux
 
 ### 3.2 Kryptografie
 
-DE: #147 R6-Kapselungsschritt: OS-Entropie, vollständige ML-KEM-G-Ausgabe K || r
-und Ergebnis vor privater Befüllung in SecretBytes sperren; Provider liefert nur
-öffentliches Chiffrat. Ableitungs-/Formatbytes bleiben gleich; Entkapselung,
-Schlüsselaufbau und interne Provider-/Compilerkopien bleiben offene Auditarbeit.
-Siehe [Plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md); native Abnahme erforderlich.
+DE: R6 (#147): Vor privater Befüllung feste Providerzustände/Arbeitsflächen und
+verschachtelte private Payloads sperren, geliehene Ein-/Ausgaben verwenden und vor
+Unlock/Free vollständig löschen. ML-KEM/DSA aller vorhandenen Parametersätze,
+SHA3/SHAKE/HMAC/HKDF, AES/GCM, Argon2 samt sämtlichen parallelen Lanes sowie
+private Unicode-/Base64-Pfade sind in der [Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md)
+zugeordnet. Algorithmen, Parameter, Workerzahlen und Formatbytes erhalten;
+gewöhnliche private Provider-APIs sind kein Ressourcen-Fallback. Endabnahme am
+exakten signierten Head einschließlich nativer CI und geprüftem Rückweg erforderlich.
+Register-/Compiler-/OS-Grenzen bleiben ausdrücklich begrenzt; R7/R8 separat offen.
+
 - **Schlüsselaustausch:** ML-KEM (FIPS 203), Standard **ML-KEM-768**, wählbar ML-KEM-512/1024.
 - **Signaturen:** ML-DSA (FIPS 204), Standard **ML-DSA-65**, wählbar ML-DSA-44/87.
 - **Private Schlüssel** bevorzugt als kompakter **Seed** speichern und beim Laden neu ableiten (sofern die Crate das unterstützt), sonst als expandierter Schlüssel.
@@ -528,3 +533,13 @@ Keine Zusage über beliebige Besucher-Rückgaben, Fehlerkategorie, Providerinter
 GUI/Prozessschutz, andere Owner oder Scalar-/Compiler-/Stacktransit. Native Tests
 müssen Sperre vor Allokation/Bindung, Moves, Wipe/Unwind und echte Verweigerung
 belegen. Siehe [Parserzustandsplan](security/PARSER_STATE_OWNER_PLAN.md).
+
+R6-Arbeitsstand: Gemeinsamer gepinnter Gitter-Codec mit geliehenen Ausgabezielen,
+kein zusätzliches CBD-Dekodierpolynom. KEM-Keygen sperrt Zustand, drei feste private
+Payloads und komplette Sampling-/NTT-/Produkt-/Hash-/XOF-Arbeitsfläche vor dem Seed-
+Einstieg. SHA3/SHAKE verwenden im Root den opt-in-Provider mit geliehenem portablen
+Keccak-Scratch und Reader-Finalisierung ohne privaten Rückgabewert. Keine privaten
+Sponge-Konvertierungsarrays oder neuen unsafe-Casts. Auf ARM kann diese geschützte
+Variante Hardwarebeschleunigung kosten. KEM-PKE nutzt ebenfalls vollständig geliehene vorab gesperrte Operationsflächen,
+einschließlich vertraulichem internem Vergleichs-Chiffrat. Native Abnahme und
+DSA-/AES-/Argon2-Nachweise bleiben offen; kein R6-Gesamtabschluss.

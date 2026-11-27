@@ -24,10 +24,21 @@ pub(crate) fn G(inputs: &[impl AsRef<[u8]>]) -> (B32, B32) {
 // EN: Finalize directly into existing caller storage, without a private output array.
 pub(crate) fn G_into(inputs: &[impl AsRef<[u8]>], out: &mut crate::EncapsulationWorkspace) {
     let mut h = Sha3_512::new();
+    G_into_with_hash(inputs, out, &mut h);
+}
+
+// DE: Stabilen Caller-Zustand nicht per finalize_into konsumieren/verschieben.
+// EN: Do not consume/move stable caller state through finalize_into.
+pub(crate) fn G_into_with_hash(
+    inputs: &[impl AsRef<[u8]>],
+    out: &mut crate::EncapsulationWorkspace,
+    h: &mut Sha3_512,
+) {
+    sha3::digest::Reset::reset(h);
     for x in inputs {
-        Digest::update(&mut h, x);
+        Digest::update(h, x);
     }
-    h.finalize_into(out);
+    sha3::digest::FixedOutputReset::finalize_into_reset(h, out);
 }
 
 pub(crate) fn H(x: impl AsRef<[u8]>) -> B32 {
@@ -54,20 +65,60 @@ pub(crate) fn J(inputs: &[impl AsRef<[u8]>]) -> B32 {
     out
 }
 
+// DE: J direkt mit vorab gesperrtem Zustand/Reader/Ziel auswerten.
+// EN: Evaluate J directly with prelocked state, reader and destination.
+pub(crate) fn J_into_with_xof(
+    inputs: &[impl AsRef<[u8]>],
+    out: &mut B32,
+    hash: &mut Shake256,
+    reader: &mut shake::Shake256Reader,
+) {
+    sha3::digest::Reset::reset(hash);
+    for input in inputs {
+        hash.update(input.as_ref());
+    }
+    hash.finalize_reader_into(reader);
+    reader.read(out);
+}
+
 pub(crate) type PrfOutput<Eta> = EncodedPolynomial<<Eta as CbdSamplingSize>::SampleSize>;
 
 pub(crate) fn PRF<Eta>(s: &B32, b: u8) -> PrfOutput<Eta>
 where
     Eta: CbdSamplingSize,
 {
+    let mut out = PrfOutput::<Eta>::default();
+    PRF_into::<Eta>(s, b, &mut out);
+    out
+}
+
+// DE: Ausgabe direkt ins vorab gesperrte Ziel; interner XOF-Zustand bleibt separat.
+// EN: Write directly into prelocked output; internal XOF state is a separate boundary.
+pub(crate) fn PRF_into<Eta>(s: &B32, b: u8, out: &mut PrfOutput<Eta>)
+where
+    Eta: CbdSamplingSize,
+{
     let mut h = Shake256::default();
+    let mut r = shake::Shake256Reader::default();
+    PRF_into_with_xof::<Eta>(s, b, out, &mut h, &mut r);
+}
+
+// DE: Auch private Absorb-/Reader-Zustände vom vorab gesperrten Caller leihen.
+// EN: Also borrow private absorption/reader states from the prelocked caller.
+pub(crate) fn PRF_into_with_xof<Eta>(
+    s: &B32,
+    b: u8,
+    out: &mut PrfOutput<Eta>,
+    h: &mut Shake256,
+    r: &mut shake::Shake256Reader,
+) where
+    Eta: CbdSamplingSize,
+{
+    sha3::digest::Reset::reset(h);
     h.update(s.as_ref());
     h.update(&[b]);
-    let mut r = h.finalize_xof();
-
-    let mut out = PrfOutput::<Eta>::default();
-    r.read(&mut out);
-    out
+    h.finalize_reader_into(r);
+    r.read(out);
 }
 
 pub(crate) fn XOF(rho: &B32, i: u8, j: u8) -> impl XofReader {

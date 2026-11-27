@@ -45,3 +45,52 @@ first); the AES-256-GCM wrap in `tests/crypto_v2_kat.rs` comes from Python `cryp
 from `v2_argon2id.json`, AES-256-GCM from `cryptography` 41.0.7). `v2_keyfile.json` is a whole key file
 `*.key.json` v2 (AES-256, passphrase + factor file) generated the same way with
 `scripts/v2_keyfile_vector.py` (header and AAD from `scripts/v2_reference.py`). Public test bytes only.
+
+## SHA3/SHAKE workspace vectors / Arbeitsflächenvektoren
+
+DE: hash_workspaces.json enthält ausschließlich öffentliche synthetische Bytes:
+byte[i]=(i*29+7)&255, Längen 0/1/7/8/71/72/73/135/136/137/167/168/169/511.
+Referenzen unabhängig von Rust mit Python hashlib und der im JSON dokumentierten
+OpenSSL-Version erzeugt: sha3_256/sha3_512 sowie jeweils512 Byte shake_128/shake_256.
+EN: These are independently generated public fixtures, not NIST ACVP extracts.
+Hash/XOF tests exercise prelocked stable owners, all rate boundaries, split calls,
+empty reads, output sentinels and repeated borrowed reader initialization.
+
+## AES/GCM workspace vectors / Arbeitsflächenvektoren
+
+DE: aead_workspaces.json enthält 72 unabhängig mit Python cryptography41.0.7
+AESGCM erzeugte öffentliche synthetische Fälle. Kein ACVP-Auszug. Schlüsselbyte
+ist (i*13+7)&255, Noncebyte (i*19+11)&255, Nachrichtenbyte (i*29+3)&255 und
+AAD-Byte (i*17+5)&255. Rust erzeugt diese Eingaben zur Laufzeit in gesperrten Ownern.
+EN: Cross product of message lengths 0/1/15/16/17/31/32/33/63/64/65/1024 and
+AAD lengths 0/1/15/16/17/65. Expected ciphertext includes the trailing 16-byte tag.
+Tests additionally compare fresh random keys and disjoint buffers with the ordinary
+provider, reject invalid tags before output writes, and check locked stable owners.
+
+## Argon2/BLAKE2 workspaces / Arbeitsflächen
+
+DE: argon_hash_workspaces.json enthält512 unabhängige Python-hashlib.blake2b-Fälle:
+Digestgrößen1..64, Nachrichtenlängen0/1/127/128/129/255/256/1024, Byte[i]=(i*29+7)&255.
+Sieben zusätzliche32Byte-Digests prüfen Little-Endian-u32-Framing, einschließlich
+65536 und u32::MAX. Keine Schlüssel; Rust erzeugt Eingaben in gesperrten Ownern.
+EN: Split updates/empty calls, lazy block boundaries, all digest sizes, sentinel
+outputs and finalized/wiped-state refusal are tested against independent values.
+
+DE: argon_operation_workspaces.json enthält76 unabhängige Argon2id1.3-Vektoren der
+vorhandenen System-C-Referenz libargon2-1 0~20190702+dfsg-4build1. Binär-SHA-256,
+öffentliche Eingabeformeln und Quellen stehen im JSON. Die C-ABI wurde am
+[Originalheader20190702](https://github.com/P-H-C/phc-winner-argon2/blob/20190702/include/argon2.h)
+und zusätzlich durch erfolgreiche Reproduktion von RFC9106/5.3 geprüft.
+EN: Cover lanes1/2/4/8/16, passes1/2/3, minimum/rounded memory, repeated address
+blocks and outputs4/16/32/64/65/128/1024, both with and without secret/AD. Synthetic
+public fixtures only; no new C runtime dependency or installation. Native Root
+tests check every lane's completed segments and real locked stable owners.
+# Base64 remainder workspace / Base64-Restblock
+
+DE: `base64_workspace.json` enthält76 unabhängig mit Pythons Standardbibliothek
+`base64` erzeugte Referenzen. Öffentliche Eingabeformel `(i*29+7)&255` wird in Rust
+erst in gesperrte Puffer geschrieben. Standard-/URL-Alphabet, jeweils mit/ohne
+Padding:304 Fälle; alle Restklassen und Grenzen bis4097Byte. Keine privaten Seeds.
+EN: References are padded; removing trailing `=` supplies the unpadded cases.
+Actual locked scratch is reused with nonzero sentinels; input/output owners stay
+locked. Error/unwind/denial proofs and token compatibility are separate tests.

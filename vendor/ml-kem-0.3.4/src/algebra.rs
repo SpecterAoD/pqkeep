@@ -4,7 +4,7 @@ use crate::{
     param::CbdSamplingSize,
 };
 use array::{Array, ArraySize, typenum::U256};
-use module_lattice::{Encode, Field, MultiplyNtt, Truncate};
+use module_lattice::{Field, MultiplyNtt, Truncate};
 use sha3::digest::XofReader;
 
 module_lattice::define_field!(BaseField, u16, u32, u64, 3329);
@@ -101,13 +101,21 @@ pub(crate) fn sample_poly_cbd<Eta>(B: &PrfOutput<Eta>) -> Polynomial
 where
     Eta: CbdSamplingSize,
 {
-    let vals: Polynomial = Encode::<Eta::SampleSize>::decode(B);
-    Polynomial::new(
-        vals.0
-            .iter()
-            .map(|val| cbd_coefficient::<Eta>(val.0))
-            .collect(),
-    )
+    let mut out = Polynomial::default();
+    sample_poly_cbd_into::<Eta>(B, &mut out);
+    out
+}
+
+// DE: Dieselben CBD-Koeffizienten direkt im geliehenen Dekodierziel auswerten.
+// EN: Evaluate the same CBD coefficients directly in the borrowed decoding target.
+pub(crate) fn sample_poly_cbd_into<Eta>(B: &PrfOutput<Eta>, out: &mut Polynomial)
+where
+    Eta: CbdSamplingSize,
+{
+    module_lattice::byte_decode_into::<BaseField, Eta::SampleSize>(B, &mut out.0);
+    for value in &mut out.0 {
+        *value = cbd_coefficient::<Eta>(value.0);
+    }
 }
 
 /// Map `2 * eta` sampled bits to a CBD coefficient: the number of ones in the low `eta` bits
@@ -138,12 +146,40 @@ where
     }))
 }
 
+// DE: Feste Zielpolynome und PRF-Ausgabe wiederverwenden, keine privaten Rückgaben.
+// EN: Reuse fixed destination polynomials and PRF output without private returns.
+pub(crate) fn sample_poly_vec_cbd_into<Eta, K>(
+    sigma: &B32,
+    start_n: u8,
+    out: &mut Vector<K>,
+    prf: &mut PrfOutput<Eta>,
+    hash: &mut shake::Shake256,
+    reader: &mut shake::Shake256Reader,
+) where
+    Eta: CbdSamplingSize,
+    K: ArraySize,
+{
+    for (i, target) in out.0.iter_mut().enumerate() {
+        let i: u8 = Truncate::truncate(i);
+        crate::crypto::PRF_into_with_xof::<Eta>(sigma, start_n + i, prf, hash, reader);
+        sample_poly_cbd_into::<Eta>(prf, target);
+    }
+}
+
 /// The Number Theoretic Transform (NTT) is a variant of the Discrete Fourier Transform (DFT)
 /// defined over a finite field that turns costly polynomial multiplications into simple
 /// coefficient-wise multiplications modulo a fixed prime.
 pub(crate) trait Ntt {
-    type Output;
-    fn ntt(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_into(&mut out);
+        out
+    }
+
+    // DE: Bestehende Transformation in die geliehene Fläche schreiben.
+    // EN: Write the existing transform into borrowed storage.
+    fn ntt_into(&self, out: &mut Self::Output);
 }
 
 /// One layer of the forward NTT butterfly.
@@ -171,27 +207,28 @@ fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(f: &mut Array<Elem, U256
 impl Ntt for Polynomial {
     type Output = NttPolynomial;
 
-    fn ntt(&self) -> NttPolynomial {
+    fn ntt_into(&self, out: &mut NttPolynomial) {
         let mut k = 1;
-        let mut f = self.0;
+        let f = &mut out.0;
+        f.copy_from_slice(&self.0);
 
-        ntt_layer::<128, 1>(&mut f, &mut k);
-        ntt_layer::<64, 2>(&mut f, &mut k);
-        ntt_layer::<32, 4>(&mut f, &mut k);
-        ntt_layer::<16, 8>(&mut f, &mut k);
-        ntt_layer::<8, 16>(&mut f, &mut k);
-        ntt_layer::<4, 32>(&mut f, &mut k);
-        ntt_layer::<2, 64>(&mut f, &mut k);
-
-        f.into()
+        ntt_layer::<128, 1>(f, &mut k);
+        ntt_layer::<64, 2>(f, &mut k);
+        ntt_layer::<32, 4>(f, &mut k);
+        ntt_layer::<16, 8>(f, &mut k);
+        ntt_layer::<8, 16>(f, &mut k);
+        ntt_layer::<4, 32>(f, &mut k);
+        ntt_layer::<2, 64>(f, &mut k);
     }
 }
 
 impl<K: ArraySize> Ntt for Vector<K> {
     type Output = NttVector<K>;
 
-    fn ntt(&self) -> NttVector<K> {
-        NttVector::new(self.0.iter().map(Ntt::ntt).collect())
+    fn ntt_into(&self, out: &mut NttVector<K>) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_into(target);
+        }
     }
 }
 
@@ -199,8 +236,15 @@ impl<K: ArraySize> Ntt for Vector<K> {
 /// products back into standard polynomial form while preserving correctness modulo the same prime.
 #[allow(clippy::module_name_repetitions)]
 pub(crate) trait NttInverse {
-    type Output;
-    fn ntt_inverse(&self) -> Self::Output;
+    type Output: Default;
+    fn ntt_inverse(&self) -> Self::Output {
+        let mut out = Self::Output::default();
+        self.ntt_inverse_into(&mut out);
+        out
+    }
+    // DE: Die vorhandene inverse Transformation direkt ins Caller-Ziel schreiben.
+    // EN: Write the existing inverse transform directly into caller storage.
+    fn ntt_inverse_into(&self, out: &mut Self::Output);
 }
 
 /// One layer of the inverse NTT butterfly.
@@ -228,27 +272,32 @@ fn ntt_inverse_layer<const LEN: usize, const ITERATIONS: usize>(
 impl NttInverse for NttPolynomial {
     type Output = Polynomial;
 
-    fn ntt_inverse(&self) -> Polynomial {
-        let mut f: Array<Elem, U256> = self.0.clone();
+    fn ntt_inverse_into(&self, out: &mut Polynomial) {
+        let f = &mut out.0;
+        f.copy_from_slice(&self.0);
         let mut k = 127;
 
-        ntt_inverse_layer::<2, 64>(&mut f, &mut k);
-        ntt_inverse_layer::<4, 32>(&mut f, &mut k);
-        ntt_inverse_layer::<8, 16>(&mut f, &mut k);
-        ntt_inverse_layer::<16, 8>(&mut f, &mut k);
-        ntt_inverse_layer::<32, 4>(&mut f, &mut k);
-        ntt_inverse_layer::<64, 2>(&mut f, &mut k);
-        ntt_inverse_layer::<128, 1>(&mut f, &mut k);
+        ntt_inverse_layer::<2, 64>(f, &mut k);
+        ntt_inverse_layer::<4, 32>(f, &mut k);
+        ntt_inverse_layer::<8, 16>(f, &mut k);
+        ntt_inverse_layer::<16, 8>(f, &mut k);
+        ntt_inverse_layer::<32, 4>(f, &mut k);
+        ntt_inverse_layer::<64, 2>(f, &mut k);
+        ntt_inverse_layer::<128, 1>(f, &mut k);
 
-        Elem::new(3303) * &Polynomial::new(f)
+        for value in f {
+            *value = Elem::new(3303) * *value;
+        }
     }
 }
 
 impl<K: ArraySize> NttInverse for NttVector<K> {
     type Output = Vector<K>;
 
-    fn ntt_inverse(&self) -> Vector<K> {
-        Vector::new(self.0.iter().map(NttInverse::ntt_inverse).collect())
+    fn ntt_inverse_into(&self, out: &mut Vector<K>) {
+        for (source, target) in self.0.iter().zip(out.0.iter_mut()) {
+            source.ntt_inverse_into(target);
+        }
     }
 }
 
@@ -256,21 +305,42 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
 impl MultiplyNtt for BaseField {
     fn multiply_ntt(lhs: &NttPolynomial, rhs: &NttPolynomial) -> NttPolynomial {
         let mut out = NttPolynomial::new(Array::default());
-
-        for i in 0..128 {
-            let (c0, c1) = base_case_multiply(
-                lhs.0[2 * i],
-                lhs.0[2 * i + 1],
-                rhs.0[2 * i],
-                rhs.0[2 * i + 1],
-                i,
-            );
-
-            out.0[2 * i] = c0;
-            out.0[2 * i + 1] = c1;
-        }
-
+        multiply_ntt_into(lhs, rhs, &mut out);
         out
+    }
+}
+
+// DE: Ursprüngliche Basismultiplikation in geliehene Fläche schreiben.
+// EN: Write the original base multiplication into borrowed storage.
+pub(crate) fn multiply_ntt_into(lhs: &NttPolynomial, rhs: &NttPolynomial, out: &mut NttPolynomial) {
+    for i in 0..128 {
+        let (c0, c1) = base_case_multiply(
+            lhs.0[2 * i],
+            lhs.0[2 * i + 1],
+            rhs.0[2 * i],
+            rhs.0[2 * i + 1],
+            i,
+        );
+
+        out.0[2 * i] = c0;
+        out.0[2 * i + 1] = c1;
+    }
+}
+
+// DE: Das vorhandene Skalarprodukt ohne private Polynom-Rückgaben auswerten.
+// EN: Evaluate the existing dot product without private polynomial returns.
+pub(crate) fn dot_ntt_into<K: ArraySize>(
+    lhs: &NttVector<K>,
+    rhs: &NttVector<K>,
+    out: &mut NttPolynomial,
+    product: &mut NttPolynomial,
+) {
+    out.0.fill(Default::default());
+    for (x, y) in lhs.0.iter().zip(rhs.0.iter()) {
+        multiply_ntt_into(x, y, product);
+        for (sum, value) in out.0.iter_mut().zip(product.0.iter()) {
+            *sum = *sum + *value;
+        }
     }
 }
 
