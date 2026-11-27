@@ -790,8 +790,6 @@ dependencies = [
 [[package]]
 name = "ml-dsa"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f6d49c3f3f0e10e18ca975ffda66f8da0ec36521c1d911adcbc521bf0743f5c"
 dependencies = [
  "crypto-common",
  "ctutils",
@@ -819,8 +817,6 @@ dependencies = [
 [[package]]
 name = "module-lattice"
 version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4a1e412c8ee83a1c678f427806219c49c96b2511b9f07497514f0e43fb26155"
 dependencies = [
  "ctutils",
  "hybrid-array",
@@ -926,6 +922,7 @@ dependencies = [
  "mime",
  "ml-dsa",
  "ml-kem",
+ "module-lattice",
  "pqkeep-platform",
  "proptest",
  "region",

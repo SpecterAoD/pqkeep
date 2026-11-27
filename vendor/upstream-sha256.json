@@ -1182,5 +1182,117 @@
       "path": "src/pke.rs",
       "sha256": "5fd5a80785140adfa10a7fd96b2102a6cec8469b6fb63f0e94cf0ab50d89929f"
     }
+  ],
+  "module-lattice-0.2.4": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "65048439748f4d547e3ebdaa4fe813bb61f5f87d05a35d582376e6b1efe5f602"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "bafee6f7e52c53df335b791f70778b208ed02b368bda487b365fd2dec54190fb"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "d0fb27c23e807f1fc6f506d161984b294a1f05c9888ae31f056d1712685948ad"
+    },
+    {
+      "path": "README.md",
+      "sha256": "55dfff72d0891c67aae8ffbd4104599fa7ab2e09df066361bd4279f122ca8e91"
+    },
+    {
+      "path": "src/algebra.rs",
+      "sha256": "44fd1c5429671aeb155d6a157443a793df79fce98d35e18bf94f77922a557909"
+    },
+    {
+      "path": "src/encoding.rs",
+      "sha256": "566cecff30fb21167593d9bcb638faedbfacdcad1a87c8aa7628a69c30fd29b7"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "e7eccaf27e2f7fc7eb7352ed38bf30769b6d3fb2b357582d9a52515020177168"
+    },
+    {
+      "path": "src/maybe_box.rs",
+      "sha256": "6c5f6fc6aa41e63837ee9d79664ddff863051620384b4d2ecfcd6a784c6b51d5"
+    },
+    {
+      "path": "src/truncate.rs",
+      "sha256": "b241a22335a9d2a0687ae992266e4872fbba6d9c89553b9ea71eda54e912bf09"
+    }
+  ],
+  "ml-dsa-0.1.2": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "b1d6cc42d3cea2eae41656d48648178f9317f6fde43904bd254e06880a4481ce"
+    },
+    {
+      "path": "Cargo.toml.orig",
+      "sha256": "35726652fa486d2faea4c9709c172c8f6b4c0cc477fdefe68ff134a1a82a2bd7"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "4621bda86773a67b5645bbd25cf1bf8b6820d4fcec3885b23b9ceec612007f63"
+    },
+    {
+      "path": "README.md",
+      "sha256": "a5c191aba55d2dbe0dee44178259c658d86268c7dc7682e74fd4d4eb0704aad3"
+    },
+    {
+      "path": "src/algebra.rs",
+      "sha256": "c6554e559902e4b406ff448aa2c17be1f77425e3f4c4f1d25b72c331090a46e0"
+    },
+    {
+      "path": "src/crypto.rs",
+      "sha256": "53bbe59986a52cfa043b7d4f2698388ef0aab27954d1d0ded03d8c0fa19074f4"
+    },
+    {
+      "path": "src/encode.rs",
+      "sha256": "ace1529c51c118f481aa595a5da7950acf5d8a857847ffe630fc0aefb7f4635b"
+    },
+    {
+      "path": "src/hint.rs",
+      "sha256": "256bbc438889474f61821e4526e3690768058b7893b0cb467c401b251723fef3"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "4f602007ee0029254bbaa271ae7bd53a8c7a145d571b4fac7500e3393bb1c8c1"
+    },
+    {
+      "path": "src/ntt.rs",
+      "sha256": "4896c4959b24f95df52d6f46833ff6b69a07f0a9ac8fddf90e74e15e16fb7f6f"
+    },
+    {
+      "path": "src/param.rs",
+      "sha256": "380a16fbb93ef547bc6a51b79eb6b4af90f81523712e38c4844f4d0918181623"
+    },
+    {
+      "path": "src/pkcs8.rs",
+      "sha256": "701e8d25b36b1d8e50596f01c4091e1c39cfd54f916b509b925bebe1cd26f431"
+    },
+    {
+      "path": "src/sampling.rs",
+      "sha256": "be7b730583563e4a9f04521843a0e05d7ed54d1c2f036b49501ab14d2dfbd2d2"
+    },
+    {
+      "path": "src/signing/steps.rs",
+      "sha256": "09191b0854f8148aea45fbf9bb987a731b7d5344d01679520ee9533d763803a0"
+    },
+    {
+      "path": "src/signing.rs",
+      "sha256": "eeee8d3e8e918c022a307ca8d217858af30b18acfab9cc1321b68636ad1bfde9"
+    },
+    {
+      "path": "src/verifying.rs",
+      "sha256": "9a8b2ea9ddb81c68c40d05a7bf4006e616f68ba330af71903170eadd27c19dbc"
+    }
   ]
 }

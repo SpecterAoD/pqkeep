@@ -15,7 +15,24 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | hmac 0.13.0 | RustCrypto/MACs, MIT OR Apache-2.0 | In-place rekey/finalize using caller-provided scratch; zeroize opad on Drop and keyed state on explicit wipe. Existing API preserved. |
 | hkdf 0.13.0 | RustCrypto/KDFs, MIT OR Apache-2.0 | Allocation-free first HKDF block over caller-owned HMAC/PRK/output. Same extract/expand steps; no hidden PRK or cloned keyed state. Existing API preserved. |
 | region 4.0.1 | darfink/region-rs, MIT | Safe current-process Windows working-set capacity request before VirtualLock. No token, account, privilege or machine-policy changes; errors are propagated. Existing lock API preserved. |
-| ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Additive encapsulation into borrowed entropy/G-output storage; public ciphertext return only. Existing G/PKE/legacy APIs unchanged. |
+| ml-kem 0.3.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed encapsulation/decapsulation, prelockable key payloads, direct NTT output and shared CBD decoding; preserve legacy APIs and algorithms. |
+| module-lattice 0.2.4 | RustCrypto/KEMs, Apache-2.0 OR MIT | Borrowed codec destinations; shared original packing loops with scalar little-endian accesses instead of private conversion arrays. |
+| ml-dsa 0.1.2 | RustCrypto/signatures, Apache-2.0 OR MIT | Versioned dependency-path bridge to the same lattice provider; production algorithms unchanged. |
+
+DE: Die beiden neuen Subsets enthalten sämtliche Produktionsmodule und vollständige
+Original-Lizenzen. Nur Dev-/Test-/Bench-Targets sowie acht reine Inline-Testmodul-
+Suffixe von ML-DSA fehlen. Ausgewählte Originaldateien bleiben einzeln gehasht;
+jede Abweichung steht im Patchregister. Root und Fuzz behalten alle Paketversionen.
+EN: Both production subsets preserve all production modules and original licenses.
+Only development targets/dependencies and eight pure ML-DSA test suffixes are omitted.
+Versioned dependency paths apply to external consumers, with no root-only patch.
+
+DE: ByteEncode/ByteDecode delegieren an geliehene Ausgabe-Schleifen. 12-Bit-Reduktion
+und öffentliche Geometriegrenze bleiben erhalten. Der KEM-CBD-Sampler dekodiert
+direkt ins Ziel und berechnet dort dieselben Koeffizienten; kein zweites lokales
+Dekodierpolynom. Legacy-Rückgaben und private Sampling-/XOF-Zustände bleiben offen.
+EN: Independent bit tests cover all used KEM/DSA widths in prelocked stable storage.
+This removes conversion arrays and one CBD intermediate, not all provider scratch.
 
 DE: ML-KEM stammt aus dem gegen das Basis-Cargo.lock geprüften Originalarchiv.
 Produktionsquellen/README/Lizenzen vollständig erhalten; nur Test-/Benchmarktargets,

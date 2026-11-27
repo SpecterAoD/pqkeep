@@ -527,3 +527,5 @@ No guarantee for arbitrary visitor outputs, error category, provider internals,
 GUI/process protection, other owners or scalar/compiler/stack transit. Native
 tests must demonstrate locks before allocation/binding, moves, wiping/unwind and
 actual lock refusal. See [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
+
+EN: R6 work in progress: shared pinned lattice codec with borrowed destinations, no private 16-byte conversion arrays, and no extra CBD decoding polynomial. Sampling/XOF/hash/DSA/AES/Argon2 workspaces remain open; this is not full remediation.

@@ -4,7 +4,7 @@ use crate::{
     param::CbdSamplingSize,
 };
 use array::{Array, ArraySize, typenum::U256};
-use module_lattice::{Encode, Field, MultiplyNtt, Truncate};
+use module_lattice::{Field, MultiplyNtt, Truncate};
 use sha3::digest::XofReader;
 
 module_lattice::define_field!(BaseField, u16, u32, u64, 3329);
@@ -101,13 +101,21 @@ pub(crate) fn sample_poly_cbd<Eta>(B: &PrfOutput<Eta>) -> Polynomial
 where
     Eta: CbdSamplingSize,
 {
-    let vals: Polynomial = Encode::<Eta::SampleSize>::decode(B);
-    Polynomial::new(
-        vals.0
-            .iter()
-            .map(|val| cbd_coefficient::<Eta>(val.0))
-            .collect(),
-    )
+    let mut out = Polynomial::default();
+    sample_poly_cbd_into::<Eta>(B, &mut out);
+    out
+}
+
+// DE: Dieselben CBD-Koeffizienten direkt im geliehenen Dekodierziel auswerten.
+// EN: Evaluate the same CBD coefficients directly in the borrowed decoding target.
+pub(crate) fn sample_poly_cbd_into<Eta>(B: &PrfOutput<Eta>, out: &mut Polynomial)
+where
+    Eta: CbdSamplingSize,
+{
+    module_lattice::byte_decode_into::<BaseField, Eta::SampleSize>(B, &mut out.0);
+    for value in &mut out.0 {
+        *value = cbd_coefficient::<Eta>(value.0);
+    }
 }
 
 /// Map `2 * eta` sampled bits to a CBD coefficient: the number of ones in the low `eta` bits

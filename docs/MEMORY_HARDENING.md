@@ -325,3 +325,14 @@ NTT output, sharing the existing transform loops. Private sampling vectors and
 G/PRF/PKE intermediates remain known open buffers, not unavoidable compiler limits.
 No complete R6 acceptance claim.
 
+## R6: borrowed lattice codec / geliehener Gitter-Codec
+
+DE: Der gemeinsame gepinnte Gitterprovider schreibt ByteEncode/ByteDecode direkt
+in geliehene Ziele; die alten APIs verwenden dieselben Schleifen. Private 16-Byte-
+Konvertierungsarrays entfallen. KEM-CBD wertet die dekodierten Koeffizienten direkt
+im Ziel aus. Vorab gesperrte stabile Tests prüfen alle verwendeten KEM-/DSA-Bitbreiten,
+unabhängige Bitreihenfolge, Randmarkierungen, 12-Bit-Reduktion und Löschen unter Sperre.
+EN: Borrowed codec destinations share the original packing/reduction logic. The
+CBD sampler no longer requires an extra decoded polynomial. Legacy return values,
+sampling/hash/XOF construction and other R6 matrix boundaries remain OPEN.
+
