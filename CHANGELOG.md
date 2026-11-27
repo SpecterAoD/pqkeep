@@ -46,6 +46,14 @@ German release notes: see `docs/releases/`.
   same-version additive provider output path, no private SharedKey return tuple.
   Other provider/platform boundaries remain open; native acceptance required.
 
+- DE: Windows-Terminaleingabe (#147): Record-Ausrichtung mit sicheren Bounds-Prüfungen;
+  geliehene initialisierte Feldsichten statt zusätzlicher roher Dereferenzen.
+  Vier vermeidbare produktive unsafe-Stellen entfernt; gesperrter Speicher und
+  vollständiges volatiles Löschen bleiben erhalten. Kein Gesamtabschluss von #147.
+  EN: Reduce four avoidable production unsafe sites in protected Windows console
+  input; exclusive read borrows guard initialized field views without record copies.
+  Native FFI and padding wipe remain justified boundaries; other findings stay open.
+
 ## [0.1.0-beta.4] – 2026-11-26
 
 Fourth public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**

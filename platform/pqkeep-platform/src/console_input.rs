@@ -3,7 +3,7 @@
 use crate::console_input_record::Record;
 use std::io;
 use std::os::windows::io::{AsRawHandle, BorrowedHandle};
-use windows_sys::Win32::System::Console::{KEY_EVENT, ReadConsoleInputW};
+use windows_sys::Win32::System::Console::{INPUT_RECORD, KEY_EVENT, ReadConsoleInputW};
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{VK_BACK, VK_ESCAPE, VK_RETURN};
 
 /// DE: Nur öffentliche Aktionen/Längen zurückgeben; Text bleibt im Callerpuffer.
@@ -43,9 +43,9 @@ pub fn read_console_input(
         return Err(io::ErrorKind::InvalidInput.into());
     }
     let result = (|| {
-        let record = Record::new(storage)?;
-        read_record(handle, &record)?;
-        key_event(&record, pending, text)
+        let mut record = Record::new(storage)?;
+        let initialized = read_record(handle, &mut record)?;
+        key_event(initialized, pending, text)
     })();
     if result.is_err()
         || matches!(
@@ -58,7 +58,10 @@ pub fn read_console_input(
     result
 }
 
-fn read_record(handle: BorrowedHandle<'_>, record: &Record<'_>) -> io::Result<()> {
+fn read_record<'a>(
+    handle: BorrowedHandle<'_>,
+    record: &'a mut Record<'_>,
+) -> io::Result<&'a INPUT_RECORD> {
     let mut count = 0;
     // SAFETY: Record guard owns exclusive aligned full native output storage and wipes
     // all bytes before safe access resumes, including partial failure/unwind. The live
@@ -71,36 +74,36 @@ fn read_record(handle: BorrowedHandle<'_>, record: &Record<'_>) -> io::Result<()
     if count != 1 {
         return Err(io::ErrorKind::InvalidData.into());
     }
-    Ok(())
+    // DE: Nur nach Erfolg/count1; der exklusive Borrow verhindert weiteres Überschreiben.
+    // SAFETY: Success with count1 initializes one aligned, in-bounds INPUT_RECORD.
+    // A reference does not read its padding or select a union variant. The exclusive
+    // guard borrow prevents another read or destruction while this view is live.
+    Ok(unsafe { &*record.pointer() })
 }
 
 fn key_event(
-    record: &Record<'_>,
+    record: &INPUT_RECORD,
     pending: &mut [u8],
     text: &mut [u8],
 ) -> io::Result<ConsoleInputEvent> {
-    // SAFETY: Success with exactly one event initializes EventType. No full record load.
-    if u32::from(unsafe { (*record.pointer()).EventType }) != KEY_EVENT {
+    if u32::from(record.EventType) != KEY_EVENT {
         return Ok(ConsoleInputEvent::Ignore);
     }
     // SAFETY: KEY_EVENT discriminant establishes initialized KEY_EVENT_RECORD fields.
-    // Take only a raw address, never a whole record/reference or private by-value copy.
-    let key = unsafe { &raw const (*record.pointer()).Event.KeyEvent };
-    // SAFETY: The checked native key variant initializes these scalar fields.
-    if unsafe { (*key).bKeyDown } == 0 {
+    // Borrow the initialized variant, never copy the whole private native record.
+    let key = unsafe { &record.Event.KeyEvent };
+    if key.bKeyDown == 0 {
         return Ok(ConsoleInputEvent::Ignore);
     }
-    // SAFETY: Checked key variant, documented Unicode W API, initialized scalar fields.
-    let repeat = unsafe { (*key).wRepeatCount };
+    let repeat = key.wRepeatCount;
     if repeat == 0 {
         return Err(io::ErrorKind::InvalidData.into());
     }
     // SAFETY: Checked initialized W key event; only a scalar private character is
     // loaded. Compiler/register/scalar copies remain an explicitly open boundary.
-    let unit = unsafe { (*key).uChar.UnicodeChar };
+    let unit = unsafe { key.uChar.UnicodeChar };
     if unit == 0 {
-        // SAFETY: Checked initialized key event. No aggregate native record load.
-        let event = match unsafe { (*key).wVirtualKeyCode } {
+        let event = match key.wVirtualKeyCode {
             VK_BACK => ConsoleInputEvent::Backspace(repeat),
             VK_RETURN => ConsoleInputEvent::Finish,
             VK_ESCAPE => ConsoleInputEvent::Cancel,
