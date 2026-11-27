@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.6.0",
+  "matrix_version": "1.7.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -980,7 +980,7 @@
         "en": "v1 decrypt samples every seventh header byte; check mutates every byte of a small v1 file. v2 coverage varies by access path."
       },
       "implementation_state": "implemented",
-      "coverage_status": "partial",
+      "coverage_status": "covered",
       "automation": "automated",
       "platforms": [
         "linux-x86_64",
@@ -1025,6 +1025,30 @@
           "symbol": "mutated_file_never_panics_or_leaks",
           "kind": "rust-integration",
           "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_headers.rs",
+          "symbol": "v1_and_v2_headers",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_headers.rs",
+          "symbol": "v3_header_with_visible_sender",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_headers.rs",
+          "symbol": "v4_file_headers",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_headers.rs",
+          "symbol": "v4_stream_headers",
+          "kind": "rust-integration",
+          "stage": "existing"
         }
       ],
       "ci_refs": [
@@ -1043,7 +1067,8 @@
       ],
       "priority": "P1",
       "issues": [
-        151
+        151,
+        335
       ],
       "v2_ids": [],
       "evidence_refs": [
@@ -1051,14 +1076,8 @@
         "B1-windows-x86_64",
         "B1-linux-arm64"
       ],
-      "gap": {
-        "de": "v1-Decrypt testet jedes siebte Headerbyte; check jedes Byte einer kleinen v1-Datei. v2 je Zugang teils Stichproben.",
-        "en": "v1 decrypt samples every seventh header byte; check mutates every byte of a small v1 file. v2 coverage varies by access path."
-      },
-      "next_evidence": {
-        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
-        "en": "Review the missing variant in the linked issue; no production change in #151."
-      },
+      "gap": null,
+      "next_evidence": null,
       "retired": false,
       "replacement": null
     },
@@ -3187,13 +3206,12 @@
         "de": "Drop läuft bei SIGKILL/Abort nicht; temporärer Klartext kann bleiben, Dauerhaftigkeit ist nicht bewiesen.",
         "en": "Drop does not run on SIGKILL/abort; temporary plaintext may remain and durability is unproven."
       },
-      "implementation_state": "documented-only",
-      "coverage_status": "missing",
-      "automation": "automatable",
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
       "platforms": [
         "linux-x86_64",
-        "linux-arm64",
-        "windows-x86_64"
+        "linux-arm64"
       ],
       "features": [
         "default",
@@ -3203,21 +3221,42 @@
         "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
         "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
       },
-      "test_refs": [],
-      "ci_refs": [],
+      "test_refs": [
+        {
+          "path": "tests/integrity_kill.rs",
+          "symbol": "killed_decrypt_never_publishes_the_target",
+          "kind": "rust-integration",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
       "priority": "P1",
       "issues": [
-        152
+        152,
+        335,
+        338
       ],
       "v2_ids": [],
       "evidence_refs": [],
       "gap": {
-        "de": "Drop läuft bei SIGKILL/Abort nicht; temporärer Klartext kann bleiben, Dauerhaftigkeit ist nicht bewiesen.",
-        "en": "Drop does not run on SIGKILL/abort; temporary plaintext may remain and durability is unproven."
+        "de": "Nach SIGKILL kann temporärer Klartext (versteckter Name, 0600) bleiben; Stromausfall/Dauerhaftigkeit nicht belegbar; Windows-Kill nicht automatisiert.",
+        "en": "After SIGKILL temporary plaintext (hidden name, 0600) may remain; power loss/durability cannot be proven; Windows kill not automated."
       },
       "next_evidence": {
-        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
-        "en": "Review the missing variant in the linked issue; no production change in #151."
+        "de": "#338: namenlose Temporärdatei (O_TMPFILE + linkat) bzw. Windows „beim Schließen löschen“; Vollverschlüsselung empfohlen.",
+        "en": "#338: unnamed temporary file (O_TMPFILE + linkat) or Windows delete-on-close; full-disk encryption recommended."
       },
       "retired": false,
       "replacement": null
@@ -5758,6 +5797,103 @@
       "issues": [
         151,
         316
+      ],
+      "v2_ids": [],
+      "evidence_refs": [],
+      "gap": null,
+      "next_evidence": null,
+      "retired": false,
+      "replacement": null
+    },
+    {
+      "id": "QA1-FMT-015",
+      "category": "Container",
+      "component_paths": [
+        "src/crypto/stream.rs",
+        "src/crypto/stream_io.rs",
+        "src/files/decrypt.rs",
+        "src/files/output.rs",
+        "src/files/tail_v4.rs",
+        "docs/security/CONTAINER_INTEGRITY_AUDIT.md"
+      ],
+      "scenario": {
+        "de": "Integritätsmatrix aller Formate (v1–v4 inkl. Strom, Füllung, sichtbarer/verborgener Absender, anonymer Empfänger) auf Dateiebene: Blöcke tauschen, doppeln, entfernen, an jeder Blockgrenze abschneiden, anhängen, Blöcke einer zweiten Datei einsetzen; dieselbe Quelle zweimal verschlüsseln; Fehler beim Schreiben/Synchronisieren/Veröffentlichen während decrypt von v4; v1-Header nicht kanonisch kodieren",
+        "en": "Integrity matrix of all formats (v1–v4 incl. stream, padding, visible/hidden sender, anonymous recipients) at file level: swap, duplicate, remove chunks, cut at every chunk boundary, append, insert chunks of a second file; encrypt the same source twice; write/sync/publish failures during v4 decrypt; encode a v1 header non-canonically."
+      },
+      "expected_behavior": {
+        "de": "decrypt und check scheitern ohne Ausgabe und ohne Temporärrest; zweimal verschlüsselt ergibt anderen Präfix, andere Schlüsselbindung (v4) und anderes Chiffrat; Fehler veröffentlichen nie ein Ziel; nur kanonische v1-Header werden gelesen",
+        "en": "decrypt and check fail without output and without temporary leftovers; encrypting twice gives a different prefix, key commitment (v4) and ciphertext; failures never publish a target; only canonical v1 headers are read"
+      },
+      "boundary": {
+        "de": "Die Zählergrenze (2^32 Blöcke) ist nur durch Code-Lesen belegt (Test-Zugang in src/crypto erst nach #147); Datei-Races beim Veröffentlichen gehören zu #338.",
+        "en": "The counter limit (2^32 chunks) is only established by code reading (test hook in src/crypto only after #147); file races while publishing belong to #338."
+      },
+      "implementation_state": "implemented",
+      "coverage_status": "covered",
+      "automation": "automated",
+      "platforms": [
+        "linux-x86_64",
+        "linux-arm64",
+        "windows-x86_64"
+      ],
+      "features": [
+        "default",
+        "no-default"
+      ],
+      "preconditions": {
+        "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
+        "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
+      },
+      "test_refs": [
+        {
+          "path": "tests/integrity_chunks.rs",
+          "symbol": "chunk_manipulations_fail_on_every_format",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_chunks.rs",
+          "symbol": "same_source_twice_is_fresh_on_every_format",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "tests/integrity_headers.rs",
+          "symbol": "unchanged_files_open_on_every_path",
+          "kind": "rust-integration",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/recovery_v4_tests.rs",
+          "symbol": "rec008_v4_decrypt_failures_never_publish",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "fuzz/fuzz_targets/pqkf_header.rs",
+          "symbol": "fuzz_target!",
+          "kind": "fuzz",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
+      "priority": "P1",
+      "issues": [
+        151,
+        335
       ],
       "v2_ids": [],
       "evidence_refs": [],

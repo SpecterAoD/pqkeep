@@ -32,6 +32,9 @@ mod original;
 mod output;
 pub mod paths;
 pub mod random_name;
+#[cfg(test)]
+#[path = "recovery_v4_tests.rs"]
+mod recovery_v4_tests;
 mod scan;
 mod signed_io;
 mod signer_v3;
