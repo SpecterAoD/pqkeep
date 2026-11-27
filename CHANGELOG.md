@@ -6,6 +6,15 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Stufe „Privatsphäre hoch“ vollständig** (#316): `--privacy high` (Menü, Kontextmenü) setzt
+  zufälligen Namen, Füllung, beim Signieren den verborgenen Absender und bei ML-KEM-1024-Empfängern die
+  **experimentellen anonymen Empfänger** – mit Warnung; abwählbar mit `--no-anonymous-recipients` bzw. per
+  Rückfrage (Vorauswahl: behalten). Andere Schlüsselarten: Hinweis, Empfänger-IDs bleiben sichtbar.
+  EN: **Level "privacy high" complete** (#316): `--privacy high` (menu, context menu) sets random name,
+  padding, the hidden sender when signing and, for ML-KEM-1024 recipients, the **experimental anonymous
+  recipients** – with a warning; deselect with `--no-anonymous-recipients` or via the question (default:
+  keep). Other key kinds: notice, recipient IDs stay visible.
+
 - DE: **Verborgener Absender** (#316): `encrypt --sign-with KEY --hide-sender` legt Absenderschlüssel und
   Signatur in den verschlüsselten Teil – Außenstehende sehen nur „signiert, Absender verborgen“, Empfänger
   prüfen den Absender beim Entschlüsseln (auch mit `--signer`). Die Stufe „Privatsphäre hoch“ verbirgt den
@@ -17,12 +26,12 @@ German release notes: see `docs/releases/`.
 
 - DE: **Anonyme Empfänger – EXPERIMENTELL** (#316, Recherche #340): `encrypt --anonymous-recipients --to …`
   schreibt Zugänge ohne Empfänger-ID (nur ML-KEM-1024, Format v4, lesbar ab beta.5); Öffnen probiert alle
-  Zugänge. Die Anonymität ist für FIPS 203 noch nicht formal belegt – Warnung bei jeder Nutzung, nicht Teil
-  von „Privatsphäre hoch“.
+  Zugänge. Die Anonymität ist für FIPS 203 noch nicht formal belegt – Warnung bei jeder Nutzung (Teil von
+  „Privatsphäre hoch“ siehe oben).
   EN: **Anonymous recipients – EXPERIMENTAL** (#316, research #340): `encrypt --anonymous-recipients --to …`
   writes slots without recipient ID (ML-KEM-1024 only, format v4, readable from beta.5); opening tries all
-  slots. Anonymity is not yet formally established for FIPS 203 – warning on every use, not part of "privacy
-  high".
+  slots. Anonymity is not yet formally established for FIPS 203 – warning on every use (part of "privacy
+  high", see above).
 
 - DE: **Füllung** (#316): `encrypt --pad` verbirgt die genaue Größe (PADMÉ, höchstens ~12 %, meist < 3 %
   größer; Format v4, lesbar ab beta.5), auch mit `--stdin`; die Stufe „Privatsphäre hoch“ (`--privacy

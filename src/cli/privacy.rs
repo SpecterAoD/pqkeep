@@ -29,11 +29,11 @@ pub fn encrypt_args(lang: Lang) -> [Arg; 3] {
     let (random, level) = match lang {
         Lang::De => (
             "Zufälliger äußerer Name (26 Zeichen + .pqkf) neben der Quelle; der Originalname bleibt verschlüsselt im Archiv. Bei mehreren Quellen als Container gibt --out den Namen im Archiv vor",
-            "Privatsphäre-Stufe: standard (Vorgabe) oder high (setzt --random-name und --pad; künftige Privatsphäre-Optionen kommen hinzu)",
+            "Privatsphäre-Stufe: standard (Vorgabe) oder high (setzt --random-name, --pad, beim Signieren --hide-sender und bei ML-KEM-1024-Empfängern EXPERIMENTELL anonyme Empfänger – abwählbar mit --no-anonymous-recipients)",
         ),
         Lang::En => (
             "Random outer name (26 characters + .pqkf) next to the source; the original name stays encrypted in the archive. With several sources as a container --out sets the name inside the archive",
-            "Privacy level: standard (default) or high (sets --random-name and --pad; future privacy options will be added)",
+            "Privacy level: standard (default) or high (sets --random-name, --pad, --hide-sender when signing and, for ML-KEM-1024 recipients, EXPERIMENTAL anonymous recipients – deselect with --no-anonymous-recipients)",
         ),
     };
     let pad = match lang {
@@ -67,8 +67,12 @@ pub fn decrypt_arg(lang: Lang) -> Arg {
 /// DE: Frage im Menü. EN: Menu question.
 pub fn menu_question(lang: Lang) -> &'static str {
     match lang {
-        Lang::De => "Privatsphäre hoch (zufälliger Dateiname, verborgene Größe; lesbar ab beta.5)?",
-        Lang::En => "Privacy high (random file name, hidden size; readable from beta.5)?",
+        Lang::De => {
+            "Privatsphäre hoch (zufälliger Dateiname, verborgene Größe und Empfänger, Absender verborgen beim Signieren; lesbar ab beta.5)?"
+        }
+        Lang::En => {
+            "Privacy high (random file name, hidden size and recipients, sender hidden when signing; readable from beta.5)?"
+        }
     }
 }
 
@@ -79,7 +83,7 @@ pub fn message(field: &str) -> Option<&'static str> {
     )
 }
 
-fn high(m: &ArgMatches) -> bool {
+pub(super) fn high(m: &ArgMatches) -> bool {
     m.get_one::<String>("privacy").map(String::as_str) == Some("high")
 }
 
@@ -181,8 +185,8 @@ pub fn restore(m: &ArgMatches, src: &Path) -> bool {
     m.get_flag(ORIGINAL_NAME) || (m.get_one::<PathBuf>("out").is_none() && is_random_path(src))
 }
 
-/// DE: Stufe „Privatsphäre hoch“ für Kindprozesse (zufälliger Name und Füllung; Codex-Fund #339).
-/// EN: Level "privacy high" for child processes (random name and padding; Codex finding #339).
+/// DE: Stufe „Privatsphäre hoch“ für Kindprozesse (Name, Füllung, Absender, anonyme Empfänger).
+/// EN: Level "privacy high" for child processes (name, padding, sender, anonymous recipients).
 pub const LEVEL_HIGH: [&str; 2] = ["--privacy", "high"];
 
 /// DE: Platzhalter-Ziel fürs Aufräumen: passt auf jeden zufälligen Namen (mit eigener Kennung).
@@ -193,10 +197,10 @@ pub const ANY_RANDOM: &str = ".pqkeep-any-random-name";
 pub fn context_question(lang: Lang) -> &'static str {
     match lang {
         Lang::De => {
-            "Privatsphäre hoch? Zufälliger Dateiname und verborgene genaue Größe; lesbar erst ab PQKeep beta.5."
+            "Privatsphäre hoch? Zufälliger Dateiname, verborgene genaue Größe und Empfänger, beim Signieren verborgener Absender; lesbar erst ab PQKeep beta.5."
         }
         Lang::En => {
-            "Privacy high? Random file name and hidden exact size; readable only from PQKeep beta.5."
+            "Privacy high? Random file name, hidden exact size and recipients, hidden sender when signing; readable only from PQKeep beta.5."
         }
     }
 }

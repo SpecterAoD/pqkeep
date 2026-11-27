@@ -129,8 +129,10 @@ Es öffnet sich ein Terminal- bzw. Konsolenfenster (Fenster-Modus: siehe oben) m
   eigenen Schlüsseldatei gefragt, nach der Faktordatei nur, wenn die Datei oder die Schlüsseldatei
   sie verlangt. Weitergegeben wird nur ihr Pfad. Signierte Dateien werden immer geprüft; die
   Fertig-Meldung nennt den **geprüften Absender** (Fingerabdruck). Beim Verschlüsseln fragt das
-  Kontextmenü nach der Schutzart **„Privatsphäre hoch?“** (#315, Standard Nein): dann bekommt die
-  `.pqkf` einen zufälligen Namen. Dateien mit zufälligem Namen
+  Kontextmenü nach der Schutzart **„Privatsphäre hoch?“** (#315/#316, Standard Nein): dann bekommt die
+  `.pqkf` einen zufälligen Namen, die Größe wird verborgen, beim Signieren auch der Absender. Bei
+  ML-KEM-1024-Empfängern folgt eine Rückfrage zu den **experimentellen anonymen Empfängern**
+  (Vorauswahl: behalten; „Nein“ wählt sie ab). Dateien mit zufälligem Namen
   (#315) werden unter ihrem Originalnamen aus dem Archiv neben der Quelle entschlüsselt
   (`--original-name --rename`); die Fertig-Meldung nennt dann die Quelle.
 - Das Ergebnis landet neben der Quelle. Ist der Name belegt, wird ein freier Name gewählt
@@ -253,7 +255,7 @@ passed on). The result is placed next to the source under a free name
 (`report (2).txt`, encrypted `report (2).txt.pqkf` – the extension survives decryption) – nothing is overwritten. The passphrase is entered hidden in a separate, fully
 sandboxed process (on Linux also via small windows, see above). Optionally **"Sign as sender?"** (#287) when encrypting (own ML-DSA-87 key, its passphrase; format v3); after
 decrypting a signed file the final message names the **verified sender**. After the mode, encrypting
-asks **"Privacy high?"** (#315, default no) for a random outer name. Randomly named files (#315) are decrypted under their original name from the archive next to the
+asks **"Privacy high?"** (#315/#316, default no) for a random outer name, hidden size and – when signing – hidden sender; with ML-KEM-1024 recipients a question about the **experimental anonymous recipients** follows (default keep; "No" deselects). Randomly named files (#315) are decrypted under their original name from the archive next to the
 source (`--original-name --rename`); the final message then names the source.
 
 **Several files:** Linux: Nemo (`Selection=notnone`), Nautilus, Dolphin and Thunar (`%F`) pass all selected

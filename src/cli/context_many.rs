@@ -193,11 +193,14 @@ pub(super) fn terminal(
     let modes: Vec<&str> = s.ctx_modes.split('|').collect();
     // DE: 1 = Empfänger, 2 = Passphrase und Faktordatei. EN: 1 = recipients, 2 = with factor file.
     let mode = select(s.ctx_mode, &modes)?;
-    if super::privacy::ask_terminal(lang)? {
+    let private = super::privacy::ask_terminal(lang)?;
+    if private {
         args.extend(super::privacy::LEVEL_HIGH);
     }
     let extra = match mode {
-        1 => recipients_ui::to_args(&recipients(s, lang)?),
+        1 => super::anonymous::to_args(&recipients(s, lang)?, private, || {
+            super::anonymous::keep_terminal(lang)
+        })?,
         2 => vec![FLAG.to_owned(), ask_path(ui_texts(lang).existing)?],
         _ => Vec::new(),
     };

@@ -65,9 +65,10 @@ fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> C
         let to = ask(t.menu_recipient, true)?;
         // DE: Mit Empfängern: weitere sammeln, dann optional eigene Passphrase (#47).
         // EN: With recipients: collect more, then optionally an own passphrase (#47).
+        let mut all = Vec::new();
         let with_pass = !to.is_empty() && {
             let r = super::recipients_ui::texts(lang);
-            let all = super::recipients_ui::collect(to.clone(), || {
+            all = super::recipients_ui::collect(to.clone(), || {
                 ask(r.menu_more, true).map(|p| (!p.is_empty()).then_some(p))
             })?;
             argv.extend(super::recipients_ui::to_args(&all));
@@ -88,6 +89,8 @@ fn crypt_args(t: &Texts, lang: Lang, encrypt: bool, argv: &mut Vec<String>) -> C
         // EN: Level "privacy high" (#315): random name, no own target.
         if confirm(super::privacy::menu_question(lang))? {
             argv.extend(["--privacy".to_owned(), "high".to_owned()]);
+            let keep = || super::anonymous::keep_terminal(lang);
+            argv.extend(super::anonymous::deselect_args(true, &all, keep)?);
             argv.extend(["--".to_owned(), path]);
             return Ok(());
         }

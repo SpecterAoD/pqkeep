@@ -79,6 +79,11 @@ today's common public-key encryption ("harvest now, decrypt later").
   ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
 - **Random outer file names** (since beta.4): `encrypt --random-name` / `--privacy high` hides the
   original name; `decrypt` restores it from the archive ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)).
+- **More privacy** (from beta.5, format v4): `--pad` hides the exact size, `--hide-sender` moves the
+  sender signature into the encrypted part, `--stdin` encrypts from a pipe; **experimental** anonymous
+  recipients (`--anonymous-recipients`, ML-KEM-1024, #340). `--privacy high` (also menu and context menu)
+  combines everything; anonymous recipients come with a warning and can be deselected
+  ([`docs/V4_DRAFT.md`](docs/V4_DRAFT.md)).
 - **Signatures:** `sign`/`verify` with ML-DSA-87 over the file's SHA3-512 (detached `.pqsig`;
   not an eIDAS signature).
 - **Backup checks** (since beta.3): `pqkeep check` verifies encrypted files completely without
@@ -293,6 +298,11 @@ sammeln, später entschlüsseln“).
   ([`docs/V3_SIGNED.md`](docs/V3_SIGNED.md)).
 - **Zufällige äußere Dateinamen** (seit beta.4): `encrypt --random-name` / `--privacy high` verbirgt
   den Originalnamen; `decrypt` stellt ihn aus dem Archiv her ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)).
+- **Mehr Privatsphäre** (ab beta.5, Format v4): `--pad` verbirgt die genaue Größe, `--hide-sender` legt
+  die Absender-Signatur in den verschlüsselten Teil, `--stdin` verschlüsselt aus einer Pipe;
+  **experimentell** anonyme Empfänger (`--anonymous-recipients`, ML-KEM-1024, #340). `--privacy high`
+  (auch Menü und Kontextmenü) fasst alles zusammen; anonyme Empfänger mit Warnung und abwählbar
+  ([`docs/V4_DRAFT.md`](docs/V4_DRAFT.md)).
 - **Signaturen:** `sign`/`verify` mit ML-DSA-87 über den SHA3-512 der Datei (abgesetzte `.pqsig`;
   keine eIDAS-Signatur).
 - **Backup-Prüfung** (seit beta.3): `pqkeep check` prüft verschlüsselte Dateien vollständig, ohne

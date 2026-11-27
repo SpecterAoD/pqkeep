@@ -99,8 +99,8 @@ Seed-basierte Fälle, darunter Prüfungen der impliziten Ablehnung nach FIPS 203
   verrät (ANO-CCA), ist für **Kyber Runde 3** bewiesen (Maram/Xagawa, ePrint 2022/1696; Grubbs/Maram/
   Paterson, Eurocrypt 2022; Xagawa, ePrint 2021/1323), für die **endgültige Norm FIPS 203 aber nicht
   veröffentlicht belegt** – FIPS 203 ändert Schritte der Schlüsselableitung, die der Beweis modelliert.
-  Recherche/Fachanalyse in #340; bis dahin Warnung bei jeder Nutzung, nicht Teil von „Privatsphäre
-  hoch“. Robustheit: ein falscher Schlüssel ergibt durch implizite Ablehnung nur Zufall, die Hülle
+  Recherche/Fachanalyse in #340; bis dahin Warnung bei jeder Nutzung; in „Privatsphäre hoch“ enthalten
+  (nur ML-KEM-1024), mit Hinweis „experimentell“ und Abwahl (`--no-anonymous-recipients`, Rückfrage im Menü). Robustheit: ein falscher Schlüssel ergibt durch implizite Ablehnung nur Zufall, die Hülle
   scheitert an AES-GCM; die Anzahl der Zugänge bleibt sichtbar.
 - **Verborgener Absender** (`--hide-sender`, Format v4, #316): Die ML-DSA-87-Signatur steht im
   verschlüsselten Trailer und deckt Header, SHA3-512 des Klartexts (samt Füllung) und beide Längen ab.
@@ -153,8 +153,8 @@ guarantee for the target hardware. **Anonymous recipients are EXPERIMENTAL** (`-
 format v4, #316): slots carry no recipient ID; that an ML-KEM-1024 ciphertext reveals nothing about the public
 key (ANO-CCA) is proven for **Kyber round 3** (Maram/Xagawa, ePrint 2022/1696; Grubbs/Maram/Paterson, Eurocrypt
 2022; Xagawa, ePrint 2021/1323) but **not established in published work for final FIPS 203**, which changes
-key-derivation steps the proof models. Research/expert analysis in #340; until then a warning on every use and
-not part of "privacy high". Robustness: a wrong key yields only randomness via implicit rejection and the wrap
+key-derivation steps the proof models. Research/expert analysis in #340; until then a warning on every use; included in
+"privacy high" (ML-KEM-1024 only) with an "experimental" notice and deselection (`--no-anonymous-recipients`, question in the menu). Robustness: a wrong key yields only randomness via implicit rejection and the wrap
 fails AES-GCM authentication; the number of slots stays visible. **Hidden sender** (`--hide-sender`, format v4, #316): the
 ML-DSA-87 signature lives in the encrypted trailer and covers the header, SHA3-512 of the plaintext (incl.
 padding) and both lengths. Whoever can decrypt sees the sender. A recipient knows the file key and can
