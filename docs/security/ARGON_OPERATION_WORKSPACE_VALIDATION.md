@@ -103,3 +103,12 @@ DE/EN: Native Linux/Windows/ARM64 with actual AVX2/fallback flags, MSRV,
 online security/history/fuzz acceptance and final complete R6 matrix/rollback
 remain pending for the signed resulting head. AES2b44f3e is already separately
 accepted; this does not accept later Argon2 or Base64 code.
+
+DE: Signierter Argon2-Checkpoint e5868d62e7d5efc85ae4463c029605a907b3d0c4
+besteht alle23 Checks, einschließlich MSRV, Online-Audit, vollständigem Historien-
+Scan und acht Fuzz-Zielen. Vier vollständige native Logs gesichert/gehasht:
+Ubuntu22/ARM je903Tests, Ubuntu-latest1732, Windows1568 über jeweilige Feature-/
+Plattformkonfigurationen, null Fehler. KDF-/Hash-Eltern und tatsächliche Laufzeit-
+Backendflag nachgewiesen: Linux/Windows AVX2=true; ARM64=false (portabel).
+EN: Evidence argone586-checks.json/native-summary.json and four complete logs.
+This accepts this exact Argon checkpoint, not subsequent Main352/Base64 changes.

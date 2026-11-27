@@ -10,7 +10,6 @@
 
 use std::path::Path;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
 use sha3::Sha3_256;
 use subtle::ConstantTimeEq;
 
@@ -107,8 +106,7 @@ pub fn create(path: &Path, overwrite: Overwrite) -> Result<SecretToken> {
     let raw = rng::secret(32)?;
     let mut bytes = SecretBytes::zeroed(TOKEN_PREFIX.len() + 43)?;
     bytes.expose_mut()[..TOKEN_PREFIX.len()].copy_from_slice(TOKEN_PREFIX.as_bytes());
-    Base64UrlUnpadded::encode(raw.expose(), &mut bytes.expose_mut()[TOKEN_PREFIX.len()..])
-        .map_err(|_| Error::Crypto)?;
+    super::token_encoding::encode(raw.expose(), &mut bytes.expose_mut()[TOKEN_PREFIX.len()..])?;
     let token = SecretToken(bytes);
     let hash = TokenHash::of(token.expose()?)?;
     let line = format!("{FILE_TAG}{}\n", hex_encode(&hash.0));

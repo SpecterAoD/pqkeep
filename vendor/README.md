@@ -26,6 +26,17 @@ not pristine upstream artifacts. Algorithms, constants and file-format bytes are
 | ghash 0.6.0 / polyval 0.7.3 | RustCrypto/universal-hashes, MIT OR Apache-2.0 | Borrowed portable multiplication/reduction, GHASH reverse/mulX and fixed private intermediate storage. |
 | argon2 0.6.0 | RustCrypto/password-hashes, MIT OR Apache-2.0 | Borrowed complete operation storage and one prelocked worker per lane; original parallel scheduler and AVX2 dispatch retained. |
 | blake2 0.11.0 | RustCrypto/hashes, MIT OR Apache-2.0 | Inline compression/message scratch, borrowed vector operations and lazy buffered output; ordinary APIs preserved. |
+| base64ct 1.8.3 | RustCrypto/formats, MIT OR Apache-2.0 | Borrowed remainder scratch for private token encoding; shared original alphabet/padding, safe UTF-8 view, ordinary APIs preserved. |
+
+DE: Der Token-Einstieg leiht exakt sieben vorab gesperrte SecretBytes an Base64.
+Quelldaten und Ausgabe sind ebenfalls gesperrt. Löschen erfolgt vor Unlock/Free,
+auch bei Fehler/Unwind; Sperrfehler verweigern ohne gewöhnlichen Encoder-Fallback.
+Die gewöhnlichen Base64-APIs bleiben für öffentliche Hüllfelder/Skripte erhalten.
+EN: Complete production modules/licenses come from the checksum-verified1.8.3 archive.
+The inherited decode/string unsafe remains outside the protected token path; one
+inherited encode UTF-8 cast is removed. No newly authored unsafe. Registry copies
+of the same version still serve unchanged transitive password-hash/DER APIs; Root
+never uses those APIs for private seed/token encoding. No global patch assumption.
 
 DE: Root aktiviert protected-workspace für private SHA3-/SHAKE-Verarbeitung. Hash und
 Reader enthalten ihre fünf Scratch-Lanes inline und werden vor privater Befüllung

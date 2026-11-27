@@ -89,7 +89,7 @@ dependencies = [
 name = "argon2"
 version = "0.6.0"
 dependencies = [
- "base64ct",
+ "base64ct 1.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2",
  "cpufeatures",
  "password-hash",
@@ -154,6 +154,10 @@ dependencies = [
  "tower-layer",
  "tower-service",
 ]
+
+[[package]]
+name = "base64ct"
+version = "1.8.3"
 
 [[package]]
 name = "base64ct"
@@ -854,7 +858,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44dc769b75f93afdddd8c7fa12d685292ddeff1e66f7f0f3a234cf1818afe892"
 dependencies = [
- "base64ct",
+ "base64ct 1.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "ctutils",
 ]
 
@@ -891,7 +895,7 @@ dependencies = [
  "aes-gcm",
  "argon2",
  "axum",
- "base64ct",
+ "base64ct 1.8.3",
  "blake2",
  "clap",
  "clap_complete",
@@ -1221,7 +1225,7 @@ version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ef958a98b9d5da290cfc78946e9f3e61e1e62a18db0d92cac0b83cc161491a9"
 dependencies = [
- "base64ct",
+ "base64ct 1.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "der",
 ]
 

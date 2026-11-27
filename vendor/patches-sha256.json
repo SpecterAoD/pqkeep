@@ -498,5 +498,11 @@
       "path": "src/simd.rs",
       "sha256": "88b3cb3fe92609f471a3d302453e5195c3c5884b29217a9a1f3010d47fc0bcfc"
     }
+  ],
+  "base64ct-1.8.3": [
+    {
+      "path": "src/encoding.rs",
+      "sha256": "4cc2604208e55605434914e253bf7b18b8a422f9e1afc6a79aa4910f53ca4d93"
+    }
   ]
 }

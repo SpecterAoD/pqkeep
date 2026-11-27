@@ -85,3 +85,12 @@ EN: Cover lanes1/2/4/8/16, passes1/2/3, minimum/rounded memory, repeated address
 blocks and outputs4/16/32/64/65/128/1024, both with and without secret/AD. Synthetic
 public fixtures only; no new C runtime dependency or installation. Native Root
 tests check every lane's completed segments and real locked stable owners.
+# Base64 remainder workspace / Base64-Restblock
+
+DE: `base64_workspace.json` enthält76 unabhängig mit Pythons Standardbibliothek
+`base64` erzeugte Referenzen. Öffentliche Eingabeformel `(i*29+7)&255` wird in Rust
+erst in gesperrte Puffer geschrieben. Standard-/URL-Alphabet, jeweils mit/ohne
+Padding:304 Fälle; alle Restklassen und Grenzen bis4097Byte. Keine privaten Seeds.
+EN: References are padded; removing trailing `=` supplies the unpadded cases.
+Actual locked scratch is reused with nonzero sentinels; input/output owners stay
+locked. Error/unwind/denial proofs and token compatibility are separate tests.
