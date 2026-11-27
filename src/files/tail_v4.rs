@@ -15,7 +15,7 @@ use super::format_v4::{
     HIDDEN_BLOCK_LEN, TRAILER_LEN, check_trailer, hidden_message, padding_for, trailer, trailer_len,
 };
 use super::signed_io::{HiddenResult, SignedBy};
-use super::signer_v3::{FILE_SIG_CONTEXT, SIGNER_DSA, SIGNER_KEY_LEN, SIGNER_ML_DSA_87, Signer};
+use super::signer_v3::{FILE_SIG_CONTEXT, SIGNER_DSA, SIGNER_KEY_LEN, SIGNER_ML_DSA_87};
 use crate::crypto::stream::PlainHash;
 use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
 use crate::crypto::{SecretBytes, dsa};
@@ -145,7 +145,7 @@ fn check_tail(d: &Drained, before: u64, tail: &TailRead, hash: Option<PlainHash>
     }
     if let Some((header, result)) = &tail.hidden {
         let hash = hash.ok_or(Error::Crypto)?.finalize()?;
-        *result.borrow_mut() = Some(hidden_sender(block, header, hash.expose(), payload, pad)?);
+        result.store(hidden_sender(block, header, hash.expose(), payload, pad)?);
     }
     Ok(payload)
 }
@@ -169,13 +169,7 @@ fn hidden_sender(
     if !dsa::verify(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig) {
         return Err(Error::InvalidSignature);
     }
-    let signer = Signer {
-        public_key: key.to_vec(),
-        commit: [0; 32],
-    };
-    Ok(SignedBy {
-        key_id: signer.key_id(),
-    })
+    SignedBy::from_public_key(key)
 }
 
 /// DE: Strom: Nutzdaten (und Füllung) nach `out`, dann Prüfung. Liefert (Nutzlänge, geschrieben);

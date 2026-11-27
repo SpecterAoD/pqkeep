@@ -70,6 +70,10 @@ fn opened(
     result
 }
 
+fn assert_sender(report: files::Report, public: &PublicKeyFile) {
+    assert_eq!(report.signer.unwrap().key_id(), public.key_id());
+}
+
 #[test]
 fn file_directory_and_stream_roundtrip_with_hidden_sender() {
     let dir = tempfile::tempdir().unwrap();
@@ -91,12 +95,8 @@ fn file_directory_and_stream_roundtrip_with_hidden_sender() {
             let _ = std::fs::remove_file(&enc);
             files::encrypt_with_options(src, &enc, &p, Some(&key), options).unwrap();
             assert_hidden(&enc, &key, content);
-            let report = opened(&enc, &unlock, None).unwrap();
-            assert_eq!(report.signer.unwrap().key_id, public.key_id());
-            assert_eq!(
-                files::check(&enc, &unlock).unwrap().signer.unwrap().key_id,
-                public.key_id()
-            );
+            assert_sender(opened(&enc, &unlock, None).unwrap(), &public);
+            assert_sender(files::check(&enc, &unlock).unwrap(), &public);
             assert!(files::list(&enc, &unlock).is_ok());
         }
         let enc = dir.path().join("s.pqkf");
@@ -104,10 +104,7 @@ fn file_directory_and_stream_roundtrip_with_hidden_sender() {
         let plain = vec![9u8; 70_000];
         files::encrypt_stream_to(&mut &plain[..], &enc, &p, Some(&key), options).unwrap();
         assert_hidden(&enc, &key, Content::Stream);
-        assert_eq!(
-            opened(&enc, &unlock, None).unwrap().signer.unwrap().key_id,
-            public.key_id()
-        );
+        assert_sender(opened(&enc, &unlock, None).unwrap(), &public);
         assert_eq!(std::fs::read(enc.with_file_name("klar")).unwrap(), plain);
         let header = files::inspect_v2(&enc).unwrap();
         assert_eq!(
@@ -145,7 +142,7 @@ fn anonymous_recipient_with_hidden_sender() {
     let header = files::inspect_v2(&enc).unwrap();
     assert_eq!(header.v4.unwrap().options & OPT_ANON, OPT_ANON);
     let report = opened(&enc, &Unlock::Key(&unlocked), Some(&public)).unwrap();
-    assert_eq!(report.signer.unwrap().key_id, public.key_id());
+    assert_eq!(report.signer.unwrap().key_id(), public.key_id());
 }
 
 #[test]

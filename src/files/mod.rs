@@ -16,6 +16,7 @@ mod anon_v4;
 mod archive;
 mod check;
 mod confidential_entries;
+mod confidential_path_index;
 mod confidential_text;
 mod decrypt;
 mod decrypt_v2;
@@ -25,6 +26,7 @@ mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
 pub mod format_v4;
+mod hidden_result;
 mod list;
 #[cfg(test)]
 mod locked_owner_tests;
@@ -32,7 +34,11 @@ mod original;
 mod output;
 pub mod paths;
 pub mod random_name;
+#[cfg(test)]
+#[path = "recovery_v4_tests.rs"]
+mod recovery_v4_tests;
 mod scan;
+mod signed_by;
 mod signed_io;
 mod signer_v3;
 mod slot_v2;
@@ -58,7 +64,7 @@ pub use format_v2::{HeaderV2, Slot};
 pub use list::{EntryKind, ListEntry, Listing, MAX_LIST_ENTRIES, MAX_LIST_PATH_BYTES, list};
 pub use original::{ChooseTarget, decrypt_original};
 pub use random_name::{is_random_name, random_name, random_target};
-pub use signed_io::SignedBy;
+pub use signed_by::SignedBy;
 pub use signer_v3::Signer;
 pub use slot_v2::MAX_RECIPIENTS;
 pub use stream_v4::{encrypt_stream, encrypt_stream_to};
@@ -145,7 +151,7 @@ pub enum Unlock<'a> {
 }
 
 /// DE: Bericht über einen Vorgang. EN: Report of an operation.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Report {
     /// DE: Anzahl Dateien. EN: Number of files.
     pub files: u64,

@@ -7,6 +7,7 @@
 
 pub mod archive;
 pub mod fake_dialog;
+pub mod integrity;
 pub mod rekey;
 pub mod v2_files;
 pub mod v2_header;

@@ -27,7 +27,8 @@ pub struct HardeningReport {
 }
 
 impl HardeningReport {
-    /// DE: `true`, wenn alle Maßnahmen gegriffen haben. EN: `true` if all measures applied.
+    /// DE: Linux-Core-/Dumpable-Schutz bestätigt; Windows-NOHEAP ist davon getrennt.
+    /// EN: Linux core/dumpability protection confirmed; Windows NOHEAP is separate.
     #[must_use]
     pub fn complete(&self) -> bool {
         self.core_dumps_disabled && self.not_dumpable
@@ -47,9 +48,23 @@ pub fn harden_process() -> HardeningReport {
     platform::harden()
 }
 
+/// DE: Liest aktuelle Prozessfähigkeiten ohne Änderung der Host-Policy.
+/// Unbekannte/fehlgeschlagene Abfragen liefern keine bestätigte Fähigkeit.
+/// Kein vollständiger Schutz gegen privilegierten Zugriff oder externe Dumps.
+/// EN: Read current process capabilities without changing host policy.
+/// Unknown/failed queries never confirm a capability. This is not complete
+/// protection against privileged access or external dumps.
+#[must_use]
+pub fn observe_process() -> HardeningReport {
+    platform::observe()
+}
+
 #[cfg(target_os = "linux")]
 mod platform {
-    use rustix::process::{DumpableBehavior, Resource, Rlimit, set_dumpable_behavior, setrlimit};
+    use rustix::process::{
+        DumpableBehavior, Resource, Rlimit, dumpable_behavior, getrlimit, set_dumpable_behavior,
+        setrlimit,
+    };
 
     use super::HardeningReport;
 
@@ -59,9 +74,21 @@ mod platform {
             current: Some(0),
             maximum: Some(0),
         };
+        let core_set = setrlimit(Resource::Core, zero).is_ok();
+        let dumpable_set = set_dumpable_behavior(DumpableBehavior::NotDumpable).is_ok();
+        let actual = observe();
         HardeningReport {
-            core_dumps_disabled: setrlimit(Resource::Core, zero).is_ok(),
-            not_dumpable: set_dumpable_behavior(DumpableBehavior::NotDumpable).is_ok(),
+            core_dumps_disabled: core_set && actual.core_dumps_disabled,
+            not_dumpable: dumpable_set && actual.not_dumpable,
+            wer_heap_reporting_disabled: false,
+        }
+    }
+
+    pub(super) fn observe() -> HardeningReport {
+        let core = getrlimit(Resource::Core);
+        HardeningReport {
+            core_dumps_disabled: core.current == Some(0) && core.maximum == Some(0),
+            not_dumpable: matches!(dumpable_behavior(), Ok(DumpableBehavior::NotDumpable)),
             wer_heap_reporting_disabled: false,
         }
     }
@@ -97,6 +124,17 @@ mod platform {
             wer_heap_reporting_disabled: pqkeep_platform::suppress_wer_heap_reporting().is_ok(),
         }
     }
+
+    pub(super) fn observe() -> HardeningReport {
+        HardeningReport {
+            core_dumps_disabled: false,
+            not_dumpable: false,
+            wer_heap_reporting_disabled: matches!(
+                pqkeep_platform::current_wer_flags(),
+                Ok(pqkeep_platform::WerFlags::Present(flags)) if flags & 1 != 0
+            ),
+        }
+    }
 }
 
 #[cfg(not(any(target_os = "linux", windows)))]
@@ -109,5 +147,9 @@ mod platform {
             not_dumpable: false,
             wer_heap_reporting_disabled: false,
         }
+    }
+
+    pub(super) fn observe() -> HardeningReport {
+        harden()
     }
 }

@@ -1,5 +1,12 @@
 # MASTER PROJECT SPECIFICATION v2.23: PQKeep (Core, CLI & API) – English translation
 
+> R7/R8 work in progress (#147, joint PR #355): verified sender identities use
+> fallible locked ownership. Rust API: `SignedBy::key_id()` replaces the public
+> Vec field, `try_duplicate()` replaces `Clone`; `Report` no longer implements `Clone`.
+> CLI/JSON/format contracts remain unchanged. Partial remediation only; signature
+> scratch, process/helper and other metadata paths remain open. See
+> [confidential sender identity](security/CONFIDENTIAL_SENDER_IDENTITY.md).
+
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.22. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the

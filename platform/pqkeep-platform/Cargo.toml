@@ -11,11 +11,17 @@ description = "Narrow synchronous platform adapters for PQKeep"
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_ErrorReporting", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse"] }
 
 [target.'cfg(windows)'.dev-dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Security"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Security", "Win32_Security_Authorization"] }
 
 [features]
 # DE/EN: Ausschließlich feste öffentliche Testereignisse / fixed public test events only.
 native-input-fixture = []
+# DE/EN: Nur ausdrücklich gestartete öffentliche Prozessprobe / explicitly run public probe only.
+process-access-probe = []
+
+[[example]]
+name = "process_access_probe"
+required-features = ["process-access-probe"]
 
 [lints.rust]
 unsafe_op_in_unsafe_fn = "deny"

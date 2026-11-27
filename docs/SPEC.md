@@ -1,5 +1,12 @@
 # MASTER-PROJEKT-SPEZIFIKATION v2.23: PQKeep (Core, CLI & API)
 
+> R7/R8-Arbeitsstand (#147, gemeinsamer PR #355): Geprüfte Absenderidentität wird
+> fallibel in gesperrtem Speicher gehalten; Rust-API `SignedBy::key_id()` statt
+> öffentlichem Vec-Feld, `try_duplicate()` statt `Clone`; `Report` ohne `Clone`.
+> CLI-/JSON-/Formatverträge bleiben erhalten. Teilbehebung, kein Gesamtabschluss;
+> Signatur-Scratch, Prozess-/Helper- und übrige Metadatenpfade weiter offen.
+> Details: [vertrauliche Absenderidentität](security/CONFIDENTIAL_SENDER_IDENTITY.md).
+
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).

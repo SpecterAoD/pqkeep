@@ -3,6 +3,7 @@
 use super::*;
 use crate::crypto::stream::EncryptWriter;
 use crate::crypto::stream::PREFIX_LEN;
+use crate::files::Signer;
 use crate::files::format_v4::TRAILER_MAGIC;
 use crate::files::format_v4::{padding_for, trailer};
 
@@ -167,13 +168,13 @@ fn hidden_check(plain: &[u8], header: &[u8]) -> (Result<(u64, u64)>, Option<Sign
     let bytes = sealed(plain);
     let mut dec = reader(&bytes);
     dec.start_hash().unwrap();
-    let result = HiddenResult::default();
+    let result = HiddenResult::new().unwrap();
     let t = TailRead {
         padded: true,
         hidden: Some((header.to_vec(), result.clone())),
     };
     let r = copy_payload(dec, &mut Vec::new(), &t);
-    let signed = result.borrow_mut().take();
+    let signed = result.take();
     (r, signed)
 }
 
@@ -193,7 +194,7 @@ fn hidden_sender_block_is_verified_and_tampering_rejected() {
         commit: [0; 32],
     }
     .key_id();
-    assert_eq!(signed.unwrap().key_id, id);
+    assert_eq!(signed.unwrap().key_id(), id);
     // DE: Anderer Header, verschobene Grenze in der Signatur, gekippte Signatur, geänderte Daten.
     // EN: Other header, shifted boundary in the signature, flipped signature, altered data.
     assert_eq!(hidden_check(&good, b"X").0, Err(Error::InvalidSignature));

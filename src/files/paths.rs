@@ -14,8 +14,6 @@
 
 use super::ConfidentialText;
 use crate::crypto::SecretBytes;
-use std::collections::BTreeSet;
-use std::ops::Bound;
 
 use crate::{Error, Result};
 
@@ -111,8 +109,7 @@ pub(super) fn validate_only(path: &str) -> Result<()> {
 /// file/directory conflicts ("a" as a file and "a/b").
 #[derive(Default)]
 pub struct PathSet {
-    entries: BTreeSet<ConfidentialText>,
-    files: BTreeSet<ConfidentialText>,
+    entries: super::confidential_path_index::Index,
 }
 
 fn lower_chars(part: &str) -> impl Iterator<Item = char> + '_ {
@@ -176,35 +173,21 @@ impl PathSet {
     ) -> Result<()> {
         let key = folded_key(parts)?;
         for (index, byte) in key.bytes().iter().enumerate() {
-            if *byte == b'/' && self.files.contains(&key.bytes()[..index]) {
+            if *byte == b'/' && self.entries.get(&key.bytes()[..index]) == Some(true) {
                 return Err(invalid());
             }
         }
-        if self.entries.contains(key.bytes()) {
+        if self.entries.get(key.bytes()).is_some() {
             return Err(invalid());
         }
         if is_file {
             let mut prefix = SecretBytes::zeroed(key.bytes().len() + 1)?;
             prefix.expose_mut()[..key.bytes().len()].copy_from_slice(key.bytes());
             prefix.expose_mut()[key.bytes().len()] = b'/';
-            if self
-                .entries
-                .range::<[u8], _>((Bound::Included(prefix.expose()), Bound::Unbounded))
-                .next()
-                .is_some_and(|p| p.bytes().starts_with(prefix.expose()))
-            {
+            if self.entries.has_prefix(prefix.expose()) {
                 return Err(invalid());
             }
         }
-        let file_key = if is_file {
-            Some(key.try_duplicate()?)
-        } else {
-            None
-        };
-        self.entries.insert(key);
-        if let Some(key) = file_key {
-            self.files.insert(key);
-        }
-        Ok(())
+        self.entries.insert(key, is_file)
     }
 }
