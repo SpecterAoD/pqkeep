@@ -29,3 +29,8 @@ DE: Rohdaten, Quellabgleich und lokale Logs liegen im geschützten Analysebereic
 issue-147-provider-in-place-20261126T171500Z. Übrige KEM-PKE-/DSA-/AES-/Argon2-
 Arbeitsflächen bleiben offen und werden nicht als Compilergrenzen umbenannt.
 EN: No complete R6 closure or merge of this partial draft is claimed.
+
+DE: Aktueller R6-Gesamtstand: [Provider-Abnahmematrix](PROVIDER_LIFETIME_VALIDATION.md).
+Frühere OPEN-/Teilnachweise hier sind historische Zwischenstände.
+EN: The current complete matrix supersedes earlier scoped provider status,
+without asserting complete R7/R8 or whole-issue147 remediation.

@@ -51,3 +51,8 @@ EN: Actual DSA parent tests are present in all four native job logs. Evidence:
 dsa26117-checks.json and dsa26117-native-summary.json/logs. This acceptance applies
 to the DSA checkpoint, not the later AES/GCM implementation. Argon2 and complete
 matrix/rollback acceptance remain open; no partial R6 merge.
+
+DE: Aktueller R6-Gesamtstand: [Provider-Abnahmematrix](PROVIDER_LIFETIME_VALIDATION.md).
+Frühere OPEN-/Teilnachweise hier sind historische Zwischenstände.
+EN: The current complete matrix supersedes earlier scoped provider status,
+without asserting complete R7/R8 or whole-issue147 remediation.

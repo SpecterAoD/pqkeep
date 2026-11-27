@@ -275,3 +275,8 @@ a private Block. The same feature detection and target-feature boundary remain;
 no additional unsafe boundary. New protected modules and Root add no unsafe code.
 Inherited allocator/segment unsafe remains for existing APIs. This is not a formal
 soundness proof or an unsafe-free dependency claim. Native acceptance is required.
+
+DE: Aktueller R6-Gesamtstand: [Provider-Abnahmematrix](../docs/security/PROVIDER_LIFETIME_VALIDATION.md).
+Frühere OPEN-/Teilnachweise hier sind historische Zwischenstände.
+EN: The current complete matrix supersedes earlier scoped provider status,
+without asserting complete R7/R8 or whole-issue147 remediation.

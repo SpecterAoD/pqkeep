@@ -52,18 +52,19 @@ German release notes: see `docs/releases/`.
   #98), decrypt/`check` understand v4. Without streams v1–v3 stay byte for byte; older versions report
   v4 as "unsupported". No command line yet (follows with #83).
 
-- DE: R6-Arbeitsstand (#147): ML-KEM-Keygen sowie Kapselung/Entkapselung verwenden
-  vollständig vorab gesperrte Zustände, private Payloads und feste geliehene
-  Sampling-/NTT-/Produkt-/Hash-/XOF-/Packing-Flächen. Auch internes Vergleichs-Chiffrat
-  und Ablehnungskandidaten bleiben darin. Keine privaten Array-Rückgaben im Root-Pfad,
-  Wipe vor Unlock/Free. Gepinnte SHA3/SHAKE nutzen geliehenen portablen Keccak-Scratch;
-  dies kann ARM-Beschleunigung kosten. Parameter/Versionen/Formatbytes erhalten.
-  Native Gesamtabnahme und weitere DSA-/AES-/Argon2-R6-Pfade bleiben offen.
-  EN: R6 work in progress: prelock complete KEM construction/operation workspaces,
-  including confidential recomputed ciphertext, and borrow codec/transform/hash/XOF
-  outputs. Preserve constant-time rejection and all parameter sets. Protected hash
-  mode shares portable permutation loops; full native acceptance and remaining
-  DSA/AES/Argon2 provider remediation are still required.
+- DE: R6-Provider-Lebensdauer (#147): vollständige vorab gesperrte ML-KEM-/DSA-
+  Zustände, private Payloads und geliehene Operationsflächen; SHA3/SHAKE/HMAC/HKDF,
+  AES/GCM sowie Argon2-Initial-/Finalhash und sämtliche parallelen Worker geschützt.
+  Privater Base64-Token-Restblock ebenfalls SecretBytes; normale APIs/Formatbytes,
+  Parameter und Workerzahlen erhalten, kein ungesperrter Fallback. Wipe vor Unlock/
+  Free. Geschütztes portables AES kostet im dokumentierten x86-Rechenvergleich
+  etwa3x; portable Hashes können ARM-Beschleunigung kosten. Vollständige Endabnahme:
+  [Matrix](docs/security/PROVIDER_LIFETIME_VALIDATION.md). R7/R8 bleiben separat offen.
+  EN: Prelocked complete provider lifetime paths and nested private storage, borrowed
+  intermediates/output and cleanup before unlock/free. Preserve existing crypto,
+  versions and formats; explicit scalar/compiler/OS boundaries. Final source/native/
+  security/fuzz/rollback acceptance is tied to the resulting signed head. No blanket
+  unsafe-free dependency or external-audit claim, no release/deployment.
 
 - DE: Kontextmenü fragt beim Verschlüsseln nach der Stufe „Privatsphäre hoch“ (#315; Terminal und
   Fenster, einzeln und mehrfach): zufälliger äußerer Name, Reste werden beim Abbrechen aufgeräumt.

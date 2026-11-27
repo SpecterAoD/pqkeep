@@ -85,23 +85,15 @@ Highly secure, memory-safe, cross-platform application (Windows & Linux) in pure
 
 ### 3.2 Cryptography
 
-EN: R6 work branch: ML-KEM decapsulation borrows output in prelocked SecretBytes
-instead of returning a private SharedKey value. Implicit rejection, parameters
-and wire bytes remain unchanged. Encapsulation also prelocks its hash state and
-finalizes/resets it through a mutable borrow. Internal candidates, key construction and
-provider scratch remain open; see the [full plan](security/PROVIDER_IN_PLACE_PLAN.md).
-Native acceptance of the complete remediation is still pending.
-EN: The KEM owner also prelocks public initial state and three fixed private payloads
-before seed processing, retaining lock records in locked workspace. Wipe payloads
-before unlocking/freeing boxes. PKE keygen writes expanded state directly through
-borrowed NTT output. Internal sampling/hash/PKE buffers remain open; do not
-reclassify them as unavoidable compiler limits.
+EN: R6 (#147): prelock fixed provider state/workspaces and nested private payloads
+before private population, borrow inputs/outputs and wipe completely before
+unlock/free. All existing ML-KEM/DSA parameter sets, SHA3/SHAKE/HMAC/HKDF, AES/GCM,
+Argon2 including every parallel lane and actual private Unicode/Base64 paths are
+mapped in the [acceptance matrix](security/PROVIDER_LIFETIME_VALIDATION.md).
+Preserve algorithms, parameters, worker counts and wire bytes; ordinary private
+provider APIs are never a resource fallback. Final exact signed-head native CI and
+verified rollback are required. Register/compiler/OS limits are explicit; R7/R8 stay separate.
 
-EN: #147 R6 encapsulation step: lock OS entropy, the full ML-KEM G output K || r
-and the result in SecretBytes before private population; the provider returns only
-public ciphertext. Derivation/format bytes stay identical; decapsulation, key
-construction and internal provider/compiler copies remain open audit work.
-See [plan](security/KEM_ENCAPSULATION_OWNER_PLAN.md); native acceptance required.
 - **Key exchange:** ML-KEM (FIPS 203), default **ML-KEM-768**, selectable ML-KEM-512/1024.
 - **Signatures:** ML-DSA (FIPS 204), default **ML-DSA-65**, selectable ML-DSA-44/87.
 - **Private keys** preferably stored as a compact **seed** and re-derived on loading (if the crate supports it), otherwise as an expanded key.
