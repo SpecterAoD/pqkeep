@@ -18,6 +18,17 @@ fn pass() -> String {
     common::random_passphrase().as_ref().expose_str().to_owned()
 }
 
+/// DE: Stufe hoch bedeutet auch Füllung (Codex-Fund #339). EN: Level high also means padding.
+fn assert_padded(enc: &Path) {
+    let v4 = pqkeep::files::inspect_v2(enc).unwrap().v4.unwrap();
+    assert_ne!(
+        v4.options & pqkeep::files::format_v4::OPT_PAD,
+        0,
+        "{}",
+        enc.display()
+    );
+}
+
 fn random_files(dir: &Path) -> Vec<PathBuf> {
     common::dir_names(dir)
         .into_iter()
@@ -44,6 +55,7 @@ fn single_file_gets_random_name_and_restores_original() {
     assert_eq!(e.context("encrypt", &file), 0, "{:?}", e.calls());
     let enc = random_files(e.work());
     assert_eq!(enc.len(), 1, "{:?}", common::dir_names(e.work()));
+    assert_padded(&enc[0]);
     let done = e.calls().last().unwrap().join("\n");
     assert!(
         done.contains(enc[0].file_name().unwrap().to_str().unwrap()),
@@ -78,6 +90,9 @@ fn several_files_each_and_cancel_leaves_nothing() {
     e.answer(&flow);
     assert_eq!(e.context_many("encrypt", &refs), 0, "{:?}", e.calls());
     assert_eq!(random_files(e.work()).len(), 3);
+    for f in random_files(e.work()) {
+        assert_padded(&f);
+    }
     // DE: Abbrechen mitten drin: keine Temporärreste mit zufälligem Namen.
     // EN: Cancel midway: no temporary leftovers with random names.
     for f in random_files(e.work()) {

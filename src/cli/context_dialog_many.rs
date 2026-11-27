@@ -126,7 +126,7 @@ fn encrypt(ui: &Ui<'_>, m: &ManyTexts, sources: &[PathBuf], refs: &[&str]) -> Cl
     // DE: Stufe „Privatsphäre hoch“ (#315): Reste über den Platzhalter aufräumen.
     // EN: Level "privacy high" (#315): clean leftovers via the placeholder.
     let targets = if ui.dlg.question(super::privacy::context_question(ui.lang)) {
-        cmd.push(super::privacy::RANDOM_FLAG.into());
+        cmd.extend(super::privacy::LEVEL_HIGH.map(String::from));
         super::privacy::any_random_targets(targets.iter().map(|t| super::privacy::dir_of(t)))
     } else {
         targets

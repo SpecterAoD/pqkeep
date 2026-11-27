@@ -179,8 +179,9 @@ pub fn restore(m: &ArgMatches, src: &Path) -> bool {
     m.get_flag(ORIGINAL_NAME) || (m.get_one::<PathBuf>("out").is_none() && is_random_path(src))
 }
 
-/// DE: Schalter für Kindprozesse. EN: Switch for child processes.
-pub const RANDOM_FLAG: &str = "--random-name";
+/// DE: Stufe „Privatsphäre hoch“ für Kindprozesse (zufälliger Name und Füllung; Codex-Fund #339).
+/// EN: Level "privacy high" for child processes (random name and padding; Codex finding #339).
+pub const LEVEL_HIGH: [&str; 2] = ["--privacy", "high"];
 
 /// DE: Platzhalter-Ziel fürs Aufräumen: passt auf jeden zufälligen Namen (mit eigener Kennung).
 /// EN: Placeholder target for cleanup: matches any random name (with own tag).
@@ -218,7 +219,7 @@ pub fn context_encrypt_target(
     let fail = |e: pqkeep::Error| Failure::from_error(&e, lang);
     if private {
         let target = files::random_target(&dir_of(Path::new(path))).map_err(fail)?;
-        return Ok((super::context::utf8(&target, lang)?, &[RANDOM_FLAG]));
+        return Ok((super::context::utf8(&target, lang)?, &LEVEL_HIGH));
     }
     let default = super::files_cmd::default_encrypted(Path::new(path));
     Ok((super::context::out_arg(default.as_deref(), lang)?, &[]))
