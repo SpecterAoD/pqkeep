@@ -142,8 +142,9 @@ sehen nur „signiert, Absender verborgen“; wer entschlüsseln kann, prüft de
 - Zwischen Prüfen und Öffnen einer Quelldatei könnte ein lokaler Angreifer sie gegen einen Symlink
   tauschen (TOCTOU); das betrifft nur Angreifer mit Schreibrechten im Quellordner. Abhilfe geplant in #338
   ([Datei-Races](security/FILE_IO_RACES.md)).
-- Ordner werden per „Prüfen + Umbenennen“ veröffentlicht; ein exakt gleichzeitig angelegtes Ziel
-  wäre ein theoretisches Rennen (unter Windows schlägt das Umbenennen dann fehl).
+- Unter Linux wird jede Ausgabe über Handles geschrieben und ohne Ersetzen veröffentlicht
+  (GHSA-9vh5-2vch-2r68); unter Windows bis zum eigenen Schritt nur in vertrauenswürdige Zielordner
+  entschlüsseln (Ordner, in die nur Sie schreiben).
 - Wird PQKeep beim Entschlüsseln hart beendet (Kill, Absturz, Stromausfall), kann eine
   **temporäre Klartextdatei** mit verstecktem Namen (`.name.tmp-…`, Linux 0600) liegen bleiben; unter
   dem Zielnamen erscheint nie etwas Ungeprüftes. Gegen Reste auf dem Datenträger hilft nur eine
@@ -232,7 +233,8 @@ decrypting, but before any output. The file grows by about 7 KB.
 
 **Limitations:** approximate total size is visible; timestamps/ownership/permissions are not kept;
 originals are not deleted; a local attacker with write access to the source directory could swap a
-file for a symlink between check and open (TOCTOU; remedy planned in #338, [file races](security/FILE_IO_RACES.md)); directory publishing is check + rename; memory use
+file for a symlink between check and open (TOCTOU; remedy planned in #338, [file races](security/FILE_IO_RACES.md)); on Linux every output is written via handles and published without replacing
+(GHSA-9vh5-2vch-2r68); on Windows, until its own step, decrypt into trusted target directories only; memory use
 is constant; if PQKeep is killed while decrypting (kill, crash, power loss) a **temporary plaintext
 file** with a hidden name (`.name.tmp-…`, Linux 0600) may remain – nothing unverified ever appears under
 the target name; against leftovers on the medium only **full-disk encryption** (LUKS, BitLocker) helps;

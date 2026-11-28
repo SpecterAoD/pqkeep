@@ -95,7 +95,6 @@ fn file_target_created_before_publish_is_never_overwritten() {
 }
 
 #[test]
-#[ignore = "bekannte Lücke / known gap #338 PR 2: Rückfall ohne Hardlinks ersetzt / fallback replaces"]
 fn fallback_without_hard_links_never_overwrites() {
     let root = tempfile::tempdir().unwrap();
     let pass = pass();
@@ -117,7 +116,6 @@ fn fallback_without_hard_links_never_overwrites() {
 
 #[test]
 #[cfg(unix)]
-#[ignore = "bekannte Lücke / known gap #338 PR 2: Ordner per Prüfen + Umbenennen / check + rename"]
 fn directory_target_created_before_rename_is_not_replaced() {
     let root = tempfile::tempdir().unwrap();
     let pass = pass();
@@ -161,4 +159,84 @@ fn source_swapped_for_symlink_is_never_read() {
         "Ziel des Symlinks verschlüsselt / symlink target encrypted"
     );
     assert!(result.is_err() && !archive.exists());
+}
+
+/// DE: Angreifer im Zielordner: benennt den Temporärordner um und setzt einen Symlink auf
+/// `woanders` (GHSA-9vh5-2vch-2r68, Fall 1). EN: Attacker in the target directory: renames the
+/// temporary directory and puts a symlink to `woanders` (case 1).
+#[cfg(unix)]
+fn swap_temp_dir_for_symlink(temp: &Path) {
+    let root = temp.parent().unwrap();
+    std::fs::rename(temp, root.join("weg")).unwrap();
+    std::os::unix::fs::symlink(root.join("woanders"), temp).unwrap();
+}
+
+/// DE: Angreifer ersetzt die Temporärdatei vor dem Veröffentlichen durch einen Symlink auf eigene
+/// Daten (Fall 2). EN: Attacker replaces the temporary file with a symlink to own data (case 2).
+#[cfg(unix)]
+fn swap_temp_file_for_symlink(temp: &Path) {
+    let root = temp.parent().unwrap();
+    std::fs::rename(temp, root.join("weg")).unwrap();
+    std::fs::write(root.join("fake"), FOREIGN).unwrap();
+    std::os::unix::fs::symlink(root.join("fake"), temp).unwrap();
+}
+
+/// DE: Wie Fall 2, aber mit einer gewöhnlichen fremden Datei. EN: Like case 2 with a plain file.
+fn swap_temp_file_for_file(temp: &Path) {
+    let root = temp.parent().unwrap();
+    std::fs::rename(temp, root.join("weg")).unwrap();
+    std::fs::write(temp, FOREIGN).unwrap();
+}
+
+#[test]
+#[cfg(target_os = "linux")]
+fn swapped_temp_dir_cannot_redirect_writes() {
+    let root = tempfile::tempdir().unwrap();
+    let pass = pass();
+    let archive = sealed(root.path(), true, &pass);
+    std::fs::create_dir(root.path().join("woanders")).unwrap();
+    let out = root.path().join("out");
+    let run = Action::Run(swap_temp_dir_for_symlink);
+    let scope = Scope::new(root.path(), plan(Point::AfterTempCreate, run));
+    let result = files::decrypt(&archive, &out, &Unlock::Passphrase(pass.as_ref()));
+    scope.finish();
+    assert!(result.is_err(), "{result:?}");
+    let leaked = std::fs::read_dir(root.path().join("woanders"))
+        .unwrap()
+        .count();
+    assert_eq!(
+        leaked, 0,
+        "Klartext außerhalb des Ziels / plaintext outside the target"
+    );
+    assert!(std::fs::symlink_metadata(&out).is_err(), "Ziel / target");
+    // DE: Der umbenannte eigene Ordner wurde über das Handle geleert. EN: Emptied via the handle.
+    assert_eq!(
+        std::fs::read_dir(root.path().join("weg")).unwrap().count(),
+        0
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn swapped_temp_file_is_never_published() {
+    for swap in [
+        swap_temp_file_for_symlink as fn(&Path),
+        swap_temp_file_for_file,
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let pass = pass();
+        let archive = sealed(root.path(), false, &pass);
+        let out = root.path().join("out");
+        let scope = Scope::new(root.path(), plan(Point::BeforePublish, Action::Run(swap)));
+        let result = files::decrypt(&archive, &out, &Unlock::Passphrase(pass.as_ref()));
+        scope.finish();
+        // DE: Linux veröffentlicht über den Deskriptor (eigener Inhalt), sonst Fehler – nie fremd.
+        // EN: Linux publishes via the descriptor (own content), else an error – never foreign.
+        match result {
+            Ok(_) => assert_eq!(std::fs::read(&out).unwrap(), b"inhalt / content"),
+            Err(_) => assert!(std::fs::symlink_metadata(&out).is_err()),
+        }
+        let link = std::fs::symlink_metadata(&out).is_ok_and(|m| m.file_type().is_symlink());
+        assert!(!link, "Ziel ist ein Symlink / target is a symlink");
+    }
 }

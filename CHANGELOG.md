@@ -6,6 +6,18 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+- DE: **Sicherheit (GHSA-9vh5-2vch-2r68, Linux):** In einem Zielordner, in den andere Nutzer schreiben
+  dürfen (ohne Sticky-Bit), konnte die Temporärausgabe beim Entschlüsseln ausgetauscht werden –
+  Klartext konnte in einem anderen Ordner landen oder fremder Inhalt als geprüftes Ergebnis
+  erscheinen. Jetzt werden Ausgaben über Handles geschrieben, ohne Ersetzen veröffentlicht und
+  danach geprüft (auch Schlüssel- und Faktordateien). Windows folgt; bis dahin dort nur in
+  vertrauenswürdige Ordner entschlüsseln.
+  EN: **Security (GHSA-9vh5-2vch-2r68, Linux):** in a target directory writable by other users (no
+  sticky bit) the temporary output could be swapped while decrypting – plaintext could end up in
+  another directory or foreign content could appear as a verified result. Outputs are now written
+  via handles, published without replacing and verified afterwards (also key and factor files).
+  Windows follows; until then decrypt into trusted directories only there.
+
 - DE: **Integritäts-Audit der Container** (#335): alle Entschlüsselungspfade (v1–v4) geprüft, kein Befund;
   neue Regressionstests (jedes Header-Byte, Blocktausch/Abschneiden auf Dateiebene, Frische, Fehlerpläne
   v4, Kill während `decrypt`). Hinweis: Nach Kill/Stromausfall kann temporärer Klartext unter verstecktem
