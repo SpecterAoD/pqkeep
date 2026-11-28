@@ -4,6 +4,9 @@
 use region::LockGuard;
 use zeroize::Zeroize;
 
+#[cfg(windows)]
+pub(super) const ALIGNMENT: usize = 8192;
+#[cfg(not(windows))]
 pub(super) const ALIGNMENT: usize = 65536;
 const NODES: usize = 256;
 
@@ -43,7 +46,10 @@ impl Drop for Node {
     }
 }
 
-#[repr(align(65536))]
+// DE: COFF kodiert höchstens 8KiB-Sektionsausrichtung, ELF unterstützt hier 64KiB.
+// EN: COFF section alignment tops out at8KiB; retain64KiB geometry on ELF targets.
+#[cfg_attr(windows, repr(align(8192)))]
+#[cfg_attr(not(windows), repr(align(65536)))]
 struct Chunk([Node; NODES]);
 
 impl Chunk {

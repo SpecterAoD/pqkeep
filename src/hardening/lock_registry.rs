@@ -13,8 +13,12 @@ use zeroize::Zeroize;
 
 const BUCKETS: usize = 2048;
 
-#[repr(align(65536))]
+#[cfg_attr(windows, repr(align(8192)))]
+#[cfg_attr(not(windows), repr(align(65536)))]
 struct Control(Mutex<Registry>);
+
+#[cfg(windows)]
+const _: () = assert!(align_of::<Control>() <= 8192);
 
 static CONTROL: Control = Control(Mutex::new(Registry::new()));
 static POISONED: AtomicBool = AtomicBool::new(false);

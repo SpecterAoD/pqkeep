@@ -12,7 +12,8 @@ Sperr-Guards entfallen. Ein seitendisjunkter statischer Kontrollbereich enthält
 Mutex, Hash-Wurzeln und Arenadescriptoren. Der Kontrollbereich wird direkt mit
 region gesperrt, bevor private Records befüllt werden; keine rekursive Nutzung
 von SecretState/SecretBytes zum Bootstrap des eigenen Registers.
-EN: Fixed alignment supports actual page sizes dividing64KiB; unsupported geometry
+EN: Target alignment is64KiB on ELF and8KiB on Windows/COFF. Actual page size must
+divide that alignment; unsupported geometry
 fails closed. Control and arena allocations cannot share OS pages with separately
 managed data allocations. Statistics alone do not allocate or bootstrap locks.
 
@@ -102,6 +103,20 @@ executed successes. Source-delta proof for the later additional release-error
 test confirms unchanged production code; two bilingual comment-only updates.
 Native exact-head acceptance of the complete new registry component remains pending.
 
+DE: Native Windows-Codegenerierung am ersten Register-Head brach in rustc/LLVM
+mit illegaler Instruktion ab. Minimaler COFF-Objekttest reproduziert denselben
+WinCOFFObjectWriter-Abbruch für16/64KiB, während8KiB funktioniert. Kontroll- und
+Node-Ausrichtung daher auf Windows auf die tatsächlich kodierbaren8KiB setzen;
+Linux/ARM64 behalten64KiB. Die tatsächliche OS-Seitengröße wird weiterhin strikt
+geprüft, keine ungesperrte/geometrisch unsichere Ausnahme.
+EN: Cross-Clippy checks metadata, not this object-emission boundary. Actual COFF
+object emission and native MSVC test/release builds are required in addition.
+The local full GNU library attempt stopped on missing x86_64-w64-mingw32-dlltool
+in getrandom before the root crate; it is not claimed as a successful build.
+Use existing native CI for full builds; no tool installation or gate reduction.
+Original failed CI logs and all reproduction results are retained, not relabeled.
+[LLVM COFF writer alignment contract](https://llvm.org/doxygen/WinCOFFObjectWriter_8cpp_source.html).
+
 DE: Letzter lokaler v2-Stand nach dem zusätzlichen echten Release-Fehlerfall:
 alle zwölf Prüfungen erfolgreich, erneut865 Quellen vor/nach dem Lauf identisch.
 Vier strenge Clippy-Konfigurationen, je16 Härtungsgruppen mit/ohne API samt den
@@ -110,3 +125,10 @@ EN: `registry-release-test-source-delta-proof.json` binds unchanged production c
 to the broad v1 suites; only the new test/parent invocation and two comment-only
 files differ. `protected-registry-v2.json` binds the final focused checks to exact
 source hashes. No new unapproved token/thread experiment was executed or published.
+
+DE: COFF-Fix v3: erneut zwölf Befehle erfolgreich bei vor/nachher865 identischen
+Quellhashes, vier strenge Linux/Windows-Cross-Lints und je16 Härtungsgruppen mit
+beiden Featurekonfigurationen. ELF-Ausrichtung und Funktionskörper bleiben erhalten;
+die Windows-Ausrichtung erfüllt nun den reproduzierten Objektformat-Vertrag.
+EN: Final native MSVC code generation and page observations still required;
+successful metadata checks are not substituted for those native jobs.
