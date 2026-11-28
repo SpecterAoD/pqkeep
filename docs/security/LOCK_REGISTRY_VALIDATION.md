@@ -12,7 +12,7 @@ Sperr-Guards entfallen. Ein seitendisjunkter statischer Kontrollbereich enthält
 Mutex, Hash-Wurzeln und Arenadescriptoren. Der Kontrollbereich wird direkt mit
 region gesperrt, bevor private Records befüllt werden; keine rekursive Nutzung
 von SecretState/SecretBytes zum Bootstrap des eigenen Registers.
-EN: Target alignment is64KiB on ELF and8KiB on Windows/COFF. Actual page size must
+EN: Target alignment is64KiB on ELF and4KiB on Windows/PE. Actual page size must
 divide that alignment; unsupported geometry
 fails closed. Control and arena allocations cannot share OS pages with separately
 managed data allocations. Statistics alone do not allocate or bootstrap locks.
@@ -117,6 +117,15 @@ Use existing native CI for full builds; no tool installation or gate reduction.
 Original failed CI logs and all reproduction results are retained, not relabeled.
 [LLVM COFF writer alignment contract](https://llvm.org/doxygen/WinCOFFObjectWriter_8cpp_source.html).
 
+DE: Der anschließende native Linklauf am8KiB-Stand erzeugte LNK1164, weil die
+Objektausrichtung die unveränderte standardmäßige PE-Image-Ausrichtung4KiB
+überstieg. Windows-Ausrichtung deshalb abschließend4KiB; Linux/ARM64 bleiben64KiB.
+Compilerobjekt und ausführbares Image sind getrennte Grenzen. Keine Änderung
+von /ALIGN, Linker-/Härtungsflags, OS-Seitenprüfung oder Sicherheitsgate.
+EN: Actual page geometry must still divide the chosen alignment. Native MSVC
+debug/release linking and memory observations remain required for the new head.
+[Microsoft image-section alignment contract](https://learn.microsoft.com/en-us/cpp/build/reference/align-section-alignment?view=msvc-170).
+
 DE: Letzter lokaler v2-Stand nach dem zusätzlichen echten Release-Fehlerfall:
 alle zwölf Prüfungen erfolgreich, erneut865 Quellen vor/nach dem Lauf identisch.
 Vier strenge Clippy-Konfigurationen, je16 Härtungsgruppen mit/ohne API samt den
@@ -132,3 +141,11 @@ beiden Featurekonfigurationen. ELF-Ausrichtung und Funktionskörper bleiben erha
 die Windows-Ausrichtung erfüllt nun den reproduzierten Objektformat-Vertrag.
 EN: Final native MSVC code generation and page observations still required;
 successful metadata checks are not substituted for those native jobs.
+
+DE: PE-Fix v4: alle zwölf lokalen Prüfungen auf erneut865 unveränderten Quellen
+erfolgreich, darunter vier strenge Lints und je16 echte Härtungsgruppen. Lokaler
+4KiB-Minimalfall erzeugt sowohl COFF-Objekt als auch PE-Image mit dem vorhandenen
+lld-link, ohne Installation oder Ausführung. Native MSVC-Linkprüfung bleibt maßgeblich:
+lld-link akzeptiert auch einen8KiB-Minimalfall, den MSVC am echten Projekt verwirft.
+EN: Preserve the observed linker difference; do not report the permissive local
+linker as proof that the native MSVC failure passed. New native jobs remain required.
