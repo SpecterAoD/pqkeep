@@ -104,6 +104,18 @@ impl NativePath {
         std::ffi::CStr::from_bytes_with_nul(self.encoded()?).map_err(|_| Error::Crypto)
     }
 
+    #[cfg(any(target_os = "linux", windows))]
+    pub(super) fn metadata_into(&self, output: &mut pqkeep_platform::SourceMetadata) -> Result<()> {
+        #[cfg(target_os = "linux")]
+        output.capture(self.c_str()?)?;
+        #[cfg(windows)]
+        {
+            let converted = windows::for_open(self)?;
+            output.capture(converted.as_ref().unwrap_or(self).encoded()?)?;
+        }
+        Ok(())
+    }
+
     pub(super) fn try_duplicate(&self) -> Result<Self> {
         let units = self.encoded()?;
         Self::from_native(&units[..units.len() - 1])

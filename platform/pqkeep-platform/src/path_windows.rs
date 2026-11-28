@@ -10,7 +10,7 @@ use windows_sys::Win32::{
     },
 };
 
-fn validate(path: &[u16]) -> io::Result<()> {
+pub(crate) fn validate(path: &[u16]) -> io::Result<()> {
     if path.last() != Some(&0) || path[..path.len() - 1].contains(&0) {
         return Err(io::ErrorKind::InvalidInput.into());
     }

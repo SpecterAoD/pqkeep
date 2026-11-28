@@ -581,3 +581,8 @@ EN: R7/R8 top-level names share the protected archive-reader PathSet. A public
 build-time Unicode table replaces private runtime expansion arrays; original
 name/wire bytes stay intact, sigma conflicts are rejected before writing.
 See security/CONFIDENTIAL_NAME_FOLDING.md.
+
+EN: R7/R8 source collection captures native metadata directly in prelocked
+libc/SDK records without private std::fs::Metadata return values. No-follow and
+Windows reparse/sharing semantics stay explicit. Full local/native acceptance
+pending; see security/SOURCE_METADATA_VALIDATION.md for the actual boundary.

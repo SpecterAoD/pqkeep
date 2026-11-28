@@ -54,7 +54,7 @@ some growth copies already succeeded, previous-state preservation, unwind, nativ
 lock cleanup and unchanged parent limits. The source-record component passed
 the local checkpoint below and the native checkpoint recorded at the end.
 
-DE: Weiter offen: read_dir-/DirEntry-/fs::Metadata-Zwischenwerte, gewöhnliche
+DE: Weiter offen: read_dir-/DirEntry-Zwischenwerte, gewöhnliche
 native Traversierungspfade/-stapel und Skip-Records. Top-Level-Namensschutz
 und Unicode-Faltung werden in CONFIDENTIAL_NAME_FOLDING.md separat abgenommen.
 M3 umfasst weiterhin Ziel-/Temp-/Cleanup-/Publish-Pfade und die aus Main358
@@ -90,3 +90,8 @@ EN: All eight fuzz targets and the usual MSRV/audit/history/workflow/hardening
 gates pass. Explicit ignored child/race entrypoints remain visible; actual child
 invocation is checked separately. The owned Windows process-access probe still
 fails due to enabled debug privilege; this is no joint R7/R8 acceptance.
+
+DE/EN: Direkte Quellmetadaten-Adapter werden im selben gemeinsamen Draft
+separat entwickelt/geprüft / direct source-metadata adapters are developed and
+validated separately in the same joint draft. See SOURCE_METADATA_VALIDATION.md;
+remaining DirEntry/traversal/output records are not thereby declared closed.

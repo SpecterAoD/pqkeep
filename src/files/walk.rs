@@ -47,8 +47,8 @@ pub(crate) fn collect_file(path: &Path) -> Result<SourceEntries> {
 }
 
 fn collect_file_into(path: &Path, entries: &mut SourceEntries) -> Result<()> {
-    let meta = fs::symlink_metadata(path)?;
-    if !meta.file_type().is_file() {
+    let meta = super::source_metadata::Metadata::read(path)?;
+    if !meta.is_file() {
         return Err(Error::InvalidInput { field: "source" });
     }
     let name = path
@@ -56,7 +56,7 @@ fn collect_file_into(path: &Path, entries: &mut SourceEntries) -> Result<()> {
         .and_then(|n| n.to_str())
         .ok_or(Error::InvalidInput { field: "path" })?;
     paths::validate_only(name)?;
-    entries.push(name, path, false, meta.len())
+    entries.push(name, path, false, meta.bytes())
 }
 
 /// DE: Ordner rekursiv; der Ordner selbst ist nicht Teil des Archivs.
@@ -92,7 +92,7 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(SourceEntries, Vec<Skip
                 other => other,
             });
         }
-        let kind = fs::symlink_metadata(src)?.file_type();
+        let kind = super::source_metadata::Metadata::read(src)?;
         if kind.is_symlink() {
             skipped.push(Skipped {
                 path: name.to_owned(),
@@ -135,7 +135,7 @@ fn collect_tree(
     entries: &mut SourceEntries,
     skipped: &mut Vec<Skipped>,
 ) -> Result<()> {
-    if !fs::symlink_metadata(root)?.file_type().is_dir() {
+    if !super::source_metadata::Metadata::read(root)?.is_dir() {
         return Err(Error::InvalidInput { field: "source" });
     }
     let mut stack = vec![(root.to_path_buf(), ConfidentialText::from_text(base)?)];
@@ -187,7 +187,7 @@ fn visit(
         subdirs.push((abs.clone(), ConfidentialText::joined(rel.expose()?, "/")?));
         entries.push(rel.expose()?, &abs, true, 0)?;
     } else if file_type.is_file() {
-        let size = fs::symlink_metadata(&abs)?.len();
+        let size = super::source_metadata::Metadata::read(&abs)?.bytes();
         entries.push(rel.expose()?, &abs, false, size)?;
     } else {
         return skip(SkipReason::Special);

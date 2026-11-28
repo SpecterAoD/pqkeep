@@ -50,6 +50,7 @@ mod signer_v3;
 mod slot_v2;
 mod source_entries;
 mod source_entry;
+mod source_metadata;
 mod stream_v4;
 mod tail_v4;
 mod tail_v4_drain;

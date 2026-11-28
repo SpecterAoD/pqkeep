@@ -7,13 +7,15 @@ license = "Apache-2.0"
 publish = false
 description = "Narrow synchronous platform adapters for PQKeep"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "=0.2.191"
+
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_ErrorReporting", "Win32_System_Threading", "Win32_System_ProcessStatus", "Win32_Storage_FileSystem", "Win32_Security", "Win32_UI_Input_KeyboardAndMouse"] }
 
-[target.'cfg(windows)'.dependencies.zeroize]
+[dependencies.zeroize]
 version = "1.9.1"
 default-features = false
-optional = true
 
 [target.'cfg(windows)'.dev-dependencies]
 windows-sys = { version = "=0.61.2", features = ["Win32_Security", "Win32_Security_Authorization"] }
@@ -22,7 +24,9 @@ windows-sys = { version = "=0.61.2", features = ["Win32_Security", "Win32_Securi
 # DE/EN: Ausschließlich feste öffentliche Testereignisse / fixed public test events only.
 native-input-fixture = []
 # DE/EN: Nur lesende eigene Seitensperrprobe / read-only own page-lock fixture only.
-native-memory-fixture = ["dep:zeroize"]
+native-memory-fixture = []
+# DE/EN: Nur lesende direkte Find-Metadatenprobe / read-only direct find-metadata fixture.
+native-metadata-fixture = []
 # DE/EN: Nur ausdrücklich gestartete öffentliche Prozessprobe / explicitly run public probe only.
 process-access-probe = []
 

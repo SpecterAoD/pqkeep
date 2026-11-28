@@ -201,3 +201,8 @@ DE/EN: R7/R8 in progress: gemeinsame geschützte Top-Level-/Archiv-Pfadprüfung
 und öffentliche Unicode-Buildtabelle lokal implementiert / shared protected
 top-level/archive path checks and public build-time Unicode table implemented
 locally. Vollständige Abnahme läuft / full acceptance running; kein Gesamtabschluss.
+
+DE/EN: R7/R8 weiterhin in Arbeit: native Quellmetadaten direkt vorab gesperrt
+lokal entwickelt / prelocked native source metadata locally developed;
+Abnahme läuft / validation running. DirEntry/Traversierung/Skip/Output/Reports
+und Prozess-/Helper-Verträge bleiben offen / remain open.

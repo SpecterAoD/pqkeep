@@ -31,3 +31,8 @@ pub mod memory_fixture;
 mod path_windows;
 #[cfg(windows)]
 pub use path_windows::{absolute_path_into, open_file_read};
+
+#[cfg(any(target_os = "linux", windows))]
+mod source_metadata;
+#[cfg(any(target_os = "linux", windows))]
+pub use source_metadata::SourceMetadata;

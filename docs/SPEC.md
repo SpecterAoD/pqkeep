@@ -588,3 +588,8 @@ DE: R7/R8 Top-Level-Namensprüfung verwendet denselben geschützten PathSet wie 
 Archivleser. Öffentliche Buildzeit-Unicode-Tabelle ersetzt private Laufzeit-
 Expansionsarrays; Originalnamen/Wire erhalten, Sigma-Konflikte bereits beim
 Schreiben abweisen. Details: security/CONFIDENTIAL_NAME_FOLDING.md.
+
+DE: R7/R8-Quellsammlung erfasst native Metadaten direkt in vorab gesperrten
+libc-/SDK-Records, ohne privaten std::fs::Metadata-Rückgabewert. No-Follow-
+Semantik und Windows-Reparse-/Sharing-Vertrag bleiben explizit. Lokale/native
+Vollabnahme offen; security/SOURCE_METADATA_VALIDATION.md beschreibt die Grenze.

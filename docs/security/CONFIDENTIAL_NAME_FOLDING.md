@@ -45,5 +45,8 @@ unterschiedliche Namen. Bestehende Pfadindex-Sperr-/Verweigerungsfälle bleiben.
 DE: Lokaler Checkpoint unicode-names-v1:879 unveränderte Rust-/Manifest-Hashes,
 13 erfolgreiche Befehle, vier strenge Linux-/Windows-GNU-Lints, je88 Datei-
 gruppen mit/ohne API und57 Integrationen. Cargo-Paketliste enthält build.rs.
-EN: Native acceptance of this component is pending. Native traversal, skip/output/report records and verified
+DE: Signierter5cf5747 nativ: Linux22/ARM je968 Tests/120 Gruppen, latest1857/238,
+Windows1676/240 ohne Testfehler. Exhaustive Unicode- und echte Auswahlfälle
+in allen vier Vollprotokollen ausgeführt; Hashes und exakter Head geprüft.
+EN: All eight fuzz targets and the usual gates pass on5cf5747. Native traversal, skip/output/report records and verified
 process/helper/host contracts remain open; no complete M1/M2 or R7/R8 claim.

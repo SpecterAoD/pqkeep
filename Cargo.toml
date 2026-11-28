@@ -131,6 +131,7 @@ tokio = { version = "1.54.1", default-features = false, features = ["macros", "r
 [target.'cfg(target_os = "linux")'.dependencies]
 landlock = "0.4.7"
 libc = "0.2.191"
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 rustix = { version = "1.1.6", default-features = false, features = ["std", "process", "termios", "event", "thread", "fs"] }
 seccompiler = { version = "0.5.0", default-features = false }
 
@@ -143,7 +144,7 @@ pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 [target.'cfg(windows)'.dev-dependencies]
 # DE: Nur sichere eigene Testfixture, nicht im normalen Produktionsbaum.
 # EN: Safe own-console fixture only, excluded from normal production features.
-pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture", "native-memory-fixture"] }
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture", "native-memory-fixture", "native-metadata-fixture"] }
 
 # DE: `api` (Standard) baut den REST-Server `pqkeep serve` ein. Ohne das Feature
 #     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.
