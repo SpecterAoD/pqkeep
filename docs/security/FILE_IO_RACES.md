@@ -22,26 +22,27 @@ Reihenfolge freigegeben: Veröffentlichung Linux → Windows → Quellen → Res
 | Stelle | Heute | Bewertung | Test (`src/files/race_tests.rs`) |
 |---|---|---|---|
 | Temporärausgabe anlegen | `create_new` (O_EXCL, folgt keinem Symlink), Zufallsname, Linux 0600, Ordner 0700 | hält | über vorhandene REC-Tests |
-| Dateiziel veröffentlichen | Hardlink auf den Zielnamen (scheitert, wenn er existiert), dann Temporärname entfernen | hält, atomar | `file_target_created_before_publish_is_never_overwritten` (scharf) |
-| Rückfall ohne Hardlinks (z. B. FAT) | prüfen, dann `rename` – ersetzt ein dazwischen angelegtes Ziel | **Lücke** (2) | `fallback_without_hard_links_never_overwrites` (ignoriert bis PR 2) |
-| Ordnerziel veröffentlichen | prüfen, dann `rename` – unter POSIX ersetzt `rename` einen leeren Ordner | **Lücke** (2) | `directory_target_created_before_rename_is_not_replaced` (ignoriert bis PR 2) |
+| Dateiziel veröffentlichen | Linux: `linkat` auf den **offenen Deskriptor** (`/proc/self/fd/N`), sonst Hardlink über den Namen; scheitert, wenn das Ziel existiert; danach Prüfung von Gerät/Inode | hält, atomar | `file_target_created_before_publish_is_never_overwritten`, `swapped_temp_file_is_never_published` |
+| Rückfall ohne Hardlinks (z. B. FAT) | Linux: `renameat2(RENAME_NOREPLACE)`, sonst prüfen und umbenennen; vorher und nachher Prüfung des eigenen Objekts | **behoben** (Linux); andere Systeme: Prüfung, Rest-Rennen dokumentiert | `fallback_without_hard_links_never_overwrites` |
+| Ordnerziel veröffentlichen | Linux: `renameat2(RENAME_NOREPLACE)`, danach Prüfung von Gerät/Inode | **behoben** (Linux) | `directory_target_created_before_rename_is_not_replaced` |
 | Quellen öffnen | Durchlauf prüft mit `symlink_metadata`, später `File::open` folgt Symlinks | **Lücke** (1): ein dazwischen gesetzter Symlink lässt eine andere, für den Nutzer lesbare Datei verschlüsseln | `source_swapped_for_symlink_is_never_read` (ignoriert bis PR 4) |
 | Pfade der Elternordner | Operationen über Pfade, nicht über Verzeichnis-Handles | Restrisiko: Austausch eines Elternordners gegen einen Symlink | PR 4 (Durchlauf über Handles) |
-| Temporärausgabe nach dem Anlegen | Weitere Schritte über Pfade, nicht über Handles | **Offenes Risiko** in fremd beschreibbaren Zielordnern ohne Sticky-Bit (Austausch der Temporärausgabe); Behebung mit Vorrang in Arbeit | folgt mit der Behebung |
+| Temporärausgabe nach dem Anlegen | Linux: Ordner ohne Symlink-Folgen geöffnet (Eigentümer, 0700 geprüft) und über `/proc/self/fd/N` beschrieben; Dateien über den Deskriptor veröffentlicht; Aufräumen nur des eigenen Objekts | **behoben** (Linux, GHSA-9vh5-2vch-2r68); **Windows noch offen** – dort nur vertrauenswürdige Zielordner | `swapped_temp_dir_cannot_redirect_writes`, `swapped_temp_file_is_never_published` |
 | Rest nach Kill | benannte Temporärdatei kann bleiben (Audit #335, L1) | Restrisiko (5) | `tests/integrity_kill.rs` |
 
 Die ersten drei Lücken waren bereits in [FILE_FORMAT.md](../FILE_FORMAT.md) unter „Grenzen“
-dokumentiert. Der Austausch der Temporärausgabe in fremd beschreibbaren Zielordnern ist ein
-**offenes Risiko** (Hinweis aus dem Review von #357) und wird mit Vorrang behoben; bis dahin nur
-vertrauenswürdige Zielordner (nur Eigentümer schreibt, oder Sticky-Bit) verwenden. Die Tests stellen sie über Test-Haltepunkte (nur `cfg(test)`,
-kein produktiver Hook) deterministisch nach: `cargo test --lib race_tests -- --include-ignored`
-zeigt heute drei Fehlschläge, die mit PR 2 bzw. PR 4 verschwinden und dann scharf geschaltet
-werden.
+dokumentiert. Der Austausch der Temporärausgabe in fremd beschreibbaren Zielordnern ohne
+Sticky-Bit (Hinweis aus dem Review von #357; Advisory GHSA-9vh5-2vch-2r68) ist unter Linux
+behoben, ebenso das Ersetzen bei Ordnern und im Rückfallweg; unter Windows gilt bis zum eigenen
+Schritt weiter: nur vertrauenswürdige Zielordner. Die Tests stellen alle Fälle über
+Test-Haltepunkte (nur `cfg(test)`, kein produktiver Hook) deterministisch nach; ignoriert ist nur
+noch `source_swapped_for_symlink_is_never_read` (PR 4).
 
 ## Geplante Abhilfe
 
-- **Vorrang (Linux und Windows):** Ausgabe durchgehend über Handles statt Pfade, Prüfung des
-  veröffentlichten Objekts.
+- **Erledigt (Linux):** Ausgabe über Handles statt Pfade, Veröffentlichen ohne Ersetzen, Prüfung
+  des veröffentlichten Objekts (auch Schlüssel- und Faktordateien). **Offen:** Windows (Handles im
+  Plattform-Crate).
 - **PR 2 (Linux):** Datei-, Strom- und `.pqkf`-Ziele als namenlose Datei (`O_TMPFILE`) im
   Zielordner, Veröffentlichung per `linkat` (scheitert bei vorhandenem Ziel; zuerst
   `AT_EMPTY_PATH`, sonst `/proc/self/fd`); Ordner per `renameat2(RENAME_NOREPLACE)`; Rückfall auf
@@ -83,8 +84,13 @@ output; pointed out in the review of #357), fixed with priority; until then use 
 directories only (owner-only or sticky). `src/files/race_tests.rs` reproduces them deterministically via test checkpoints
 (`cfg(test)` only, no productive hook); the gap tests are `#[ignore]` until PR 2 or PR 4 fixes them.
 
-**Planned remedy:** priority – handle-based output throughout and verification of the published
-object (Linux and Windows); PR 2 Linux – unnamed `O_TMPFILE` outputs published with `linkat` (fails if the
+**Status:** on Linux the replacement of the temporary output (GHSA-9vh5-2vch-2r68), directory
+replacement and the fallback replacement are fixed – handle-based output (directories opened
+without following symlinks, owner/0700 checked, written via `/proc/self/fd/N`; files linked via the
+open descriptor), publication without replacing (`renameat2(RENAME_NOREPLACE)`) and device/inode
+verification, also for key and factor files; **Windows is still open** (trusted target
+directories only). Only `source_swapped_for_symlink_is_never_read` stays ignored (PR 4).
+**Planned remedy:** Windows handle-based output; PR 2 Linux – unnamed `O_TMPFILE` outputs published with `linkat` (fails if the
 target exists; `AT_EMPTY_PATH` first, else `/proc/self/fd`), directories via
 `renameat2(RENAME_NOREPLACE)`, fallback to today's path only where the file system cannot – never
 weaker than today; PR 3 Windows – delete-pending file, handle-based rename without replace; PR 4

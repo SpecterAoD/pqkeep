@@ -15,6 +15,7 @@ pub mod crypto;
 pub mod envelope;
 pub mod error;
 pub mod files;
+mod fs_identity;
 mod fsutil;
 pub mod hardening;
 pub mod security;

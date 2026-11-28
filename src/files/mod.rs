@@ -30,6 +30,7 @@ mod list;
 mod locked_owner_tests;
 mod original;
 mod output;
+mod output_guard;
 pub mod paths;
 #[cfg(test)]
 #[path = "race_tests.rs"]

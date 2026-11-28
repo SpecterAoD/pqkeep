@@ -13,6 +13,7 @@ use std::sync::OnceLock;
 
 use crate::crypto::rng;
 use crate::envelope::hex_encode;
+use crate::fs_identity::{Identity, is_own, link_handle, rename_noreplace, replaced, verify};
 use crate::{Error, Result};
 
 // DE: Nur Lib-Tests erhalten einen Wrapper. EN: Only lib tests receive a wrapper.
@@ -83,44 +84,88 @@ pub(crate) fn open_new(path: &Path) -> std::io::Result<OutputFile> {
     Ok(file)
 }
 
-/// DE: Veröffentlicht `temp` als `path`, ohne zu überschreiben.
-/// EN: Publishes `temp` as `path` without overwriting.
-pub(crate) fn publish_no_overwrite(temp: &Path, path: &Path) -> std::io::Result<()> {
-    publish(temp, path, true)
+/// DE: Zweites Handle auf die geschriebene Datei, um sie unabhängig vom Namen zu veröffentlichen
+/// und zu prüfen (#338). EN: Second handle to the written file to publish and verify it
+/// independent of its name (#338).
+pub(crate) fn handle_of(file: &OutputFile) -> std::io::Result<fs::File> {
+    #[cfg(not(test))]
+    return file.try_clone();
+    #[cfg(test)]
+    file.try_clone_file()
+}
+
+/// DE: Veröffentlicht die über `handle` offene Datei `temp` als `path`, ohne zu überschreiben.
+/// EN: Publishes the file `temp`, open via `handle`, as `path` without overwriting.
+pub(crate) fn publish_no_overwrite(
+    temp: &Path,
+    handle: &fs::File,
+    path: &Path,
+) -> std::io::Result<()> {
+    publish(temp, handle, path, true)
 }
 
 /// DE: Rekey: ohne Hardlinks kein unsicherer Fallback. EN: Rekey: no weak fallback without links.
-pub(crate) fn publish_no_overwrite_strict(temp: &Path, path: &Path) -> std::io::Result<()> {
-    publish(temp, path, false)
+pub(crate) fn publish_no_overwrite_strict(
+    temp: &Path,
+    handle: &fs::File,
+    path: &Path,
+) -> std::io::Result<()> {
+    publish(temp, handle, path, false)
 }
 
-fn publish(temp: &Path, path: &Path, allow_fallback: bool) -> std::io::Result<()> {
+/// DE: Linux: über den Deskriptor verlinken, sonst über den Namen. EN: Link via descriptor or name.
+fn link(temp: &Path, handle: &fs::File, path: &Path) -> std::io::Result<()> {
+    if link_handle(handle, path)? {
+        return Ok(());
+    }
+    fs::hard_link(temp, path)
+}
+
+fn publish(
+    temp: &Path,
+    handle: &fs::File,
+    path: &Path,
+    allow_fallback: bool,
+) -> std::io::Result<()> {
+    let id = Identity::of(handle)?;
     #[cfg(test)]
     checkpoint(temp, Point::BeforePublish)?;
     #[cfg(test)]
-    let link = checkpoint(temp, Point::BeforeHardLink).and_then(|()| fs::hard_link(temp, path));
+    let linked = checkpoint(temp, Point::BeforeHardLink).and_then(|()| link(temp, handle, path));
     #[cfg(not(test))]
-    let link = fs::hard_link(temp, path);
-    match link {
+    let linked = link(temp, handle, path);
+    match linked {
         Ok(()) => {
             #[cfg(test)]
             checkpoint(temp, Point::AfterPublish)?;
+            // DE: Abweichung: Fehler melden, aber nichts unter dem Zielnamen entfernen – der Eintrag
+            //     ist dann nicht nachweislich unserer (Codex-Fund #358).
+            // EN: Mismatch: report an error but remove nothing under the target name – the entry
+            //     is then not provably ours (Codex finding #358).
+            verify(path, id)?;
             #[cfg(test)]
             checkpoint(temp, Point::BeforeRemoveFile)?;
-            fs::remove_file(temp)
+            // DE: Nur den eigenen Temporärnamen entfernen. EN: Only remove our own temporary name.
+            if is_own(temp, id) {
+                fs::remove_file(temp)?;
+            }
+            Ok(())
         }
-        // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Prüfen + Umbenennen, nicht atomar.
-        // EN: File systems without hard links (e.g. FAT): check + rename, not atomic.
+        // DE: Dateisysteme ohne Hardlinks (z. B. FAT): Umbenennen ohne Ersetzen, danach prüfen.
+        // EN: File systems without hard links (e.g. FAT): rename without replacing, then verify.
         Err(e) if allow_fallback && e.kind() == ErrorKind::Unsupported => {
             if path.exists() {
                 return Err(ErrorKind::AlreadyExists.into());
             }
             #[cfg(test)]
             checkpoint(temp, Point::BeforeRename)?;
-            fs::rename(temp, path)?;
+            if !is_own(temp, id) {
+                return Err(replaced());
+            }
+            rename_noreplace(temp, path)?;
             #[cfg(test)]
             checkpoint(path, Point::AfterPublish)?;
-            Ok(())
+            verify(path, id)
         }
         Err(e) => Err(e),
     }

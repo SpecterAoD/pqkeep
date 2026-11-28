@@ -17,7 +17,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 
 use crate::crypto::{SecretBytes, rng};
-use crate::fsutil::{open_new, publish_no_overwrite, sync_dir, temp_path};
+use crate::fsutil::{handle_of, open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::{Error, Result};
 
 #[cfg(test)]
@@ -119,8 +119,9 @@ fn write_and_publish(temp: &Path, path: &Path, data: &[u8]) -> Result<()> {
     checkpoint(temp, Point::AfterTempCreate)?;
     file.write_all(data)?;
     file.sync_all()?;
+    let handle = handle_of(&file)?;
     drop(file);
-    publish_no_overwrite(temp, path)?;
+    publish_no_overwrite(temp, &handle, path)?;
     sync_dir(path);
     Ok(())
 }
