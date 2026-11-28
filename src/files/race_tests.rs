@@ -182,6 +182,7 @@ fn swap_temp_file_for_symlink(temp: &Path) {
 }
 
 /// DE: Wie Fall 2, aber mit einer gewöhnlichen fremden Datei. EN: Like case 2 with a plain file.
+#[cfg(unix)]
 fn swap_temp_file_for_file(temp: &Path) {
     let root = temp.parent().unwrap();
     std::fs::rename(temp, root.join("weg")).unwrap();

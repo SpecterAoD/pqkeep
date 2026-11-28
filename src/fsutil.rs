@@ -138,11 +138,11 @@ fn publish(
         Ok(()) => {
             #[cfg(test)]
             checkpoint(temp, Point::AfterPublish)?;
-            if verify(path, id).is_err() {
-                // DE: Fremdes Objekt verlinkt: eigenen Namen wieder entfernen. EN: Remove our link.
-                let _ = fs::remove_file(path);
-                return Err(replaced());
-            }
+            // DE: Abweichung: Fehler melden, aber nichts unter dem Zielnamen entfernen – der Eintrag
+            //     ist dann nicht nachweislich unserer (Codex-Fund #358).
+            // EN: Mismatch: report an error but remove nothing under the target name – the entry
+            //     is then not provably ours (Codex finding #358).
+            verify(path, id)?;
             #[cfg(test)]
             checkpoint(temp, Point::BeforeRemoveFile)?;
             // DE: Nur den eigenen Temporärnamen entfernen. EN: Only remove our own temporary name.

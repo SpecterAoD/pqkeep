@@ -86,6 +86,7 @@ pub(crate) fn handle_path(file: &File) -> Option<PathBuf> {
 
 /// DE: Ohne `/proc` kein Handle-Pfad. EN: Without `/proc` no handle path.
 #[cfg(not(target_os = "linux"))]
+#[allow(clippy::unnecessary_wraps)] // DE/EN: gleiche Signatur wie unter Linux / same signature as on Linux
 pub(crate) fn handle_path(_file: &File) -> Option<PathBuf> {
     None
 }
@@ -109,6 +110,7 @@ pub(crate) fn link_handle(file: &File, target: &Path) -> io::Result<bool> {
 
 /// DE: Außer Linux: immer über den Namen. EN: Outside Linux: always via the name.
 #[cfg(not(target_os = "linux"))]
+#[allow(clippy::unnecessary_wraps)] // DE/EN: gleiche Signatur wie unter Linux / same signature as on Linux
 pub(crate) fn link_handle(_file: &File, _target: &Path) -> io::Result<bool> {
     Ok(false)
 }

@@ -56,6 +56,7 @@ impl Guard {
 
     /// DE: Außer Linux: kein Ordner-Handle (Windows folgt eigens). EN: Outside Linux: none yet.
     #[cfg(not(target_os = "linux"))]
+    #[allow(clippy::unnecessary_wraps)] // DE/EN: gleiche Signatur wie unter Linux / same signature as on Linux
     pub(super) fn dir(_temp: &Path) -> Result<Option<Self>> {
         Ok(None)
     }
