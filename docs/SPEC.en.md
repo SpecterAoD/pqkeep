@@ -3,8 +3,8 @@
 > R7/R8 work in progress (#147, joint PR #355): verified sender identities use
 > fallible locked ownership. Rust API: `SignedBy::key_id()` replaces the public
 > Vec field, `try_duplicate()` replaces `Clone`; `Report` no longer implements `Clone`.
-> CLI/JSON/format contracts remain unchanged. Partial remediation only; signature
-> scratch, process/helper and other metadata paths remain open. See
+> CLI/JSON/format contracts remain unchanged. Partial remediation only; final
+> process/helper and other metadata acceptance remains open. See
 > [confidential sender identity](security/CONFIDENTIAL_SENDER_IDENTITY.md).
 
 > R8 follow-up in PR355: hidden signing-key construction, encoding and verification
@@ -12,6 +12,13 @@
 > without ordinary Signature/cache copies in these paths. Implemented in the joint draft;
 > final joint native acceptance remains pending. See
 > [validation scope and limits](security/HIDDEN_SIGNATURE_VALIDATION.md).
+
+> R8 framing in PR355: encode private trailer/signature-message bytes directly
+> into prelocked SecretBytes; lock retained STREAM/holdback counters before plaintext
+> ingress and wipe before release. Rust API `format_v4::trailer` now returns
+> `Result<SecretBytes>`; propagate with `?` and borrow bytes through `expose()`.
+> Wire format unchanged; reports/transport and other R7/R8 paths remain open.
+> [Scope and API migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
 
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.22. Both versions are maintained together; every change to one is made to the other in the

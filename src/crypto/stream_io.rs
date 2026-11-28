@@ -9,8 +9,8 @@
 
 use std::io::{Read, Write};
 
-use super::SecretBytes;
 use super::locked_hash::LockedHash;
+use super::{SecretBytes, secret_state::SecretState};
 use sha3::Sha3_512;
 use zeroize::Zeroize;
 
@@ -22,6 +22,14 @@ use crate::crypto::aead::TAG_LEN;
 use crate::crypto::stream::{CHUNK_SIZE, ENCRYPTED_CHUNK_SIZE, PREFIX_LEN, Stream, read_full};
 use crate::{Error, Result};
 
+#[path = "stream_progress.rs"]
+mod progress;
+use progress::Progress;
+
+#[cfg(test)]
+#[path = "stream_progress_tests.rs"]
+mod progress_tests;
+
 /// DE: Verschlüsselnder Schreiber: puffert bis zu einem Block; ein voller Block
 /// wird erst versiegelt, wenn weitere Daten folgen. `finish` versiegelt den Rest
 /// als letzten Block (auch leer).
@@ -31,8 +39,7 @@ pub struct EncryptWriter<W: Write> {
     stream: Stream,
     inner: W,
     buf: SecretBytes,
-    used: usize,
-    total: u64,
+    progress: SecretState<Progress>,
     hash: Option<PlainHash>,
 }
 
@@ -46,8 +53,7 @@ impl<W: Write> EncryptWriter<W> {
             stream: Stream::new(key, prefix, aad)?,
             inner,
             buf: SecretBytes::zeroed(CHUNK_SIZE)?,
-            used: 0,
-            total: 0,
+            progress: Progress::prepare()?,
             hash: None,
         })
     }
@@ -58,19 +64,22 @@ impl<W: Write> EncryptWriter<W> {
     /// DE/EN: [`Error::Io`], [`Error::Crypto`].
     pub fn push(&mut self, mut data: &[u8]) -> Result<()> {
         while !data.is_empty() {
-            if self.used == CHUNK_SIZE {
-                let sealed = self.stream.seal(&self.buf.expose()[..self.used], false)?;
+            if self.progress.get().cursor == CHUNK_SIZE {
+                let sealed = self
+                    .stream
+                    .seal(&self.buf.expose()[..self.progress.get().cursor], false)?;
                 self.inner.write_all(&sealed)?;
                 self.buf.expose_mut().zeroize();
-                self.used = 0;
+                self.progress.get_mut().cursor = 0;
             }
-            let take = (CHUNK_SIZE - self.used).min(data.len());
+            let take = (CHUNK_SIZE - self.progress.get().cursor).min(data.len());
+            self.progress.get().check_advance(take)?;
             if let Some(hash) = &mut self.hash {
                 hash.update(&data[..take]);
             }
-            self.buf.expose_mut()[self.used..self.used + take].copy_from_slice(&data[..take]);
-            self.used += take;
-            self.total += take as u64;
+            self.buf.expose_mut()[self.progress.get().cursor..self.progress.get().cursor + take]
+                .copy_from_slice(&data[..take]);
+            self.progress.get_mut().advance(take)?;
             data = &data[take..];
         }
         Ok(())
@@ -94,7 +103,7 @@ impl<W: Write> EncryptWriter<W> {
     /// DE: Bisher aufgenommene Klartextbytes. EN: Plaintext bytes accepted so far.
     #[must_use]
     pub fn written(&self) -> u64 {
-        self.total
+        self.progress.get().total
     }
 
     /// DE: Schließt ab; liefert den inneren Schreiber und die Klartextlänge.
@@ -103,10 +112,12 @@ impl<W: Write> EncryptWriter<W> {
     /// # Errors
     /// DE/EN: [`Error::Io`], [`Error::Crypto`].
     pub fn finish(mut self) -> Result<(W, u64)> {
-        let sealed = self.stream.seal(&self.buf.expose()[..self.used], true)?;
+        let sealed = self
+            .stream
+            .seal(&self.buf.expose()[..self.progress.get().cursor], true)?;
         self.inner.write_all(&sealed)?;
         self.inner.flush()?;
-        Ok((self.inner, self.total))
+        Ok((self.inner, self.progress.get().total))
     }
 }
 
@@ -118,11 +129,10 @@ pub struct DecryptReader<R: Read> {
     stream: Stream,
     inner: R,
     plain: SecretBytes,
-    pos: usize,
+    progress: SecretState<Progress>,
     pending: Vec<u8>,
     pending_len: usize,
     done: bool,
-    released: u64,
     hash: Option<PlainHash>,
 }
 
@@ -138,11 +148,10 @@ impl<R: Read> DecryptReader<R> {
             stream: Stream::new(key, prefix, aad)?,
             inner,
             plain: SecretBytes::zeroed(0)?,
-            pos: 0,
+            progress: Progress::prepare()?,
             pending,
             pending_len,
             done: false,
-            released: 0,
             hash: None,
         })
     }
@@ -159,7 +168,7 @@ impl<R: Read> DecryptReader<R> {
         };
         let last = next_len == 0;
         self.plain = self.stream.open(&self.pending[..self.pending_len], last)?;
-        self.pos = 0;
+        self.progress.get_mut().cursor = 0;
         self.pending = next;
         self.pending_len = next_len;
         self.done = last;
@@ -172,19 +181,21 @@ impl<R: Read> DecryptReader<R> {
     /// # Errors
     /// DE/EN: [`Error::Decrypt`], [`Error::Io`].
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        while self.pos == self.plain.len() {
+        while self.progress.get().cursor == self.plain.len() {
             if self.done {
                 return Ok(0);
             }
             self.refill()?;
         }
-        let n = buf.len().min(self.plain.len() - self.pos);
-        buf[..n].copy_from_slice(&self.plain.expose()[self.pos..self.pos + n]);
+        let n = buf.len().min(self.plain.len() - self.progress.get().cursor);
+        self.progress.get().check_advance(n)?;
+        buf[..n].copy_from_slice(
+            &self.plain.expose()[self.progress.get().cursor..self.progress.get().cursor + n],
+        );
         if let Some(hash) = &mut self.hash {
             hash.update(&buf[..n]);
         }
-        self.pos += n;
-        self.released += n as u64;
+        self.progress.get_mut().advance(n)?;
         Ok(n)
     }
 
@@ -205,7 +216,7 @@ impl<R: Read> DecryptReader<R> {
     /// DE: Bisher herausgegebene Klartextbytes. EN: Plaintext bytes released so far.
     #[must_use]
     pub fn position(&self) -> u64 {
-        self.released
+        self.progress.get().total
     }
 
     /// DE: Liest genau `buf.len()` Bytes. EN: Reads exactly `buf.len()` bytes.
@@ -231,7 +242,7 @@ impl<R: Read> DecryptReader<R> {
     /// DE/EN: [`Error::InvalidInput`] (Restdaten / trailing data), [`Error::Decrypt`].
     pub fn finish(mut self) -> Result<()> {
         loop {
-            if self.pos != self.plain.len() {
+            if self.progress.get().cursor != self.plain.len() {
                 return Err(Error::InvalidInput { field: "archive" });
             }
             if self.done {

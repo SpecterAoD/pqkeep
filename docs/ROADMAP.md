@@ -167,3 +167,10 @@ EN: One joint PR; platform/helper, remaining metadata, native/security/fuzz and
 full rollback acceptance remain open. See
 [hidden signature scope](security/HIDDEN_SIGNATURE_VALIDATION.md) and
 [restricted inspector proposal](security/WINDOWS_RESTRICTED_INSPECTOR_PROPOSAL.md).
+
+DE: Derselbe Draft schützt nun auch Trailer-/Signaturnachricht-Bytes und laufende
+STREAM-/Rückhalte-Zähler vor privater Befüllung. Berichte, native Pfade,
+Sperrregister und Prozess-/Helper-Gesamtabnahme bleiben offen.
+EN: Protected framing and retained stream/holdback counters in the same joint PR;
+fallible Rust trailer API, unchanged wire bytes. No whole-row completion claim.
+See [scope and migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).

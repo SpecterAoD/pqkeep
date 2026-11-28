@@ -215,7 +215,7 @@
       "path": "Cargo.toml"
     },
     {
-      "sha256": "4f36fbfb2200aeef22323ffd5c4a346238e829d8bf51bf8d5442bcd9e9fc59fe",
+      "sha256": "7721b8bec4b6695b6438b2daccd30bffaeeb32a2b0db62590046f85df986f2b8",
       "path": "src/algebra.rs"
     },
     {
@@ -231,11 +231,11 @@
       "path": "src/hash_workspace.rs"
     },
     {
-      "sha256": "b2f459860cad9aee90fce36dcca3d55298c7fe925dc15ebbfbc5c3955b0c7ec2",
+      "sha256": "0f50c2a847adcf6ea969836afd8502d93f114d0160db60486157a8901ecccff4",
       "path": "src/hint.rs"
     },
     {
-      "sha256": "82c8f39a0f4a2b82cf8f8c06ad3c78d9d119aaf556cc331ed119c6e048059fc9",
+      "sha256": "5a0940bd491609ba5ec23668abc8f5d9a3a1c1f8667a1af3c9362954e72bdefc",
       "path": "src/lib.rs"
     },
     {
@@ -243,23 +243,39 @@
       "path": "src/ntt.rs"
     },
     {
-      "sha256": "059eeb62220875479ca35d809fabf33e47e746a941dab6a2f40438f95710b262",
+      "sha256": "f87aecd75a14468c9022816bf49d0e03d57e099a192e986a91dec020d36fc478",
       "path": "src/param.rs"
+    },
+    {
+      "sha256": "8c55d56fdefcea76d7cc23f917b7db9b622f614759271982ac83ecec9664f003",
+      "path": "src/sampling.rs"
     },
     {
       "sha256": "d374e7ba9c964a22d7030b81f6829c1c2217760e6a744cfb6f963b2477f6e761",
       "path": "src/sampling/in_place.rs"
     },
     {
-      "sha256": "27ea974a59effc0c42e499a45dfe12aee74abc1413f6fd5b62e727619987f7bb",
-      "path": "src/sampling.rs"
+      "sha256": "6f3aa1ee24ebe2747c9cfeb3342a96627ac67485bc890f6b25c599084e17e4da",
+      "path": "src/sampling/matrix_workspace.rs"
     },
     {
-      "sha256": "3561aebac973136d3dddfb6db2f80432f07d94afb989ddde5aa381dff5bd0ac0",
+      "sha256": "691e9ef8ce1a0db4e55075691b141112cafa48d1acd87318578abfc509566e43",
+      "path": "src/signing.rs"
+    },
+    {
+      "sha256": "adefe1a2b18b07ce993a97e7ed8a3a7341a1560f3b34a048e0b2b0a9595c9e44",
       "path": "src/signing/borrowed.rs"
     },
     {
-      "sha256": "b34d6382ac006608a593a8f66a18d9af384fbde07b1b72a0d93980739e5eda7b",
+      "sha256": "28f139460628a9816cdb6c35dd0a9f465011edb7ea340137bb71b4c8a0f031f8",
+      "path": "src/signing/confidential_encoding.rs"
+    },
+    {
+      "sha256": "5fb4713ed598e937b93e45bc21c4c09d97c1f4ab788e67f35f4beb9de1c4ce67",
+      "path": "src/signing/confidential_key.rs"
+    },
+    {
+      "sha256": "656999ae93fe9b7d30538a15f622c34f39e159e059e3b909d8d7e67f770173e2",
       "path": "src/signing/in_place.rs"
     },
     {
@@ -267,16 +283,24 @@
       "path": "src/signing/workspace.rs"
     },
     {
-      "sha256": "15eacd4f4ee299bd85d100116ff84232f151565ca4df2ef28a14a346acaee5b3",
-      "path": "src/signing.rs"
+      "sha256": "1469e9f2132c04680ed2f59f90caba9e4f5fcd0c977ab268664895b41e867dd0",
+      "path": "src/verifying.rs"
+    },
+    {
+      "sha256": "cb1cac683e21ca9fb0d3302832fee07250860c3f2bf07485d23f14c5a6dffdbe",
+      "path": "src/verifying/confidential.rs"
+    },
+    {
+      "sha256": "d02dde49f1e337021ca6bdb943529c9cdcf87c629f4c627b67f222afae7f9910",
+      "path": "src/verifying/confidential_decode.rs"
+    },
+    {
+      "sha256": "deb41b31c728275489c67fbf98e879e61413683214461b6fb08061d23beb3186",
+      "path": "src/verifying/confidential_operations.rs"
     },
     {
       "sha256": "6722f4ed69c0e0dfb6dd80c500a1b60fa62e9d0cbb56329c37d60587e665e18b",
       "path": "src/verifying/in_place.rs"
-    },
-    {
-      "sha256": "fc8a4b48267279487787d09464fb9c3a9e0cd3636574bec412902b5a844f2349",
-      "path": "src/verifying.rs"
     }
   ],
   "shake-0.1.0": [

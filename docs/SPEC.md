@@ -4,7 +4,7 @@
 > fallibel in gesperrtem Speicher gehalten; Rust-API `SignedBy::key_id()` statt
 > öffentlichem Vec-Feld, `try_duplicate()` statt `Clone`; `Report` ohne `Clone`.
 > CLI-/JSON-/Formatverträge bleiben erhalten. Teilbehebung, kein Gesamtabschluss;
-> Signatur-Scratch, Prozess-/Helper- und übrige Metadatenpfade weiter offen.
+> Finale Prozess-/Helper- und übrige Metadatenabnahme weiter offen.
 > Details: [vertrauliche Absenderidentität](security/CONFIDENTIAL_SENDER_IDENTITY.md).
 
 > R8-Folgebaustein in PR355: Verborgener Signierschlüssel-Aufbau, Kodierung und
@@ -12,6 +12,13 @@
 > matrix und SHAKE128-Scratch; keine gewöhnlichen Signature-/Cache-Kopien in
 > diesen Pfaden. Umsetzung im gemeinsamen Draft, finale native Abnahme noch offen.
 > [Prüfumfang und Grenzen](security/HIDDEN_SIGNATURE_VALIDATION.md).
+
+> R8-Framing in PR355: Private Trailer-/Signaturnachricht-Bytes direkt in vorab
+> gesperrte SecretBytes kodieren; laufende STREAM-/Rückhalte-Zähler vor Klartext-
+> eingang sperren und vor Freigabe löschen. Rust-API `format_v4::trailer` liefert
+> jetzt `Result<SecretBytes>`; mit `?` behandeln und Bytes mit `expose()` ausleihen.
+> Wire-Format unverändert; Berichte/Transport und weitere R7/R8-Pfade bleiben offen.
+> [Umfang und API-Migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
 
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 

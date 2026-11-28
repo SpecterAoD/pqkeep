@@ -16,6 +16,7 @@ mod anon_v4;
 mod archive;
 mod check;
 mod confidential_entries;
+mod confidential_framing;
 mod confidential_path_index;
 mod confidential_text;
 mod decrypt;
@@ -44,6 +45,7 @@ mod signer_v3;
 mod slot_v2;
 mod stream_v4;
 mod tail_v4;
+mod tail_v4_drain;
 mod walk;
 
 use std::fs::File;
