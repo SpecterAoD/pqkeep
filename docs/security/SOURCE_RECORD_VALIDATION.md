@@ -51,11 +51,12 @@ gesperrten nativen Seitenbeobachter. Referenzsortierung einschließlich gleicher
 Namen, Wachstumsgrenzen, gültige Dateiinhalte und fehlgeschlagene Slotbefüllung.
 EN: Bounded own Linux children exercise actual zero-budget refusal, failure after
 some growth copies already succeeded, previous-state preservation, unwind, native
-lock cleanup and unchanged parent limits. Native acceptance of this source-record
-component is pending; the local checkpoint below passed.
+lock cleanup and unchanged parent limits. The source-record component passed
+the local checkpoint below and the native checkpoint recorded at the end.
 
 DE: Weiter offen: read_dir-/DirEntry-/fs::Metadata-Zwischenwerte, gewöhnliche
-native Traversierungspfade/-stapel, Top-Level-to_lowercase/BTreeSet und Skip-Records.
+native Traversierungspfade/-stapel und Skip-Records. Top-Level-Namensschutz
+und Unicode-Faltung werden in CONFIDENTIAL_NAME_FOLDING.md separat abgenommen.
 M3 umfasst weiterhin Ziel-/Temp-/Cleanup-/Publish-Pfade und die aus Main358
 übernommenen Handle-/Identitäts-/Metadatenrecords. Berichte, Serialisierung,
 CLI-Kontext und Prozess-/Helper-Verträge bleiben eigene tatsächliche Lücken.
@@ -77,3 +78,15 @@ diff checks passed. The native sandbox cases now require actual Landlock support
 rather than reporting an unsupported kernel as proof of denial. No sandbox rule,
 security gate, dependency version or unsafe boundary was weakened or added.
 The separate Windows process probe remains unsuccessful; no R7/R8 closure.
+
+## Native checkpoint / Native Abnahme
+
+DE: Exakter signierter Quellstand3dc0fdf: vollständige Rust-Jobs unter Linux22
+und ARM jeweils965 Tests/120 Gruppen, Linux-latest1851/238 sowie Windows1670/240
+bestanden, ohne Testfehler. Vollprotokolle und Hashes gesichert; konkrete
+Owner-/Sortier-/Iteratorfälle, begrenzte Fehlerkinder und Windows-Seitenabfragen
+nicht aus einem bloßen Cross-Check abgeleitet.
+EN: All eight fuzz targets and the usual MSRV/audit/history/workflow/hardening
+gates pass. Explicit ignored child/race entrypoints remain visible; actual child
+invocation is checked separately. The owned Windows process-access probe still
+fails due to enabled debug privilege; this is no joint R7/R8 acceptance.

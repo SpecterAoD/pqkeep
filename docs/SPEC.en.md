@@ -576,3 +576,8 @@ source records, occupancy, sort indices and iterator state. Fallible growth copi
 only between protected targets; stable ordering without ordinary record sorting
 scratch. Native traversal, skip/filesystem intermediates and other R7/R8 gaps
 remain open; see [source collection](security/SOURCE_RECORD_VALIDATION.md).
+
+EN: R7/R8 top-level names share the protected archive-reader PathSet. A public
+build-time Unicode table replaces private runtime expansion arrays; original
+name/wire bytes stay intact, sigma conflicts are rejected before writing.
+See security/CONFIDENTIAL_NAME_FOLDING.md.

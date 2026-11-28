@@ -15,6 +15,7 @@ categories = ["cryptography", "command-line-utilities"]
 # EN: Only what is needed to build and for the licence (no tests, scripts, workflows).
 include = [
     "/src/**",
+    "/build.rs",
     "/data/wordlists/**",
     "/Cargo.toml",
     "/Cargo.lock",

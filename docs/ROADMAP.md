@@ -196,3 +196,8 @@ stabile Referenzreihenfolge ohne gewöhnlichen Sortier-Scratch. Abnahme offen.
 EN: Actual single/tree/multi/container callers ported in the same joint work;
 native traversal/skip/FS intermediates and other plan rows remain open. See
 [source collection scope](security/SOURCE_RECORD_VALIDATION.md).
+
+DE/EN: R7/R8 in progress: gemeinsame geschützte Top-Level-/Archiv-Pfadprüfung
+und öffentliche Unicode-Buildtabelle lokal implementiert / shared protected
+top-level/archive path checks and public build-time Unicode table implemented
+locally. Vollständige Abnahme läuft / full acceptance running; kein Gesamtabschluss.

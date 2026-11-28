@@ -79,15 +79,18 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(SourceEntries, Vec<Skip
         return Err(Error::InvalidInput { field: "source" });
     }
     let (mut entries, mut skipped) = (SourceEntries::prepare()?, Vec::new());
-    let mut names = std::collections::BTreeSet::new();
+    let mut names = paths::PathSet::default();
     for src in sources {
         let name = src
             .file_name()
             .and_then(|n| n.to_str())
             .ok_or(Error::InvalidInput { field: "path" })?;
         paths::validate_only(name)?;
-        if !names.insert(name.to_lowercase()) {
-            return Err(Error::InvalidInput { field: "duplicate" });
+        if let Err(error) = names.insert(&[name], true) {
+            return Err(match error {
+                Error::InvalidInput { .. } => Error::InvalidInput { field: "duplicate" },
+                other => other,
+            });
         }
         let kind = fs::symlink_metadata(src)?.file_type();
         if kind.is_symlink() {

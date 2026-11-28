@@ -112,14 +112,6 @@ pub struct PathSet {
     entries: super::confidential_path_index::Index,
 }
 
-fn lower_chars(part: &str) -> impl Iterator<Item = char> + '_ {
-    // DE: Sigma-Aliase konservativ zusammenfassen; Originalnamen nicht ändern.
-    // EN: Conservatively merge sigma aliases; never alter original names.
-    part.chars()
-        .flat_map(char::to_lowercase)
-        .map(|c| if c == 'ς' { 'σ' } else { c })
-}
-
 fn folded_size<'a>(parts: impl Iterator<Item = &'a str>) -> Result<usize> {
     let (mut count, mut raw_len, mut len) = (0, 0, 0);
     for part in parts {
@@ -131,7 +123,7 @@ fn folded_size<'a>(parts: impl Iterator<Item = &'a str>) -> Result<usize> {
         if raw_len > MAX_PATH_BYTES {
             return Err(invalid());
         }
-        len += lower_chars(part).map(char::len_utf8).sum::<usize>() + separator;
+        len += part.chars().map(super::unicode_fold::size).sum::<usize>() + separator;
         count += 1;
     }
     if count == 0 {
@@ -148,10 +140,8 @@ fn folded_key<'a>(parts: impl Iterator<Item = &'a str> + Clone) -> Result<Confid
             out.expose_mut()[offset] = b'/';
             offset += 1;
         }
-        for c in lower_chars(part) {
-            let len = c.len_utf8();
-            c.encode_utf8(&mut out.expose_mut()[offset..offset + len]);
-            offset += len;
+        for c in part.chars() {
+            offset += super::unicode_fold::write(c, &mut out.expose_mut()[offset..]);
         }
     }
     ConfidentialText::from_locked(out)

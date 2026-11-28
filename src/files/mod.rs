@@ -53,6 +53,7 @@ mod source_entry;
 mod stream_v4;
 mod tail_v4;
 mod tail_v4_drain;
+mod unicode_fold;
 mod walk;
 
 use std::io::BufReader;

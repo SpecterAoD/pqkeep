@@ -583,3 +583,8 @@ Wachstum kopiert nur zwischen gesperrten Zielen; stabile Reihenfolge ohne
 gewöhnlichen Record-Sortierscratch. Native Traversierung, Skip-/FS-Zwischenwerte
 und übrige R7/R8-Flächen bleiben offen; siehe
 [Quellsammlung](security/SOURCE_RECORD_VALIDATION.md).
+
+DE: R7/R8 Top-Level-Namensprüfung verwendet denselben geschützten PathSet wie der
+Archivleser. Öffentliche Buildzeit-Unicode-Tabelle ersetzt private Laufzeit-
+Expansionsarrays; Originalnamen/Wire erhalten, Sigma-Konflikte bereits beim
+Schreiben abweisen. Details: security/CONFIDENTIAL_NAME_FOLDING.md.
