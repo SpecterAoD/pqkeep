@@ -570,3 +570,9 @@ into prelocked UTF8/UTF16 destinations. Root forbid remains; necessary native
 Windows calls stay in the narrow platform adapter. Other traversal/target/temp
 paths and process/helper gaps remain open; see
 [native path scope](security/NATIVE_PATH_VALIDATION.md).
+
+R7/R8 work in progress: actual source collectors and archive writers use prelocked
+source records, occupancy, sort indices and iterator state. Fallible growth copies
+only between protected targets; stable ordering without ordinary record sorting
+scratch. Native traversal, skip/filesystem intermediates and other R7/R8 gaps
+remain open; see [source collection](security/SOURCE_RECORD_VALIDATION.md).

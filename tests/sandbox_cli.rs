@@ -32,6 +32,11 @@ fn zz_probe_entry() {
     let report = sandbox::apply(&Profile::Cli(access)).unwrap();
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     assert_eq!(report.seccomp, sandbox::Status::Full);
+    if probe.ends_with("_native") {
+        // DE: Native Verweigerung tatsächlich prüfen, bei fehlendem Landlock nicht überspringen.
+        // EN: Actually prove native denial; do not skip it when Landlock is unavailable.
+        assert_ne!(report.landlock, sandbox::Status::Unsupported);
+    }
     println!("LANDLOCK={}", report.landlock.as_str());
     println!("RESULT={}", run_probe(&probe, &root));
     std::process::exit(0);

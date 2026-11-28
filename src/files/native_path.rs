@@ -68,14 +68,12 @@ impl NativePath {
         }
     }
 
-    #[cfg(any(unix, test))]
     pub(super) fn from_native(source: &[Unit]) -> Result<Self> {
         let mut out = Self::prepare()?;
         out.copy_native(source)?;
         Ok(out)
     }
 
-    #[cfg(any(unix, test))]
     pub(super) fn copy_native(&mut self, source: &[Unit]) -> Result<()> {
         if source.contains(&0) {
             return Err(Error::InvalidInput { field: "path" });
@@ -106,7 +104,6 @@ impl NativePath {
         std::ffi::CStr::from_bytes_with_nul(self.encoded()?).map_err(|_| Error::Crypto)
     }
 
-    #[cfg(test)]
     pub(super) fn try_duplicate(&self) -> Result<Self> {
         let units = self.encoded()?;
         Self::from_native(&units[..units.len() - 1])
@@ -135,6 +132,10 @@ pub(super) fn open_file(path: &Path) -> Result<std::fs::File> {
         Error::InvalidInput { field: "path" } => Error::Io(std::io::ErrorKind::InvalidInput),
         other => other,
     })?;
+    open_native(&path)
+}
+
+pub(super) fn open_native(path: &NativePath) -> Result<std::fs::File> {
     #[cfg(target_os = "linux")]
     {
         use rustix::fs::{CWD, Mode, OFlags, openat};
@@ -151,8 +152,8 @@ pub(super) fn open_file(path: &Path) -> Result<std::fs::File> {
     }
     #[cfg(windows)]
     {
-        let normalized = windows::for_open(&path)?;
-        pqkeep_platform::open_file_read(normalized.as_ref().unwrap_or(&path).encoded()?)
+        let normalized = windows::for_open(path)?;
+        pqkeep_platform::open_file_read(normalized.as_ref().unwrap_or(path).encoded()?)
             .map_err(Into::into)
     }
     #[cfg(not(any(target_os = "linux", windows)))]

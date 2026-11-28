@@ -17,6 +17,17 @@ impl Zeroize for ConfidentialText {
 }
 
 impl ConfidentialText {
+    pub(crate) fn joined(left: &str, right: &str) -> Result<Self> {
+        let len = left
+            .len()
+            .checked_add(right.len())
+            .ok_or(Error::MemoryLock)?;
+        let mut bytes = SecretBytes::zeroed(len)?;
+        bytes.expose_mut()[..left.len()].copy_from_slice(left.as_bytes());
+        bytes.expose_mut()[left.len()..].copy_from_slice(right.as_bytes());
+        Self::from_locked(bytes)
+    }
+
     pub(crate) fn prepare() -> Result<Self> {
         Ok(Self(SecretState::new(SecretBytes::zeroed(0)?)?))
     }

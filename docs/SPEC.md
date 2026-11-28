@@ -576,3 +576,10 @@ verwendet vor Befüllung gesperrte UTF8-/UTF16-Ziele. Root-forbid bleibt erhalte
 notwendige native Windows-Aufrufe bleiben im schmalen Plattformadapter. Übrige
 Traversal-/Ziel-/Temppfad- und Prozess-/Helper-Lücken bleiben offen; siehe
 [Nativer Pfadumfang](security/NATIVE_PATH_VALIDATION.md).
+
+R7/R8-Arbeitsstand: Tatsächliche Quellsammler und Archivschreiber verwenden vorab
+gesperrte Quelleinträge, Belegung, Sortierindizes und Iteratorzustände. Fallibles
+Wachstum kopiert nur zwischen gesperrten Zielen; stabile Reihenfolge ohne
+gewöhnlichen Record-Sortierscratch. Native Traversierung, Skip-/FS-Zwischenwerte
+und übrige R7/R8-Flächen bleiben offen; siehe
+[Quellsammlung](security/SOURCE_RECORD_VALIDATION.md).

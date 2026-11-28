@@ -9,7 +9,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use super::ConfidentialText;
 use super::paths::{self, MAX_ENTRIES};
+use super::source_entries::SourceEntries;
 use crate::{Error, Result};
 
 /// DE: Grund für das Überspringen. EN: Reason for skipping.
@@ -36,22 +38,15 @@ pub struct Skipped {
     pub reason: SkipReason,
 }
 
-/// DE: Art eines Quelleintrags. EN: Kind of source entry.
-pub(crate) enum SourceKind {
-    Dir,
-    File(u64),
-}
-
-/// DE: Quelleintrag mit relativem Archivpfad. EN: Source entry with relative archive path.
-pub(crate) struct SourceEntry {
-    pub rel: String,
-    pub abs: PathBuf,
-    pub kind: SourceKind,
-}
-
 /// DE: Einzeldatei als einziger Eintrag (Name muss portabel sein).
 /// EN: Single file as the only entry (name must be portable).
-pub(crate) fn collect_file(path: &Path) -> Result<SourceEntry> {
+pub(crate) fn collect_file(path: &Path) -> Result<SourceEntries> {
+    let mut entries = SourceEntries::prepare()?;
+    collect_file_into(path, &mut entries)?;
+    Ok(entries)
+}
+
+fn collect_file_into(path: &Path, entries: &mut SourceEntries) -> Result<()> {
     let meta = fs::symlink_metadata(path)?;
     if !meta.file_type().is_file() {
         return Err(Error::InvalidInput { field: "source" });
@@ -61,19 +56,15 @@ pub(crate) fn collect_file(path: &Path) -> Result<SourceEntry> {
         .and_then(|n| n.to_str())
         .ok_or(Error::InvalidInput { field: "path" })?;
     paths::validate_only(name)?;
-    Ok(SourceEntry {
-        rel: name.to_owned(),
-        abs: path.to_path_buf(),
-        kind: SourceKind::File(meta.len()),
-    })
+    entries.push(name, path, false, meta.len())
 }
 
 /// DE: Ordner rekursiv; der Ordner selbst ist nicht Teil des Archivs.
 /// EN: Directory recursively; the directory itself is not part of the archive.
-pub(crate) fn collect_dir(root: &Path) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
-    let (mut entries, mut skipped) = (Vec::new(), Vec::new());
+pub(crate) fn collect_dir(root: &Path) -> Result<(SourceEntries, Vec<Skipped>)> {
+    let (mut entries, mut skipped) = (SourceEntries::prepare()?, Vec::new());
     collect_tree(root, "", &mut entries, &mut skipped)?;
-    entries.sort_by(|a, b| a.rel.cmp(&b.rel));
+    entries.sort()?;
     Ok((entries, skipped))
 }
 
@@ -83,11 +74,11 @@ pub(crate) fn collect_dir(root: &Path) -> Result<(Vec<SourceEntry>, Vec<Skipped>
 /// EN: Several sources as one archive (multi-selection): each source becomes a top-level entry,
 /// directories with their content. Equal names (ignoring case) → abort; a selected symlink is
 /// skipped and reported.
-pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
+pub(crate) fn collect_many(sources: &[&Path]) -> Result<(SourceEntries, Vec<Skipped>)> {
     if sources.is_empty() || sources.len() as u64 > MAX_ENTRIES {
         return Err(Error::InvalidInput { field: "source" });
     }
-    let (mut entries, mut skipped) = (Vec::new(), Vec::new());
+    let (mut entries, mut skipped) = (SourceEntries::prepare()?, Vec::new());
     let mut names = std::collections::BTreeSet::new();
     for src in sources {
         let name = src
@@ -105,17 +96,14 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<S
                 reason: SkipReason::Symlink,
             });
         } else if kind.is_dir() {
-            entries.push(SourceEntry {
-                rel: name.to_owned(),
-                abs: src.to_path_buf(),
-                kind: SourceKind::Dir,
-            });
-            collect_tree(src, &format!("{name}/"), &mut entries, &mut skipped)?;
+            entries.push(name, src, true, 0)?;
+            let prefix = ConfidentialText::joined(name, "/")?;
+            collect_tree(src, prefix.expose()?, &mut entries, &mut skipped)?;
         } else {
-            entries.push(collect_file(src)?);
+            collect_file_into(src, &mut entries)?;
         }
     }
-    entries.sort_by(|a, b| a.rel.cmp(&b.rel));
+    entries.sort()?;
     Ok((entries, skipped))
 }
 
@@ -126,22 +114,14 @@ pub(crate) fn collect_many(sources: &[&Path]) -> Result<(Vec<SourceEntry>, Vec<S
 pub(crate) fn collect_under(
     sources: &[&Path],
     root: &str,
-) -> Result<(Vec<SourceEntry>, Vec<Skipped>)> {
+) -> Result<(SourceEntries, Vec<Skipped>)> {
     if paths::validate(root)?.len() != 1 {
         return Err(Error::InvalidInput { field: "path" });
     }
-    let (inner, skipped) = collect_many(sources)?;
-    let mut entries = Vec::with_capacity(inner.len() + 1);
-    entries.push(SourceEntry {
-        rel: root.to_owned(),
-        abs: PathBuf::new(),
-        kind: SourceKind::Dir,
-    });
-    for mut entry in inner {
-        entry.rel = format!("{root}/{}", entry.rel);
-        paths::validate_only(&entry.rel)?;
-        entries.push(entry);
-    }
+    let (mut entries, skipped) = collect_many(sources)?;
+    entries.prepend_all(root)?;
+    entries.push(root, Path::new(""), true, 0)?;
+    entries.sort()?;
     Ok((entries, skipped))
 }
 
@@ -149,13 +129,13 @@ pub(crate) fn collect_under(
 fn collect_tree(
     root: &Path,
     base: &str,
-    entries: &mut Vec<SourceEntry>,
+    entries: &mut SourceEntries,
     skipped: &mut Vec<Skipped>,
 ) -> Result<()> {
     if !fs::symlink_metadata(root)?.file_type().is_dir() {
         return Err(Error::InvalidInput { field: "source" });
     }
-    let mut stack = vec![(root.to_path_buf(), base.to_owned())];
+    let mut stack = vec![(root.to_path_buf(), ConfidentialText::from_text(base)?)];
     while let Some((dir, prefix)) = stack.pop() {
         let mut children: Vec<_> = fs::read_dir(&dir)?.collect::<std::io::Result<_>>()?;
         children.sort_by_key(fs::DirEntry::file_name);
@@ -163,7 +143,7 @@ fn collect_tree(
         // EN: Pushed in reverse so that the order stays alphabetical.
         let mut subdirs = Vec::new();
         for child in children {
-            visit(&child, &prefix, entries, skipped, &mut subdirs)?;
+            visit(&child, prefix.expose()?, entries, skipped, &mut subdirs)?;
             if entries.len() as u64 > MAX_ENTRIES {
                 return Err(Error::InvalidInput { field: "entries" });
             }
@@ -176,15 +156,14 @@ fn collect_tree(
 fn visit(
     child: &fs::DirEntry,
     prefix: &str,
-    entries: &mut Vec<SourceEntry>,
+    entries: &mut SourceEntries,
     skipped: &mut Vec<Skipped>,
-    subdirs: &mut Vec<(PathBuf, String)>,
+    subdirs: &mut Vec<(PathBuf, ConfidentialText)>,
 ) -> Result<()> {
     let name = child.file_name();
-    let lossy = format!("{prefix}{}", name.to_string_lossy());
     let mut skip = |reason| {
         skipped.push(Skipped {
-            path: lossy.clone(),
+            path: format!("{prefix}{}", name.to_string_lossy()),
             reason,
         });
         Ok(())
@@ -192,8 +171,8 @@ fn visit(
     let Some(name) = name.to_str() else {
         return skip(SkipReason::NonUtf8Name);
     };
-    let rel = format!("{prefix}{name}");
-    if paths::validate_only(&rel).is_err() {
+    let rel = ConfidentialText::joined(prefix, name)?;
+    if paths::validate_only(rel.expose()?).is_err() {
         return skip(SkipReason::InvalidName);
     }
     let file_type = child.file_type()?;
@@ -202,19 +181,11 @@ fn visit(
     }
     let abs = child.path();
     if file_type.is_dir() {
-        subdirs.push((abs.clone(), format!("{rel}/")));
-        entries.push(SourceEntry {
-            rel,
-            abs,
-            kind: SourceKind::Dir,
-        });
+        subdirs.push((abs.clone(), ConfidentialText::joined(rel.expose()?, "/")?));
+        entries.push(rel.expose()?, &abs, true, 0)?;
     } else if file_type.is_file() {
         let size = fs::symlink_metadata(&abs)?.len();
-        entries.push(SourceEntry {
-            rel,
-            abs,
-            kind: SourceKind::File(size),
-        });
+        entries.push(rel.expose()?, &abs, false, size)?;
     } else {
         return skip(SkipReason::Special);
     }

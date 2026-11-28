@@ -189,3 +189,10 @@ std-kompatibler248-Grenze. Quell-/Traversal-/Ziel-/Temppfade insgesamt weiter of
 EN: First actual native read adapters implemented and locally source-checked in
 the same Draft355; native acceptance pending, no M1/M3 closure. See
 [native path scope](security/NATIVE_PATH_VALIDATION.md).
+
+DE: Gesammelte Quellrecords, Sortierindizes und konkreter Iterator vor privater
+Befüllung in gesperrten Arenen; Wachstum nur zwischen geschützten Zielen,
+stabile Referenzreihenfolge ohne gewöhnlichen Sortier-Scratch. Abnahme offen.
+EN: Actual single/tree/multi/container callers ported in the same joint work;
+native traversal/skip/FS intermediates and other plan rows remain open. See
+[source collection scope](security/SOURCE_RECORD_VALIDATION.md).

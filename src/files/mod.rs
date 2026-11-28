@@ -48,6 +48,8 @@ mod signed_by;
 mod signed_io;
 mod signer_v3;
 mod slot_v2;
+mod source_entries;
+mod source_entry;
 mod stream_v4;
 mod tail_v4;
 mod tail_v4_drain;
