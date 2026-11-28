@@ -33,13 +33,13 @@ try {
     $ready = $target.StandardOutput.ReadLineAsync()
     if (-not $ready.Wait(10000)) { throw 'Own target readiness timeout' }
     if ($ready.Result -cne "READY $($target.Id)") { throw 'Own target identity mismatch' }
-    $inspector = New-Probe -Arguments @('inspect', [string]$target.Id)
+    $inspector = New-Probe -Arguments @('inspect-restricted', [string]$target.Id)
     $inspector.StandardInput.Close()
     if (-not $inspector.WaitForExit(10000)) { throw 'Own inspector timeout' }
     $result = $inspector.StandardOutput.ReadToEnd()
+    # DE/EN: Ausschließlich öffentliche Probenkontrolle / public probe control only.
+    Write-Output ($inspector.StandardError.ReadToEnd().Trim())
     if ($inspector.ExitCode -ne 0 -or -not $result.StartsWith('PASS:')) {
-        # DE/EN: Nur feste öffentliche Probenfehler, keine Geheimwerte / public probe errors only.
-        Write-Output ($inspector.StandardError.ReadToEnd())
         throw 'Own inspector rejected process access policy'
     }
     $target.StandardInput.Close()

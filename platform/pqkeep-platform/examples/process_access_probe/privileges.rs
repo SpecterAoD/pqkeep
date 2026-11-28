@@ -31,6 +31,34 @@ fn own_token() -> io::Result<OwnedHandle> {
 
 pub(super) fn debug_enabled() -> io::Result<bool> {
     let token = own_token()?;
+    query(&token, enabled)
+}
+
+// DE: Alle ursprünglichen Privileg-IDs/-Flags vergleichen, keine Werte protokollieren.
+// EN: Compare every original privilege ID/flag without logging the values.
+pub(super) fn primary_snapshot() -> io::Result<Vec<(i32, u32, u32)>> {
+    query(&own_token()?, |values| {
+        let mut snapshot: Vec<_> = values
+            .iter()
+            .map(|v| (v.Luid.HighPart, v.Luid.LowPart, v.Attributes))
+            .collect();
+        snapshot.sort_unstable();
+        Ok(snapshot)
+    })
+}
+
+pub(super) fn any_enabled(token: &OwnedHandle) -> io::Result<bool> {
+    query(token, |values| {
+        Ok(values
+            .iter()
+            .any(|value| value.Attributes & SE_PRIVILEGE_ENABLED != 0))
+    })
+}
+
+fn query<T>(
+    token: &OwnedHandle,
+    inspect: impl FnOnce(&[LUID_AND_ATTRIBUTES]) -> io::Result<T>,
+) -> io::Result<T> {
     let (mut buffer, mut needed) = ([0u32; 512], 0);
     // SAFETY: Live own TOKEN_QUERY handle; initialized aligned2048byte buffer;
     // exact capacity passed and exclusive output count. No token writes.
@@ -66,7 +94,7 @@ pub(super) fn debug_enabled() -> io::Result<bool> {
             count,
         )
     };
-    enabled(values)
+    inspect(values)
 }
 
 fn enabled(values: &[LUID_AND_ATTRIBUTES]) -> io::Result<bool> {

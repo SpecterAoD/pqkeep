@@ -6,6 +6,9 @@
 #[cfg(windows)]
 #[path = "process_access_probe/privileges.rs"]
 mod privileges;
+#[cfg(windows)]
+#[path = "process_access_probe/restricted.rs"]
+mod restricted;
 
 #[cfg(windows)]
 mod windows {
@@ -132,6 +135,10 @@ mod windows {
             "INSPECTOR debug_privilege_enabled={}",
             super::privileges::debug_enabled()?
         );
+        check_access(pid)
+    }
+
+    fn check_access(pid: u32) -> io::Result<()> {
         for rights in [0x10, 0x20, 0x08, 0x40, 0x02, WRITE_DAC, 0x80000] {
             match open(pid, rights) {
                 Ok(_) => {
@@ -152,11 +159,33 @@ mod windows {
         Ok(())
     }
 
+    fn inspect_restricted(pid: u32) -> io::Result<()> {
+        let primary_before = super::privileges::primary_snapshot()?;
+        if super::privileges::debug_enabled()? {
+            // DE: Privilegierte Kontrolle schließen, bevor der Thread reduziert wird.
+            // EN: Close the privileged control handle before reducing the thread.
+            drop(open(pid, 0x10)?);
+            eprintln!("CONTROL: privileged VM_READ handle allowed and closed");
+        }
+        let _duplicate = super::restricted::own_thread()?;
+        eprintln!("INSPECTOR effective_thread_privileges_enabled=false");
+        check_access(pid)?;
+        if super::privileges::primary_snapshot()? != primary_before {
+            return Err(io::Error::other("original primary privilege state changed"));
+        }
+        eprintln!("PASS: original primary privilege state unchanged");
+        Ok(())
+    }
+
     pub(super) fn run() -> io::Result<()> {
         let mut args = std::env::args().skip(1);
         match (args.next().as_deref(), args.next()) {
             (Some("target"), None) => target(),
             (Some("inspect"), Some(pid)) if args.next().is_none() => inspect(
+                pid.parse()
+                    .map_err(|_| io::Error::other("invalid process ID"))?,
+            ),
+            (Some("inspect-restricted"), Some(pid)) if args.next().is_none() => inspect_restricted(
                 pid.parse()
                     .map_err(|_| io::Error::other("invalid process ID"))?,
             ),

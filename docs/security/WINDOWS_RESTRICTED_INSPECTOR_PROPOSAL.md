@@ -1,9 +1,10 @@
 # Restricted CI inspector / Reduzierter CI-Inspector
 
 DE: Konkreter Folgeversuch zu P2 des freigegebenen gemeinsamen R7/R8-Plans.
-Noch nicht zur Ausführung freigegeben. Bisherige Freigabe galt nur der eigenen
-Prozess-DACL und Zugriffsprobe, ausdrücklich ohne Token-/Threadänderungen.
-EN: Locally developed and cross-checked only until additional concrete approval.
+Am28.11.2026 ausdrücklich für diese eigene reduzierte Windows-CI-Probe freigegeben.
+Die frühere DACL-Freigabe wurde dabei nicht pauschal auf Tokenänderungen erweitert.
+EN: Explicit scoped owner approval recorded; implementation/cross-checks pass,
+native execution is still required. This is a test, not production protection.
 
 ## Observed failure / Beobachteter Fehler
 
@@ -30,7 +31,8 @@ DE: Nur im bereits eigenen kurzlebigen Inspector-Hauptthread:
    Privilegien zulassen. Keine Veränderung des ursprünglichen Primärtokens.
 5. Dieselben sieben sensiblen OpenProcess-Rechte müssen AccessDenied liefern;
    QueryLimited/Synchronize müssen weiterhin funktionieren. Zustand des ursprünglichen
-   Primärtokens vor/nachher muss gleich sein. Kein Skip/abgeschwächter Rechteumfang.
+   Primärtokens vor/nachher muss gleich sein (sämtliche Privileg-IDs und Flags,
+nicht nur das Debugflag; keine Werte protokollieren). Kein Skip/abgeschwächter Rechteumfang.
 
 EN: Before reduction, if actual debug privilege is enabled, open and immediately
 close one VM_READ control handle to the same owned target without reading memory.
@@ -50,8 +52,8 @@ administrators. No production helper/CLI policy is installed by this experiment.
 DE: Beispiele process_access_probe.rs und process_access_probe/{privileges,
 restricted}.rs sowie eine konkrete Änderung des vorhandenen PowerShell-Harness:
 Argument inspect-restricted statt inspect; feste öffentliche Kontroll-/Readback-
-Diagnose auch bei Erfolg festhalten. Geplanter Harness liegt vor Freigabe nur
-in der geschützten Analyseablage; bestehender Workflow führt ihn noch nicht aus.
+Diagnose auch bei Erfolg festhalten. Der genehmigte Harness verwendet
+jetzt inspect-restricted; native Ergebnisse werden separat dokumentiert.
 EN: Same two owned children, same own Process/PID tracking, same bounded10-second
 startup/inspection/exit and kill/wait cleanup; no unknown processes or shared endpoint.
 
