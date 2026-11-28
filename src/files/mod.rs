@@ -31,6 +31,9 @@ mod locked_owner_tests;
 mod original;
 mod output;
 pub mod paths;
+#[cfg(test)]
+#[path = "race_tests.rs"]
+mod race_tests;
 pub mod random_name;
 #[cfg(test)]
 #[path = "recovery_v4_tests.rs"]

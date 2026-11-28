@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.7.0",
+  "matrix_version": "1.8.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -2157,9 +2157,11 @@
       "id": "QA1-FS-008",
       "category": "Filesystem",
       "component_paths": [
-        "src/fsutil.rs",
+        "docs/security/FILE_IO_RACES.md",
         "src/files/output.rs",
-        "src/files/paths.rs"
+        "src/files/paths.rs",
+        "src/files/race_tests.rs",
+        "src/fsutil.rs"
       ],
       "scenario": {
         "de": "Source-Austausch/gleichzeitige Zielanlage/FAT-Fallback",
@@ -2173,9 +2175,9 @@
         "de": "Dokumentierte TOCTOU-/Publish-/FAT-Grenzen; keine deterministische Race-Prüfung.",
         "en": "Documented TOCTOU/publication/FAT boundaries; no deterministic race test."
       },
-      "implementation_state": "documented-only",
-      "coverage_status": "missing",
-      "automation": "automatable",
+      "implementation_state": "implemented",
+      "coverage_status": "partial",
+      "automation": "automated",
       "platforms": [
         "linux-x86_64",
         "linux-arm64",
@@ -2189,23 +2191,62 @@
         "de": "Nur synthetische Testdaten; OS-/Featurebedingungen der referenzierten Tests beachten.",
         "en": "Synthetic test data only; observe OS/feature conditions of referenced tests."
       },
-      "test_refs": [],
-      "ci_refs": [],
+      "test_refs": [
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "file_target_created_before_publish_is_never_overwritten",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "fallback_without_hard_links_never_overwrites",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "directory_target_created_before_rename_is_not_replaced",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "source_swapped_for_symlink_is_never_read",
+          "kind": "rust-unit",
+          "stage": "existing"
+        }
+      ],
+      "ci_refs": [
+        {
+          "workflow": ".github/workflows/ci.yml",
+          "job": "test",
+          "matrix_filter": [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-22.04-arm",
+            "windows-latest"
+          ],
+          "gate": "required-except-arm64",
+          "stage": "existing"
+        }
+      ],
       "priority": "P1",
       "issues": [
         151,
         152,
-        153
+        153,
+        338
       ],
       "v2_ids": [],
       "evidence_refs": [],
       "gap": {
-        "de": "Dokumentierte TOCTOU-/Publish-/FAT-Grenzen; keine deterministische Race-Prüfung.",
-        "en": "Documented TOCTOU/publication/FAT boundaries; no deterministic race test."
+        "de": "Race-Tests stellen die Lücken nach (Rückfall ohne Hardlinks, Ordner per Prüfen + Umbenennen, Quelle folgt Symlink nach dem Durchlauf); drei Tests sind bis zur Behebung ignoriert.",
+        "en": "Race tests reproduce the gaps (fallback without hard links, directory check + rename, source follows a symlink after the walk); three tests are ignored until fixed."
       },
       "next_evidence": {
-        "de": "Konkrete fehlende Variante im verknüpften Issue prüfen; keine Produktänderung in #151.",
-        "en": "Review the missing variant in the linked issue; no production change in #151."
+        "de": "#338 PR 2 (O_TMPFILE/linkat, renameat2 NOREPLACE), PR 3 (Windows per Handle), PR 4 (O_NOFOLLOW + fstat, Verzeichnis-Handles); dann Tests scharf schalten.",
+        "en": "#338 PR 2 (O_TMPFILE/linkat, renameat2 NOREPLACE), PR 3 (Windows handle-based), PR 4 (O_NOFOLLOW + fstat, directory handles); then enforce the tests."
       },
       "retired": false,
       "replacement": null
