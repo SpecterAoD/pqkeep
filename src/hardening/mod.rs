@@ -64,8 +64,7 @@ pub fn observe_process() -> HardeningReport {
 #[cfg(target_os = "linux")]
 mod platform {
     use rustix::process::{
-        DumpableBehavior, Resource, Rlimit, dumpable_behavior, getrlimit, set_dumpable_behavior,
-        setrlimit,
+        DumpableBehavior, Resource, Rlimit, dumpable_behavior, set_dumpable_behavior, setrlimit,
     };
 
     use super::HardeningReport;
@@ -87,9 +86,8 @@ mod platform {
     }
 
     pub(super) fn observe() -> HardeningReport {
-        let core = getrlimit(Resource::Core);
         HardeningReport {
-            core_dumps_disabled: core.current == Some(0) && core.maximum == Some(0),
+            core_dumps_disabled: pqkeep_platform::core_limits_disabled().unwrap_or(false),
             not_dumpable: matches!(dumpable_behavior(), Ok(DumpableBehavior::NotDumpable)),
             wer_heap_reporting_disabled: false,
         }

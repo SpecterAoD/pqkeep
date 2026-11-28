@@ -593,3 +593,8 @@ DE: R7/R8-Quellsammlung erfasst native Metadaten direkt in vorab gesperrten
 libc-/SDK-Records, ohne privaten std::fs::Metadata-Rückgabewert. No-Follow-
 Semantik und Windows-Reparse-/Sharing-Vertrag bleiben explizit. Lokale/native
 Vollabnahme offen; security/SOURCE_METADATA_VALIDATION.md beschreibt die Grenze.
+
+DE: R7-Linux-CLI setzt/prüft Core-Limits und Dumpable vor argv-/Secret-Eintritt
+zwingend. Native Core-Rücklesung ist fallibel, unbekannte/verweigerte Abfragen
+bestätigen keine Fähigkeit; statischer zweisprachiger Startfehler statt Panic.
+Windows-/Host-/Helper-Abnahme offen: security/LINUX_STARTUP_CAPABILITY.md.

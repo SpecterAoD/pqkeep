@@ -36,3 +36,8 @@ pub use path_windows::{absolute_path_into, open_file_read};
 mod source_metadata;
 #[cfg(any(target_os = "linux", windows))]
 pub use source_metadata::SourceMetadata;
+
+#[cfg(target_os = "linux")]
+mod core_limits_linux;
+#[cfg(target_os = "linux")]
+pub use core_limits_linux::core_limits_disabled;

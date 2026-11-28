@@ -206,3 +206,9 @@ DE/EN: R7/R8 weiterhin in Arbeit: native Quellmetadaten direkt vorab gesperrt
 lokal entwickelt / prelocked native source metadata locally developed;
 Abnahme läuft / validation running. DirEntry/Traversierung/Skip/Output/Reports
 und Prozess-/Helper-Verträge bleiben offen / remain open.
+
+DE/EN: R7/R8 in progress: fallible Linux-Core-Rücklesung und zwingende CLI-
+Startprüfung vor argv lokal implementiert / fallible Linux core readback and
+mandatory pre-argv CLI startup check locally implemented. Echte drei negative
+Syscall-Pfade und normaler Start bestanden / three actual refusal paths and
+normal startup passed; integrierte/native Abnahme läuft / acceptance running.

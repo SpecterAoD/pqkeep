@@ -586,3 +586,8 @@ EN: R7/R8 source collection captures native metadata directly in prelocked
 libc/SDK records without private std::fs::Metadata return values. No-follow and
 Windows reparse/sharing semantics stay explicit. Full local/native acceptance
 pending; see security/SOURCE_METADATA_VALIDATION.md for the actual boundary.
+
+EN: R7 Linux CLI must establish/read back core limits and dumpability before
+argv/secret ingress. Native core readback is fallible; unknown/refused queries
+confirm no capability. Static bilingual startup failure replaces panic.
+Windows/host/helper acceptance remains open: security/LINUX_STARTUP_CAPABILITY.md.
