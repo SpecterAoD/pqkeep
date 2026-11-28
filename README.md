@@ -12,7 +12,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-> **Status: beta (`v0.1.0-beta.4`) – not audited, not FIPS 140 validated.**
+> **Status: beta (`v0.1.0-beta.5`) – not audited, not FIPS 140 validated.**
 > File formats and options may still change before 1.0. Please do not use PQKeep to protect
 > secrets you cannot afford to lose. See [Status and limitations](#status-and-limitations).
 
@@ -148,7 +148,7 @@ arguments – only a hidden prompt, `--passphrase-stdin` or `--passphrase-file` 
 
 ### Status and limitations
 
-- **Development status:** fourth beta (`v0.1.0-beta.4`), active development. Formats and options
+- **Development status:** fifth beta (`v0.1.0-beta.5`), active development. Formats and options
   may change before 1.0. Changes: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit status:** no external security audit has been performed. An independent review is
   planned before 1.0.
@@ -369,7 +369,7 @@ verwenden; `--passphrase-file` wird nicht unterstützt. Siehe [`docs/REKEY.md`](
 
 ### Stand und Grenzen
 
-- **Entwicklungsstand:** vierte Beta (`v0.1.0-beta.4`), aktive Entwicklung. Formate und Optionen
+- **Entwicklungsstand:** fünfte Beta (`v0.1.0-beta.5`), aktive Entwicklung. Formate und Optionen
   können sich bis 1.0 ändern. Änderungen: [`CHANGELOG.md`](CHANGELOG.md).
 - **Audit:** Es gab noch kein externes Sicherheitsaudit; eine unabhängige Prüfung ist vor 1.0
   geplant.
