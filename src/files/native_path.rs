@@ -137,8 +137,11 @@ pub(super) fn open_file(path: &Path) -> Result<std::fs::File> {
     })?;
     #[cfg(target_os = "linux")]
     {
-        use rustix::fs::{Mode, OFlags, open};
-        open(
+        use rustix::fs::{CWD, Mode, OFlags, openat};
+        // DE: Unveränderte Sandbox nutzt openat, nicht den älteren x86-open-Syscall.
+        // EN: The unchanged sandbox permits openat, not legacy x86 open.
+        openat(
+            CWD,
             path.c_str()?,
             OFlags::RDONLY | OFlags::CLOEXEC,
             Mode::empty(),

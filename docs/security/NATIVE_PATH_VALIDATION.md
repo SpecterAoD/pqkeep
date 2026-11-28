@@ -74,3 +74,28 @@ Sources / Quellen:
 - [Rust1.88 Windows path source](https://github.com/rust-lang/rust/blob/1.88.0/library/std/src/sys/path/windows.rs)
 - [GetFullPathNameW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfullpathnamew)
 - [CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)
+
+## Native follow-up / Nativer Folgeabgleich
+
+DE: d818ff3 besteht die vollständigen nativen Windows- und ARM-Jobs. Insbesondere
+alle zehn Windows-Pfadfälle mit/ohne API einschließlich physischer Seitensperren,
+248-Grenze, langer/relativer Pfade, Surrogate und Fehlerklassen tatsächlich grün.
+EN: Full logs are retained; this is native execution, not cross-compilation only.
+
+DE: Linux-x86-CI findet dagegen eine echte Sandbox-Regression: rustix::fs::open
+verwendet dort den alten open-Syscall, den die bestehende Allowlist korrekt
+verweigert. ARM nutzt bereits openat. Der Adapter fordert nun explizit openat
+mit CWD an; Allowlist/Landlock/Flags bleiben unverändert. Die bestehende Sandbox-
+Probe prüft zusätzlich tatsächliche native Leseeingänge und fremde Pfadverweigerung
+bei nachgewiesen aktivem Seccomp. Der betroffene echte CLI-Ablauf bleibt Teil der
+Abnahme; ursprüngliche Fehlerprotokolle werden nicht als Erfolg umgedeutet.
+EN: New complete Linux/native acceptance remains required after the targeted fix.
+
+DE: Abschließender lokaler openat-v1-Checkpoint: alle14 Befehle erfolgreich,
+Quellen vor/nachher unverändert. Vier strenge Lints, je sechs Pfadgruppen,
+echter CLI-Anonymitätsfall und sechs Sandbox-Gruppen in beiden Featurevarianten;
+freigegebene native Pfade erreichbar, fremde gesperrt, Seccomp auf Zielarchitektur
+nachweislich Full. Keine Allowlist-/Landlock-/Flagänderung.
+EN: Complete native reruns for the corrected head remain required; previous
+Linux failures retained and not counted as passes. Three unrelated unapproved
+local token/thread prototype sources remain excluded and unexecuted.

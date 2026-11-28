@@ -30,6 +30,8 @@ fn zz_probe_entry() {
         write_dirs: vec![root.join("ziel")],
     };
     let report = sandbox::apply(&Profile::Cli(access)).unwrap();
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    assert_eq!(report.seccomp, sandbox::Status::Full);
     println!("LANDLOCK={}", report.landlock.as_str());
     println!("RESULT={}", run_probe(&probe, &root));
     std::process::exit(0);
@@ -39,11 +41,23 @@ fn ok_or_err<T, E>(r: &Result<T, E>) -> &'static str {
     if r.is_ok() { "ok" } else { "err" }
 }
 
+// DE: Fehlerhafter öffentlicher Header muss erreichbar sein; native Öffnungsverweigerung trennen.
+// EN: An invalid public header must be reachable; distinguish native open denial.
+fn native_read_probe(path: &Path) -> &'static str {
+    match pqkeep::files::inspect(path) {
+        Err(pqkeep::Error::InvalidInput { field: "header" }) => "ok",
+        Err(pqkeep::Error::Io(std::io::ErrorKind::PermissionDenied)) => "err",
+        _ => "unexpected",
+    }
+}
+
 fn run_probe(probe: &str, root: &Path) -> &'static str {
     let ziel = root.join("ziel");
     match probe {
         "read_source" => ok_or_err(&std::fs::read(root.join("quelle.txt"))),
+        "read_source_native" => native_read_probe(&root.join("quelle.txt")),
         "read_other" => ok_or_err(&std::fs::read(root.join("fremd.txt"))),
+        "read_other_native" => native_read_probe(&root.join("fremd.txt")),
         "write_target" => {
             let file = ziel.join("neu.txt");
             let steps = std::fs::write(&file, b"x")
@@ -95,7 +109,7 @@ fn landlock_active(out: &Output) -> bool {
 
 #[test]
 fn permitted_paths_work() {
-    for name in ["read_source", "write_target"] {
+    for name in ["read_source", "read_source_native", "write_target"] {
         let (out, root, _dir) = probe(name);
         assert!(
             result(&out).contains("RESULT=ok"),
@@ -111,7 +125,12 @@ fn permitted_paths_work() {
 
 #[test]
 fn other_paths_are_denied() {
-    for name in ["read_other", "write_outside", "symlink_target"] {
+    for name in [
+        "read_other",
+        "read_other_native",
+        "write_outside",
+        "symlink_target",
+    ] {
         let (out, root, _dir) = probe(name);
         if !landlock_active(&out) && name != "symlink_target" {
             eprintln!("Landlock nicht verfügbar – {name} übersprungen / skipped");
