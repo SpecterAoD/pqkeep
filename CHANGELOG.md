@@ -6,6 +6,32 @@ German release notes: see `docs/releases/`.
 
 ## [Unreleased]
 
+## [0.1.0-beta.5] – 2026-11-28
+
+Fifth public beta. **Not audited, not FIPS 140 validated – do not use for secrets you cannot afford to lose.**
+
+### Security
+- **GHSA-9vh5-2vch-2r68 (Linux/Unix fixed, Windows still affected):** in a target directory other users
+  may write to (no sticky bit), the temporary output of `decrypt` could be swapped. Fixed on Linux by
+  handle-based output (see the first entry below). On **Windows** decrypt only into directories that
+  only you can write to until the Windows fix follows (#338).
+
+### Known limitations
+- No external audit; cryptographic crates are 0.x versions.
+- **Format v4** (streams, padding, anonymous recipients, hidden sender, `--privacy high`) cannot be
+  opened by beta.1 to beta.4 (they report "unsupported"). Without these options files are written as
+  before (v1–v3).
+- **Anonymous recipients are EXPERIMENTAL** (#340): anonymity of ML-KEM is proven for Kyber round 3 but
+  not yet established for FIPS 203. `--privacy high` includes them (ML-KEM-1024 only) with a warning;
+  deselect with `--no-anonymous-recipients` or via the question in menu and context menu.
+- Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn); window
+  and context menu flows not hand-tested on Windows (#259).
+- Locked memory is mandatory (up to 1 GiB); see `docs/INSTALL.md` ("Locked memory").
+- After a kill or power loss a temporary plaintext file with a hidden name may remain; full-disk
+  encryption is recommended (`docs/security/CONTAINER_INTEGRITY_AUDIT.md`, #338).
+- ARM64 with 64 KiB pages is untested (#163).
+- See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
+
 - DE: **Sicherheit (GHSA-9vh5-2vch-2r68, Linux):** In einem Zielordner, in den andere Nutzer schreiben
   dürfen (ohne Sticky-Bit), konnte die Temporärausgabe beim Entschlüsseln ausgetauscht werden –
   Klartext konnte in einem anderen Ordner landen oder fremder Inhalt als geprüftes Ergebnis
@@ -531,6 +557,7 @@ First public beta. **Not audited, not FIPS 140 validated – do not use for secr
 - Windows: no sandbox, no own ACL; binary not yet Authenticode-signed (SmartScreen may warn).
 - See `docs/SECURITY_REVIEW.md` and `docs/THREAT_MODEL.md`.
 
+[0.1.0-beta.5]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.5
 [0.1.0-beta.4]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.4
 [0.1.0-beta.3]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/SpecterAoD/pqkeep/releases/tag/v0.1.0-beta.2
