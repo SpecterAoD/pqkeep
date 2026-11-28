@@ -178,7 +178,14 @@ See [scope and migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
 DE: Im selben Draft folgt das vor Befüllung gesperrte gemeinsame Seitenregister:
 Kontroll-/Node-Arenen, fallibles Wachstum, geprüfte Überlappung/Teilsperre und
 Verweigerung weiterer Aufnahme nach echtem Release-Fehler oder Poisoning.
-EN: Protected shared registry implemented and locally source-checked; native final
-acceptance remains pending. Two unnecessary unsafe Send/Sync impls removed;
+EN: Protected shared registry accepted on native Linux/Windows/ARM at5470c188.
+Two unnecessary unsafe Send/Sync impls removed;
 read-only native Windows observer is test-only. Other R7/R8 rows stay open.
 See [registry contract and evidence](security/LOCK_REGISTRY_VALIDATION.md).
+
+DE: Native Pfadkonvertierung an den tatsächlichen Archiv-/Quelldatei-Leseeingängen
+vor privater Befüllung gesperrt; Windows-Normalisierung mit gesperrtem Ziel und
+std-kompatibler248-Grenze. Quell-/Traversal-/Ziel-/Temppfade insgesamt weiter offen.
+EN: First actual native read adapters implemented and locally source-checked in
+the same Draft355; native acceptance pending, no M1/M3 closure. See
+[native path scope](security/NATIVE_PATH_VALIDATION.md).

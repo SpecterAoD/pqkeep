@@ -26,3 +26,8 @@ pub mod input_fixture;
 
 #[cfg(all(windows, feature = "native-memory-fixture"))]
 pub mod memory_fixture;
+
+#[cfg(windows)]
+mod path_windows;
+#[cfg(windows)]
+pub use path_windows::{absolute_path_into, open_file_read};

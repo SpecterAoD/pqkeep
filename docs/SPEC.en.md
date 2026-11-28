@@ -564,3 +564,9 @@ without private return values. No private sponge conversion arrays or new unsafe
 casts. This protected mode may lose ARM SHA3 acceleration. KEM PKE also uses complete
 borrowed prelocked operation storage, including confidential recomputed candidate
 ciphertext. Native acceptance and DSA/AES/Argon2 proofs stay open; no full R6 closure.
+
+R7/R8 work in progress: actual archive/source read ingress converts native paths
+into prelocked UTF8/UTF16 destinations. Root forbid remains; necessary native
+Windows calls stay in the narrow platform adapter. Other traversal/target/temp
+paths and process/helper gaps remain open; see
+[native path scope](security/NATIVE_PATH_VALIDATION.md).

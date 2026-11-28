@@ -570,3 +570,9 @@ Sponge-Konvertierungsarrays oder neuen unsafe-Casts. Auf ARM kann diese geschüt
 Variante Hardwarebeschleunigung kosten. KEM-PKE nutzt ebenfalls vollständig geliehene vorab gesperrte Operationsflächen,
 einschließlich vertraulichem internem Vergleichs-Chiffrat. Native Abnahme und
 DSA-/AES-/Argon2-Nachweise bleiben offen; kein R6-Gesamtabschluss.
+
+R7/R8-Arbeitsstand: Native Konvertierung der Archiv-/Quelldatei-Leseeingänge
+verwendet vor Befüllung gesperrte UTF8-/UTF16-Ziele. Root-forbid bleibt erhalten;
+notwendige native Windows-Aufrufe bleiben im schmalen Plattformadapter. Übrige
+Traversal-/Ziel-/Temppfad- und Prozess-/Helper-Lücken bleiben offen; siehe
+[Nativer Pfadumfang](security/NATIVE_PATH_VALIDATION.md).

@@ -3,7 +3,7 @@
 //! EN: Encrypting a file or directory into `target` (atomic, no overwriting).
 //! Fresh file key and nonce prefix for every operation.
 
-use std::fs::{self, File};
+use std::fs;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
@@ -275,7 +275,7 @@ fn write_entry<W: Write>(
             report.directories += 1;
         }
         SourceKind::File(size) => {
-            let mut reader = File::open(&entry.abs)?;
+            let mut reader = super::native_path::open_file(&entry.abs)?;
             archive.file(&entry.rel, &mut reader, size)?;
             report.files += 1;
             report.bytes += size;

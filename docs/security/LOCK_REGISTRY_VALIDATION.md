@@ -149,3 +149,22 @@ lld-link, ohne Installation oder Ausführung. Native MSVC-Linkprüfung bleibt ma
 lld-link akzeptiert auch einen8KiB-Minimalfall, den MSVC am echten Projekt verwirft.
 EN: Preserve the observed linker difference; do not report the permissive local
 linker as proof that the native MSVC failure passed. New native jobs remain required.
+
+## Current native acceptance / Aktuelle native Abnahme
+
+DE: Der aktuelle signierte Stand5470c188 besteht alle vier nativen Rust-Jobs:
+Ubuntu22 undARM je948 Tests/120Gruppen, Ubuntu-latest1817/238, Windows1636/240;
+keine Testfehler. Vollständige Protokolle und tatsächliche Register-Eltern samt
+vier eigenen Kindfällen geprüft. Alle acht Fuzz-Ziele, MSRV/deny/Historien-/
+Workflow-/Abhängigkeits-/Härtungsgates erfolgreich; keine Abschwächung.
+EN: registry-5470-native-summary.json binds full logs to this exact head. Optional
+native Windows observations prove actual page state, not just registry membership.
+Explicitly ignored child entry points execute through their bounded parent;
+unrelated known338 race gaps remain ignored and are not counted as passed.
+
+DE: Damit ist die Registerkomponente PR-seitig abgenommen, einschließlich echter
+Windows-MSVC-Debug-/Release-Builds. Die getrennte R7-Prozesszugriffsprobe bleibt
+wegen des nachgewiesenen Debugprivilegs fehlgeschlagen. Kein R7/R8-Gesamtabschluss,
+kein Main-Merge. Spätere native Pfadänderungen sind nicht durch diesen Stand belegt.
+EN: These results supersede the earlier pending registry-native acceptance only;
+they do not grant or execute any restricted-token/thread experiment.

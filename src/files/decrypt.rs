@@ -84,7 +84,7 @@ pub(super) fn open(
     unlock: &Unlock<'_>,
     signer: Option<&PublicKeyFile>,
 ) -> Result<(ArchiveReader<Source>, Content, Option<SignatureCheck>)> {
-    let mut file = BufReader::new(File::open(source)?);
+    let mut file = BufReader::new(super::native_path::open_file(source)?);
     let file_len = file.get_ref().metadata()?.len();
     // DE: Magic und Version vorab lesen und dem passenden Parser wieder voranstellen.
     // EN: Read magic and version up front and put them back in front of the matching parser.

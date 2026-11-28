@@ -31,6 +31,7 @@ mod hidden_result;
 mod list;
 #[cfg(test)]
 mod locked_owner_tests;
+mod native_path;
 mod original;
 mod output;
 pub mod paths;
@@ -51,7 +52,6 @@ mod tail_v4;
 mod tail_v4_drain;
 mod walk;
 
-use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
@@ -179,9 +179,9 @@ pub struct Report {
 ///
 /// # Errors
 /// DE/EN: [`crate::Error::Io`], [`crate::Error::InvalidInput`], [`crate::Error::Unsupported`],
-/// [`crate::Error::KdfParams`].
+/// [`crate::Error::KdfParams`], [`crate::Error::MemoryLock`].
 pub fn inspect(source: &Path) -> Result<FileHeader> {
-    let mut reader = BufReader::new(File::open(source)?);
+    let mut reader = BufReader::new(native_path::open_file(source)?);
     FileHeader::read(&mut reader)
 }
 
@@ -191,6 +191,6 @@ pub fn inspect(source: &Path) -> Result<FileHeader> {
 /// # Errors
 /// DE/EN: wie [`inspect`]; [`crate::Error::Unsupported`] auch für v1-Dateien / also for v1 files.
 pub fn inspect_v2(source: &Path) -> Result<HeaderV2> {
-    let mut reader = BufReader::new(File::open(source)?);
+    let mut reader = BufReader::new(native_path::open_file(source)?);
     HeaderV2::read(&mut reader)
 }
