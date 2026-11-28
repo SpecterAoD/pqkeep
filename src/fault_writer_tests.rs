@@ -64,7 +64,7 @@ impl OutputFile {
                 crate::crash_driver_tests::pause()?;
                 Ok(length)
             }
-            Action::Partial { .. } | Action::PauseAfter(_) => unreachable!(),
+            Action::Partial { .. } | Action::PauseAfter(_) | Action::Run(_) => unreachable!(),
         }
     }
 }

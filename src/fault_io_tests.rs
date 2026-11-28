@@ -44,12 +44,18 @@ impl Failure {
 #[derive(Clone, Copy)]
 pub(crate) enum Action {
     Fail(Failure),
-    Partial { after: usize, failure: Failure },
+    Partial {
+        after: usize,
+        failure: Failure,
+    },
     Short(usize),
     Interrupt,
     Zero,
     Pause,
     PauseAfter(usize),
+    /// DE: Führt am Haltepunkt eine Aktion mit dessen Pfad aus (Race-Tests, #338).
+    /// EN: Runs an action with the checkpoint's path (race tests, #338).
+    Run(fn(&Path)),
 }
 
 #[derive(Clone, Copy)]
@@ -87,8 +93,10 @@ impl Scope {
         for plan in &plans {
             assert!(plan.occurrence > 0, "Fault occurrence / Fehlervorkommen");
             assert!(
-                matches!(plan.action, Action::Fail(_) | Action::Pause)
-                    || plan.point == Point::Write
+                matches!(
+                    plan.action,
+                    Action::Fail(_) | Action::Pause | Action::Run(_)
+                ) || plan.point == Point::Write
             );
             assert!(!matches!(plan.action, Action::Short(0)));
         }
@@ -174,6 +182,10 @@ pub(crate) fn consume(state: &Shared) {
 }
 
 pub(crate) fn check_state(state: &Shared, point: Point) -> io::Result<()> {
+    check_state_at(state, point, None)
+}
+
+fn check_state_at(state: &Shared, point: Point, path: Option<&Path>) -> io::Result<()> {
     match action(state, point) {
         None => Ok(()),
         Some(Action::Fail(failure)) => {
@@ -184,10 +196,15 @@ pub(crate) fn check_state(state: &Shared, point: Point) -> io::Result<()> {
             consume(state);
             crate::crash_driver_tests::pause()
         }
+        Some(Action::Run(run)) => {
+            consume(state);
+            run(path.unwrap());
+            Ok(())
+        }
         Some(_) => panic!("Invalid fault point / Ungültiger Fehlerpunkt"),
     }
 }
 
 pub(crate) fn checkpoint(path: &Path, point: Point) -> io::Result<()> {
-    capture(path).map_or(Ok(()), |s| check_state(&s, point))
+    capture(path).map_or(Ok(()), |s| check_state_at(&s, point, Some(path)))
 }
