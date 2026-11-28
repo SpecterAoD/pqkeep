@@ -15,6 +15,12 @@ use shake::Shake256;
 use signature::{DigestVerifier, Error, MultipartVerifier};
 
 #[cfg(feature = "protected-workspace")]
+pub(crate) mod confidential;
+#[cfg(feature = "protected-workspace")]
+mod confidential_decode;
+#[cfg(feature = "protected-workspace")]
+mod confidential_operations;
+#[cfg(feature = "protected-workspace")]
 pub(crate) mod in_place;
 
 /// An ML-DSA verification key.

@@ -64,7 +64,7 @@ fn body(entries: &[(Value, Option<PathBuf>, Outcome)]) -> (Map<String, Value>, u
 /// (hex) or `null` (#44).
 pub(super) fn signer(r: &Report) -> Value {
     r.signer.as_ref().map_or(Value::Null, |s| {
-        pqkeep::envelope::hex_encode(&s.key_id).into()
+        pqkeep::envelope::hex_encode(s.key_id()).into()
     })
 }
 

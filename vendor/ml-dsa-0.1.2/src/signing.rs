@@ -33,6 +33,10 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(all(feature = "protected-workspace", feature = "rand_core"))]
 mod borrowed;
+#[cfg(feature = "protected-workspace")]
+mod confidential_encoding;
+#[cfg(all(feature = "protected-workspace", feature = "alloc"))]
+pub(crate) mod confidential_key;
 #[cfg(all(feature = "protected-workspace", feature = "alloc"))]
 pub(crate) mod in_place;
 mod steps;

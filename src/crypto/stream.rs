@@ -155,13 +155,11 @@ pub fn decrypt(
 ) -> Result<u64> {
     let mut dec = DecryptReader::new(key, prefix, aad, reader)?;
     let mut buf = SecretBytes::zeroed(CHUNK_SIZE)?;
-    let mut total = 0u64;
     loop {
         let n = dec.read(buf.expose_mut())?;
         if n == 0 {
-            return Ok(total);
+            return Ok(dec.position());
         }
         writer.write_all(&buf.expose()[..n])?;
-        total += n as u64;
     }
 }

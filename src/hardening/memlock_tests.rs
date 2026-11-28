@@ -123,12 +123,12 @@ fn saturated_reference_stops_at_prefix_without_losing_existing_owner() {
     let second = first + size;
     let existing = lock_range(second, size);
     assert!(existing.complete(second, size));
-    registry().get_mut(&second).unwrap().0 = usize::MAX;
+    registry().get_mut(second).unwrap().users = usize::MAX;
     let prefix = lock_range(first, 2 * size);
     let reference_preserved = {
         let mut reg = registry();
-        let preserved = reg.get(&second).unwrap().0 == usize::MAX;
-        reg.get_mut(&second).unwrap().0 = 1;
+        let preserved = reg.get(second).unwrap().users == usize::MAX;
+        reg.get_mut(second).unwrap().users = 1;
         preserved
     };
     assert!(reference_preserved);

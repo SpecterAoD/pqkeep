@@ -10,15 +10,15 @@
 //! ```
 //!
 //! Umgesetzt sind `SIGNED`, `PAD` (Füllung nach PADMÉ, nur Nullbytes, kanonische Länge) und
-//! `ANON` (anonyme ML-KEM-1024-Empfänger, **experimentell**, #340); `HIDDEN_SENDER` ist reserviert
-//! und „nicht unterstützt“, ebenso unbekannte Bits. v4 wird nur geschrieben, wenn eine Option es
+//! `ANON` (anonyme ML-KEM-1024-Empfänger, **experimentell**, #340) sowie `HIDDEN_SENDER`.
+//! Unbekannte Bits werden abgewiesen. v4 wird nur geschrieben, wenn eine Option es
 //! verlangt (Inhalt 3, `PAD` oder `ANON`); sonst ist v4 ungültig (D3 bleibt kanonisch).
 //!
 //! EN: Format v4 (`docs/V4_DRAFT.md`, #316/#83): v2 header with version 4, U16 option bits after
 //! the nonce prefix and a key commitment `commit` in every v4 file; new content type 3 "stream". A
 //! stream's plaintext ends with a trailer (layout above). `SIGNED`, `PAD` (PADMÉ padding, zero bytes
 //! only, canonical length) and `ANON` (anonymous ML-KEM-1024 recipients, **experimental**, #340) are
-//! implemented; `HIDDEN_SENDER` is reserved and "unsupported", like unknown bits. v4 is only written
+//! implemented together with `HIDDEN_SENDER`; unknown bits are rejected. v4 is only written
 //! when an option requires it (content 3, `PAD` or `ANON`); otherwise v4 is invalid (D3 stays
 //! canonical).
 
@@ -36,13 +36,13 @@ pub const VERSION_V4: u16 = 4;
 /// DE: Domäne für Hüllen-AAD und Schlüsselbindung. EN: Domain for wrap AAD and key commitment.
 pub const DOMAIN_V4: &[u8] = b"PQKeep/file/v4\0";
 
-/// DE: Füllung (reserviert). EN: Padding (reserved).
+/// DE: Füllung nach PADMÉ. EN: PADMÉ padding.
 pub const OPT_PAD: u16 = 0x0001;
-/// DE: Anonyme Empfänger (reserviert). EN: Anonymous recipients (reserved).
+/// DE: Experimentelle anonyme Empfänger. EN: Experimental anonymous recipients.
 pub const OPT_ANON: u16 = 0x0002;
 /// DE: Sichtbarer Absender wie v3. EN: Visible sender as in v3.
 pub const OPT_SIGNED: u16 = 0x0004;
-/// DE: Verborgener Absender (reserviert). EN: Hidden sender (reserved).
+/// DE: Verborgener Absender. EN: Hidden sender.
 pub const OPT_HIDDEN_SENDER: u16 = 0x0008;
 
 /// DE: Kennung am Ende des Trailers. EN: Marker at the end of the trailer.
@@ -78,26 +78,7 @@ pub fn hidden_message(
     payload: u64,
     pad: u64,
 ) -> Result<SecretBytes> {
-    const TAG: &[u8] = b"sig/hidden\0";
-    if plain_hash.len() != 64 {
-        return Err(Error::Crypto);
-    }
-    let header_hash = <sha3::Sha3_512 as sha3::Digest>::digest(header);
-    let parts: [&[u8]; 6] = [
-        DOMAIN_V4,
-        TAG,
-        &header_hash,
-        plain_hash,
-        &payload.to_le_bytes(),
-        &pad.to_le_bytes(),
-    ];
-    let mut out = SecretBytes::zeroed(parts.iter().map(|p| p.len()).sum())?;
-    let mut at = 0;
-    for part in parts {
-        out.expose_mut()[at..at + part.len()].copy_from_slice(part);
-        at += part.len();
-    }
-    Ok(out)
+    super::confidential_framing::message(header, plain_hash, payload, pad)
 }
 
 /// DE: v4-Zusatzfelder des Headers. EN: v4 extra fields of the header.
@@ -252,13 +233,12 @@ pub fn padding_for(payload: u64, padded: bool, trailer: usize) -> Result<u64> {
 
 /// DE: Trailer für `payload_len` Nutzbytes und `pad_len` Füllbytes.
 /// EN: Trailer for `payload_len` payload bytes and `pad_len` padding bytes.
-#[must_use]
-pub fn trailer(payload_len: u64, pad_len: u64) -> [u8; TRAILER_LEN] {
-    let mut out = [0u8; TRAILER_LEN];
-    out[..8].copy_from_slice(&payload_len.to_le_bytes());
-    out[8..16].copy_from_slice(&pad_len.to_le_bytes());
-    out[16..].copy_from_slice(TRAILER_MAGIC);
-    out
+/// DE: Vor privater Befüllung sperren; Bytes ausschließlich bewusst ausleihen.
+/// EN: Lock before private population; borrow bytes only by explicit disclosure.
+/// # Errors
+/// DE/EN: [`Error::MemoryLock`], [`Error::Crypto`] bei ungültiger interner Geometrie / invalid internal geometry.
+pub fn trailer(payload_len: u64, pad_len: u64) -> Result<SecretBytes> {
+    super::confidential_framing::trailer(payload_len, pad_len)
 }
 
 fn trailer_error() -> Error {
@@ -279,8 +259,7 @@ pub fn check_trailer(bytes: &[u8], total: u64, padded: bool, trailer: usize) -> 
         return Err(trailer_error());
     }
     let word = |i: usize| -> Result<u64> {
-        let raw: [u8; 8] = bytes[i..i + 8].try_into().map_err(|_| trailer_error())?;
-        Ok(u64::from_le_bytes(raw))
+        super::confidential_framing::read_word(&bytes[i..i + 8]).map_err(|_| trailer_error())
     };
     let (payload, pad) = (word(0)?, word(8)?);
     let canonical = padding_for(payload, padded, trailer).map_err(|_| trailer_error())?;

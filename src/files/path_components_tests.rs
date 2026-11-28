@@ -81,7 +81,7 @@ fn borrowed_and_public_path_sets_preserve_unicode_and_prefix_conflicts() {
         ("childless", true, true),
         ("CHILDLESS/x", true, false),
     ] {
-        let before = (private.entries.len(), private.files.len());
+        let before = (private.entries.len(), private.entries.file_count());
         assert_eq!(
             public.insert(&validate(path).unwrap(), file).is_ok(),
             expected
@@ -93,11 +93,14 @@ fn borrowed_and_public_path_sets_preserve_unicode_and_prefix_conflicts() {
             expected
         );
         if !expected {
-            assert_eq!((private.entries.len(), private.files.len()), before);
+            assert_eq!(
+                (private.entries.len(), private.entries.file_count()),
+                before
+            );
         }
         assert_eq!(public.entries.len(), private.entries.len());
-        assert_eq!(public.files.len(), private.files.len());
-        for (left, right) in public.entries.iter().zip(&private.entries) {
+        assert_eq!(public.entries.file_count(), private.entries.file_count());
+        for (left, right) in public.entries.iter().zip(private.entries.iter()) {
             assert!(left.bytes().eq(right.bytes()));
             left.assert_owner_locked();
             right.assert_owner_locked();
@@ -111,7 +114,7 @@ fn public_slice_rejections_and_existing_part_semantics_remain_unchanged() {
     assert!(set.insert(&[], true).is_err());
     assert!(set.insert(&["good", ".."], true).is_err());
     assert!(set.insert(&vec!["d"; MAX_DEPTH + 1], true).is_err());
-    assert!(set.entries.is_empty() && set.files.is_empty());
+    assert!(set.entries.len() == 0 && set.entries.file_count() == 0);
     // DE: Kein neuer Teile-Slice-Vertrag; interne Rohpfade werden vollständig getrennt geprüft.
     // EN: No new part-slice contract; internal raw paths are fully split and validated.
     set.insert(&["one/two"], true).unwrap();

@@ -72,7 +72,7 @@ fn signed_passphrase_file_is_v3_and_names_the_sender() {
     assert_eq!(v2::version(&bytes), 3);
     let unlock = Unlock::Passphrase(pass.as_ref());
     let report = open(&w, &bytes, &unlock, None).unwrap();
-    assert_eq!(report.signer.unwrap().key_id, public.key_id());
+    assert_eq!(report.signer.unwrap().key_id(), public.key_id());
     // DE: Verlangter, richtiger Absender. EN: Required, correct sender.
     assert!(open(&w, &bytes, &unlock, Some(&public)).is_ok());
     // DE: Header zeigt den Absender ungeprüft. EN: Header shows the sender unverified.
@@ -111,12 +111,12 @@ fn signed_works_with_recipients_factor_and_check() {
         },
     ] {
         let report = open(&w, &bytes, &unlock, Some(&public)).unwrap();
-        assert_eq!(report.signer.unwrap().key_id, public.key_id());
+        assert_eq!(report.signer.unwrap().key_id(), public.key_id());
     }
     let input = w.work.join("check.pqkf");
     std::fs::write(&input, &bytes).unwrap();
     let report = files::check_with(&input, &Unlock::Key(&anna), Some(&public)).unwrap();
-    assert_eq!(report.signer.unwrap().key_id, public.key_id());
+    assert_eq!(report.signer.unwrap().key_id(), public.key_id());
     assert!(files::list(&input, &Unlock::Key(&ben)).is_ok());
     std::fs::remove_file(&input).unwrap();
 }

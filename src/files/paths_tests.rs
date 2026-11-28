@@ -137,17 +137,17 @@ fn later_directory_parent_and_non_descendant_prefixes_remain_valid() {
 fn normalized_keys_are_locked_and_conflicts_do_not_mutate_state() {
     let mut set = PathSet::default();
     set.insert(&["Ä", "İΣ"], true).unwrap();
-    for key in set.entries.iter().chain(&set.files) {
+    for key in set.entries.iter() {
         key.assert_owner_locked();
         assert!(crate::hardening::memlock::is_locked(
             key.bytes().as_ptr().addr()
         ));
         assert_eq!(format!("{key:?}"), "[REDACTED]");
     }
-    let before = (set.entries.len(), set.files.len());
+    let before = (set.entries.len(), set.entries.file_count());
     assert!(set.insert(&["ä", "i\u{307}ς"], false).is_err());
     assert!(set.insert(&["Ä"], true).is_err());
-    assert_eq!((set.entries.len(), set.files.len()), before);
+    assert_eq!((set.entries.len(), set.entries.file_count()), before);
     set.insert(&["ä", "other"], true).unwrap();
 }
 
@@ -188,13 +188,13 @@ fn private_name_owners_stay_locked_through_tree_growth() {
             let name = format!("entry-{index:04}");
             set.insert(&[&name], true).unwrap();
         }
-        for key in set.entries.iter().chain(&set.files) {
+        for key in set.entries.iter() {
             key.assert_owner_locked();
         }
     }
     assert_eq!(set.entries.len(), 128);
-    assert_eq!(set.files.len(), 128);
+    assert_eq!(set.entries.file_count(), 128);
     assert!(set.insert(&["ENTRY-0000"], true).is_err());
     assert_eq!(set.entries.len(), 128);
-    assert_eq!(set.files.len(), 128);
+    assert_eq!(set.entries.file_count(), 128);
 }

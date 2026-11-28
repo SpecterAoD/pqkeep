@@ -15,10 +15,11 @@ use super::format_v4::{
     HIDDEN_BLOCK_LEN, TRAILER_LEN, check_trailer, hidden_message, padding_for, trailer, trailer_len,
 };
 use super::signed_io::{HiddenResult, SignedBy};
-use super::signer_v3::{FILE_SIG_CONTEXT, SIGNER_DSA, SIGNER_KEY_LEN, SIGNER_ML_DSA_87, Signer};
+use super::signer_v3::{FILE_SIG_CONTEXT, SIGNER_DSA, SIGNER_KEY_LEN, SIGNER_ML_DSA_87};
+use super::tail_v4_drain::{Drained, drain};
+use crate::crypto::dsa;
 use crate::crypto::stream::PlainHash;
-use crate::crypto::stream::{CHUNK_SIZE, DecryptReader, EncryptWriter};
-use crate::crypto::{SecretBytes, dsa};
+use crate::crypto::stream::{DecryptReader, EncryptWriter};
 use crate::envelope::UnlockedKey;
 use crate::{Error, Result};
 
@@ -56,96 +57,43 @@ pub(crate) fn push_tail<W: Write>(enc: &mut EncryptWriter<W>, tail: &TailWrite<'
     if let Some((key, header)) = tail.hidden {
         let hash = enc.take_hash().ok_or(Error::Crypto)?.finalize()?;
         let msg = hidden_message(header, hash.expose(), payload, pad)?;
-        let sig = dsa::sign(
+        let sig = dsa::sign_confidential(
             SIGNER_DSA,
             key.secret().expose(),
             msg.expose(),
             FILE_SIG_CONTEXT,
         )?;
         // DE: Gegenprobe wie bei v3. EN: Cross-check as in v3.
-        if !dsa::verify(
+        if !dsa::verify_confidential(
             SIGNER_DSA,
             &key.public_key,
             msg.expose(),
             FILE_SIG_CONTEXT,
-            &sig,
-        ) {
+            sig.expose(),
+        )? {
             return Err(Error::Crypto);
         }
         enc.push(&[SIGNER_ML_DSA_87])?;
         enc.push(&key.public_key)?;
-        enc.push(&sig)?;
+        enc.push(sig.expose())?;
     }
-    enc.push(&trailer(payload, pad))
-}
-
-/// DE: Was `drain` gelesen hat. EN: What `drain` has read.
-struct Drained {
-    /// DE: Bytes vor dem Trailer. EN: Bytes before the trailer.
-    written: u64,
-    /// DE: Nullbytes am Ende davon. EN: Trailing zero bytes of those.
-    zeros: u64,
-    /// DE: Zurückgehaltener Trailer. EN: Held-back trailer.
-    tail: SecretBytes,
-}
-
-/// DE: Liest den Rest: alles vor den letzten `hold` Bytes geht an `out` und (falls vorhanden) in
-/// `hash`. EN: Reads the rest: everything before the last `hold` bytes goes to `out` and `hash`.
-fn drain<R: Read>(
-    dec: &mut DecryptReader<R>,
-    out: &mut impl Write,
-    holdback: usize,
-    mut hash: Option<&mut PlainHash>,
-) -> Result<Drained> {
-    let mut buf = SecretBytes::zeroed(CHUNK_SIZE + holdback)?;
-    let (mut held, mut written, mut zeros) = (0usize, 0u64, 0u64);
-    loop {
-        let n = dec.read(&mut buf.expose_mut()[held..])?;
-        if n == 0 {
-            break;
-        }
-        held += n;
-        if held > holdback {
-            let ready = held - holdback;
-            let part = &buf.expose()[..ready];
-            out.write_all(part)?;
-            if let Some(h) = hash.as_deref_mut() {
-                h.update(part);
-            }
-            zeros = match part.iter().rposition(|b| *b != 0) {
-                Some(last) => (ready - last - 1) as u64,
-                None => zeros + ready as u64,
-            };
-            written += ready as u64;
-            buf.expose_mut().copy_within(ready..held, 0);
-            held = holdback;
-        }
-    }
-    if held != holdback {
-        return Err(Error::InvalidInput { field: "trailer" });
-    }
-    let tail = SecretBytes::from_slice(&buf.expose()[..holdback])?;
-    Ok(Drained {
-        written,
-        zeros,
-        tail,
-    })
+    enc.push(trailer(payload, pad)?.expose())
 }
 
 /// DE: Prüft Trailer, Füllung und ggf. den verborgenen Absender; liefert die Nutzlänge.
 /// EN: Checks trailer, padding and the optional hidden sender; returns the payload length.
 fn check_tail(d: &Drained, before: u64, tail: &TailRead, hash: Option<PlainHash>) -> Result<u64> {
-    let bytes = d.tail.expose();
+    let bytes = d.bytes()?;
     let (block, end) = bytes.split_at(bytes.len() - TRAILER_LEN);
-    let total = before.checked_add(d.written).ok_or(Error::Decrypt)?;
+    let total = before.checked_add(d.written()).ok_or(Error::Decrypt)?;
     let payload = check_trailer(end, total, tail.padded, bytes.len())?;
     let pad = total - payload;
-    if d.zeros < pad.min(d.written) || payload < before {
+    if d.zeros() < pad.min(d.written()) || payload < before {
         return Err(Error::InvalidInput { field: "padding" });
     }
     if let Some((header, result)) = &tail.hidden {
         let hash = hash.ok_or(Error::Crypto)?.finalize()?;
-        *result.borrow_mut() = Some(hidden_sender(block, header, hash.expose(), payload, pad)?);
+        result.store(hidden_sender(block, header, hash.expose(), payload, pad)?);
     }
     Ok(payload)
 }
@@ -166,16 +114,10 @@ fn hidden_sender(
     }
     let (key, sig) = block[1..].split_at(SIGNER_KEY_LEN);
     let msg = hidden_message(header, hash, payload, pad)?;
-    if !dsa::verify(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig) {
+    if !dsa::verify_confidential(SIGNER_DSA, key, msg.expose(), FILE_SIG_CONTEXT, sig)? {
         return Err(Error::InvalidSignature);
     }
-    let signer = Signer {
-        public_key: key.to_vec(),
-        commit: [0; 32],
-    };
-    Ok(SignedBy {
-        key_id: signer.key_id(),
-    })
+    SignedBy::from_public_key(key)
 }
 
 /// DE: Strom: Nutzdaten (und Füllung) nach `out`, dann Prüfung. Liefert (Nutzlänge, geschrieben);
@@ -192,7 +134,7 @@ pub(crate) fn copy_payload<R: Read>(
     let d = drain(&mut dec, out, hold, hash.as_mut())?;
     dec.finish()?;
     let payload = check_tail(&d, 0, tail, hash)?;
-    Ok((payload, d.written))
+    Ok((payload, d.written()))
 }
 
 /// DE: Archiv: nach dem Archiv-Ende nur Nullbytes, dann der Trailer mit genau der Archivlänge.
@@ -206,7 +148,7 @@ pub(crate) fn finish_tail<R: Read>(
     let hold = trailer_len(tail.hidden.is_some());
     let d = drain(&mut dec, &mut std::io::sink(), hold, hash.as_mut())?;
     dec.finish()?;
-    if d.zeros != d.written {
+    if d.zeros() != d.written() {
         return Err(Error::InvalidInput { field: "padding" });
     }
     if check_tail(&d, archive_len, tail, hash)? != archive_len {

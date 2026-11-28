@@ -173,7 +173,7 @@ pub(super) fn open_header(
             Some((SignatureCheck::new(bytes, s.clone()), Some(body_len)))
         }
         None if hidden => {
-            let (check, result) = SignatureCheck::hidden(signer);
+            let (check, result) = SignatureCheck::hidden(signer)?;
             if let Some(t) = tail.as_mut() {
                 t.hidden = Some((header.encode()?, result));
             }

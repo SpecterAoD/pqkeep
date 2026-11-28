@@ -16,6 +16,8 @@ mod anon_v4;
 mod archive;
 mod check;
 mod confidential_entries;
+mod confidential_framing;
+mod confidential_path_index;
 mod confidential_text;
 mod decrypt;
 mod decrypt_v2;
@@ -25,9 +27,11 @@ mod encrypt_v2;
 pub mod format;
 pub mod format_v2;
 pub mod format_v4;
+mod hidden_result;
 mod list;
 #[cfg(test)]
 mod locked_owner_tests;
+mod native_path;
 mod original;
 mod output;
 mod output_guard;
@@ -40,14 +44,19 @@ pub mod random_name;
 #[path = "recovery_v4_tests.rs"]
 mod recovery_v4_tests;
 mod scan;
+mod signed_by;
 mod signed_io;
 mod signer_v3;
 mod slot_v2;
+mod source_entries;
+mod source_entry;
+mod source_metadata;
 mod stream_v4;
 mod tail_v4;
+mod tail_v4_drain;
+mod unicode_fold;
 mod walk;
 
-use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
@@ -65,7 +74,7 @@ pub use format_v2::{HeaderV2, Slot};
 pub use list::{EntryKind, ListEntry, Listing, MAX_LIST_ENTRIES, MAX_LIST_PATH_BYTES, list};
 pub use original::{ChooseTarget, decrypt_original};
 pub use random_name::{is_random_name, random_name, random_target};
-pub use signed_io::SignedBy;
+pub use signed_by::SignedBy;
 pub use signer_v3::Signer;
 pub use slot_v2::MAX_RECIPIENTS;
 pub use stream_v4::{encrypt_stream, encrypt_stream_to};
@@ -152,7 +161,7 @@ pub enum Unlock<'a> {
 }
 
 /// DE: Bericht über einen Vorgang. EN: Report of an operation.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Report {
     /// DE: Anzahl Dateien. EN: Number of files.
     pub files: u64,
@@ -175,9 +184,9 @@ pub struct Report {
 ///
 /// # Errors
 /// DE/EN: [`crate::Error::Io`], [`crate::Error::InvalidInput`], [`crate::Error::Unsupported`],
-/// [`crate::Error::KdfParams`].
+/// [`crate::Error::KdfParams`], [`crate::Error::MemoryLock`].
 pub fn inspect(source: &Path) -> Result<FileHeader> {
-    let mut reader = BufReader::new(File::open(source)?);
+    let mut reader = BufReader::new(native_path::open_file(source)?);
     FileHeader::read(&mut reader)
 }
 
@@ -187,6 +196,6 @@ pub fn inspect(source: &Path) -> Result<FileHeader> {
 /// # Errors
 /// DE/EN: wie [`inspect`]; [`crate::Error::Unsupported`] auch für v1-Dateien / also for v1 files.
 pub fn inspect_v2(source: &Path) -> Result<HeaderV2> {
-    let mut reader = BufReader::new(File::open(source)?);
+    let mut reader = BufReader::new(native_path::open_file(source)?);
     HeaderV2::read(&mut reader)
 }

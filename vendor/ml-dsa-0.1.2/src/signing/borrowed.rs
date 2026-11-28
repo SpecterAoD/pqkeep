@@ -46,6 +46,17 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         rng: &mut R,
         work: &mut SigningWorkspace<P>,
     ) -> Result<Signature<P>, Error> {
+        self.accept_candidate(message, context, rng, work)?;
+        Ok(Self::accepted_signature(work))
+    }
+
+    pub(super) fn accept_candidate<R: TryCryptoRng + ?Sized>(
+        &self,
+        message: &[u8],
+        context: &[u8],
+        rng: &mut R,
+        work: &mut SigningWorkspace<P>,
+    ) -> Result<(), Error> {
         if context.len() > 255 {
             return Err(Error::new());
         }
@@ -69,19 +80,23 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             if work.ct0.infinity_norm() >= P::Gamma2::U32 || weight > P::Omega::USIZE {
                 continue;
             }
-            return Ok(Self::accepted_signature(work));
+            return Ok(());
         }
         Err(Error::new())
     }
 
     // DE: Ausschließlich nach beiden Akzeptanzprüfungen aufrufen.
     // EN: Call only after both acceptance checks.
-    fn accepted_signature(work: &mut SigningWorkspace<P>) -> Signature<P> {
+    pub(super) fn canonicalize(work: &mut SigningWorkspace<P>) {
         for poly in &mut work.z.0 {
             for value in &mut poly.0 {
                 *value = value.mod_plus_minus::<SpecQ>();
             }
         }
+    }
+
+    fn accepted_signature(work: &mut SigningWorkspace<P>) -> Signature<P> {
+        Self::canonicalize(work);
         Signature {
             c_tilde: work.challenge.clone(),
             z: MaybeBox::new(work.z.clone()),

@@ -15,6 +15,7 @@ categories = ["cryptography", "command-line-utilities"]
 # EN: Only what is needed to build and for the licence (no tests, scripts, workflows).
 include = [
     "/src/**",
+    "/build.rs",
     "/data/wordlists/**",
     "/Cargo.toml",
     "/Cargo.lock",
@@ -81,7 +82,7 @@ region = { version = "4.0.1", path = "vendor/region-4.0.1" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.154", path = "vendor/serde_json-1.0.154" }
 sha3 = { version = "0.12.0", path = "vendor/sha3-0.12.0", features = ["zeroize", "protected-workspace"] }
-subtle = { version = "2.6.1", optional = true }
+subtle = "2.6.1"
 sys-locale = "0.3.2"
 thiserror = "2.0.21"
 tokio = { version = "1.54.1", default-features = false, features = ["rt-multi-thread", "net", "time", "signal", "sync"], optional = true }
@@ -130,6 +131,7 @@ tokio = { version = "1.54.1", default-features = false, features = ["macros", "r
 [target.'cfg(target_os = "linux")'.dependencies]
 landlock = "0.4.7"
 libc = "0.2.191"
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 rustix = { version = "1.1.6", default-features = false, features = ["std", "process", "termios", "event", "thread", "fs"] }
 seccompiler = { version = "0.5.0", default-features = false }
 
@@ -142,7 +144,7 @@ pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 [target.'cfg(windows)'.dev-dependencies]
 # DE: Nur sichere eigene Testfixture, nicht im normalen Produktionsbaum.
 # EN: Safe own-console fixture only, excluded from normal production features.
-pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture"] }
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture", "native-memory-fixture", "native-metadata-fixture"] }
 
 # DE: `api` (Standard) baut den REST-Server `pqkeep serve` ein. Ohne das Feature
 #     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.
@@ -150,7 +152,7 @@ pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", featur
 #     (`--no-default-features`) a pure CLI without network code is built.
 [features]
 default = ["api"]
-api = ["dep:axum", "dep:hyper", "dep:hyper-util", "dep:tokio", "dep:tower", "dep:subtle", "dep:mime"]
+api = ["dep:axum", "dep:hyper", "dep:hyper-util", "dep:tokio", "dep:tower", "dep:mime"]
 
 # DE: Abhängigkeiten auch im Debug/Test-Build optimieren (Argon2 sonst extrem langsam).
 #     Betrifft nur die Laufzeit, nicht die Semantik; eigener Code bleibt unoptimiert.

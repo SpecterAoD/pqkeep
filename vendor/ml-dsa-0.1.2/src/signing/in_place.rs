@@ -148,6 +148,81 @@ impl<P: MlDsaParams> SeedKeyInPlace for SigningKey<P> {
     }
 }
 
+impl<P: MlDsaParams> ExpandedSigningKey<P> {
+    /// DE: Nur öffentliche Defaults; Caller sperrt Objekt und alle Matrixzeilen.
+    /// EN: Public defaults only; caller prelocks object and every matrix row.
+    #[must_use]
+    pub fn public_confidential_state() -> Self {
+        Self {
+            rho: Default::default(),
+            K: Default::default(),
+            tr: Default::default(),
+            s1: Default::default(),
+            s2: Default::default(),
+            t0: Default::default(),
+            s1_hat: Default::default(),
+            s2_hat: Default::default(),
+            t0_hat: Default::default(),
+            A_hat: Default::default(),
+        }
+    }
+
+    /// DE/EN: Öffentliche feste Zeilenanzahl / public fixed row count.
+    #[must_use]
+    pub fn confidential_storage_count(&self) -> usize {
+        self.A_hat.row_count()
+    }
+
+    /// DE: Jede Zeile muss vor privater Konstruktion gesperrt sein.
+    /// EN: Every row must be locked before private construction.
+    pub fn visit_confidential_storage(&self, visitor: impl FnMut(usize, usize) -> bool) -> bool {
+        self.A_hat.visit_rows(visitor)
+    }
+
+    /// DE: Einschließlich zuvor öffentlich klassifizierter Matrix vor Unlock löschen.
+    /// EN: Wipe the formerly public-classified matrix as well before unlocking.
+    pub fn zeroize_confidential(&mut self) {
+        self.A_hat.zeroize();
+        self.zeroize();
+    }
+
+    /// DE: Objekt, Zeilen und Arbeitsfläche müssen vollständig gesperrt sein.
+    /// EN: Object, rows and workspace must all be fully locked.
+    /// # Errors
+    /// DE/EN: Ungültige öffentliche Zielgeometrie / invalid public output geometry.
+    pub fn initialize_confidential_seed(
+        &mut self,
+        seed: &Seed,
+        work: &mut super::confidential_key::ConfidentialKeyGenerationWorkspace<P>,
+    ) -> Result<(), signature::Error> {
+        work.inner.hash.start(&[seed, &[P::K::U8], &[P::L::U8]]);
+        work.inner.hash.read(&mut self.rho);
+        work.inner.hash.read(&mut work.inner.rhop);
+        work.inner.hash.read(&mut self.K);
+        work.matrix_sampling.expand(&self.rho, &mut self.A_hat);
+        work.inner
+            .sampling
+            .expand_s_into(&work.inner.rhop, P::Eta::ETA, 0, &mut self.s1);
+        work.inner
+            .sampling
+            .expand_s_into(&work.inner.rhop, P::Eta::ETA, P::L::USIZE, &mut self.s2);
+        self.s1.ntt_into(&mut self.s1_hat);
+        self.A_hat
+            .multiply_into(&self.s1_hat, &mut work.inner.sum, &mut work.inner.product);
+        work.inner.sum.ntt_inverse_into(&mut work.inner.t);
+        work.inner.round_into(self);
+        self.s2.ntt_into(&mut self.s2_hat);
+        self.t0.ntt_into(&mut self.t0_hat);
+        let (rho, t1) = work.encoded.as_mut_slice().split_at_mut(32);
+        rho.copy_from_slice(&self.rho);
+        let t1 = t1.try_into().map_err(|_| signature::Error::new())?;
+        P::encode_t1_into(&work.inner.t1, t1);
+        work.inner.hash.start(&[&work.encoded]);
+        work.inner.hash.read(&mut self.tr);
+        Ok(())
+    }
+}
+
 impl<P: MlDsaParams> KeyGenerationWorkspace<P> {
     fn round_into(&mut self, key: &mut ExpandedSigningKey<P>) {
         for ((t, s2), (t1, t0)) in self

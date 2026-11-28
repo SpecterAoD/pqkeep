@@ -11,6 +11,8 @@ use zeroize::Zeroize;
 
 #[cfg(feature = "protected-workspace")]
 pub(crate) mod in_place;
+#[cfg(feature = "protected-workspace")]
+pub(crate) mod matrix_workspace;
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {
@@ -21,6 +23,10 @@ fn bit_set(z: &[u8], i: usize) -> bool {
 
 // Algorithm 14 CoeffFromThreeBytes
 fn coeff_from_three_bytes(b: [u8; 3]) -> Option<Elem> {
+    coeff_from_three_bytes_ref(&b)
+}
+
+fn coeff_from_three_bytes_ref(b: &[u8; 3]) -> Option<Elem> {
     let b0: Int = b[0].into();
     let b1: Int = b[1].into();
     let b2: Int = b[2].into();

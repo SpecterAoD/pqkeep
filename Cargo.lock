@@ -938,7 +938,9 @@ dependencies = [
 name = "pqkeep-platform"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "windows-sys",
+ "zeroize",
 ]
 
 [[package]]
@@ -1059,6 +1061,7 @@ dependencies = [
  "libc",
  "mach2",
  "windows-sys",
+ "zeroize",
 ]
 
 [[package]]

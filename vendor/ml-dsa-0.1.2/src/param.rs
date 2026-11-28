@@ -285,7 +285,11 @@ pub trait VerifyingKeyParams: ParameterSet {
     type VerifyingKeySize: ArraySize;
 
     fn encode_t1(t1: &Vector<Self::K>) -> EncodedT1<Self>;
+    #[cfg(feature = "protected-workspace")]
+    fn encode_t1_into(t1: &Vector<Self::K>, out: &mut EncodedT1<Self>);
     fn decode_t1(enc: &EncodedT1<Self>) -> Vector<Self::K>;
+    #[cfg(feature = "protected-workspace")]
+    fn decode_t1_into(enc: &EncodedT1<Self>, out: &mut Vector<Self::K>);
 
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerifyingKey<Self>;
     fn split_vk(enc: &EncodedVerifyingKey<Self>) -> (&B32, &EncodedT1<Self>);
@@ -316,8 +320,34 @@ where
         Encode::<BitlenQMinusD>::encode(t1)
     }
 
+    #[cfg(feature = "protected-workspace")]
+    fn encode_t1_into(t1: &Vector<Self::K>, out: &mut EncodedT1<Self>) {
+        let (parts, tail) = module_lattice::EncodedPolynomial::<BitlenQMinusD>::slice_as_chunks_mut(
+            out.as_mut_slice(),
+        );
+        assert!(tail.is_empty() && parts.len() == t1.0.len());
+        for (part, poly) in parts.iter_mut().zip(t1.0.iter()) {
+            module_lattice::byte_encode_into::<crate::algebra::BaseField, BitlenQMinusD>(
+                &poly.0, part,
+            );
+        }
+    }
+
     fn decode_t1(enc: &EncodedT1<Self>) -> Vector<Self::K> {
         Encode::<BitlenQMinusD>::decode(enc)
+    }
+
+    #[cfg(feature = "protected-workspace")]
+    fn decode_t1_into(enc: &EncodedT1<Self>, out: &mut Vector<Self::K>) {
+        let (parts, tail) =
+            module_lattice::EncodedPolynomial::<BitlenQMinusD>::slice_as_chunks(enc.as_slice());
+        assert!(tail.is_empty() && parts.len() == out.0.len());
+        for (part, poly) in parts.iter().zip(out.0.iter_mut()) {
+            module_lattice::byte_decode_into::<crate::algebra::BaseField, BitlenQMinusD>(
+                part,
+                &mut poly.0,
+            );
+        }
     }
 
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerifyingKey<Self> {
@@ -349,7 +379,14 @@ pub trait SignatureParams: ParameterSet {
     fn decode_w1(enc: &EncodedW1<Self>) -> Vector<Self::K>;
 
     fn encode_z(z: &Vector<Self::L>) -> EncodedZ<Self>;
+    #[cfg(feature = "protected-workspace")]
+    fn encode_z_into(
+        z: &mut Vector<Self::L>,
+        out: &mut EncodedZ<Self>,
+    ) -> Result<(), module_lattice::InvalidEncodingGeometry>;
     fn decode_z(enc: &EncodedZ<Self>) -> Vector<Self::L>;
+    #[cfg(feature = "protected-workspace")]
+    fn decode_z_into(enc: &EncodedZ<Self>, out: &mut Vector<Self::L>);
 
     fn concat_sig(
         c_tilde: EncodedCTilde<Self>,
@@ -443,8 +480,41 @@ where
         BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::pack(z)
     }
 
+    // DE: Dieselbe BitPack-Abbildung im bereits gesperrten Kandidaten ausführen.
+    // EN: Apply the same BitPack mapping in the already protected candidate.
+    #[cfg(feature = "protected-workspace")]
+    fn encode_z_into(
+        z: &mut Vector<Self::L>,
+        out: &mut EncodedZ<Self>,
+    ) -> Result<(), module_lattice::InvalidEncodingGeometry> {
+        let a = crate::algebra::Elem::new(P::Gamma1::U32 - 1);
+        let b = crate::algebra::Elem::new(P::Gamma1::U32);
+        for poly in &mut z.0 {
+            for value in &mut poly.0 {
+                if !(value.0 <= b.0 || value.0 >= (-a).0) {
+                    return Err(module_lattice::InvalidEncodingGeometry);
+                }
+                *value = b - *value;
+            }
+        }
+        module_lattice::byte_encode_vector_into::<
+            crate::algebra::BaseField,
+            crate::encode::RangeEncodingBits<Diff<P::Gamma1, U1>, P::Gamma1>,
+            P::L,
+        >(z, out)
+    }
+
     fn decode_z(enc: &EncodedZ<Self>) -> Vector<Self::L> {
         BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::unpack(enc)
+    }
+
+    #[cfg(feature = "protected-workspace")]
+    fn decode_z_into(enc: &EncodedZ<Self>, out: &mut Vector<Self::L>) {
+        let (parts, tail) = crate::encode::RangeEncodedPolynomial::<Diff<P::Gamma1, U1>, P::Gamma1>::slice_as_chunks(enc.as_slice());
+        assert!(tail.is_empty() && parts.len() == out.0.len());
+        for (part, poly) in parts.iter().zip(out.0.iter_mut()) {
+            crate::encode::unpack_into::<Diff<P::Gamma1, U1>, P::Gamma1>(part, poly);
+        }
     }
 
     fn concat_sig(

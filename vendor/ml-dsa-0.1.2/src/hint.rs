@@ -22,7 +22,7 @@ pub(crate) fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
 /// All branches are replaced with constant-time selection to avoid
 /// leaking information about `r0` through branch timing.
 #[allow(clippy::integer_division_remainder_used, reason = "params are public")]
-fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
+pub(crate) fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let m: u32 = (BaseField::Q - 1) / TwoGamma2::U32;
     let (r1, r0) = r.decompose::<TwoGamma2>();
     let gamma2 = TwoGamma2::U32 / 2;

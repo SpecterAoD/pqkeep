@@ -150,9 +150,65 @@ EN: Prelock parser/source/index/depth/scratch descriptor; native/security/fuzz
 acceptance required. Other R6/R7/R8 boundaries remain OPEN. See
 [parser state plan](security/PARSER_STATE_OWNER_PLAN.md).
 
-DE: #147 R6 In Bearbeitung: vollständige Provider-Lebensdauer in Draft334 umgesetzt;
-alle neun Zeilen der [Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md) abgleichen.
-Finaler signierter Head, native Linux-/Windows-/ARM64-CI, Security/Fuzz und exakter
-Rückweg vor Merge erforderlich; kein Teilmerge. R7/R8 separat offen.
-EN: Complete R6 implementation; final source-bound acceptance remains required.
-Issue147 and roadmap stay In progress; no whole-issue closure.
+DE: #147 R6 abgeschlossen: PR334 auf Mainb813bc6 mit allen neun Zeilen der
+[Abnahmematrix](security/PROVIDER_LIFETIME_VALIDATION.md), nativer Linux-/Windows-/
+ARM64-Abnahme, Security/Fuzz und geprüftem Rückweg übernommen. R7/R8 separat offen.
+EN: R6 completed on Main; current shared-provider changes retain its regression
+checks. Issue147 and roadmap stay In progress; no whole-issue closure.
+
+DE: #147 R7/R8 gemeinsam in Bearbeitung in [Draft355](https://github.com/SpecterAoD/pqkeep/pull/355):
+[vollständig freigegebener Plan](security/PROCESS_METADATA_COMPLETION_PLAN.md).
+Geschützte Pfadindex-Knoten und Absenderidentität veröffentlicht; geschützter
+verborgener Signierschlüssel-/Kodier-/Verifikationspfad im selben Draft umgesetzt,
+Gesamtabnahme noch offen. Windows-DACL nativ zurückgelesen, privilegierter
+SeDebugPrivilege-Bypass tatsächlich nachgewiesen; neuer eigener reduzierter
+CI-Threadversuch benötigt separate konkrete Freigabe. Kein Teilmerge.
+EN: One joint PR; platform/helper, remaining metadata, native/security/fuzz and
+full rollback acceptance remain open. See
+[hidden signature scope](security/HIDDEN_SIGNATURE_VALIDATION.md) and
+[restricted inspector proposal](security/WINDOWS_RESTRICTED_INSPECTOR_PROPOSAL.md).
+
+DE: Derselbe Draft schützt nun auch Trailer-/Signaturnachricht-Bytes und laufende
+STREAM-/Rückhalte-Zähler vor privater Befüllung. Berichte, native Pfade,
+Sperrregister und Prozess-/Helper-Gesamtabnahme bleiben offen.
+EN: Protected framing and retained stream/holdback counters in the same joint PR;
+fallible Rust trailer API, unchanged wire bytes. No whole-row completion claim.
+See [scope and migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
+
+DE: Im selben Draft folgt das vor Befüllung gesperrte gemeinsame Seitenregister:
+Kontroll-/Node-Arenen, fallibles Wachstum, geprüfte Überlappung/Teilsperre und
+Verweigerung weiterer Aufnahme nach echtem Release-Fehler oder Poisoning.
+EN: Protected shared registry accepted on native Linux/Windows/ARM at5470c188.
+Two unnecessary unsafe Send/Sync impls removed;
+read-only native Windows observer is test-only. Other R7/R8 rows stay open.
+See [registry contract and evidence](security/LOCK_REGISTRY_VALIDATION.md).
+
+DE: Native Pfadkonvertierung an den tatsächlichen Archiv-/Quelldatei-Leseeingängen
+vor privater Befüllung gesperrt; Windows-Normalisierung mit gesperrtem Ziel und
+std-kompatibler248-Grenze. Quell-/Traversal-/Ziel-/Temppfade insgesamt weiter offen.
+EN: First actual native read adapters implemented and locally source-checked in
+the same Draft355; native acceptance pending, no M1/M3 closure. See
+[native path scope](security/NATIVE_PATH_VALIDATION.md).
+
+DE: Gesammelte Quellrecords, Sortierindizes und konkreter Iterator vor privater
+Befüllung in gesperrten Arenen; Wachstum nur zwischen geschützten Zielen,
+stabile Referenzreihenfolge ohne gewöhnlichen Sortier-Scratch. Abnahme offen.
+EN: Actual single/tree/multi/container callers ported in the same joint work;
+native traversal/skip/FS intermediates and other plan rows remain open. See
+[source collection scope](security/SOURCE_RECORD_VALIDATION.md).
+
+DE/EN: R7/R8 in progress: gemeinsame geschützte Top-Level-/Archiv-Pfadprüfung
+und öffentliche Unicode-Buildtabelle lokal implementiert / shared protected
+top-level/archive path checks and public build-time Unicode table implemented
+locally. Vollständige Abnahme läuft / full acceptance running; kein Gesamtabschluss.
+
+DE/EN: R7/R8 weiterhin in Arbeit: native Quellmetadaten direkt vorab gesperrt
+lokal entwickelt / prelocked native source metadata locally developed;
+Abnahme läuft / validation running. DirEntry/Traversierung/Skip/Output/Reports
+und Prozess-/Helper-Verträge bleiben offen / remain open.
+
+DE/EN: R7/R8 in progress: fallible Linux-Core-Rücklesung und zwingende CLI-
+Startprüfung vor argv lokal implementiert / fallible Linux core readback and
+mandatory pre-argv CLI startup check locally implemented. Echte drei negative
+Syscall-Pfade und normaler Start bestanden / three actual refusal paths and
+normal startup passed; integrierte/native Abnahme läuft / acceptance running.

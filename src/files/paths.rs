@@ -14,8 +14,6 @@
 
 use super::ConfidentialText;
 use crate::crypto::SecretBytes;
-use std::collections::BTreeSet;
-use std::ops::Bound;
 
 use crate::{Error, Result};
 
@@ -111,16 +109,7 @@ pub(super) fn validate_only(path: &str) -> Result<()> {
 /// file/directory conflicts ("a" as a file and "a/b").
 #[derive(Default)]
 pub struct PathSet {
-    entries: BTreeSet<ConfidentialText>,
-    files: BTreeSet<ConfidentialText>,
-}
-
-fn lower_chars(part: &str) -> impl Iterator<Item = char> + '_ {
-    // DE: Sigma-Aliase konservativ zusammenfassen; Originalnamen nicht ändern.
-    // EN: Conservatively merge sigma aliases; never alter original names.
-    part.chars()
-        .flat_map(char::to_lowercase)
-        .map(|c| if c == 'ς' { 'σ' } else { c })
+    entries: super::confidential_path_index::Index,
 }
 
 fn folded_size<'a>(parts: impl Iterator<Item = &'a str>) -> Result<usize> {
@@ -134,7 +123,7 @@ fn folded_size<'a>(parts: impl Iterator<Item = &'a str>) -> Result<usize> {
         if raw_len > MAX_PATH_BYTES {
             return Err(invalid());
         }
-        len += lower_chars(part).map(char::len_utf8).sum::<usize>() + separator;
+        len += part.chars().map(super::unicode_fold::size).sum::<usize>() + separator;
         count += 1;
     }
     if count == 0 {
@@ -151,10 +140,8 @@ fn folded_key<'a>(parts: impl Iterator<Item = &'a str> + Clone) -> Result<Confid
             out.expose_mut()[offset] = b'/';
             offset += 1;
         }
-        for c in lower_chars(part) {
-            let len = c.len_utf8();
-            c.encode_utf8(&mut out.expose_mut()[offset..offset + len]);
-            offset += len;
+        for c in part.chars() {
+            offset += super::unicode_fold::write(c, &mut out.expose_mut()[offset..]);
         }
     }
     ConfidentialText::from_locked(out)
@@ -176,35 +163,21 @@ impl PathSet {
     ) -> Result<()> {
         let key = folded_key(parts)?;
         for (index, byte) in key.bytes().iter().enumerate() {
-            if *byte == b'/' && self.files.contains(&key.bytes()[..index]) {
+            if *byte == b'/' && self.entries.get(&key.bytes()[..index]) == Some(true) {
                 return Err(invalid());
             }
         }
-        if self.entries.contains(key.bytes()) {
+        if self.entries.get(key.bytes()).is_some() {
             return Err(invalid());
         }
         if is_file {
             let mut prefix = SecretBytes::zeroed(key.bytes().len() + 1)?;
             prefix.expose_mut()[..key.bytes().len()].copy_from_slice(key.bytes());
             prefix.expose_mut()[key.bytes().len()] = b'/';
-            if self
-                .entries
-                .range::<[u8], _>((Bound::Included(prefix.expose()), Bound::Unbounded))
-                .next()
-                .is_some_and(|p| p.bytes().starts_with(prefix.expose()))
-            {
+            if self.entries.has_prefix(prefix.expose()) {
                 return Err(invalid());
             }
         }
-        let file_key = if is_file {
-            Some(key.try_duplicate()?)
-        } else {
-            None
-        };
-        self.entries.insert(key);
-        if let Some(key) = file_key {
-            self.files.insert(key);
-        }
-        Ok(())
+        self.entries.insert(key, is_file)
     }
 }

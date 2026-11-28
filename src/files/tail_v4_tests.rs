@@ -1,8 +1,11 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use super::*;
+use crate::crypto::SecretBytes;
+use crate::crypto::stream::CHUNK_SIZE;
 use crate::crypto::stream::EncryptWriter;
 use crate::crypto::stream::PREFIX_LEN;
+use crate::files::Signer;
 use crate::files::format_v4::TRAILER_MAGIC;
 use crate::files::format_v4::{padding_for, trailer};
 
@@ -36,7 +39,12 @@ fn payload_of(plain: &[u8], padded: bool) -> (Result<(u64, u64)>, Vec<u8>) {
 fn framed(data: &[u8], padded: bool) -> Vec<u8> {
     let pad = padding_for(data.len() as u64, padded, TRAILER_LEN).unwrap();
     let zeros = vec![0u8; usize::try_from(pad).unwrap()];
-    [data, &zeros, &trailer(data.len() as u64, pad)].concat()
+    [
+        data,
+        &zeros,
+        trailer(data.len() as u64, pad).unwrap().expose(),
+    ]
+    .concat()
 }
 
 #[test]
@@ -63,19 +71,19 @@ fn valid_trailer_releases_payload_and_padding_is_counted() {
 #[test]
 fn tampered_trailers_and_padding_are_rejected() {
     let data = vec![5u8; 1001];
-    let good = trailer(1001, 0);
-    let mut wrong_len = good;
-    wrong_len[0] ^= 1;
-    let mut magic = good;
-    magic[TRAILER_LEN - 2] ^= 1;
+    let good = trailer(1001, 0).unwrap();
+    let mut wrong_len = SecretBytes::from_slice(good.expose()).unwrap();
+    wrong_len.expose_mut()[0] ^= 1;
+    let mut magic = SecretBytes::from_slice(good.expose()).unwrap();
+    magic.expose_mut()[TRAILER_LEN - 2] ^= 1;
     let pad = padding_for(1001, true, TRAILER_LEN).unwrap();
     let mut dirty = framed(&data, true);
     dirty[1001 + 3] = 1;
-    let off_by_one = [&data[..], &[0u8; 25], &trailer(1001, 25)].concat();
+    let off_by_one = [&data[..], &[0u8; 25], trailer(1001, 25).unwrap().expose()].concat();
     let cases: Vec<(Vec<u8>, bool)> = vec![
-        ([&data[..], &wrong_len].concat(), false),
-        ([&data[..], &magic].concat(), false),
-        ([&data[..], &good, b"x"].concat(), false),
+        ([&data[..], wrong_len.expose()].concat(), false),
+        ([&data[..], magic.expose()].concat(), false),
+        ([&data[..], good.expose(), b"x"].concat(), false),
         (data[..10].to_vec(), false),
         (TRAILER_MAGIC.to_vec(), false),
         (Vec::new(), false),
@@ -83,7 +91,10 @@ fn tampered_trailers_and_padding_are_rejected() {
         (framed(&data, true), false),
         (dirty, true),
         (off_by_one, true),
-        ([&data[..], &[0u8; 24], &trailer(1001, pad)].concat(), true),
+        (
+            [&data[..], &[0u8; 24], trailer(1001, pad).unwrap().expose()].concat(),
+            true,
+        ),
     ];
     for (i, (plain, padded)) in cases.iter().enumerate() {
         let (r, _) = payload_of(plain, *padded);
@@ -101,7 +112,7 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
         let plain = {
             let pad = padding_for(500, padded, TRAILER_LEN).unwrap();
             let zeros = vec![0u8; usize::try_from(pad).unwrap()];
-            [&archive[..], &zeros, &trailer(500, pad)].concat()
+            [&archive[..], &zeros, trailer(500, pad).unwrap().expose()].concat()
         };
         let sealed_plain = sealed(&plain);
         let mut dec = reader(&sealed_plain);
@@ -116,12 +127,12 @@ fn archive_tail_accepts_only_zero_padding_after_the_archive() {
     let pad = padding_for(500, true, TRAILER_LEN).unwrap();
     let mut zeros = vec![0u8; usize::try_from(pad).unwrap()];
     zeros[0] = 1;
-    let bad = sealed(&[&archive[..], &zeros, &trailer(500, pad)].concat());
+    let bad = sealed(&[&archive[..], &zeros, trailer(500, pad).unwrap().expose()].concat());
     let mut dec = reader(&bad);
     let mut head = vec![0u8; 500];
     dec.read_exact(&mut head).unwrap();
     assert!(finish_tail(dec, 500, &tail(true)).is_err());
-    let short = sealed(&[&archive[..], &trailer(499, 0)].concat());
+    let short = sealed(&[&archive[..], trailer(499, 0).unwrap().expose()].concat());
     let mut dec = reader(&short);
     dec.read_exact(&mut head).unwrap();
     assert!(finish_tail(dec, 500, &tail(false)).is_err());
@@ -143,7 +154,13 @@ fn hidden_plain(kp: &dsa::DsaKeyPair, data: &[u8], header: &[u8], signed: (u64, 
     )
     .unwrap();
     let block = [&[SIGNER_ML_DSA_87][..], &kp.public_key, &sig].concat();
-    [data, &zeros, &block, &trailer(data.len() as u64, pad)].concat()
+    [
+        data,
+        &zeros,
+        &block,
+        trailer(data.len() as u64, pad).unwrap().expose(),
+    ]
+    .concat()
 }
 
 /// DE: Wie `hidden_plain`, aber mit frei gewählter Füllung. EN: Like `hidden_plain` with chosen padding.
@@ -160,20 +177,26 @@ fn hidden_plain_with_pad(kp: &dsa::DsaKeyPair, data: &[u8], pad: u64) -> Vec<u8>
     )
     .unwrap();
     let block = [&[SIGNER_ML_DSA_87][..], &kp.public_key, &sig].concat();
-    [data, &zeros, &block, &trailer(data.len() as u64, pad)].concat()
+    [
+        data,
+        &zeros,
+        &block,
+        trailer(data.len() as u64, pad).unwrap().expose(),
+    ]
+    .concat()
 }
 
 fn hidden_check(plain: &[u8], header: &[u8]) -> (Result<(u64, u64)>, Option<SignedBy>) {
     let bytes = sealed(plain);
     let mut dec = reader(&bytes);
     dec.start_hash().unwrap();
-    let result = HiddenResult::default();
+    let result = HiddenResult::new().unwrap();
     let t = TailRead {
         padded: true,
         hidden: Some((header.to_vec(), result.clone())),
     };
     let r = copy_payload(dec, &mut Vec::new(), &t);
-    let signed = result.borrow_mut().take();
+    let signed = result.take();
     (r, signed)
 }
 
@@ -193,7 +216,7 @@ fn hidden_sender_block_is_verified_and_tampering_rejected() {
         commit: [0; 32],
     }
     .key_id();
-    assert_eq!(signed.unwrap().key_id, id);
+    assert_eq!(signed.unwrap().key_id(), id);
     // DE: Anderer Header, verschobene Grenze in der Signatur, gekippte Signatur, geänderte Daten.
     // EN: Other header, shifted boundary in the signature, flipped signature, altered data.
     assert_eq!(hidden_check(&good, b"X").0, Err(Error::InvalidSignature));

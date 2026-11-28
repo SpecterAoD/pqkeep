@@ -17,16 +17,10 @@ use std::rc::Rc;
 use sha3::{Digest, Sha3_512};
 
 use super::signer_v3::{FILE_SIG_CONTEXT, FILE_SIGNATURE_LEN, SIGNER_DSA, Signer, message};
+pub(super) use super::{SignedBy, hidden_result::HiddenResult};
 use crate::crypto::{KeyAlgorithm, dsa};
 use crate::envelope::{PublicKeyFile, UnlockedKey};
 use crate::{Error, Result};
-
-/// DE: Geprüfter Absender einer Datei. EN: Verified sender of a file.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SignedBy {
-    /// DE: Schlüssel-ID (SHA3-256 des öffentlichen Schlüssels). EN: Key ID (SHA3-256 of the public key).
-    pub key_id: Vec<u8>,
-}
 
 /// DE: Prüft, dass `key` ein ML-DSA-87-Schlüssel ist (vor jeder Arbeit).
 /// EN: Checks that `key` is an ML-DSA-87 key (before any work).
@@ -160,9 +154,6 @@ impl<R: Read> Read for Body<R> {
     }
 }
 
-/// DE: Ergebnis eines verborgenen Absenders (füllt der Trailer-Leser). EN: Result of a hidden sender.
-pub(crate) type HiddenResult = Rc<RefCell<Option<SignedBy>>>;
-
 /// DE: Signaturprüfung: v3/v4-SIGNED (Σ am Dateiende) oder verborgener Absender (Trailer, #316).
 /// EN: Signature check: v3/v4-SIGNED (Σ at the end) or hidden sender (trailer, #316).
 pub(crate) struct SignatureCheck {
@@ -171,7 +162,7 @@ pub(crate) struct SignatureCheck {
     signer: Option<Signer>,
     /// DE: Verborgener Absender: Ergebnis und verlangte Schlüssel-ID (`--signer`).
     /// EN: Hidden sender: result and required key ID (`--signer`).
-    hidden: Option<(HiddenResult, Option<Vec<u8>>)>,
+    hidden: Option<(HiddenResult, Option<SignedBy>)>,
 }
 
 impl SignatureCheck {
@@ -186,18 +177,20 @@ impl SignatureCheck {
 
     /// DE: Prüfung für einen verborgenen Absender; der Trailer-Leser trägt das Ergebnis ein.
     /// EN: Check for a hidden sender; the trailer reader fills in the result.
-    pub(super) fn hidden(expected: Option<&PublicKeyFile>) -> (Self, HiddenResult) {
-        let result: HiddenResult = Rc::new(RefCell::new(None));
+    pub(super) fn hidden(expected: Option<&PublicKeyFile>) -> Result<(Self, HiddenResult)> {
+        let result = HiddenResult::new()?;
         let check = Self {
             tail: Rc::new(RefCell::new(Tail::default())),
             header: Vec::new(),
             signer: None,
             hidden: Some((
-                Rc::clone(&result),
-                expected.map(PublicKeyFile::key_id).map(<[u8]>::to_vec),
+                result.clone(),
+                expected
+                    .map(|key| SignedBy::from_key_id(key.key_id()))
+                    .transpose()?,
             )),
         };
-        (check, result)
+        Ok((check, result))
     }
 
     /// DE: Prüft nach vollständig gelesenem `C`. EN: Verifies after `C` has been read completely.
@@ -207,8 +200,8 @@ impl SignatureCheck {
     /// missing, file too long or truncated), [`Error::InvalidSignature`].
     pub(super) fn verify(self) -> Result<SignedBy> {
         if let Some((result, expected)) = self.hidden {
-            let signed = result.borrow_mut().take().ok_or(Error::Decrypt)?;
-            if expected.is_some_and(|id| id != signed.key_id) {
+            let signed = result.take().ok_or(Error::Decrypt)?;
+            if expected.is_some_and(|id| id != signed) {
                 return Err(Error::InvalidSignature);
             }
             return Ok(signed);
@@ -222,9 +215,7 @@ impl SignatureCheck {
         if !dsa::verify(SIGNER_DSA, key, &msg, FILE_SIG_CONTEXT, &signature) {
             return Err(Error::InvalidSignature);
         }
-        Ok(SignedBy {
-            key_id: signer.key_id(),
-        })
+        SignedBy::from_public_key(key)
     }
 }
 

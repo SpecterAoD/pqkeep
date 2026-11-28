@@ -91,6 +91,13 @@ use self::text::{Texts, texts};
 /// DE: Einstiegspunkt der CLI. EN: CLI entry point.
 pub fn run() -> ExitCode {
     let report = hardening::harden_process();
+    #[cfg(target_os = "linux")]
+    if !report.complete() {
+        // DE: Vor argv-/Dialog-/Secret-Eintritt verweigern, nicht bloß warnen.
+        // EN: Refuse before argv/dialog/secret ingress instead of merely warning.
+        eprintln!("Prozessschutz nicht nachgewiesen / process protection unavailable");
+        return ExitCode::FAILURE;
+    }
     let argv: Vec<String> = std::env::args().collect();
     let lang = args::detect_lang(&argv);
     let t = texts(lang);

@@ -1,0 +1,32 @@
+# DE/EN: Explizite öffentliche eigene Prozessprobe, keine vollständige R7-Abnahme.
+name: Process access probe
+
+on:
+  pull_request:
+    paths:
+      - 'platform/pqkeep-platform/**'
+      - 'scripts/test_process_access_probe.ps1'
+      - '.github/workflows/process-access-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: process-access-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Owned Windows process access probe
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show active-toolchain
+      - run: cargo build --locked -p pqkeep-platform --example process_access_probe --features process-access-probe
+      - name: Eigene Prozess-DACL und Leseverweigerung / own DACL and denied access
+        shell: pwsh
+        run: ./scripts/test_process_access_probe.ps1

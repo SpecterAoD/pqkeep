@@ -1,5 +1,32 @@
 # MASTER-PROJEKT-SPEZIFIKATION v2.23: PQKeep (Core, CLI & API)
 
+> R7/R8-Arbeitsstand (#147, gemeinsamer PR #355): Geprüfte Absenderidentität wird
+> fallibel in gesperrtem Speicher gehalten; Rust-API `SignedBy::key_id()` statt
+> öffentlichem Vec-Feld, `try_duplicate()` statt `Clone`; `Report` ohne `Clone`.
+> CLI-/JSON-/Formatverträge bleiben erhalten. Teilbehebung, kein Gesamtabschluss;
+> Finale Prozess-/Helper- und übrige Metadatenabnahme weiter offen.
+> Details: [vertrauliche Absenderidentität](security/CONFIDENTIAL_SENDER_IDENTITY.md).
+
+> R8-Folgebaustein in PR355: Verborgener Signierschlüssel-Aufbau, Kodierung und
+> Verifikation verwenden vorab gesperrte Arbeitsflächen einschließlich Identitäts-
+> matrix und SHAKE128-Scratch; keine gewöhnlichen Signature-/Cache-Kopien in
+> diesen Pfaden. Umsetzung im gemeinsamen Draft, finale native Abnahme noch offen.
+> [Prüfumfang und Grenzen](security/HIDDEN_SIGNATURE_VALIDATION.md).
+
+> R8-Framing in PR355: Private Trailer-/Signaturnachricht-Bytes direkt in vorab
+> gesperrte SecretBytes kodieren; laufende STREAM-/Rückhalte-Zähler vor Klartext-
+> eingang sperren und vor Freigabe löschen. Rust-API `format_v4::trailer` liefert
+> jetzt `Result<SecretBytes>`; mit `?` behandeln und Bytes mit `expose()` ausleihen.
+> Wire-Format unverändert; Berichte/Transport und weitere R7/R8-Pfade bleiben offen.
+> [Umfang und API-Migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
+
+> R8-Sperrregister in PR355: Getrennte Kontroll-/Node-Arenen vor Adress- und
+> Referenzeintritt sperren; Wachstum zwischen gesperrten Zielen, Wipe vor Unlock.
+> Keine gewöhnlichen BTree-Records und keine rekursive Secret-Sperre im Bootstrap.
+> Root-forbid erhalten; zwei unsafe Send/Sync-Impls entfallen. Eng geprüfte reine
+> Windows-Testabfrage getrennt vom Produktionsfeature. Gesamtabnahme noch offen.
+> [Registervertrag und Prüfumfang](security/LOCK_REGISTRY_VALIDATION.md).
+
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).
@@ -543,3 +570,31 @@ Sponge-Konvertierungsarrays oder neuen unsafe-Casts. Auf ARM kann diese geschüt
 Variante Hardwarebeschleunigung kosten. KEM-PKE nutzt ebenfalls vollständig geliehene vorab gesperrte Operationsflächen,
 einschließlich vertraulichem internem Vergleichs-Chiffrat. Native Abnahme und
 DSA-/AES-/Argon2-Nachweise bleiben offen; kein R6-Gesamtabschluss.
+
+R7/R8-Arbeitsstand: Native Konvertierung der Archiv-/Quelldatei-Leseeingänge
+verwendet vor Befüllung gesperrte UTF8-/UTF16-Ziele. Root-forbid bleibt erhalten;
+notwendige native Windows-Aufrufe bleiben im schmalen Plattformadapter. Übrige
+Traversal-/Ziel-/Temppfad- und Prozess-/Helper-Lücken bleiben offen; siehe
+[Nativer Pfadumfang](security/NATIVE_PATH_VALIDATION.md).
+
+R7/R8-Arbeitsstand: Tatsächliche Quellsammler und Archivschreiber verwenden vorab
+gesperrte Quelleinträge, Belegung, Sortierindizes und Iteratorzustände. Fallibles
+Wachstum kopiert nur zwischen gesperrten Zielen; stabile Reihenfolge ohne
+gewöhnlichen Record-Sortierscratch. Native Traversierung, Skip-/FS-Zwischenwerte
+und übrige R7/R8-Flächen bleiben offen; siehe
+[Quellsammlung](security/SOURCE_RECORD_VALIDATION.md).
+
+DE: R7/R8 Top-Level-Namensprüfung verwendet denselben geschützten PathSet wie der
+Archivleser. Öffentliche Buildzeit-Unicode-Tabelle ersetzt private Laufzeit-
+Expansionsarrays; Originalnamen/Wire erhalten, Sigma-Konflikte bereits beim
+Schreiben abweisen. Details: security/CONFIDENTIAL_NAME_FOLDING.md.
+
+DE: R7/R8-Quellsammlung erfasst native Metadaten direkt in vorab gesperrten
+libc-/SDK-Records, ohne privaten std::fs::Metadata-Rückgabewert. No-Follow-
+Semantik und Windows-Reparse-/Sharing-Vertrag bleiben explizit. Lokale/native
+Vollabnahme offen; security/SOURCE_METADATA_VALIDATION.md beschreibt die Grenze.
+
+DE: R7-Linux-CLI setzt/prüft Core-Limits und Dumpable vor argv-/Secret-Eintritt
+zwingend. Native Core-Rücklesung ist fallibel, unbekannte/verweigerte Abfragen
+bestätigen keine Fähigkeit; statischer zweisprachiger Startfehler statt Panic.
+Windows-/Host-/Helper-Abnahme offen: security/LINUX_STARTUP_CAPABILITY.md.

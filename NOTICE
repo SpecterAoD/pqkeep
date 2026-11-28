@@ -7,6 +7,14 @@ Lizenziert unter der Apache License, Version 2.0 (siehe LICENSE).
 This product includes no proprietary code.
 Dieses Produkt enthält keinen proprietären Code.
 
+Windows native path normalization / Native Windows-Pfadnormalisierung:
+- src/files/native_path_windows.rs adapts get_long_path branch logic from
+  Rust 1.88.0, library/std/src/sys/path/windows.rs.
+  Copyright The Rust Project Developers, licensed under Apache-2.0.
+  Modified: prelocked UTF16 destinations, fallible bounded growth, borrowed input.
+  DE: Angepasst auf vorab gesperrte UTF16-Ziele, fallibles begrenztes Wachstum
+  und geliehene Eingabe.
+
 Test vectors / Testvektoren (tests/kat/):
 - NIST ACVP-Server (usnistgov/ACVP-Server): public domain / gemeinfrei (US Government work).
 - Project Wycheproof (C2SP/wycheproof): Copyright the Wycheproof authors,

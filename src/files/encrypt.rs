@@ -3,7 +3,7 @@
 //! EN: Encrypting a file or directory into `target` (atomic, no overwriting).
 //! Fresh file key and nonce prefix for every operation.
 
-use std::fs::{self, File};
+use std::fs;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
@@ -13,8 +13,8 @@ use super::format::Content;
 use super::output::TempOutput;
 use super::signed_io::{HashingWriter, check_signing_key};
 use super::tail_v4::TailWrite;
-use super::walk::{self, SourceEntry, SourceKind};
 use super::{EncryptOptions, Protection, Report};
+use super::{source_entries::SourceEntries, source_entry::SourceEntry, walk};
 use crate::crypto::stream::{EncryptWriter, PREFIX_LEN};
 use crate::crypto::{aead, rng};
 use crate::envelope::UnlockedKey;
@@ -84,7 +84,7 @@ fn encrypt_with(
         let (e, s) = walk::collect_dir(source)?;
         (e, s, Content::Directory)
     } else {
-        (vec![walk::collect_file(source)?], Vec::new(), Content::File)
+        (walk::collect_file(source)?, Vec::new(), Content::File)
     };
     let job = Job {
         target,
@@ -204,7 +204,7 @@ pub fn encrypt_many_under(
 }
 
 fn write_archive(
-    entries: &[SourceEntry],
+    entries: &SourceEntries,
     skipped: Vec<super::Skipped>,
     content: Content,
     job: &Job<'_>,
@@ -240,8 +240,8 @@ fn write_archive(
         skipped,
         ..Report::default()
     };
-    for entry in entries {
-        write_entry(&mut archive, entry, &mut report)?;
+    for entry in entries.try_iter()? {
+        write_entry(&mut archive, entry?, &mut report)?;
     }
     // DE: Jede v4-Datei (Füllung, anonym, verborgener Absender) hat einen Trailer.
     // EN: Every v4 file (padding, anonymous, hidden sender) has a trailer.
@@ -269,17 +269,14 @@ fn write_entry<W: Write>(
     entry: &SourceEntry,
     report: &mut Report,
 ) -> Result<()> {
-    match entry.kind {
-        SourceKind::Dir => {
-            archive.dir(&entry.rel)?;
-            report.directories += 1;
-        }
-        SourceKind::File(size) => {
-            let mut reader = File::open(&entry.abs)?;
-            archive.file(&entry.rel, &mut reader, size)?;
-            report.files += 1;
-            report.bytes += size;
-        }
+    if entry.is_directory() {
+        archive.dir(entry.path()?)?;
+        report.directories += 1;
+    } else {
+        let mut reader = entry.open()?;
+        archive.file(entry.path()?, &mut reader, entry.size())?;
+        report.files += 1;
+        report.bytes += entry.size();
     }
     Ok(())
 }

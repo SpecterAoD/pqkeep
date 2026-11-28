@@ -242,7 +242,7 @@ pub fn load_expected(lang: Lang, m: &ArgMatches) -> CliResult<Option<PublicKeyFi
 /// DE: Zeile „Signiert von …“ (nur bei signierten Dateien). EN: Line "Signed by …" (signed files only).
 pub fn print(lang: Lang, signer: Option<&SignedBy>) {
     if let Some(s) = signer {
-        let hex = envelope::hex_encode(&s.key_id);
+        let hex = envelope::hex_encode(s.key_id());
         println!("{}: {}", texts(lang).signed_by, fingerprint(&hex));
         // DE: Für das Fertig-Fenster des Kontextmenüs eine eigene Steuerzeile – nie aus Text
         //     erraten (#287). EN: A dedicated control line for the context menu's final window –
