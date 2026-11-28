@@ -15,7 +15,9 @@
 
 use std::fs::{self, File};
 use std::io::{self, ErrorKind};
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(target_os = "linux")]
+use std::path::PathBuf;
 
 /// DE: Gerät und Inode (Unix); unter Windows noch ohne Inhalt. EN: Device and inode (Unix).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -82,13 +84,6 @@ pub(crate) fn handle_path(file: &File) -> Option<PathBuf> {
     fs::metadata(&path)
         .is_ok_and(|meta| from(&meta) == id)
         .then_some(path)
-}
-
-/// DE: Ohne `/proc` kein Handle-Pfad. EN: Without `/proc` no handle path.
-#[cfg(not(target_os = "linux"))]
-#[allow(clippy::unnecessary_wraps)] // DE/EN: gleiche Signatur wie unter Linux / same signature as on Linux
-pub(crate) fn handle_path(_file: &File) -> Option<PathBuf> {
-    None
 }
 
 /// DE: Verlinkt das offene Objekt als `target` (scheitert, wenn `target` existiert). `Ok(false)`:
