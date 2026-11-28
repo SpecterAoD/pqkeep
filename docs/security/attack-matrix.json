@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "matrix_version": "1.8.0",
+  "matrix_version": "1.9.0",
   "reviewed_source_commit": "ab65cd0cf736366acf2d6fad8569fe76b291c2da",
   "cases": [
     {
@@ -2159,8 +2159,10 @@
       "component_paths": [
         "docs/security/FILE_IO_RACES.md",
         "src/files/output.rs",
+        "src/files/output_guard.rs",
         "src/files/paths.rs",
         "src/files/race_tests.rs",
+        "src/fs_identity.rs",
         "src/fsutil.rs"
       ],
       "scenario": {
@@ -2215,6 +2217,18 @@
           "symbol": "source_swapped_for_symlink_is_never_read",
           "kind": "rust-unit",
           "stage": "existing"
+        },
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "swapped_temp_dir_cannot_redirect_writes",
+          "kind": "rust-unit",
+          "stage": "existing"
+        },
+        {
+          "path": "src/files/race_tests.rs",
+          "symbol": "swapped_temp_file_is_never_published",
+          "kind": "rust-unit",
+          "stage": "existing"
         }
       ],
       "ci_refs": [
@@ -2241,12 +2255,12 @@
       "v2_ids": [],
       "evidence_refs": [],
       "gap": {
-        "de": "Race-Tests stellen die Lücken nach (Rückfall ohne Hardlinks, Ordner per Prüfen + Umbenennen, Quelle folgt Symlink nach dem Durchlauf); drei Tests sind bis zur Behebung ignoriert.",
-        "en": "Race tests reproduce the gaps (fallback without hard links, directory check + rename, source follows a symlink after the walk); three tests are ignored until fixed."
+        "de": "Linux behoben (handlebasierte Ausgabe, Veröffentlichen ohne Ersetzen, Prüfung; GHSA-9vh5-2vch-2r68). Offen: Windows (Handles im Plattform-Crate) und Quellen folgen nach dem Durchlauf einem Symlink (Test ignoriert).",
+        "en": "Fixed on Linux (handle-based output, publication without replacing, verification; GHSA-9vh5-2vch-2r68). Open: Windows (handles in the platform crate) and sources following a symlink after the walk (test ignored)."
       },
       "next_evidence": {
-        "de": "#338 PR 2 (O_TMPFILE/linkat, renameat2 NOREPLACE), PR 3 (Windows per Handle), PR 4 (O_NOFOLLOW + fstat, Verzeichnis-Handles); dann Tests scharf schalten.",
-        "en": "#338 PR 2 (O_TMPFILE/linkat, renameat2 NOREPLACE), PR 3 (Windows handle-based), PR 4 (O_NOFOLLOW + fstat, directory handles); then enforce the tests."
+        "de": "#338: Windows-Ausgabe per Handle, dann Quellen mit O_NOFOLLOW + fstat und Verzeichnis-Handles; Test scharf schalten.",
+        "en": "#338: Windows handle-based output, then sources with O_NOFOLLOW + fstat and directory handles; enforce the test."
       },
       "retired": false,
       "replacement": null

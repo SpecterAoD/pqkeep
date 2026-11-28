@@ -16,8 +16,10 @@ use std::path::Path;
 
 use super::keyfile::{KeyFile, MAX_FILE_BYTES};
 use super::public::PublicKeyFile;
+use crate::fs_identity::{Identity, is_own, replaced, verify};
 use crate::fsutil::{
-    OutputFile, open_new, publish_no_overwrite, publish_no_overwrite_strict, sync_dir, temp_path,
+    OutputFile, handle_of, open_new, publish_no_overwrite, publish_no_overwrite_strict, sync_dir,
+    temp_path,
 };
 use crate::security::Lang;
 use crate::{Error, Result};
@@ -193,19 +195,27 @@ fn write_and_publish(
     checkpoint(temp, Point::AfterTempCreate)?;
     file.write_all(data)?;
     file.sync_all()?;
+    let handle = handle_of(&file)?;
     drop(file);
     match overwrite {
         Overwrite::Yes => {
+            let id = Identity::of(&handle)?;
             #[cfg(test)]
             checkpoint(temp, Point::BeforePublish)?;
             #[cfg(test)]
             checkpoint(temp, Point::BeforeRename)?;
+            // DE: Nur das eigene Objekt umbenennen und danach prüfen (#338).
+            // EN: Only rename our own object and verify afterwards (#338).
+            if !is_own(temp, id) {
+                return Err(replaced().into());
+            }
             fs::rename(temp, path)?;
             #[cfg(test)]
             checkpoint(path, Point::AfterPublish)?;
+            verify(path, id)?;
         }
-        Overwrite::No if strict => publish_no_overwrite_strict(temp, path)?,
-        Overwrite::No => publish_no_overwrite(temp, path)?,
+        Overwrite::No if strict => publish_no_overwrite_strict(temp, &handle, path)?,
+        Overwrite::No => publish_no_overwrite(temp, &handle, path)?,
     }
     sync_dir(path);
     Ok(())

@@ -13,6 +13,11 @@ pub(crate) struct OutputFile {
 }
 
 impl OutputFile {
+    /// DE: Zweites Handle auf die Datei (Veröffentlichen/Prüfen). EN: Second handle (publish/verify).
+    pub(crate) fn try_clone_file(&self) -> io::Result<File> {
+        self.file.try_clone()
+    }
+
     pub(crate) fn new(file: File, path: &Path) -> Self {
         Self {
             file,

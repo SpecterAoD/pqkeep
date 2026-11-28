@@ -13,6 +13,8 @@ use std::fs::{self, DirBuilder};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
+use super::output_guard::{Guard, cleanup};
+use crate::fs_identity::{is_own, rename_noreplace, replaced, verify};
 use crate::fsutil::{OutputFile, open_new, publish_no_overwrite, sync_dir, temp_path};
 use crate::{Error, Result};
 
@@ -25,6 +27,8 @@ pub(crate) struct TempOutput {
     target: PathBuf,
     is_dir: bool,
     published: bool,
+    /// DE: Eigenes offenes Objekt (#338). EN: Own open object (#338).
+    guard: Option<Guard>,
 }
 
 fn ensure_absent(target: &Path) -> Result<()> {
@@ -51,9 +55,9 @@ impl TempOutput {
         ensure_absent(target)?;
         let temp = temp_path(target)?;
         let file = open_new(&temp)?;
-        let output = Self::new(temp, target, false);
+        let output = Self::new(temp, target, false, Some(Guard::file(&file)?));
         #[cfg(test)]
-        if let Err(error) = checkpoint(output.path(), Point::AfterTempCreate) {
+        if let Err(error) = checkpoint(&output.temp, Point::AfterTempCreate) {
             drop(file);
             return Err(error.into());
         }
@@ -68,7 +72,8 @@ impl TempOutput {
         ensure_absent(target)?;
         let temp = temp_path(base)?;
         let file = open_new(&temp)?;
-        Ok((Self::new(temp, target, false), file))
+        let guard = Guard::file(&file)?;
+        Ok((Self::new(temp, target, false, Some(guard)), file))
     }
 
     /// DE: Temporärordner für ein Ordnerziel. EN: Temporary directory for a directory target.
@@ -78,9 +83,10 @@ impl TempOutput {
         let mut builder = dir_builder();
         builder.recursive(false);
         builder.create(&temp)?;
-        let output = Self::new(temp, target, true);
+        let mut output = Self::new(temp, target, true, None);
         #[cfg(test)]
-        checkpoint(output.path(), Point::AfterTempCreate)?;
+        checkpoint(&output.temp, Point::AfterTempCreate)?;
+        output.guard = Guard::dir(&output.temp)?;
         Ok(output)
     }
 
@@ -93,7 +99,9 @@ impl TempOutput {
         let mut builder = dir_builder();
         builder.recursive(false);
         builder.create(&temp)?;
-        Ok(Self::new(temp, base, true))
+        let mut output = Self::new(temp, base, true, None);
+        output.guard = Guard::dir(&output.temp)?;
+        Ok(output)
     }
 
     /// DE: Veröffentlicht den Unterordner `child` als `target` (ohne Überschreiben) und entfernt
@@ -102,25 +110,38 @@ impl TempOutput {
     /// empty temporary directory.
     pub fn publish_child(mut self, child: &str, target: &Path) -> Result<()> {
         ensure_absent(target)?;
-        fs::rename(self.temp.join(child), target)?;
+        // DE: Quelle über das Handle (#338). EN: Source via the handle (#338).
+        let source = self.path().join(child);
+        let id = crate::fs_identity::Identity::at(&source)?;
+        rename_noreplace(&source, target)?;
+        verify(target, id)?;
         sync_dir(target);
         self.published = true;
-        let _ = fs::remove_dir(&self.temp);
+        if self.guard.as_ref().is_none_or(|g| is_own(&self.temp, g.id)) {
+            let _ = fs::remove_dir(&self.temp);
+        }
         Ok(())
     }
 
-    fn new(temp: PathBuf, target: &Path, is_dir: bool) -> Self {
+    fn new(temp: PathBuf, target: &Path, is_dir: bool, guard: Option<Guard>) -> Self {
         Self {
             temp,
             target: target.to_path_buf(),
             is_dir,
             published: false,
+            guard,
         }
     }
 
-    /// DE: Pfad der Temporärausgabe. EN: Path of the temporary output.
+    /// DE: Pfad der Temporärausgabe; Ordner unter Linux über das Handle (`/proc/self/fd/N`), damit
+    /// ein ausgetauschter Name keine Schreibvorgänge umlenkt (#338).
+    /// EN: Path of the temporary output; directories on Linux via the handle (`/proc/self/fd/N`)
+    /// so a swapped name cannot redirect writes (#338).
     pub fn path(&self) -> &Path {
-        &self.temp
+        self.guard
+            .as_ref()
+            .and_then(|g| g.via.as_deref())
+            .unwrap_or(&self.temp)
     }
 
     /// DE: Veröffentlicht unter dem Zielnamen. Ordner: Prüfen + Umbenennen (unter
@@ -134,11 +155,21 @@ impl TempOutput {
             checkpoint(&self.temp, Point::BeforePublish)?;
             #[cfg(test)]
             checkpoint(&self.temp, Point::BeforeRename)?;
-            fs::rename(&self.temp, &self.target)?;
+            // DE: Nur das eigene Objekt, ohne Ersetzen, danach prüfen (#338).
+            // EN: Only our own object, without replacing, verified afterwards (#338).
+            let id = self.guard.as_ref().map(|g| g.id);
+            if id.is_some_and(|id| !is_own(&self.temp, id)) {
+                return Err(replaced().into());
+            }
+            rename_noreplace(&self.temp, &self.target)?;
             #[cfg(test)]
             checkpoint(&self.target, Point::AfterPublish)?;
+            if let Some(id) = id {
+                verify(&self.target, id)?;
+            }
         } else {
-            publish_no_overwrite(&self.temp, &self.target)?;
+            let guard = self.guard.as_ref().ok_or_else(replaced)?;
+            publish_no_overwrite(&self.temp, &guard.handle, &self.target)?;
         }
         sync_dir(&self.target);
         self.published = true;
@@ -166,11 +197,7 @@ impl Drop for TempOutput {
         {
             return;
         }
-        let _ = if self.is_dir {
-            fs::remove_dir_all(&self.temp)
-        } else {
-            fs::remove_file(&self.temp)
-        };
+        cleanup(&self.temp, &self.target, self.is_dir, self.guard.as_ref());
     }
 }
 

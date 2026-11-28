@@ -26,6 +26,7 @@ follows with the next baseline run.
 1.6.0 adds QA1-FMT-014 (#316, hidden sender): 64 cases.
 1.7.0 adds QA1-FMT-015 (#335, container integrity matrix); QA1-FMT-003 covered, QA1-REC-003 partial (kill test, limit L1 → #338): 65 cases.
 1.8.0: QA1-FS-008 partial (#338, deterministic race tests; gaps reproduced, fixes in PR 2–4): 65 cases.
+1.9.0: QA1-FS-008 – Linux fixed (GHSA-9vh5-2vch-2r68, handle-based output); Windows and sources open: 65 cases.
 [Execution evidence](FAULT_RECOVERY_EVIDENCE.md) pins signed source/CI; broad original gaps stay open.
 
 ### Files, status and execution
@@ -193,6 +194,7 @@ CI-Nachweis folgt mit dem nächsten Baseline-Lauf.
 1.6.0 ergänzt QA1-FMT-014 (#316, verborgener Absender): 64 Fälle.
 1.7.0 ergänzt QA1-FMT-015 (#335, Integritätsmatrix der Container); QA1-FMT-003 abgedeckt, QA1-REC-003 teilweise (Kill-Test, Grenze L1 → #338): 65 Fälle.
 1.8.0: QA1-FS-008 teilweise (#338, deterministische Race-Tests; Lücken nachgestellt, Behebung in PR 2–4): 65 Fälle.
+1.9.0: QA1-FS-008 – Linux behoben (GHSA-9vh5-2vch-2r68, handlebasierte Ausgabe); Windows und Quellen offen: 65 Fälle.
 [Ausführungsnachweise](FAULT_RECOVERY_EVIDENCE.md) verknüpfen Quelle/CI; breite Altlücken bleiben offen.
 
 ### Dateien, Status und Ausführung
