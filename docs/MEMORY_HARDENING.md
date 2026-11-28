@@ -2,6 +2,16 @@
 
 **DE** | [EN](#english)
 
+DE: PR355 ersetzt die gewöhnlichen gemeinsamen Seiten-/Referenz-/Guard-Records
+durch vorab gesperrte Kontroll- und Node-Arenen. Zusätzlicher Registerspeicher
+gehört zum nativen Sperrbedarf; die bestehende Statistik zählt weiterhin Seiten
+lebender Secret-Bereiche. Nach dem letzten Owner sämtliche Arena-/Kontrollsperren
+freigeben; kein permanenter Bootstrap. Reale native Gesamtabnahme noch offen.
+EN: No unprotected registry fallback or recursive bootstrap. Preserve overlap,
+partial denial and exact final kernel baseline. Two unsafe Send/Sync impls removed;
+the narrow native Windows observer is test-only. See
+[registry lifetime and FFI review](security/LOCK_REGISTRY_VALIDATION.md).
+
 DE: Feste HKDF/HMAC-Zustände und -Scratch sowie Archiv-Framing/Eintragsdatensätze
 verwenden SecretWorkspace: Der innere Pufferdescriptor wird vor Allokation und
 privater Befüllung stabil gesperrt. Hashausgabe, HKDF-PRK und -Ergebnis entstehen

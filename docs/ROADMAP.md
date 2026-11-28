@@ -174,3 +174,11 @@ Sperrregister und Prozess-/Helper-Gesamtabnahme bleiben offen.
 EN: Protected framing and retained stream/holdback counters in the same joint PR;
 fallible Rust trailer API, unchanged wire bytes. No whole-row completion claim.
 See [scope and migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
+
+DE: Im selben Draft folgt das vor Befüllung gesperrte gemeinsame Seitenregister:
+Kontroll-/Node-Arenen, fallibles Wachstum, geprüfte Überlappung/Teilsperre und
+Verweigerung weiterer Aufnahme nach echtem Release-Fehler oder Poisoning.
+EN: Protected shared registry implemented and locally source-checked; native final
+acceptance remains pending. Two unnecessary unsafe Send/Sync impls removed;
+read-only native Windows observer is test-only. Other R7/R8 rows stay open.
+See [registry contract and evidence](security/LOCK_REGISTRY_VALIDATION.md).

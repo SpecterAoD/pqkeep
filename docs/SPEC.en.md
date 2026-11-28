@@ -20,6 +20,13 @@
 > Wire format unchanged; reports/transport and other R7/R8 paths remain open.
 > [Scope and API migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
 
+> R8 lock registry in PR355: separate control/node arenas locked before address/
+> reference ingress; growth between locked targets, wipe before unlock. No ordinary
+> BTree records or recursive secret-lock bootstrap. Preserve root forbid; remove
+> two unsafe Send/Sync impls. Narrow reviewed read-only Windows test observer is
+> separate from production features. Final acceptance remains pending.
+> [Registry contract and validation scope](security/LOCK_REGISTRY_VALIDATION.md).
+
 > **Translation note:** This is the English translation of [`SPEC.md`](SPEC.md) (German), version
 > 2.22. Both versions are maintained together; every change to one is made to the other in the
 > same pull request. If they ever contradict each other, the German version applies until the

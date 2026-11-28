@@ -9,12 +9,10 @@
 //! Locking is per page, not per variable. A page counter prevents releasing one
 //! secret from unlocking another on the same page. Secret constructors reject incomplete locks.
 
-use std::collections::BTreeMap;
 use std::ops::Range;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Mutex, MutexGuard, OnceLock, PoisonError};
 
-use region::LockGuard;
+use super::lock_registry::registry;
 use zeroize::Zeroize;
 
 #[cfg(test)]
@@ -25,26 +23,16 @@ mod memlock_tests;
 #[path = "memlock_denial_tests.rs"]
 mod denial_tests;
 
-/// DE: Gesperrte Seiten: Seitenadresse → (Anzahl Nutzer, Sperre).
-/// EN: Locked pages: page address → (number of users, lock).
-type Registry = BTreeMap<usize, (usize, LockGuard)>;
-
-fn registry() -> MutexGuard<'static, Registry> {
-    static PAGES: OnceLock<Mutex<Registry>> = OnceLock::new();
-    PAGES
-        .get_or_init(|| Mutex::new(BTreeMap::new()))
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-}
-
 static FAILED: AtomicUsize = AtomicUsize::new(0);
 
 /// DE: Momentaufnahme des Sperrstatus. EN: Snapshot of the lock status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LockStats {
-    /// DE: Aktuell gesperrte Seiten. EN: Currently locked pages.
+    /// DE: Seiten lebender Secret-Bereiche, ohne die zusätzliche Registerarena.
+    /// EN: Pages owned by live secret ranges, excluding the additional registry arena.
     pub locked_pages: usize,
-    /// DE: Fehlgeschlagene Sperrversuche seit Start. EN: Failed lock attempts since start.
+    /// DE: Fehler beim Sperren/Freigeben seit Start.
+    /// EN: Failed lock/release operations since startup.
     pub failed_attempts: usize,
 }
 
@@ -74,16 +62,16 @@ impl LockedRange {
 
     fn release(&mut self) {
         let mut reg = registry();
-        for page in self.pages.clone().step_by(region::page::size()) {
-            let remove = reg.get_mut(&page).is_some_and(|entry| {
-                entry.0 -= 1;
-                entry.0 == 0
-            });
-            if remove {
-                // DE: Entfernen gibt die Sperre frei (Drop von LockGuard).
-                // EN: Removing releases the lock (drop of LockGuard).
-                reg.remove(&page);
+        let mut page = self.pages.start;
+        while page < self.pages.end {
+            if !reg.release_page(page) {
+                FAILED.fetch_add(1, Ordering::Relaxed);
             }
+            page += region::page::size();
+        }
+        page.zeroize();
+        if !reg.finish_release() {
+            FAILED.fetch_add(1, Ordering::Relaxed);
         }
         // DE: Eigenen Record löschen; temporäre Compiler-/Stackkopien bleiben offen.
         // EN: Wipe the owned record; temporary compiler/stack copies remain open.
@@ -100,22 +88,6 @@ fn page_span(addr: usize, len: usize) -> Option<Range<usize>> {
     let last = addr.checked_add(len)?.checked_sub(1)?;
     let end = (last - last % size).checked_add(size)?;
     Some((addr - addr % size)..end)
-}
-
-fn acquire_page(reg: &mut Registry, page: usize, size: usize) -> bool {
-    if let Some(entry) = reg.get_mut(&page) {
-        let Some(count) = entry.0.checked_add(1) else {
-            return false;
-        };
-        entry.0 = count;
-        return true;
-    }
-    if let Ok(guard) = region::lock(std::ptr::without_provenance::<u8>(page), size) {
-        reg.insert(page, (1, guard));
-        true
-    } else {
-        false
-    }
 }
 
 fn lock_capacity(pages: usize, span: &Range<usize>) -> Option<usize> {
@@ -156,12 +128,12 @@ impl LockedRange {
         let size = region::page::size();
         let mut reg = registry();
         let total = lock_capacity(reg.len(), &span);
-        if total.is_none_or(|n| region::prepare_lock_capacity(n).is_err()) {
+        if total.is_none() || !reg.prepare(span.len()) {
             FAILED.fetch_add(1, Ordering::Relaxed);
             return false;
         }
         for page in span.step_by(size) {
-            if !acquire_page(&mut reg, page, size) {
+            if !reg.acquire_page(page, size) {
                 FAILED.fetch_add(1, Ordering::Relaxed);
                 break;
             }
@@ -199,7 +171,8 @@ impl Drop for LockedRange {
 #[must_use]
 pub fn is_locked(addr: usize) -> bool {
     let size = region::page::size();
-    registry().contains_key(&(addr - addr % size))
+    let reg = registry();
+    reg.contains_key(addr - addr % size) || reg.metadata_contains(addr)
 }
 
 /// DE: Erlaubtes Sperrbudget (weiches `RLIMIT_MEMLOCK`) in Byte, nur zur Diagnose (#325);

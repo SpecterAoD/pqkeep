@@ -20,6 +20,13 @@
 > Wire-Format unverändert; Berichte/Transport und weitere R7/R8-Pfade bleiben offen.
 > [Umfang und API-Migration](security/CONFIDENTIAL_FRAMING_VALIDATION.md).
 
+> R8-Sperrregister in PR355: Getrennte Kontroll-/Node-Arenen vor Adress- und
+> Referenzeintritt sperren; Wachstum zwischen gesperrten Zielen, Wipe vor Unlock.
+> Keine gewöhnlichen BTree-Records und keine rekursive Secret-Sperre im Bootstrap.
+> Root-forbid erhalten; zwei unsafe Send/Sync-Impls entfallen. Eng geprüfte reine
+> Windows-Testabfrage getrennt vom Produktionsfeature. Gesamtabnahme noch offen.
+> [Registervertrag und Prüfumfang](security/LOCK_REGISTRY_VALIDATION.md).
+
 > **English translation:** [`SPEC.en.md`](SPEC.en.md) – beide Fassungen werden im selben Pull Request gemeinsam geändert; bei Widersprüchen gilt bis zur Korrektur die deutsche. / Both versions are changed together in the same pull request; in case of contradiction the German one applies until fixed.
 
 > Änderung v2.19 (22.11.2026, Eigentümerauftrag zur autonomen Sicherheitsbehebung bis main): Secret-Speicher einschließlich KDF-/HKDF-Arbeitspuffern zwingend sperren; Fehler statt ungesperrtem Fallback, begrenzte Eingaben und sichere Freigabe. Keine Änderung von Format-/Ableitungsbytes. Details: [LOCKED_SECRETS.md](security/LOCKED_SECRETS.md).

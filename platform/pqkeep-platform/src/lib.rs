@@ -23,3 +23,6 @@ pub use console_input_record::CONSOLE_INPUT_STORAGE;
 
 #[cfg(all(windows, feature = "native-input-fixture"))]
 pub mod input_fixture;
+
+#[cfg(all(windows, feature = "native-memory-fixture"))]
+pub mod memory_fixture;

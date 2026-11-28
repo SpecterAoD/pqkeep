@@ -25,12 +25,16 @@
   ],
   "region-4.0.1": [
     {
-      "sha256": "0060a028891aabcf99ecd0c2e48b025dd87e04ed2330d2f9c7e16eac8921d397",
+      "sha256": "41e01df7dcd6f063e58d865927ad6c9a201385481c349666fe19ce789b6dbbfc",
       "path": "Cargo.toml"
     },
     {
       "sha256": "6dce58bd48179fd1a352e9c676df90d8840c2496a7561d7a40ef98fd1e50f23d",
       "path": "src/lib.rs"
+    },
+    {
+      "sha256": "a35b644e0f445695fd340f4a9348704672e00011857cdb592089f37d4f4bb623",
+      "path": "src/lock.rs"
     },
     {
       "sha256": "1d69f87df2e8d4a551294a91e5dc047203ceb01cf4df24e974b86249a6289ec4",

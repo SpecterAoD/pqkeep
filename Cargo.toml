@@ -142,7 +142,7 @@ pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform" }
 [target.'cfg(windows)'.dev-dependencies]
 # DE: Nur sichere eigene Testfixture, nicht im normalen Produktionsbaum.
 # EN: Safe own-console fixture only, excluded from normal production features.
-pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture"] }
+pqkeep-platform = { version = "0.1.0", path = "platform/pqkeep-platform", features = ["native-input-fixture", "native-memory-fixture"] }
 
 # DE: `api` (Standard) baut den REST-Server `pqkeep serve` ein. Ohne das Feature
 #     (`--no-default-features`) entsteht eine reine CLI ohne Netzwerkcode.

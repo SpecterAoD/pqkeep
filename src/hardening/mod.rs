@@ -10,6 +10,8 @@
 //! separate process hardening reports OS-dependent limits. CLI startup calls [`harden_process`];
 //! library embedders explicitly choose their own host policy.
 
+mod lock_registry;
+mod lock_registry_storage;
 pub mod memlock;
 pub mod sandbox;
 

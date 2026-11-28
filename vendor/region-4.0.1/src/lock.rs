@@ -77,30 +77,80 @@ pub unsafe fn unlock<T>(address: *const T, size: usize) -> Result<()> {
 /// released.
 #[must_use]
 pub struct LockGuard {
-  address: *const (),
+  // DE/EN: Numerische OS-Adressen, niemals dereferenzieren / numeric OS addresses, never dereferenced.
+  address: usize,
   size: usize,
 }
 
 impl LockGuard {
   #[inline(always)]
   fn new<T>(address: *const T, size: usize) -> Self {
-    Self {
-      address: address.cast(),
-      size,
+    Self { address: address.addr(), size }
+  }
+
+  /// DE: Öffentlich leer, zum Aufbau im bereits gesperrten Ziel.
+  /// EN: Public-empty guard for initialization in an already locked destination.
+  #[inline]
+  pub const fn empty() -> Self { Self { address: 0, size: 0 } }
+
+  /// DE: Besitzt eine erfolgreiche native Sperre. EN: Owns a successful native lock.
+  #[inline]
+  pub const fn is_active(&self) -> bool { self.size != 0 }
+
+  /// DE: Leeren Guard direkt befüllen; vorhandenes Eigentum niemals ersetzen.
+  /// EN: Populate an empty guard in place without replacing existing ownership.
+  ///
+  /// # Errors
+  /// DE/EN: Aktiver Guard, ungültige Spanne oder native Verweigerung / active guard,
+  /// invalid range or native refusal. The guard stays unchanged on failure.
+  #[inline]
+  pub fn acquire<T>(&mut self, address: *const T, size: usize) -> Result<()> {
+    if self.is_active() { return Err(crate::Error::InvalidParameter("active guard")); }
+    let page = crate::page::size();
+    if size == 0 || address.addr().checked_add(size).is_none()
+      || size.checked_add(page - 1).and_then(|n| n.checked_add(page - 1)).is_none() {
+      return Err(crate::Error::InvalidParameter("lock range"));
     }
+    let (address, size) = util::round_to_page_boundaries(address, size)?;
+    os::lock(address.cast(), size)?;
+    self.address = address.addr();
+    self.size = size;
+    Ok(())
+  }
+
+  /// DE: Eigentum zwischen zwei Guards feldweise übertragen, ohne Gesamtrecord-Kopie.
+  /// EN: Exchange owned guards field by field, without moving a private aggregate record.
+  #[inline]
+  pub fn swap(&mut self, other: &mut Self) {
+    core::mem::swap(&mut self.address, &mut other.address);
+    core::mem::swap(&mut self.size, &mut other.size);
+  }
+
+  /// DE: Nur eigene Sperre freigeben; gespeicherte Felder vor Unlock löschen.
+  /// EN: Release only this guard's lock; wipe retained fields before unlocking.
+  ///
+  /// # Errors
+  /// DE/EN: Native Unlock-Verweigerung / native unlock refusal. Like Drop, the
+  /// ownership is consumed; this never grants authority over an arbitrary range.
+  #[inline]
+  pub fn release(&mut self) -> Result<()> {
+    use zeroize::Zeroize;
+    if !self.is_active() { return Ok(()); }
+    let address = self.address;
+    let size = self.size;
+    self.address.zeroize();
+    self.size.zeroize();
+    os::unlock(core::ptr::without_provenance(address), size)
   }
 }
 
 impl Drop for LockGuard {
   #[inline]
   fn drop(&mut self) {
-    let result = os::unlock(self.address, self.size);
+    let result = self.release();
     debug_assert!(result.is_ok(), "unlocking region: {:?}", result);
   }
 }
-
-unsafe impl Send for LockGuard {}
-unsafe impl Sync for LockGuard {}
 
 #[cfg(test)]
 mod tests {

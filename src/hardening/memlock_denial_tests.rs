@@ -6,22 +6,13 @@ use super::{is_locked, lock_range, registry};
 
 #[test]
 fn partial_os_denial_is_cleaned_up_in_isolated_child() {
-    let result = std::process::Command::new(std::env::current_exe().unwrap())
-        .args([
-            "--exact",
-            "hardening::memlock::denial_tests::partial_os_denial_child",
-            "--ignored",
-            "--test-threads=1",
-        ])
-        .env("PQKEEP_LOCK_RANGE_DENIAL_CHILD", "1")
-        .output()
-        .unwrap();
-    assert!(
-        result.status.success(),
-        "{}",
-        String::from_utf8_lossy(&result.stderr)
+    use rustix::process::{Resource, getrlimit};
+    let before = getrlimit(Resource::Memlock);
+    crate::locked_owner_test_support::isolated_test(
+        "hardening::memlock::denial_tests::partial_os_denial_child",
+        "PQKEEP_LOCK_RANGE_DENIAL_CHILD",
     );
-    assert!(String::from_utf8_lossy(&result.stdout).contains("1 passed"));
+    assert_eq!(getrlimit(Resource::Memlock), before);
 }
 
 #[test]
@@ -37,19 +28,49 @@ fn partial_os_denial_child() {
     let buffer = vec![0u8; 4 * size];
     let base = buffer.as_ptr().addr();
     let first = base - base % size + size;
+    let baseline = kernel_locked_bytes();
+    let warm = lock_range(first, size);
+    assert!(warm.complete(first, size));
+    let warm_bytes = kernel_locked_bytes();
+    let budget = warm_bytes
+        .checked_add(u64::try_from(size).unwrap())
+        .unwrap();
     setrlimit(
         Resource::Memlock,
         Rlimit {
-            current: Some(u64::try_from(size).unwrap()),
-            maximum: Some(u64::try_from(size).unwrap()),
+            current: Some(budget),
+            maximum: Some(budget),
         },
     )
     .unwrap();
-    let range = lock_range(first, 2 * size);
-    assert!(!range.complete(first, 2 * size));
-    assert!(PartialEq::eq(&range.pages, &(first..first + size)));
-    assert!(is_locked(first) && !is_locked(first + size));
+    assert_eq!(
+        rustix::process::getrlimit(Resource::Memlock).current,
+        Some(budget)
+    );
+    let target = first + size;
+    let range = lock_range(target, 2 * size);
+    assert!(!range.complete(target, 2 * size));
+    assert!(PartialEq::eq(&range.pages, &(target..target + size)));
+    assert!(is_locked(target) && !is_locked(target + size));
     drop(range);
-    assert!(!is_locked(first));
+    assert!(!is_locked(target));
+    assert!(is_locked(first));
+    assert_eq!(kernel_locked_bytes(), warm_bytes);
+    drop(warm);
+    assert_eq!(kernel_locked_bytes(), baseline);
     assert!(registry().is_empty());
+}
+
+fn kernel_locked_bytes() -> u64 {
+    std::fs::read_to_string("/proc/self/status")
+        .unwrap()
+        .lines()
+        .find_map(|line| line.strip_prefix("VmLck:"))
+        .unwrap()
+        .split_whitespace()
+        .next()
+        .unwrap()
+        .parse::<u64>()
+        .unwrap()
+        * 1024
 }
